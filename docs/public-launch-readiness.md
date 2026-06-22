@@ -76,6 +76,9 @@ The following checks pass on a clean local clone without credentials or network 
 - `python3.11 scripts/check_paper_human_review_policy.py` — v0.6.15 CAND-003 paper human review policy gate is safe and present
 - `python3.11 -m pytest tests/test_paper_human_review_policy.py -q` — paper human review policy tests pass
 - `bash scripts/demo_paper_human_review_policy.sh` — paper human review policy demo runs offline without credentials, network, or broker contact
+- `python3.11 scripts/check_paper_human_review_replay.py` — v0.6.15 CAND-004 paper human review replay and regression gate is safe and present
+- `python3.11 -m pytest tests/test_paper_human_review_replay.py -q` — paper human review replay tests pass
+- `bash scripts/demo_paper_human_review_replay.sh` — paper human review replay demo runs offline without credentials, network, or broker contact
 - `./scripts/release_check.sh --quick` — quick release gate passes
 
 ## Verified in CI

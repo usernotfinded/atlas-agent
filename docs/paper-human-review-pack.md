@@ -100,4 +100,6 @@ publication is created by this candidate.
 
 The next step in the v0.6.15 planning line is the
 [Paper Human Review Ledger](paper-human-review-ledger.md) (CAND-002), followed by the
-[Paper Human Review Policy Simulator](paper-human-review-policy.md) (CAND-003).
+[Paper Human Review Policy Simulator](paper-human-review-policy.md) (CAND-003), and
+closed by the [Paper Human Review Replay and Regression Gate](paper-human-review-replay.md)
+(CAND-004).

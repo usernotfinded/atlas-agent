@@ -22,6 +22,12 @@
       "status": "implemented",
       "description": "Paper Human Review Policy Simulator",
       "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval. Live path blocked."
+    },
+    {
+      "id": "CAND-004",
+      "status": "implemented",
+      "description": "Paper Human Review Replay and Regression Gate",
+      "notes": "Paper-only. Offline/no-provider/no-broker/no-network. Non-executable. No live trading, no provider calls, no broker calls, no notifications, no orders, no real human approval. Live path blocked. Deterministic replay/regression gate."
     }
   ]
 }

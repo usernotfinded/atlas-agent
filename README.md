@@ -138,6 +138,7 @@ atlas backtest robustness --fixtures data/sample/regimes/ohlcv_uptrend.csv,data/
 atlas backtest portfolio-stress --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 atlas backtest portfolio-review-pack --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 atlas backtest portfolio-review-policy --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
+atlas backtest portfolio-review-replay --data data/sample/ohlcv_extended.csv --symbol DEMO-SYMBOL --output-dir <temp-dir>
 ```
 
 For paper-only strategy comparison, see
@@ -211,6 +212,7 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[Paper Human Review Pack](docs/paper-human-review-pack.md)** — deterministic, offline, non-executable review dossier derived from v0.6.14 paper portfolio evidence. See `scripts/demo_paper_human_review_pack.sh`.
 - **[Paper Human Review Ledger](docs/paper-human-review-ledger.md)** — deterministic, offline, non-executable simulated human-review decision ledger derived from the CAND-001 review pack. See `scripts/demo_paper_human_review_ledger.sh`.
 - **[Paper Human Review Policy Simulator](docs/paper-human-review-policy.md)** — v0.6.15 CAND-003 deterministic, offline, non-executable policy simulation against the CAND-001 review pack and CAND-002 review ledger. Produces a blocked-live gate artifact; no live trading, broker submission, provider execution, notifications, orders, or real human approval. See `scripts/demo_paper_human_review_policy.sh`.
+- **[Paper Human Review Replay and Regression Gate](docs/paper-human-review-replay.md)** — v0.6.15 CAND-004 deterministic, offline, non-executable replay and regression gate over the CAND-001 review pack, CAND-002 review ledger, and CAND-003 review policy. Produces a replay artifact; no live trading, broker submission, provider execution, notifications, orders, or real human approval. See `scripts/demo_paper_human_review_replay.sh`.
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.

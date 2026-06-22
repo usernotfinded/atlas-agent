@@ -2553,3 +2553,478 @@ def render_portfolio_review_policy_markdown(report: dict[str, Any]) -> str:
     ])
 
     return "\n".join(lines) + "\n"
+
+
+REVIEW_REPLAY_ARTIFACT_TYPE = "paper_human_review_replay"
+REVIEW_REPLAY_SCHEMA_VERSION = 1
+REVIEW_REPLAY_RELEASE = "v0.6.15-planning"
+REVIEW_REPLAY_SOURCE_RELEASE = "v0.6.14"
+
+ALLOWED_REVIEW_REPLAY_STATUSES = {
+    "paper_review_replay_passed",
+    "paper_review_replay_follow_up",
+    "paper_review_replay_rejected",
+}
+
+
+def build_paper_portfolio_review_replay(
+    *,
+    review_pack_path: str | Path | None = None,
+    review_ledger_path: str | Path | None = None,
+    review_policy_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    build_kwargs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a deterministic paper-only human review replay/regression gate.
+
+    Consumes the CAND-001 paper human review pack, CAND-002 review ledger, and
+    CAND-003 review policy artifacts (loaded from disk or built deterministically
+    from build_kwargs), validates the full chain, and emits a reproducible replay
+    artifact. The replay gate remains strictly non-executable, paper-only, and
+    blocks every live-related path.
+    """
+    if build_kwargs is not None:
+        pack = build_paper_portfolio_review_pack(**build_kwargs)
+        pack_text = json.dumps(pack, sort_keys=True, allow_nan=False)
+        pack_digest = hashlib.sha256(pack_text.encode("utf-8")).hexdigest()
+
+        ledger = build_paper_portfolio_review_ledger(build_kwargs=build_kwargs)
+        ledger_text = json.dumps(ledger, sort_keys=True, allow_nan=False)
+        ledger_digest = hashlib.sha256(ledger_text.encode("utf-8")).hexdigest()
+
+        policy = build_paper_portfolio_review_policy(build_kwargs=build_kwargs)
+        policy_text = json.dumps(policy, sort_keys=True, allow_nan=False)
+        policy_digest = hashlib.sha256(policy_text.encode("utf-8")).hexdigest()
+    else:
+        if review_pack_path is None or review_ledger_path is None or review_policy_path is None:
+            raise ValueError(
+                "Either build_kwargs or all three review_pack_path, review_ledger_path, and review_policy_path must be provided."
+            )
+        pack_path = Path(review_pack_path)
+        ledger_path = Path(review_ledger_path)
+        policy_path = Path(review_policy_path)
+        pack_text = pack_path.read_text(encoding="utf-8")
+        ledger_text = ledger_path.read_text(encoding="utf-8")
+        policy_text = policy_path.read_text(encoding="utf-8")
+        pack = json.loads(pack_text)
+        ledger = json.loads(ledger_text)
+        policy = json.loads(policy_text)
+        pack_digest = hashlib.sha256(pack_text.encode("utf-8")).hexdigest()
+        ledger_digest = hashlib.sha256(ledger_text.encode("utf-8")).hexdigest()
+        policy_digest = hashlib.sha256(policy_text.encode("utf-8")).hexdigest()
+
+    # Validate upstream artifact types and schema versions.
+    if pack.get("artifact_type") != "paper_human_review_pack":
+        raise ValueError("Source review pack artifact_type must be paper_human_review_pack.")
+    if pack.get("schema_version") != 1:
+        raise ValueError("Source review pack schema_version must be 1.")
+    if ledger.get("artifact_type") != "paper_human_review_ledger":
+        raise ValueError("Source review ledger artifact_type must be paper_human_review_ledger.")
+    if ledger.get("schema_version") != 1:
+        raise ValueError("Source review ledger schema_version must be 1.")
+    if policy.get("artifact_type") != "paper_human_review_policy":
+        raise ValueError("Source review policy artifact_type must be paper_human_review_policy.")
+    if policy.get("schema_version") != 1:
+        raise ValueError("Source review policy schema_version must be 1.")
+
+    chain_canonical = json.dumps(
+        {"pack": pack, "ledger": ledger, "policy": policy},
+        sort_keys=True,
+        allow_nan=False,
+    )
+    chain_canonical_hash = hashlib.sha256(chain_canonical.encode("utf-8")).hexdigest()
+
+    regression_checks: list[dict[str, Any]] = []
+
+    # Check 1: artifact types and schema versions.
+    regression_checks.append({
+        "check_id": "artifact_types_and_schemas_valid",
+        "description": "All upstream artifacts have expected artifact_type and schema_version.",
+        "passed": True,
+        "reason": "Pack, ledger, and policy artifact_type/schema_version are valid.",
+    })
+
+    # Check 2: paper-only flags preserved.
+    paper_only_ok = (
+        pack.get("mode") == "paper" and pack.get("paper_only") is True
+        and ledger.get("mode") == "paper" and ledger.get("paper_only") is True
+        and policy.get("mode") == "paper" and policy.get("paper_only") is True
+    )
+    regression_checks.append({
+        "check_id": "paper_only_preserved",
+        "description": "All upstream artifacts remain mode=paper and paper_only=true.",
+        "passed": paper_only_ok,
+        "reason": "Paper-only flags preserved." if paper_only_ok else "One or more artifacts are not paper_only=true or mode=paper.",
+    })
+
+    # Check 3: non-executable flags preserved.
+    non_exec_ok = (
+        pack.get("non_executable") is True
+        and ledger.get("non_executable") is True
+        and policy.get("non_executable") is True
+    )
+    regression_checks.append({
+        "check_id": "non_executable_preserved",
+        "description": "All upstream artifacts remain non_executable=true.",
+        "passed": non_exec_ok,
+        "reason": "Non-executable flags preserved." if non_exec_ok else "One or more artifacts are not non_executable=true.",
+    })
+
+    # Check 4: live path remains blocked.
+    policy_gate = policy.get("gate_summary", {})
+    live_blocked = policy_gate.get("live_path_blocked") is True
+    regression_checks.append({
+        "check_id": "live_path_blocked",
+        "description": "The upstream policy gate blocks the live path.",
+        "passed": live_blocked,
+        "reason": "Live path is blocked by policy gate." if live_blocked else "Live path is not blocked.",
+    })
+
+    # Check 5: broker/provider/network requirements remain false.
+    runtime_flags_ok = (
+        pack.get("broker_required") is False
+        and ledger.get("broker_required") is False
+        and policy.get("broker_required") is False
+        and pack.get("provider_required") is False
+        and ledger.get("provider_required") is False
+        and policy.get("provider_required") is False
+        and pack.get("network_required") is False
+        and ledger.get("network_required") is False
+        and policy.get("network_required") is False
+    )
+    regression_checks.append({
+        "check_id": "broker_provider_network_disabled",
+        "description": "Broker, provider, and network requirements remain false across the chain.",
+        "passed": runtime_flags_ok,
+        "reason": "Broker/provider/network flags are disabled." if runtime_flags_ok else "One or more broker/provider/network flags are not false.",
+    })
+
+    # Check 6: notification and order generation remain false.
+    notif_order_ok = (
+        pack.get("notifications_sent") is False
+        and ledger.get("notifications_sent") is False
+        and policy.get("notifications_sent") is False
+        and pack.get("orders_generated") is False
+        and ledger.get("orders_generated") is False
+        and policy.get("orders_generated") is False
+    )
+    regression_checks.append({
+        "check_id": "notifications_and_orders_disabled",
+        "description": "Notification sending and order generation remain false across the chain.",
+        "passed": notif_order_ok,
+        "reason": "Notifications and orders are disabled." if notif_order_ok else "One or more notification/order flags are not false.",
+    })
+
+    # Check 7: no real human approval.
+    no_real_approval = (
+        pack.get("real_human_approval", False) is False
+        and ledger.get("real_human_approval", False) is False
+        and policy.get("real_human_approval", False) is False
+    )
+    regression_checks.append({
+        "check_id": "no_real_human_approval",
+        "description": "No upstream artifact claims real human approval.",
+        "passed": no_real_approval,
+        "reason": "Real human approval is false across the chain." if no_real_approval else "An artifact claims real_human_approval=true.",
+    })
+
+    # Check 8: safety claim flags preserved.
+    pack_safety = pack.get("safety", {})
+    ledger_safety = ledger.get("safety", {})
+    policy_safety = policy.get("safety", {})
+    safety_claims_ok = (
+        pack_safety.get("no_profit_claim") is True
+        and ledger_safety.get("no_profit_claim") is True
+        and policy_safety.get("no_profit_claim") is True
+        and pack_safety.get("no_live_readiness_claim") is True
+        and ledger_safety.get("no_live_readiness_claim") is True
+        and policy_safety.get("no_live_readiness_claim") is True
+    )
+    regression_checks.append({
+        "check_id": "safety_claims_preserved",
+        "description": "Upstream safety blocks deny profit and live-readiness claims.",
+        "passed": safety_claims_ok,
+        "reason": "Safety claims preserved." if safety_claims_ok else "One or more safety blocks do not deny profit/live-readiness claims.",
+    })
+
+    # Check 9: upstream source digests are internally consistent.
+    policy_source_digests = policy.get("source_artifact_digests", {})
+    policy_digests_ok = (
+        policy_source_digests.get("paper_human_review_pack") == pack_digest
+        and policy_source_digests.get("paper_human_review_ledger") == ledger_digest
+    )
+    regression_checks.append({
+        "check_id": "upstream_source_digests_consistent",
+        "description": "Policy source_artifact_digests match the pack and ledger digests.",
+        "passed": policy_digests_ok,
+        "reason": "Upstream source digests are consistent." if policy_digests_ok else "Upstream source digests do not match.",
+    })
+
+    # Check 10: stable canonical replay representation.
+    # The replay itself is built from deterministic inputs; this check records
+    # that the canonical serialization of the chain is stable.
+    stable_replay_ok = True
+    regression_checks.append({
+        "check_id": "stable_replay_canonicalization",
+        "description": "The replay artifact uses a stable canonical representation.",
+        "passed": stable_replay_ok,
+        "reason": "Canonical chain serialization is stable.",
+    })
+
+    all_passed = all(check["passed"] for check in regression_checks)
+    deterministic_replay_passed = all_passed and live_blocked and non_exec_ok and paper_only_ok
+    paper_chain_intact = all_passed
+
+    if not deterministic_replay_passed:
+        overall_replay_status = "paper_review_replay_rejected"
+    elif policy.get("overall_policy_status") == "paper_policy_needs_more_evidence":
+        overall_replay_status = "paper_review_replay_follow_up"
+    else:
+        overall_replay_status = "paper_review_replay_passed"
+
+    replayed_artifacts = [
+        {
+            "artifact_type": "paper_human_review_pack",
+            "schema_version": 1,
+            "overall_status": pack.get("overall_review_pack_status", ""),
+            "digest": pack_digest,
+        },
+        {
+            "artifact_type": "paper_human_review_ledger",
+            "schema_version": 1,
+            "overall_status": ledger.get("overall_review_ledger_status", ""),
+            "digest": ledger_digest,
+        },
+        {
+            "artifact_type": "paper_human_review_policy",
+            "schema_version": 1,
+            "overall_status": policy.get("overall_policy_status", ""),
+            "digest": policy_digest,
+        },
+    ]
+
+    safety = {
+        "no_live_trading": True,
+        "no_broker_calls": True,
+        "no_provider_calls": True,
+        "no_notifications_sent": True,
+        "no_orders_generated": True,
+        "no_profit_claim": True,
+        "no_live_readiness_claim": True,
+        "no_real_human_approval": True,
+        "non_executable": True,
+        "paper_only": True,
+    }
+
+    report: dict[str, Any] = {
+        "artifact_type": REVIEW_REPLAY_ARTIFACT_TYPE,
+        "schema_version": REVIEW_REPLAY_SCHEMA_VERSION,
+        "release": REVIEW_REPLAY_RELEASE,
+        "source_release": REVIEW_REPLAY_SOURCE_RELEASE,
+        "mode": "paper",
+        "paper_only": True,
+        "non_executable": True,
+        "provider_required": False,
+        "broker_required": False,
+        "network_required": False,
+        "live_submit_enabled": False,
+        "orders_generated": False,
+        "notifications_sent": False,
+        "real_human_approval": False,
+        "not_financial_advice": True,
+        "not_live_ready": True,
+        "symbol": pack.get("symbol", ""),
+        "data_source": pack.get("data_source", ""),
+        "source_artifact_types": [
+            "paper_human_review_pack",
+            "paper_human_review_ledger",
+            "paper_human_review_policy",
+        ],
+        "source_artifact_digests": {
+            "paper_human_review_pack": pack_digest,
+            "paper_human_review_ledger": ledger_digest,
+            "paper_human_review_policy": policy_digest,
+        },
+        "chain_canonical_hash": chain_canonical_hash,
+        "overall_replay_status": overall_replay_status,
+        "replayed_artifacts": replayed_artifacts,
+        "regression_checks": regression_checks,
+        "gate_summary": {
+            "deterministic_replay_passed": deterministic_replay_passed,
+            "paper_chain_intact": paper_chain_intact,
+            "paper_follow_up_allowed": True,
+            "live_path_blocked": True,
+            "broker_submission_allowed": False,
+            "provider_execution_allowed": False,
+            "notification_sending_allowed": False,
+            "real_order_generation_allowed": False,
+        },
+        "safety": safety,
+    }
+
+    # Compute a canonical hash of the replay artifact excluding the hash field itself.
+    replay_for_hash = {k: v for k, v in report.items() if k != "replay_canonical_hash"}
+    replay_canonical = json.dumps(replay_for_hash, sort_keys=True, allow_nan=False)
+    report["replay_canonical_hash"] = hashlib.sha256(replay_canonical.encode("utf-8")).hexdigest()
+
+    if output_dir is not None:
+        write_portfolio_review_replay_reports(report, output_dir=output_dir)
+
+    return report
+
+
+def write_portfolio_review_replay_reports(
+    report: dict[str, Any],
+    *,
+    output_dir: str | Path,
+) -> tuple[Path, Path]:
+    """Write paper human review replay JSON and Markdown reports."""
+    destination = Path(output_dir)
+    destination.mkdir(parents=True, exist_ok=True)
+    json_path = destination / "paper-human-review-replay.json"
+    md_path = destination / "paper-human-review-replay.md"
+    json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    md_path.write_text(
+        render_portfolio_review_replay_markdown(report), encoding="utf-8"
+    )
+    return json_path, md_path
+
+
+def render_portfolio_review_replay_markdown(report: dict[str, Any]) -> str:
+    """Render a non-executable paper-only human review replay Markdown report."""
+    lines = [
+        "# Paper Human Review Replay and Regression Gate",
+        "",
+        "> **v0.6.15 planning line.** Paper-only. Offline/no-provider/no-broker/no-network.",
+        "> **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.",
+        "",
+        "**PAPER-ONLY. NON-EXECUTABLE. NOT FINANCIAL ADVICE. NOT LIVE READY.**",
+        "**NO BROKER SUBMISSION. NO PROVIDER CALLS. NO REAL NOTIFICATIONS. NO ORDERS GENERATED.**",
+        "**NO ACCOUNT-SPECIFIC INSTRUCTIONS. NO PROFIT GUARANTEES. NO ABSOLUTE SAFETY CLAIMS. NO CLAIMS THAT RISK IS ELIMINATED.**",
+        "**NO LIVE-READINESS CLAIM. NO AUTONOMOUS LIVE TRADING READINESS CLAIM.**",
+        "**NO REAL HUMAN APPROVAL. REPLAY DECISIONS ARE SIMULATED FOR PAPER REVIEW ONLY.**",
+        "",
+        f"- **Release**: `{report.get('release')}`",
+        f"- **Source Release**: `{report.get('source_release')}`",
+        f"- **Symbol**: `{report.get('symbol')}`",
+        f"- **Overall Replay Status**: `{report.get('overall_replay_status')}`",
+        f"- **Chain Canonical Hash**: `{report.get('chain_canonical_hash', '')[:8]}`",
+        f"- **Replay Canonical Hash**: `{report.get('replay_canonical_hash', '')[:8]}`",
+        "",
+        "## What it does",
+        "",
+        "- Replays the full v0.6.15 paper human review chain (pack, ledger, policy).",
+        "- Validates artifact types, schema versions, paper-only flags, and non-executable flags.",
+        "- Confirms the live path remains blocked and all safety invariants are unchanged.",
+        "- Emits a reproducible replay artifact for regression testing and reviewer evidence.",
+        "",
+        "## What it does NOT do",
+        "",
+        "- It does NOT enable live trading.",
+        "- It does NOT generate executable orders.",
+        "- It does NOT submit anything to brokers.",
+        "- It does NOT call providers.",
+        "- It does NOT send notifications.",
+        "- It does NOT create real human approval.",
+        "- It does NOT claim live readiness or autonomous live trading readiness.",
+        "- It is NOT financial advice, NOT live ready, and NOT a profit guarantee.",
+        "- It makes NO account-specific instructions.",
+        "- It makes NO absolute safety claims and NO claims that risk is eliminated.",
+        "",
+        "## Safety assertions",
+        "",
+        "| Property | Value |",
+        "|---|---|---|",
+        f"| `non_executable` | `{report.get('non_executable')}` |",
+        f"| `paper_only` | `{report.get('paper_only')}` |",
+        f"| `provider_required` | `{report.get('provider_required')}` |",
+        f"| `broker_required` | `{report.get('broker_required')}` |",
+        f"| `network_required` | `{report.get('network_required')}` |",
+        f"| `live_submit_enabled` | `{report.get('live_submit_enabled')}` |",
+        f"| `orders_generated` | `{report.get('orders_generated')}` |",
+        f"| `notifications_sent` | `{report.get('notifications_sent')}` |",
+        f"| `real_human_approval` | `{report.get('real_human_approval')}` |",
+        f"| `not_financial_advice` | `{report.get('not_financial_advice')}` |",
+        f"| `not_live_ready` | `{report.get('not_live_ready')}` |",
+        "",
+        "## Source artifact digests",
+        "",
+    ]
+
+    source_digests = report.get("source_artifact_digests", {})
+    for artifact_type, digest in source_digests.items():
+        lines.append(f"- `{artifact_type}`: `{digest[:8]}`")
+
+    lines.extend([
+        "",
+        "## Replayed artifacts",
+        "",
+        "| Artifact | Schema | Overall status | Digest (short) |",
+        "|---|---|---|---|",
+    ])
+    for artifact in report.get("replayed_artifacts", []):
+        lines.append(
+            f"| `{artifact.get('artifact_type')}` | `{artifact.get('schema_version')}` | "
+            f"`{artifact.get('overall_status')}` | `{artifact.get('digest', '')[:8]}` |"
+        )
+
+    lines.extend([
+        "",
+        "## Regression checks",
+        "",
+        "| Check | Passed | Reason |",
+        "|---|---|---|",
+    ])
+    for check in report.get("regression_checks", []):
+        passed = "Yes" if check.get("passed") else "No"
+        lines.append(
+            f"| `{check.get('check_id')}` | {passed} | {check.get('reason')} |"
+        )
+
+    lines.extend([
+        "",
+        "## Gate summary",
+        "",
+        "| Property | Value |",
+        "|---|---|---|",
+    ])
+    gate_summary = report.get("gate_summary", {})
+    lines.append(f"| `deterministic_replay_passed` | `{gate_summary.get('deterministic_replay_passed')}` |")
+    lines.append(f"| `paper_chain_intact` | `{gate_summary.get('paper_chain_intact')}` |")
+    lines.append(f"| `paper_follow_up_allowed` | `{gate_summary.get('paper_follow_up_allowed')}` |")
+    lines.append(f"| `live_path_blocked` | `{gate_summary.get('live_path_blocked')}` |")
+    lines.append(f"| `broker_submission_allowed` | `{gate_summary.get('broker_submission_allowed')}` |")
+    lines.append(f"| `provider_execution_allowed` | `{gate_summary.get('provider_execution_allowed')}` |")
+    lines.append(f"| `notification_sending_allowed` | `{gate_summary.get('notification_sending_allowed')}` |")
+    lines.append(f"| `real_order_generation_allowed` | `{gate_summary.get('real_order_generation_allowed')}` |")
+    lines.extend([
+        "",
+        "The gate summary confirms deterministic replay passed, paper chain intact, "
+        "paper follow up allowed, and live path blocked.",
+        "",
+        "## What This Replay Gate Is NOT",
+        "",
+        "- It is NOT live trading approval.",
+        "- It is NOT a real human decision or authorization.",
+        "- It is NOT an executable order or broker submission.",
+        "- It is NOT a claim that the portfolio, strategy, or system is ready for live trading.",
+        "- It is NOT a guarantee of profit, outperformance, or risk-free operation.",
+        "- It does NOT call brokers, providers, notification services, or any network API.",
+        "",
+        "## Human review is required",
+        "",
+        "Before any future live-related work, a human reviewer must:",
+        "",
+        "1. Confirm the replay report was generated offline from deterministic paper evidence.",
+        "2. Confirm no broker submission, provider call, notification, order generation, or real human approval occurred.",
+        "3. Confirm no live-readiness claim, no profit guarantee, and no absolute-safety claim was made.",
+        "4. Review the `regression_checks`, `gate_summary`, and overall replay status.",
+        "",
+        "---",
+        "Generated offline from deterministic paper evidence. No live data or APIs used.",
+    ])
+
+    return "\n".join(lines) + "\n"

@@ -154,3 +154,9 @@ review policy simulation in a temporary directory.
 This feature is v0.6.15 CAND-003. The source/package version remains `0.6.14`,
 `v0.6.15` remains the next planning line, and no tag, GitHub Release, or PyPI
 publication is created by this candidate.
+
+The next step in the v0.6.15 planning line is the
+[Paper Human Review Replay and Regression Gate](paper-human-review-replay.md)
+(CAND-004), which deterministically replays the CAND-001 review pack, this
+CAND-003 policy, and the CAND-002 ledger to verify the paper chain remains
+intact and the live path stays blocked.

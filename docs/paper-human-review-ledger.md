@@ -113,4 +113,7 @@ publication is created by this candidate.
 The next step in the v0.6.15 planning line is the
 [Paper Human Review Policy Simulator](paper-human-review-policy.md) (CAND-003), which
 evaluates the CAND-001 review pack and this CAND-002 ledger against explicit
-blocked-live policy rules.
+blocked-live policy rules. The chain closes with the
+[Paper Human Review Replay and Regression Gate](paper-human-review-replay.md)
+(CAND-004), which replays the CAND-001/002/003 artifacts and verifies the paper
+chain remains intact.

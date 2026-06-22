@@ -159,6 +159,7 @@ Level 1 is **operator-supervised, local-only automation that runs entirely insid
 - [Paper Human Review Pack](paper-human-review-pack.md) — v0.6.15 CAND-001 deterministic, offline, non-executable review dossier derived from paper portfolio evidence. No live trading, broker calls, provider calls, notifications, or orders.
 - [Paper Human Review Ledger](paper-human-review-ledger.md) — v0.6.15 CAND-002 deterministic, offline, non-executable simulated human-review decision ledger derived from the CAND-001 review pack. No live approval, broker submission, provider calls, notifications, orders, or real human approval.
 - [Paper Human Review Policy Simulator](paper-human-review-policy.md) — v0.6.15 CAND-003 deterministic, offline, non-executable policy simulation against the CAND-001 review pack and CAND-002 review ledger. Produces a blocked-live gate artifact; no live trading, broker submission, provider execution, notifications, orders, or real human approval.
+- [Paper Human Review Replay and Regression Gate](paper-human-review-replay.md) — v0.6.15 CAND-004 deterministic, offline, non-executable replay and regression gate over the CAND-001 review pack, CAND-002 review ledger, and CAND-003 review policy. Verifies the paper chain remains intact and the live path stays blocked; no live trading, broker submission, provider execution, notifications, orders, or real human approval.
 
 ## L2 — Live Suggestions with Human Approval
 
