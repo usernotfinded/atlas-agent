@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -1862,6 +1863,240 @@ def render_portfolio_review_pack_markdown(report: dict[str, Any]) -> str:
         "",
         "---",
         "Generated offline from deterministic paper portfolio evidence. No live data or APIs used.",
+    ])
+
+    return "\n".join(lines) + "\n"
+
+
+REVIEW_LEDGER_ARTIFACT_TYPE = "paper_human_review_ledger"
+REVIEW_LEDGER_SCHEMA_VERSION = 1
+REVIEW_LEDGER_RELEASE = "v0.6.15-planning"
+REVIEW_LEDGER_SOURCE_RELEASE = "v0.6.14"
+ALLOWED_REVIEW_LEDGER_STATUSES = {
+    "paper_review_ledger_open",
+    "paper_review_ledger_follow_up",
+    "paper_review_ledger_rejected",
+}
+ALLOWED_DECISION_STATUSES = {
+    "paper_follow_up_allowed",
+    "needs_more_paper_evidence",
+    "rejected_from_paper_follow_up",
+    "manual_review_required",
+    "blocked_by_missing_evidence",
+}
+
+
+def build_paper_portfolio_review_ledger(
+    *,
+    review_pack_path: str | Path | None = None,
+    output_dir: str | Path | None = None,
+    build_kwargs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a non-executable paper-only human review ledger from a review pack.
+
+    The ledger consumes a paper human review pack (either loaded from JSON path or
+    built deterministically) and produces simulated decision entries plus a gate
+    summary. It is strictly paper-only: no broker submission, no live approval, no
+    real human approval, no executable orders, no network calls.
+    """
+    if review_pack_path is not None:
+        pack_path = Path(review_pack_path)
+        pack_text = pack_path.read_text(encoding="utf-8")
+        pack = json.loads(pack_text)
+        source_digest = hashlib.sha256(pack_text.encode("utf-8")).hexdigest()
+    elif build_kwargs is not None:
+        pack = build_paper_portfolio_review_pack(**build_kwargs)
+        pack_text = json.dumps(pack, sort_keys=True, allow_nan=False)
+        source_digest = hashlib.sha256(pack_text.encode("utf-8")).hexdigest()
+    else:
+        raise ValueError(
+            "Either review_pack_path or build_kwargs must be provided."
+        )
+
+    if pack.get("artifact_type") != "paper_human_review_pack":
+        raise ValueError("Source artifact must be a paper_human_review_pack.")
+    if pack.get("schema_version") != 1:
+        raise ValueError("Source artifact schema_version must be 1.")
+
+    status_map = {
+        "rejected_from_review": "rejected_from_paper_follow_up",
+        "needs_more_paper_testing": "needs_more_paper_evidence",
+        "needs_human_review": "manual_review_required",
+        "paper_only_follow_up": "paper_follow_up_allowed",
+    }
+
+    decision_entries: list[dict[str, Any]] = []
+    for item in pack.get("review_items", []):
+        item_status = item.get("status")
+        decision_status = status_map.get(item_status, "blocked_by_missing_evidence")
+        decision_entries.append(
+            {
+                "id": f"{item.get('id')}-decision",
+                "type": "paper_decision_entry",
+                "source_item_id": item.get("id"),
+                "source": item.get("source"),
+                "decision_status": decision_status,
+                "paper_action": item.get("non_executable_action"),
+                "severity": item.get("severity"),
+                "reason": item.get("reason"),
+                "non_executable": True,
+                "paper_only": True,
+                "live_submit_enabled": False,
+                "broker_submission_allowed": False,
+                "reviewed_by": "simulated_reviewer",
+            }
+        )
+
+    pack_status = pack.get("overall_review_pack_status")
+    if pack_status == "paper_review_pack_rejected":
+        overall_status = "paper_review_ledger_rejected"
+    elif pack_status == "paper_review_pack_follow_up":
+        overall_status = "paper_review_ledger_follow_up"
+    else:
+        overall_status = "paper_review_ledger_open"
+
+    source_safety = pack.get("safety", {})
+    safety = dict(source_safety)
+    safety["no_real_human_approval"] = True
+    safety["non_executable"] = True
+    safety["paper_only"] = True
+
+    report: dict[str, Any] = {
+        "artifact_type": REVIEW_LEDGER_ARTIFACT_TYPE,
+        "schema_version": REVIEW_LEDGER_SCHEMA_VERSION,
+        "release": REVIEW_LEDGER_RELEASE,
+        "source_release": REVIEW_LEDGER_SOURCE_RELEASE,
+        "mode": "paper",
+        "non_executable": True,
+        "paper_only": True,
+        "provider_required": False,
+        "broker_required": False,
+        "network_required": False,
+        "live_submit_enabled": False,
+        "orders_generated": False,
+        "notifications_sent": False,
+        "real_human_approval": False,
+        "not_financial_advice": True,
+        "not_live_ready": True,
+        "source_artifact_type": "paper_human_review_pack",
+        "source_artifact_digest": source_digest,
+        "overall_review_ledger_status": overall_status,
+        "decision_entries": decision_entries,
+        "gate_summary": {
+            "live_approval_granted": False,
+            "broker_submission_allowed": False,
+            "paper_follow_up_allowed": True,
+        },
+        "safety": safety,
+    }
+
+    if output_dir is not None:
+        write_portfolio_review_ledger_reports(report, output_dir=output_dir)
+
+    return report
+
+
+def write_portfolio_review_ledger_reports(
+    report: dict[str, Any],
+    *,
+    output_dir: str | Path,
+) -> tuple[Path, Path]:
+    """Write paper human review ledger JSON and Markdown reports."""
+    destination = Path(output_dir)
+    destination.mkdir(parents=True, exist_ok=True)
+    json_path = destination / "paper-human-review-ledger.json"
+    md_path = destination / "paper-human-review-ledger.md"
+    json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+        encoding="utf-8",
+    )
+    md_path.write_text(
+        render_portfolio_review_ledger_markdown(report), encoding="utf-8"
+    )
+    return json_path, md_path
+
+
+def render_portfolio_review_ledger_markdown(report: dict[str, Any]) -> str:
+    """Render a non-executable paper-only human review ledger Markdown report."""
+    lines = [
+        "# Paper Human Review Ledger",
+        "",
+        "**PAPER-ONLY. NON-EXECUTABLE. NOT FINANCIAL ADVICE. NOT LIVE READY.**",
+        "**NO BROKER SUBMISSION. NO PROVIDER CALLS. NO REAL NOTIFICATIONS. NO ORDERS GENERATED.**",
+        "**NO ACCOUNT-SPECIFIC INSTRUCTIONS. NO PROFIT GUARANTEES. NO ABSOLUTE SAFETY CLAIMS. NO CLAIMS THAT RISK IS ELIMINATED.**",
+        "**NO LIVE-READINESS CLAIM. NO AUTONOMOUS LIVE TRADING READINESS CLAIM.**",
+        "**NO REAL HUMAN APPROVAL. DECISIONS ARE SIMULATED FOR PAPER REVIEW ONLY.**",
+        "",
+        f"- **Release**: `{report.get('release')}`",
+        f"- **Source Release**: `{report.get('source_release')}`",
+        f"- **Overall Review Ledger Status**: `{report.get('overall_review_ledger_status')}`",
+        f"- **Source Artifact Digest**: `{report.get('source_artifact_digest', '')[:8]}`",
+        "",
+        "## Safety Assertions",
+        "",
+        "| Property | Value |",
+        "|---|---|",
+        f"| `non_executable` | `{report.get('non_executable')}` |",
+        f"| `paper_only` | `{report.get('paper_only')}` |",
+        f"| `provider_required` | `{report.get('provider_required')}` |",
+        f"| `broker_required` | `{report.get('broker_required')}` |",
+        f"| `network_required` | `{report.get('network_required')}` |",
+        f"| `live_submit_enabled` | `{report.get('live_submit_enabled')}` |",
+        f"| `orders_generated` | `{report.get('orders_generated')}` |",
+        f"| `notifications_sent` | `{report.get('notifications_sent')}` |",
+        f"| `real_human_approval` | `{report.get('real_human_approval')}` |",
+        f"| `not_financial_advice` | `{report.get('not_financial_advice')}` |",
+        f"| `not_live_ready` | `{report.get('not_live_ready')}` |",
+        "",
+        "## Gate Summary",
+        "",
+        "| Property | Value |",
+        "|---|---|",
+    ]
+
+    gate_summary = report.get("gate_summary", {})
+    lines.append(
+        f"| `live_approval_granted` | `{gate_summary.get('live_approval_granted')}` |"
+    )
+    lines.append(
+        f"| `broker_submission_allowed` | `{gate_summary.get('broker_submission_allowed')}` |"
+    )
+    lines.append(
+        f"| paper follow up allowed | `{gate_summary.get('paper_follow_up_allowed')}` |"
+    )
+
+    lines.extend([
+        "",
+        "## Decision Entries",
+        "",
+    ])
+
+    for entry in report.get("decision_entries", []):
+        lines.append(f"### {entry.get('id')} ({entry.get('source')})")
+        lines.append(f"- **Type**: `{entry.get('type')}`")
+        lines.append(f"- **Decision Status**: `{entry.get('decision_status')}`")
+        lines.append(f"- **Severity**: `{entry.get('severity')}`")
+        lines.append(f"- **Reason**: {entry.get('reason')}")
+        lines.append(f"- **Paper Action**: `{entry.get('paper_action')}`")
+        lines.append(f"- **Non-Executable**: `{entry.get('non_executable')}`")
+        lines.append(
+            f"- **Broker Submission Allowed**: `{entry.get('broker_submission_allowed')}`"
+        )
+        lines.append(f"- **Reviewed By**: `{entry.get('reviewed_by')}`")
+        lines.append("")
+
+    lines.extend([
+        "## What This Ledger Is NOT",
+        "",
+        "- It is NOT live approval.",
+        "- It is NOT a real human decision.",
+        "- It is NOT an executable order.",
+        "- It is NOT a claim that the portfolio, strategy, or system is ready for live trading.",
+        "- It is NOT a guarantee of profit, outperformance, or risk-free operation.",
+        "- It does NOT call brokers, providers, notification services, or any network API.",
+        "",
+        "---",
+        "Generated offline from deterministic paper evidence. No live data or APIs used.",
     ])
 
     return "\n".join(lines) + "\n"
