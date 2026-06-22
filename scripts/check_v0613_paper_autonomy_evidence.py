@@ -297,10 +297,6 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
     pyproject = _read(root / "pyproject.toml")
     init_py = _read(root / "src" / "atlas_agent" / "__init__.py")
     metadata_path = root / "docs" / "releases" / "release-metadata.json"
-    if SOURCE_VERSION not in pyproject:
-        errors.append("Source/package version must remain 0.6.13 in pyproject.toml")
-    if SOURCE_VERSION not in init_py:
-        errors.append("Source/package version must remain 0.6.13 in src/atlas_agent/__init__.py")
     if not metadata_path.exists():
         errors.append("Missing release metadata: docs/releases/release-metadata.json")
         return
@@ -309,18 +305,24 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
     except json.JSONDecodeError as exc:
         errors.append(f"Invalid release metadata JSON: {exc}")
         return
-    checks = {
-        "source_version": "0.6.13",
-        "current_public_release": "v0.6.13",
-        "next_planned_release": "v0.6.14",
-        "pypi_published": False,
+    posture = (
+        metadata.get("source_version"),
+        metadata.get("current_public_release"),
+        metadata.get("next_planned_release"),
+    )
+    allowed = {
+        ("0.6.13", "v0.6.13", "v0.6.14"),
+        ("0.6.14", "v0.6.14", "v0.6.15"),
     }
-    for key, expected in checks.items():
-        if metadata.get(key) != expected:
-            errors.append(f"release-metadata.json {key} must be {expected!r}")
-    for item in metadata.get("releases", []):
-        if isinstance(item, dict) and item.get("tag") == "v0.6.14":
-            errors.append("release-metadata.json must not list v0.6.14 as a release")
+    if posture not in allowed:
+        errors.append(f"release-metadata.json has an unsupported historical posture: {posture!r}")
+    if metadata.get("pypi_published") is not False:
+        errors.append("release-metadata.json pypi_published must be false")
+    active_source = str(metadata.get("source_version", ""))
+    if active_source not in pyproject:
+        errors.append("pyproject.toml version must match release metadata")
+    if active_source not in init_py:
+        errors.append("src/atlas_agent/__init__.py version must match release metadata")
 
 
 def _check_release_docs(root: Path, errors: list[str]) -> None:

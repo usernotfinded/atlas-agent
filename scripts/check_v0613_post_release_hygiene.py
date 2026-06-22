@@ -395,13 +395,38 @@ def _check_historical_docs_marked() -> list[str]:
     return errors
 
 
+def _successor_release_is_current() -> bool:
+    """Return true once v0.6.14 has superseded the v0.6.13 public posture."""
+    try:
+        data = _load_release_metadata()
+    except CheckError:
+        return False
+    return (
+        data.get("source_version") == "0.6.14"
+        and data.get("current_public_release") == "v0.6.14"
+        and data.get("next_planned_release") == "v0.6.15"
+        and data.get("pypi_published") is False
+    )
+
+
+def _check_successor_source_version() -> list[str]:
+    errors: list[str] = []
+    for path in (PYPROJECT, INIT_PY):
+        if not path.exists() or "0.6.14" not in _read_text(path):
+            errors.append(f"Successor source version 0.6.14 not found in {path}")
+    return errors
+
+
 def run_check(*, json_output: bool = False) -> tuple[int, dict[str, Any]]:
     errors: list[str] = []
     warnings: list[str] = []
     checks: list[str] = []
 
+    successor_current = _successor_release_is_current()
+
     checks.append("release_metadata")
-    errors.extend(_check_release_metadata())
+    if not successor_current:
+        errors.extend(_check_release_metadata())
 
     checks.append("evidence_json")
     errors.extend(_check_evidence_json())
@@ -413,12 +438,16 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict[str, Any]]:
     errors.extend(_check_v0613_docs())
 
     checks.append("source_version")
-    errors.extend(_check_source_version())
+    if successor_current:
+        errors.extend(_check_successor_source_version())
+    else:
+        errors.extend(_check_source_version())
 
     docs = _collect_public_facing_docs()
 
     checks.append("no_v0613_release_claims")
-    errors.extend(_check_no_v0613_release_claims(docs))
+    if not successor_current:
+        errors.extend(_check_no_v0613_release_claims(docs))
 
     checks.append("no_stale_v0613_not_released")
     errors.extend(_check_no_stale_v0613_not_released(docs))

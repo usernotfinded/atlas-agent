@@ -5,22 +5,23 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.13` (tagged)
-- Previous public release: `v0.6.12`
-- Source package version on `main`: `0.6.13`
-- GitHub release: `v0.6.13` (current public)
-- Next planning line: `v0.6.14`
-- Public v0.6.13: current public — [v0.6.13 Trust and Release Status](v0.6.13-status.md)
+- Current public release: `v0.6.14` (tagged)
+- Previous public release: `v0.6.13`
+- Source package version on `main`: `0.6.14`
+- GitHub release: `v0.6.14` (current public)
+- Next planning line: `v0.6.15`
+- Public v0.6.14: current public — [v0.6.14 Trust and Release Status](v0.6.14-status.md)
+- Public v0.6.13: historical — [v0.6.13 Trust and Release Status](v0.6.13-status.md)
 - Public v0.6.12: historical — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md)
 - Previous public v0.6.10 — [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
 - PyPI was not published
-- Current public release status: [v0.6.13 Trust and Release Status](v0.6.13-status.md) (current public)
+- Current public release status: [v0.6.14 Trust and Release Status](v0.6.14-status.md) (current public)
 - Previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - Previous previous release status: [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
 - Previous previous previous release status: [v0.6.9 Trust and Release Status](v0.6.9-status.md) (historical)
 - Previous previous previous previous release status: [v0.6.8 Trust and Release Status](v0.6.8-status.md) (historical)
-- Current public release notes: [docs/releases/v0.6.13.md](../releases/v0.6.13.md) (current public)
+- Current public release notes: [docs/releases/v0.6.14.md](../releases/v0.6.14.md) (current public)
 - v0.6.11 release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (historical)
 - Previous release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (historical)
@@ -59,19 +60,18 @@ provider execution, broker execution, live trading, or order approval.
 - [Provider Audit Pack](../security/provider-audit-pack.md)
 - [Provider Audit Pack CI Workflow](../../.github/workflows/provider-audit-pack.yml)
 
-## v0.6.13 Post-Release Evidence
+## v0.6.14 Post-Release Evidence
 
-The `v0.6.13` public release cutover evidence is captured in deterministic,
+The `v0.6.14` GitHub-only release cutover evidence is captured in deterministic,
 reviewer-verifiable records. The next planning line is seeded in
-`v0.6.14-plan.md`. PyPI remains unpublished, live trading remains disabled by
+`v0.6.15-plan.md`. PyPI remains unpublished, live trading remains disabled by
 default, and provider/broker execution remains locked behind the existing safety
 gates.
 
-- [v0.6.13 Post-Release Evidence](../releases/v0.6.13-post-release-evidence.md) — deterministic cutover evidence and canonical public record
-- [v0.6.14 Planning Seed](../releases/v0.6.14-plan.md) — next-line planning notes
-- [v0.6.14 Candidate Selection](../releases/v0.6.14-candidate-selection.md) — candidate-selection gate
-- [v0.6.14 Paper Portfolio Evidence](../releases/v0.6.14-paper-portfolio-evidence.md) — planning-only CAND-001 through CAND-007 paper portfolio evidence
-- [v0.6.14 Final Paper Portfolio Readiness Audit](../releases/v0.6.14-final-readiness-audit.md) — planning-only CAND-008 Go/No-Go dossier for a future separately authorized cutover decision
+- [v0.6.14 Post-Release Evidence](../releases/v0.6.14-post-release-evidence.md) — deterministic GitHub-only cutover record
+- [v0.6.14 Paper Portfolio Evidence](../releases/v0.6.14-paper-portfolio-evidence.md) — historical pre-cutover CAND-001 through CAND-007 evidence
+- [v0.6.14 Final Paper Portfolio Readiness Audit](../releases/v0.6.14-final-readiness-audit.md) — historical pre-cutover CAND-008 decision dossier
+- [v0.6.15 Planning Seed](../releases/v0.6.15-plan.md) — next-line planning notes
 
 ## v0.6.12 Post-Release Evidence
 
@@ -112,24 +112,27 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.13` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.14` is verified against the GitHub release/tag.
 Auto-updater delivery for `v0.6.11` remains verified.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.13` (current public)
+- GitHub release: `v0.6.14` (current public)
+- GitHub release: `v0.6.13` (historical)
 - GitHub release: `v0.6.11` (historical)
-- Tag: `v0.6.13` (created and pushed)
+- Tag: `v0.6.14` (created and pushed)
+- Tag: `v0.6.13` (historical)
 - Tag: `v0.6.11` (historical)
 - PyPI was not published
-- Package version in source metadata: `0.6.13`
-- Auto-updater delivery: verified for `v0.6.13`; verified for `v0.6.12`; verified for `v0.6.11`
+- Package version in source metadata: `0.6.14`
+- Auto-updater delivery: verified for `v0.6.14`; verified for `v0.6.13`; verified for `v0.6.12`
 
 ## What Is Ready
 
-- Public v0.6.13 release notes and release status documentation (current public).
+- Public v0.6.14 release notes and release status documentation (current public).
+- Public v0.6.13 release notes and release status documentation (historical).
 - Public v0.6.11 release notes and release status documentation (historical).
 - Public v0.6.10 release notes and release status documentation (historical).
 - Public v0.6.9 release notes and release status documentation (historical).
@@ -149,17 +152,16 @@ brokers, enable trading, or require credentials.
   and `.json`) plus `scripts/check_v0613_paper_autonomy_evidence.py` — planning-only,
   local, and no release side effects.
 - Paper portfolio evidence bundle (`docs/releases/v0.6.14-paper-portfolio-evidence.md`
-  and `.json`) plus `scripts/check_v0614_paper_portfolio_evidence.py` — planning-only,
-  local, and no release side effects.
+  and `.json`) plus `scripts/check_v0614_paper_portfolio_evidence.py` — historical
+  pre-cutover evidence, local, and paper-only.
 - Final paper portfolio readiness audit (`docs/releases/v0.6.14-final-readiness-audit.md`
-  and `.json`) plus `scripts/check_v0614_final_readiness_audit.py` — planning-only,
-  local, and no release side effects.
+  and `.json`) plus `scripts/check_v0614_final_readiness_audit.py` — historical
+  pre-cutover decision evidence.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1`, `v0.6.2`, `v0.6.3`, `v0.6.4`, `v0.6.5`, `v0.6.6`, `v0.6.7`, `v0.6.8`, `v0.6.9`, `v0.6.10`, `v0.6.11`, `v0.6.12`, or `v0.6.13`.
-- `v0.6.14` is the next planning line; CAND-001 through CAND-008 are planning
-  candidates and do not create a release, tag, PyPI publication, or version bump.
+- PyPI was not published for `v0.6.1` through `v0.6.14`.
+- `v0.6.15` is the next planning line; no candidates are selected.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -175,8 +177,10 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.13 Release Notes](../releases/v0.6.13.md) (current public)
-- [v0.6.13 Trust and Release Status](v0.6.13-status.md) (current public)
+- [v0.6.14 Release Notes](../releases/v0.6.14.md) (current public)
+- [v0.6.14 Trust and Release Status](v0.6.14-status.md) (current public)
+- [v0.6.13 Release Notes](../releases/v0.6.13.md) (historical)
+- [v0.6.13 Trust and Release Status](v0.6.13-status.md) (historical)
 - [v0.6.11 Release Notes](../releases/v0.6.11.md) (historical)
 - [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - [v0.6.10 Release Notes](../releases/v0.6.10.md) (historical)

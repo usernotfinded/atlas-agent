@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.6.13)** — package/source version is `0.6.13`. `v0.6.13` is the current public GitHub release. `v0.6.12` is the historical previous public release. `v0.6.14` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
+> **Current Status (v0.6.14)** — package/source version is `0.6.14`. `v0.6.14` is the current public GitHub release. `v0.6.13` is the historical previous public release. `v0.6.15` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -106,7 +106,7 @@ The research workflow is paper-only and analysis-only. All commands operate on l
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-`v0.6.13` is the current public GitHub release. `v0.6.12` is the historical previous public release. `v0.6.14` is the next planning line. The package/source version on main is `0.6.13`. Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
+`v0.6.14` is the current public GitHub release. `v0.6.13` is the historical previous public release. `v0.6.15` is the next planning line. The package/source version on main is `0.6.14`. Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
 
 ## Broker-Neutral Model
 
@@ -149,7 +149,8 @@ For paper-only strategy comparison, see
 collects CAND-021 through CAND-029 evidence for the historical planning line,
 while the [v0.6.14 Paper Portfolio Evidence Bundle](docs/releases/v0.6.14-paper-portfolio-evidence.md)
 and [v0.6.14 Final Paper Portfolio Readiness Audit](docs/releases/v0.6.14-final-readiness-audit.md)
-cover the planning-only paper portfolio chain through CAND-008.
+preserve the historical pre-cutover evidence for the GitHub-only `v0.6.14`
+release through CAND-008.
 Historical results do not guarantee future performance.
 
 ## Configuration & Security
@@ -203,8 +204,8 @@ Reproducible walkthroughs that show Atlas working as a broker-neutral supervised
 - **[Paper Portfolio Stress Constraints](docs/paper-portfolio-stress.md)** — deterministic paper-only synthetic stress checks for proposal drawdown, scenario loss, concentration, and cash guardrails. See `scripts/demo_paper_portfolio_stress.sh`.
 - **[Paper Portfolio Monitoring Simulation](docs/paper-portfolio-monitoring.md)** — deterministic paper-only monitoring simulation windows with recheck/watchlist triggers over sample data. See `scripts/demo_paper_portfolio_monitoring.sh`.
 - **[v0.6.13 Paper Autonomy Evidence Bundle](docs/releases/v0.6.13-paper-autonomy-evidence.md)** — planning-only CAND-021 through CAND-029 closure evidence with no release, tag, PyPI, or live-trading side effects.
-- **[v0.6.14 Paper Portfolio Evidence Bundle](docs/releases/v0.6.14-paper-portfolio-evidence.md)** — planning-only CAND-001 through CAND-007 paper portfolio closure evidence with no release, tag, PyPI, provider, broker, notification, or order side effects.
-- **[v0.6.14 Final Paper Portfolio Readiness Audit](docs/releases/v0.6.14-final-readiness-audit.md)** — planning-only CAND-008 Go/No-Go dossier for a future separately authorized cutover decision; it does not authorize a release.
+- **[v0.6.14 Paper Portfolio Evidence Bundle](docs/releases/v0.6.14-paper-portfolio-evidence.md)** — historical pre-cutover CAND-001 through CAND-007 paper portfolio closure evidence.
+- **[v0.6.14 Final Paper Portfolio Readiness Audit](docs/releases/v0.6.14-final-readiness-audit.md)** — historical pre-cutover CAND-008 Go/No-Go dossier preserved after the separately authorized GitHub-only release.
 - **[Product Demo and Marketplace Readiness Pack](docs/product-demo-pack.md)** — curated paper-only demos, safe copy templates, marketplace listing, autonomy roadmap, and reviewer-facing assets for public showcase and marketplace listings, all offline-safe and free of live-trading or profit claims.
 - **[Product Demo Walkthrough Script](scripts/demo_product_walkthrough.sh)** — combined paper workflow, diagnostics, safety boundary, and artifact verification walkthrough for reviewers and marketplace evaluators.
 - **[Product Demo Evidence Bundle](docs/product-demo-evidence.md)** — optional deterministic, reviewer-facing evidence package produced by the walkthrough script with `--output-dir`.
@@ -235,7 +236,7 @@ New to the repo? Start with the [External Reviewer Walkthrough](docs/external-re
 Maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.13 --output artifacts/release_assurance/v0.6.13-local-check
+python scripts/release_assurance.py --version v0.6.14 --output artifacts/release_assurance/v0.6.14-local-check
 ```
 
 Or run `.github/workflows/release-assurance.yml` via `workflow_dispatch` in GitHub Actions. Both are read-only and non-publishing — they do not create tags, publish packages, call providers, or enable trading.

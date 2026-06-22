@@ -1,6 +1,11 @@
 {
   "release_line": "v0.6.14",
   "status": "planning-only",
+  "record_state": "historical_pre_cutover",
+  "source_version": "0.6.14",
+  "current_public_release": "v0.6.14",
+  "next_planned_release": "v0.6.15",
+  "pypi_published": false,
   "candidates": [
     {
       "id": "CAND-001",

@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.13]
+## [0.6.14] - 2026-06-22
+
+### Added
+- CAND-001 through CAND-008 paper portfolio proposal, stress, monitoring, recheck, dossier, replay, evidence, and final-readiness gates.
+- Deterministic, offline paper portfolio documentation, demos, checkers, tests, and reviewer evidence.
+
+### Changed
+- Source/package version advanced to `0.6.14` for the owner-authorized GitHub-only release.
+- Public release metadata now identifies `v0.6.14` as current, `v0.6.13` as historical, and `v0.6.15` as the next planning line.
+
+### Safety
+- PyPI was not published.
+- Live trading and live submit remain disabled by default; provider and broker execution defaults are unchanged.
+- No protected runtime safety boundary changed in this release cutover.
+
+## [0.6.13] - 2026-06-18
 - Initial release for 0.6.13.
 
 ### Added

@@ -239,19 +239,19 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
-echo "9i. v0.6.13 post-release hygiene check"
+echo "9i. v0.6.14 post-release hygiene check"
 echo "========================================"
 SECONDS=0
-"$PYTHON_BIN" scripts/check_v0613_post_release_hygiene.py
+"$PYTHON_BIN" scripts/check_v0614_post_release_hygiene.py
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
-echo "9j. v0.6.13 post-release hygiene tests"
+echo "9j. v0.6.14 post-release hygiene tests"
 echo "========================================"
 SECONDS=0
-"$PYTHON_BIN" -m pytest tests/test_v0613_post_release_hygiene.py -q
+"$PYTHON_BIN" -m pytest tests/test_v0614_post_release_hygiene.py -q
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 

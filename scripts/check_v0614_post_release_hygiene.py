@@ -1,33 +1,9 @@
-#!/usr/bin/env python3
-"""Deterministic v0.6.14 post-release hygiene checker.
+#!/usr/bin/env python3.11
+"""Validate the deterministic v0.6.14 GitHub-only post-release posture.
 
-Validates that after the v0.6.13 public release:
-
-- v0.6.13 remains the current public release and v0.6.14 is the next planned
-  release.
-- The package/source version stays at ``0.6.13``.
-- Canonical v0.6.13 records (release notes, trust status, post-release evidence)
-  exist.
-- The v0.6.14 plan and candidate-selection gate exist.
-- No active doc claims v0.6.14 is released.
-- No active doc claims the current public release is v0.6.12.
-- No stale "v0.6.13 not released" wording remains in public-facing docs.
-- Historical/prep docs are clearly marked archived or historical.
-- No positive PyPI publication claims or forbidden unsafe claims appear.
-
-Exit codes:
-  0 = pass
-  1 = blocking findings
-  2 = operational error
-
-Deterministic and local. Does not:
-- call network
-- publish
-- tag
-- push
-- require credentials
-- run live trading
-- call brokers/providers
+Exit codes: 0 pass, 1 findings, 2 operational error. This checker is local,
+read-only, and performs no network, provider, broker, notification, order,
+tagging, publishing, or credential operations.
 """
 
 from __future__ import annotations
@@ -40,453 +16,308 @@ from pathlib import Path
 from typing import Any
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+CURRENT_PUBLIC = "v0.6.14"
+SOURCE_VERSION = "0.6.14"
+PREVIOUS_PUBLIC = "v0.6.13"
+NEXT_PLANNED = "v0.6.15"
 
-RELEASE_METADATA = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
-EVIDENCE_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.13-post-release-evidence.json"
-EVIDENCE_MD = REPO_ROOT / "docs" / "releases" / "v0.6.13-post-release-evidence.md"
-RELEASE_NOTES = REPO_ROOT / "docs" / "releases" / "v0.6.13.md"
-TRUST_STATUS = REPO_ROOT / "docs" / "trust" / "v0.6.13-status.md"
-V0613_PLAN = REPO_ROOT / "docs" / "releases" / "v0.6.14-plan.md"
-V0613_SELECTION = REPO_ROOT / "docs" / "releases" / "v0.6.14-candidate-selection.md"
-PYPROJECT = REPO_ROOT / "pyproject.toml"
-INIT_PY = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
-README = REPO_ROOT / "README.md"
-DOCS_DIR = REPO_ROOT / "docs"
-ARCHIVE_DIR = DOCS_DIR / "archive"
-SUPERPOWERS_DIR = DOCS_DIR / "superpowers"
+METADATA = "docs/releases/release-metadata.json"
+EVIDENCE_JSON = "docs/releases/v0.6.14-post-release-evidence.json"
+EVIDENCE_MD = "docs/releases/v0.6.14-post-release-evidence.md"
+RELEASE_NOTES = "docs/releases/v0.6.14.md"
+TRUST_STATUS = "docs/trust/v0.6.14-status.md"
 
-CURRENT_PUBLIC = "v0.6.13"
-SOURCE_VERSION = "0.6.13"
-NEXT_PLANNED = "v0.6.14"
+REQUIRED_FILES = [
+    EVIDENCE_JSON,
+    EVIDENCE_MD,
+    RELEASE_NOTES,
+    TRUST_STATUS,
+    "docs/releases/v0.6.14-plan.md",
+    "docs/releases/v0.6.14-candidates.md",
+    "docs/releases/v0.6.14-candidates.json",
+    "docs/releases/v0.6.14-candidate-selection.md",
+    "docs/releases/v0.6.14-paper-portfolio-evidence.md",
+    "docs/releases/v0.6.14-final-readiness-audit.md",
+    "docs/releases/v0.6.15-plan.md",
+    "docs/releases/v0.6.15-candidates.md",
+    "docs/releases/v0.6.15-candidates.json",
+    "docs/releases/v0.6.15-candidate-selection.md",
+]
+
+HISTORICAL_RECORDS = [
+    "docs/releases/v0.6.14-plan.md",
+    "docs/releases/v0.6.14-candidates.md",
+    "docs/releases/v0.6.14-candidate-selection.md",
+    "docs/releases/v0.6.14-paper-portfolio-evidence.md",
+    "docs/releases/v0.6.14-final-readiness-audit.md",
+]
+
+PUBLIC_STATE_DOCS = [
+    "README.md",
+    "SECURITY.md",
+    "docs/trust/README.md",
+    "docs/public-launch-readiness.md",
+    "docs/reviewer-checklist.md",
+    "docs/autonomy-roadmap.md",
+    "docs/release-checklist.md",
+    "docs/development/main-health.md",
+    "docs/public-repo-hygiene.md",
+    "docs/public-faq.md",
+    "docs/public-launch-messaging.md",
+    "docs/security/release-readiness.md",
+]
+
+GATE_FILES = [
+    "scripts/dev_check.sh",
+    "scripts/ci_check.sh",
+    "scripts/release_check.sh",
+    ".github/workflows/ci.yml",
+]
 
 FORBIDDEN_CLAIMS = [
     "guaranteed profit",
-    "no-risk",
+    "guaranteed returns",
+    "risk-free trading",
+    "zero-risk trading",
     "safe live trading",
     "production trading readiness",
-    "autonomous trading readiness",
+    "autonomous live trading readiness",
+    "ready for live",
+    "will outperform the market",
 ]
 
-PYPI_PUBLISH_PHRASES = [
+POSITIVE_PYPI = [
     "pypi published",
-    "publish to pypi",
     "published to pypi",
-]
-
-V0613_POSITIVE_RELEASE_CLAIMS = [
-    "v0.6.14 is released",
-    "current public release v0.6.14",
-    "tag v0.6.14 created",
-    "github release v0.6.14 published",
-    "v0.6.14 has been released",
-]
-
-STALE_V0612_NOT_RELEASED_PATTERNS = [
-    re.compile(r"v0\.6\.12\s+is\s+not\s+released", re.IGNORECASE),
-    re.compile(r"v0\.6\.12\s+not\s+released", re.IGNORECASE),
-    re.compile(r"not\s+released.*v0\.6\.12", re.IGNORECASE),
-]
-
-STALE_CURRENT_PUBLIC_V0612_PATTERNS = [
-    re.compile(r"current\s+public\s+release\s+(?:is\s+)?v0\.6\.12", re.IGNORECASE),
-    re.compile(r"current\s+public\s+v0\.6\.12", re.IGNORECASE),
-    re.compile(r"current\s+public:\s*v0\.6\.12", re.IGNORECASE),
-]
-
-NEGATION_HINTS = [
-    "not ",
-    "no ",
-    "no;",
-    "no,",
-    "was not",
-    "is not",
-    "has not",
-    "never",
-    "does not",
-    "false",
-    "absent",
-    "disabled",
-]
-
-# Docs that are expected to be marked as historical/archived after the v0.6.13
-# cutover because they are prep/cutover planning records.
-EXPECTED_HISTORICAL_MARKED_DOCS = [
-    DOCS_DIR / "releases" / "v0.6.13-candidate-readiness.md",
-    DOCS_DIR / "releases" / "v0.6.13-candidates.md",
-    DOCS_DIR / "releases" / "v0.6.13-owner-approval.md",
-    DOCS_DIR / "superpowers" / "plans" / "2026-06-16-cand017-release-candidate-readiness-plan.md",
+    "available on pypi",
 ]
 
 
-class CheckError(Exception):
-    """Operational error inside the checker."""
+def _read(root: Path, rel: str) -> str:
+    return (root / rel).read_text(encoding="utf-8")
 
 
-def _fail(message: str) -> tuple[int, dict[str, Any]]:
-    result: dict[str, Any] = {
-        "artifact_type": "v0614_post_release_hygiene_report",
-        "schema_version": 1,
-        "valid": False,
-        "errors": [message],
-        "warnings": [],
-        "checks": [],
+def _load_json(root: Path, rel: str, errors: list[str]) -> dict[str, Any] | None:
+    path = root / rel
+    if not path.exists():
+        errors.append(f"Missing required file: {rel}")
+        return None
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        errors.append(f"Invalid JSON in {rel}: {exc}")
+        return None
+    if not isinstance(value, dict):
+        errors.append(f"JSON root must be an object: {rel}")
+        return None
+    return value
+
+
+def _check_required_files(root: Path, errors: list[str]) -> None:
+    for rel in REQUIRED_FILES:
+        if not (root / rel).is_file():
+            errors.append(f"Missing required file: {rel}")
+
+
+def _check_metadata(root: Path, errors: list[str]) -> None:
+    data = _load_json(root, METADATA, errors)
+    if data is None:
+        return
+    expected = {
+        "source_version": SOURCE_VERSION,
+        "current_public_release": CURRENT_PUBLIC,
+        "next_planned_release": NEXT_PLANNED,
+        "pypi_published": False,
     }
-    return 2, result
+    for field, value in expected.items():
+        if data.get(field) != value:
+            errors.append(f"release metadata {field} must be {value!r}")
 
-
-def _read_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8") if path.exists() else ""
-
-
-def _is_negated(text: str, idx: int, phrase_len: int, window: int = 500) -> bool:
-    window_start = max(0, idx - window)
-    window_end = min(len(text), idx + phrase_len + window)
-    window_text = text[window_start:window_end]
-    return any(hint in window_text for hint in NEGATION_HINTS)
-
-
-def _load_release_metadata() -> dict[str, Any]:
-    if not RELEASE_METADATA.exists():
-        raise CheckError(f"Release metadata missing: {RELEASE_METADATA}")
-    try:
-        return json.loads(RELEASE_METADATA.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise CheckError(f"Invalid release metadata JSON: {exc}")
-
-
-def _load_evidence_json() -> dict[str, Any]:
-    if not EVIDENCE_JSON.exists():
-        raise CheckError(f"Evidence JSON missing: {EVIDENCE_JSON}")
-    try:
-        data = json.loads(EVIDENCE_JSON.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise CheckError(f"Invalid evidence JSON: {exc}")
-    if not isinstance(data, dict):
-        raise CheckError("Evidence JSON must be an object")
-    return data
-
-
-def _check_release_metadata() -> list[str]:
-    errors: list[str] = []
-    data = _load_release_metadata()
-    if data.get("source_version") != SOURCE_VERSION:
-        errors.append(
-            f"source_version mismatch: expected {SOURCE_VERSION}, got {data.get('source_version')}"
-        )
-    if data.get("current_public_release") != CURRENT_PUBLIC:
-        errors.append(
-            f"current_public_release mismatch: expected {CURRENT_PUBLIC}, got {data.get('current_public_release')}"
-        )
-    if data.get("next_planned_release") != NEXT_PLANNED:
-        errors.append(
-            f"next_planned_release mismatch: expected {NEXT_PLANNED}, got {data.get('next_planned_release')}"
-        )
-    if data.get("pypi_published") is not False:
-        errors.append("pypi_published must be false")
-    return errors
-
-
-def _check_evidence_json() -> list[str]:
-    errors: list[str] = []
-    try:
-        data = _load_evidence_json()
-    except CheckError as exc:
-        errors.append(str(exc))
-        return errors
-    checks = [
-        ("release", CURRENT_PUBLIC),
-        ("source_version", SOURCE_VERSION),
-        ("current_public_release", CURRENT_PUBLIC),
-        ("next_planned_release", NEXT_PLANNED),
-        ("pypi_published", False),
-        ("live_trading_enabled", False),
-        ("provider_execution_enabled", False),
-        ("broker_execution_enabled", False),
-    ]
-    for field, expected in checks:
-        actual = data.get(field)
-        if actual != expected:
-            errors.append(
-                f"Evidence field {field!r}: expected {expected!r}, got {actual!r}"
-            )
-    return errors
-
-
-def _check_canonical_records() -> list[str]:
-    errors: list[str] = []
-    required = {
-        "Release notes": RELEASE_NOTES,
-        "Trust status": TRUST_STATUS,
-        "Post-release evidence markdown": EVIDENCE_MD,
-        "Post-release evidence JSON": EVIDENCE_JSON,
+    releases = data.get("releases")
+    if not isinstance(releases, list):
+        errors.append("release metadata releases must be a list")
+        return
+    records = {item.get("tag"): item for item in releases if isinstance(item, dict)}
+    current = records.get(CURRENT_PUBLIC, {})
+    previous = records.get(PREVIOUS_PUBLIC, {})
+    current_expected = {
+        "version": SOURCE_VERSION,
+        "status": "current_public",
+        "github_release": True,
+        "pypi_published": False,
+        "release_authorized": True,
+        "release_type": "github_only",
+        "tag_created": True,
+        "github_release_created": True,
     }
-    for label, path in required.items():
+    for field, value in current_expected.items():
+        if current.get(field) != value:
+            errors.append(f"v0.6.14 release record {field} must be {value!r}")
+    if previous.get("status") != "historical":
+        errors.append("v0.6.13 release record must be historical")
+    if any(item.get("status") == "current_public" for tag, item in records.items() if tag != CURRENT_PUBLIC):
+        errors.append("only v0.6.14 may be current_public")
+
+
+def _check_source_version(root: Path, errors: list[str]) -> None:
+    pyproject = _read(root, "pyproject.toml")
+    init_py = _read(root, "src/atlas_agent/__init__.py")
+    if not re.search(r'^version\s*=\s*"0\.6\.14"$', pyproject, re.M):
+        errors.append("pyproject.toml project.version must be 0.6.14")
+    if not re.search(r'^__version__\s*=\s*"0\.6\.14"$', init_py, re.M):
+        errors.append("src/atlas_agent/__init__.py __version__ must be 0.6.14")
+
+
+def _check_evidence(root: Path, errors: list[str]) -> None:
+    data = _load_json(root, EVIDENCE_JSON, errors)
+    if data is None:
+        return
+    expected = {
+        "release": CURRENT_PUBLIC,
+        "source_version": SOURCE_VERSION,
+        "release_type": "github_only",
+        "current_public_release": CURRENT_PUBLIC,
+        "next_planned_release": NEXT_PLANNED,
+        "previous_public_release": PREVIOUS_PUBLIC,
+        "pypi_published": False,
+        "live_trading_enabled": False,
+        "live_submit_enabled": False,
+        "provider_execution_enabled": False,
+        "broker_execution_enabled": False,
+        "notifications_sent": False,
+        "orders_generated_or_submitted": False,
+        "protected_runtime_boundaries_changed": False,
+        "created_for_github_only_cutover": True,
+    }
+    for field, value in expected.items():
+        if data.get(field) != value:
+            errors.append(f"post-release evidence {field} must be {value!r}")
+
+    text = _read(root, EVIDENCE_MD).lower()
+    for phrase in [
+        "current public github-only release",
+        "source/package version:** `0.6.14`",
+        "pypi:** not published",
+        "v0.6.15",
+        "live trading and live submit remain disabled by default",
+        "no orders are generated or submitted",
+        "protected runtime boundaries are unchanged",
+    ]:
+        if phrase not in text:
+            errors.append(f"post-release evidence markdown missing: {phrase}")
+
+
+def _check_historical_and_planning_docs(root: Path, errors: list[str]) -> None:
+    for rel in HISTORICAL_RECORDS:
+        text = _read(root, rel).lower()
+        if "historical" not in text:
+            errors.append(f"pre-cutover record is not marked historical: {rel}")
+    for rel in [
+        "docs/releases/v0.6.15-plan.md",
+        "docs/releases/v0.6.15-candidates.md",
+        "docs/releases/v0.6.15-candidate-selection.md",
+    ]:
+        if "planning" not in _read(root, rel).lower():
+            errors.append(f"next-line document is not planning-only: {rel}")
+
+
+def _is_negated(text: str, start: int) -> bool:
+    window = text[max(0, start - 100): start + 180]
+    return any(word in window for word in [
+        "not ", "no ", "never ", "without ", "forbidden", "disabled",
+        "does **not**", "do **not**",
+        "unpublished", "does not", "do not", "isn't", "is not",
+    ])
+
+
+def _check_public_docs(root: Path, errors: list[str]) -> None:
+    for rel in PUBLIC_STATE_DOCS:
+        path = root / rel
         if not path.exists():
-            errors.append(f"Canonical v0.6.13 record missing: {label} ({path})")
-    return errors
-
-
-def _check_v0614_docs() -> list[str]:
-    errors: list[str] = []
-    for label, path in (
-        ("v0.6.14 plan", V0613_PLAN),
-        ("v0.6.14 candidate-selection doc", V0613_SELECTION),
-    ):
-        if not path.exists():
-            errors.append(f"Missing {label}: {path}")
-    return errors
-
-
-def _check_source_version() -> list[str]:
-    errors: list[str] = []
-    for path in (PYPROJECT, INIT_PY):
-        if not path.exists():
-            errors.append(f"Missing source version file: {path}")
+            errors.append(f"Missing public state doc: {rel}")
             continue
         text = path.read_text(encoding="utf-8")
-        if SOURCE_VERSION not in text:
-            errors.append(f"Source version {SOURCE_VERSION} not found in {path}")
-    return errors
+        lower = text.lower()
+        stale_patterns = [
+            r"current public (?:github )?release (?:is )?`?v0\.6\.13",
+            r"latest stable public github release is v0\.6\.13",
+            r"next planning line (?:is )?`?v0\.6\.14",
+            r"next planned release:?\s*`?v0\.6\.14",
+        ]
+        for pattern in stale_patterns:
+            if re.search(pattern, lower):
+                errors.append(f"stale release posture in {rel}: {pattern}")
+        for phrase in FORBIDDEN_CLAIMS + POSITIVE_PYPI:
+            for match in re.finditer(re.escape(phrase), lower):
+                if not _is_negated(lower, match.start()):
+                    errors.append(f"unsafe or publication claim in {rel}: {phrase}")
+
+    readme = _read(root, "README.md")
+    for phrase in [
+        "Current Status (v0.6.14)",
+        "`v0.6.14` is the current public GitHub release",
+        "`v0.6.15` is the next planning line",
+        "package/source version is `0.6.14`",
+    ]:
+        if phrase not in readme:
+            errors.append(f"README missing post-release posture: {phrase}")
 
 
-def _collect_public_facing_docs() -> list[Path]:
-    """Return active public-facing docs to scan for stale/forbidden claims.
-
-    Excludes archived docs and internal superpowers planning docs, which are not
-    public-facing current docs.
-    """
-    docs: list[Path] = [README]
-    if not DOCS_DIR.exists():
-        return docs
-    for path in sorted(DOCS_DIR.rglob("*")):
-        if not path.is_file():
-            continue
-        if path.suffix not in (".md", ".json", ".txt", ".yml", ".yaml"):
-            continue
-        if path.is_relative_to(ARCHIVE_DIR):
-            continue
-        if path.is_relative_to(SUPERPOWERS_DIR):
-            continue
-        docs.append(path)
-    return sorted(set(docs))
+def _check_gate_integration(root: Path, errors: list[str]) -> None:
+    for rel in GATE_FILES:
+        text = _read(root, rel)
+        if "scripts/check_v0614_post_release_hygiene.py" not in text:
+            errors.append(f"{rel} missing v0.6.14 post-release hygiene checker")
+        if rel != "scripts/release_check.sh" and "tests/test_v0614_post_release_hygiene.py" not in text:
+            errors.append(f"{rel} missing v0.6.14 post-release hygiene tests")
 
 
-def _check_no_v0614_release_claims(docs: list[Path]) -> list[str]:
+def check(root: Path) -> dict[str, Any]:
     errors: list[str] = []
-    for path in docs:
-        text = _read_text(path).lower()
-        for phrase in V0613_POSITIVE_RELEASE_CLAIMS:
-            start = 0
-            while True:
-                idx = text.find(phrase, start)
-                if idx == -1:
-                    break
-                if _is_negated(text, idx, len(phrase)):
-                    start = idx + 1
-                    continue
-                try:
-                    display = path.relative_to(REPO_ROOT)
-                except ValueError:
-                    display = path
-                errors.append(
-                    f"v0.6.14 release claim in {display}: {phrase!r}"
-                )
-                start = idx + 1
-    return errors
+    _check_required_files(root, errors)
+    if errors:
+        return _payload(False, errors)
+    _check_metadata(root, errors)
+    _check_source_version(root, errors)
+    _check_evidence(root, errors)
+    _check_historical_and_planning_docs(root, errors)
+    _check_public_docs(root, errors)
+    _check_gate_integration(root, errors)
+    return _payload(not errors, errors)
 
 
-def _check_no_stale_v0613_not_released(docs: list[Path]) -> list[str]:
-    errors: list[str] = []
-    for path in docs:
-        text = _read_text(path)
-        for pattern in STALE_V0612_NOT_RELEASED_PATTERNS:
-            for m in pattern.finditer(text):
-                try:
-                    display = path.relative_to(REPO_ROOT)
-                except ValueError:
-                    display = path
-                line_no = text[: m.start()].count("\n") + 1
-                errors.append(
-                    f"Stale 'v0.6.13 not released' wording in {display}:{line_no}: {m.group(0)!r}"
-                )
-    return errors
-
-
-def _check_no_stale_current_public_v0612(docs: list[Path]) -> list[str]:
-    errors: list[str] = []
-    for path in docs:
-        # Skip historical docs that legitimately discuss the v0.6.12 state.
-        if "v0.6.12" in path.name:
-            continue
-        text = _read_text(path)
-        for pattern in STALE_CURRENT_PUBLIC_V0612_PATTERNS:
-            for m in pattern.finditer(text):
-                try:
-                    display = path.relative_to(REPO_ROOT)
-                except ValueError:
-                    display = path
-                line_no = text[: m.start()].count("\n") + 1
-                errors.append(
-                    f"Stale current-public v0.6.12 claim in {display}:{line_no}: {m.group(0)!r}"
-                )
-    return errors
-
-
-def _check_no_pypi_publish_claims(docs: list[Path]) -> list[str]:
-    errors: list[str] = []
-    for path in docs:
-        text = _read_text(path).lower()
-        for phrase in PYPI_PUBLISH_PHRASES:
-            start = 0
-            while True:
-                idx = text.find(phrase, start)
-                if idx == -1:
-                    break
-                if _is_negated(text, idx, len(phrase)):
-                    start = idx + 1
-                    continue
-                try:
-                    display = path.relative_to(REPO_ROOT)
-                except ValueError:
-                    display = path
-                errors.append(f"Positive PyPI publish claim in {display}: {phrase!r}")
-                start = idx + 1
-    return errors
-
-
-def _check_no_forbidden_claims(docs: list[Path]) -> list[str]:
-    errors: list[str] = []
-    for path in docs:
-        text = _read_text(path).lower()
-        for claim in FORBIDDEN_CLAIMS:
-            start = 0
-            while True:
-                idx = text.find(claim, start)
-                if idx == -1:
-                    break
-                if _is_negated(text, idx, len(claim)):
-                    start = idx + 1
-                    continue
-                try:
-                    display = path.relative_to(REPO_ROOT)
-                except ValueError:
-                    display = path
-                errors.append(f"Forbidden claim in {display}: {claim!r}")
-                start = idx + 1
-    return errors
-
-
-def _check_historical_docs_marked() -> list[str]:
-    errors: list[str] = []
-    for path in EXPECTED_HISTORICAL_MARKED_DOCS:
-        if not path.exists():
-            # Missing is not a hygiene failure here; other checks handle required files.
-            continue
-        text = _read_text(path).lower()
-        if "historical" not in text and "archived" not in text:
-            try:
-                display = path.relative_to(REPO_ROOT)
-            except ValueError:
-                display = path
-            errors.append(
-                f"Historical/prep doc {display} is not marked 'historical' or 'archived'"
-            )
-    return errors
-
-
-def run_check(*, json_output: bool = False) -> tuple[int, dict[str, Any]]:
-    errors: list[str] = []
-    warnings: list[str] = []
-    checks: list[str] = []
-
-    checks.append("release_metadata")
-    errors.extend(_check_release_metadata())
-
-    checks.append("evidence_json")
-    errors.extend(_check_evidence_json())
-
-    checks.append("canonical_records")
-    errors.extend(_check_canonical_records())
-
-    checks.append("v0614_docs")
-    errors.extend(_check_v0614_docs())
-
-    checks.append("source_version")
-    errors.extend(_check_source_version())
-
-    docs = _collect_public_facing_docs()
-
-    checks.append("no_v0614_release_claims")
-    errors.extend(_check_no_v0614_release_claims(docs))
-
-    checks.append("no_stale_v0613_not_released")
-    errors.extend(_check_no_stale_v0613_not_released(docs))
-
-    checks.append("no_stale_current_public_v0612")
-    errors.extend(_check_no_stale_current_public_v0612(docs))
-
-    checks.append("no_pypi_publish_claims")
-    errors.extend(_check_no_pypi_publish_claims(docs))
-
-    checks.append("no_forbidden_claims")
-    errors.extend(_check_no_forbidden_claims(docs))
-
-    checks.append("historical_docs_marked")
-    errors.extend(_check_historical_docs_marked())
-
-    valid = len(errors) == 0
-    result: dict[str, Any] = {
+def _payload(valid: bool, errors: list[str]) -> dict[str, Any]:
+    return {
         "artifact_type": "v0614_post_release_hygiene_report",
         "schema_version": 1,
         "valid": valid,
-        "expected_current_public_release": CURRENT_PUBLIC,
-        "expected_source_version": SOURCE_VERSION,
+        "current_public_release": CURRENT_PUBLIC,
+        "source_version": SOURCE_VERSION,
         "next_planned_release": NEXT_PLANNED,
+        "pypi_published": False,
         "errors": errors,
-        "warnings": warnings,
-        "checks": checks,
+        "warnings": [],
     }
-    code = 0 if valid else 1
-    return code, result
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="v0.6.14 post-release hygiene checker"
-    )
-    parser.add_argument("--json", action="store_true", help="Output JSON")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--root", default=".", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
-
     try:
-        code, result = run_check(json_output=args.json)
-    except Exception as exc:
-        result = {
-            "artifact_type": "v0614_post_release_hygiene_report",
-            "schema_version": 1,
-            "valid": False,
-            "errors": [f"Operational error: {exc}"],
-            "warnings": [],
-            "checks": [],
-        }
-        if args.json:
-            print(json.dumps(result, indent=2, sort_keys=True))
-        else:
-            print(f"ERROR: {exc}")
-        return 2
-
+        result = check(Path(args.root).resolve())
+    except Exception as exc:  # pragma: no cover
+        result = _payload(False, [f"Operational error: {exc}"])
+        code = 2
+    else:
+        code = 0 if result["valid"] else 1
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
     else:
-        status = "PASS" if result["valid"] else "FAIL"
-        print(f"v0.6.14 post-release hygiene check {status}")
-        if result["errors"]:
-            for err in result["errors"]:
-                print(f"  ERROR: {err}")
-        if result["warnings"]:
-            for warn in result["warnings"]:
-                print(f"  WARN: {warn}")
-
+        print(f"v0.6.14 post-release hygiene check {'PASS' if result['valid'] else 'FAIL'}")
+        for error in result["errors"]:
+            print(f"  ERROR: {error}")
     return code
 
 

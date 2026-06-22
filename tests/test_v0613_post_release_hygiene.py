@@ -170,15 +170,15 @@ class TestFailures:
         original_init = mod.INIT_PY
         try:
             fake_pyproject = tmp_path / "pyproject.toml"
-            fake_pyproject.write_text('version = "0.6.14"\n', encoding="utf-8")
+            fake_pyproject.write_text('version = "0.6.15"\n', encoding="utf-8")
             fake_init = tmp_path / "__init__.py"
-            fake_init.write_text('__version__ = "0.6.14"\n', encoding="utf-8")
+            fake_init.write_text('__version__ = "0.6.15"\n', encoding="utf-8")
             mod.PYPROJECT = fake_pyproject
             mod.INIT_PY = fake_init
             code, result = mod.run_check()
             assert code == 1
-            assert any("0.6.13" in e and "pyproject.toml" in e.lower() for e in result["errors"])
-            assert any("0.6.13" in e and "__init__.py" in e.lower() for e in result["errors"])
+            assert any("0.6.14" in e and "pyproject.toml" in e.lower() for e in result["errors"])
+            assert any("0.6.14" in e and "__init__.py" in e.lower() for e in result["errors"])
         finally:
             mod.PYPROJECT = original_pyproject
             mod.INIT_PY = original_init
@@ -205,7 +205,7 @@ class TestFailures:
         finally:
             mod.V0613_SELECTION = original
 
-    def test_v0614_release_claim_fails(self, tmp_path: Path) -> None:
+    def test_v0614_release_claim_is_allowed_after_successor_cutover(self, tmp_path: Path) -> None:
         mod = _load_script_module()
         original_readme = mod.README
         try:
@@ -216,8 +216,8 @@ class TestFailures:
             )
             mod.README = fake_readme
             code, result = mod.run_check()
-            assert code == 1
-            assert any("v0.6.14 release claim" in e for e in result["errors"])
+            assert code == 0
+            assert result["errors"] == []
         finally:
             mod.README = original_readme
 

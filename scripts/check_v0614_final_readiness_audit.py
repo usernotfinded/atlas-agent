@@ -17,7 +17,6 @@ import argparse
 import json
 import re
 import sys
-import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +24,9 @@ ARTIFACT_TYPE = "v0614_final_readiness_audit"
 CURRENT_PUBLIC = "v0.6.13"
 NEXT_PLANNED = "v0.6.14"
 SOURCE_VERSION = "0.6.13"
+POST_RELEASE_CURRENT = "v0.6.14"
+POST_RELEASE_NEXT = "v0.6.15"
+POST_RELEASE_SOURCE = "0.6.14"
 
 AUDIT_MD = "docs/releases/v0.6.14-final-readiness-audit.md"
 AUDIT_JSON = "docs/releases/v0.6.14-final-readiness-audit.json"
@@ -184,7 +186,7 @@ def check(root: Path) -> dict[str, Any]:
         _check_reference_paths(root, data, errors)
 
     _check_markdown(md_path, errors)
-    _check_release_metadata(root, errors)
+    _check_repository_posture(root, errors)
     _check_gate_integration(root, errors)
 
     return _payload(valid=not errors, errors=errors, warnings=warnings)
@@ -362,44 +364,34 @@ def _check_markdown(path: Path, errors: list[str]) -> None:
     _scan_phrases(AUDIT_MD, text, FORBIDDEN_SIDE_EFFECTS, "side-effect claim", errors)
 
 
-def _check_release_metadata(root: Path, errors: list[str]) -> None:
-    pyproject_path = root / "pyproject.toml"
-    try:
-        pyproject = tomllib.loads(pyproject_path.read_text(encoding="utf-8"))
-        version = pyproject.get("project", {}).get("version")
-    except Exception as exc:
-        errors.append(f"Unable to read pyproject.toml version: {exc}")
-    else:
-        if version != SOURCE_VERSION:
-            errors.append(f"pyproject.toml version must remain {SOURCE_VERSION}")
-
-    init_path = root / "src" / "atlas_agent" / "__init__.py"
-    init_text = _read(init_path)
-    match = re.search(r"^__version__\s*=\s*['\"]([^'\"]+)['\"]", init_text, re.M)
-    if not match:
-        errors.append("src/atlas_agent/__init__.py must define __version__")
-    elif match.group(1) != SOURCE_VERSION:
-        errors.append(f"src/atlas_agent/__init__.py version must remain {SOURCE_VERSION}")
-
+def _check_repository_posture(root: Path, errors: list[str]) -> None:
+    """Accept the audited pre-cutover state or the authorized post-cutover state."""
     metadata_path = root / RELEASE_METADATA
     metadata = _load_json(metadata_path, errors)
     if metadata is None:
         return
-    if metadata.get("source_version") != SOURCE_VERSION:
-        errors.append(f"release metadata source_version must remain {SOURCE_VERSION}")
-    if metadata.get("current_public_release") != CURRENT_PUBLIC:
-        errors.append(f"release metadata current_public_release must remain {CURRENT_PUBLIC}")
-    if metadata.get("next_planned_release") != NEXT_PLANNED:
-        errors.append(f"release metadata next_planned_release must remain {NEXT_PLANNED}")
+
+    posture = (
+        metadata.get("source_version"),
+        metadata.get("current_public_release"),
+        metadata.get("next_planned_release"),
+    )
+    allowed = {
+        (SOURCE_VERSION, CURRENT_PUBLIC, NEXT_PLANNED),
+        (POST_RELEASE_SOURCE, POST_RELEASE_CURRENT, POST_RELEASE_NEXT),
+    }
+    if posture not in allowed:
+        errors.append(f"release metadata posture is not an audited v0.6.14 state: {posture!r}")
     if metadata.get("pypi_published") is not False:
         errors.append("release metadata pypi_published must be false")
 
-    releases = metadata.get("releases")
-    if not isinstance(releases, list):
-        errors.append("release metadata releases must be a list")
-        return
-    if any(isinstance(item, dict) and item.get("tag") == NEXT_PLANNED for item in releases):
-        errors.append("release metadata must not contain a v0.6.14 release record")
+    pyproject = _read(root / "pyproject.toml")
+    init_text = _read(root / "src" / "atlas_agent" / "__init__.py")
+    expected_source = str(metadata.get("source_version", ""))
+    if f'version = "{expected_source}"' not in pyproject:
+        errors.append("pyproject.toml version must match release metadata")
+    if f'__version__ = "{expected_source}"' not in init_text:
+        errors.append("src/atlas_agent/__init__.py version must match release metadata")
 
 
 def _check_gate_integration(root: Path, errors: list[str]) -> None:

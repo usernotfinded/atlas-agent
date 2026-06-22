@@ -24,6 +24,7 @@ ARTIFACT_TYPE = "v0614_paper_portfolio_evidence"
 CURRENT_PUBLIC = "v0.6.13"
 NEXT_PLANNED = "v0.6.14"
 SOURCE_VERSION = "0.6.13"
+POST_RELEASE_SOURCE_VERSION = "0.6.14"
 
 EVIDENCE_MD = "docs/releases/v0.6.14-paper-portfolio-evidence.md"
 EVIDENCE_JSON = "docs/releases/v0.6.14-paper-portfolio-evidence.json"
@@ -101,7 +102,7 @@ def check(root: Path) -> dict[str, Any]:
         _check_candidates(data, errors)
         _check_evidence_references(root, data, errors)
     _check_markdown(md_path, errors)
-    _check_release_metadata(root, errors)
+    _check_repository_version(root, errors)
 
     return _payload(valid=not errors, errors=errors, warnings=warnings)
 
@@ -221,13 +222,14 @@ def _check_markdown(path: Path, errors: list[str]) -> None:
     _scan_release_claims(EVIDENCE_MD, text, errors)
 
 
-def _check_release_metadata(root: Path, errors: list[str]) -> None:
+def _check_repository_version(root: Path, errors: list[str]) -> None:
     pyproject = _read(root / "pyproject.toml")
     init_py = _read(root / "src" / "atlas_agent" / "__init__.py")
-    if SOURCE_VERSION not in pyproject:
-        errors.append(f"Source/package version must remain {SOURCE_VERSION} in pyproject.toml")
-    if SOURCE_VERSION not in init_py:
-        errors.append(f"Source/package version must remain {SOURCE_VERSION} in src/atlas_agent/__init__.py")
+    allowed = (SOURCE_VERSION, POST_RELEASE_SOURCE_VERSION)
+    if not any(f'version = "{version}"' in pyproject for version in allowed):
+        errors.append("Source/package version must be an audited v0.6.14 posture in pyproject.toml")
+    if not any(f'__version__ = "{version}"' in init_py for version in allowed):
+        errors.append("Source/package version must be an audited v0.6.14 posture in src/atlas_agent/__init__.py")
 
 def _scan_forbidden_claims(rel: str, text: str, errors: list[str]) -> None:
     lower = text.lower()
