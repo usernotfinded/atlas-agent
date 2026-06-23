@@ -1,23 +1,25 @@
 from __future__ import annotations
 
 import json
-from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from atlas_agent.agent.autonomous_paper_kernel import (
+    apply_fill,
+    build_portfolio_snapshot,
+    observations_for_bar,
+)
 from atlas_agent.audit import AuditWriter
 from atlas_agent.audit.redaction import redact_payload
 from atlas_agent.backtest.data import load_market_data
 from atlas_agent.backtest.execution import ExecutionSimulator
 from atlas_agent.backtest.models import (
     BacktestConfig as BacktestRuntimeConfig,
-    BacktestFill,
     BacktestOrder,
     BacktestPosition,
-    MarketBar,
 )
 from atlas_agent.backtest.registry import get_strategy
 from atlas_agent.backtest.strategy import StrategyContext
@@ -25,7 +27,7 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger, generate_run_id
 from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.manager import RiskManager
-from atlas_agent.risk.models import OrderRiskInput, PendingOrder, PortfolioSnapshot, RiskPosition
+from atlas_agent.risk.models import OrderRiskInput
 
 
 class AutonomousDecision(BaseModel):
@@ -42,7 +44,7 @@ class AutonomousDecision(BaseModel):
     proposed_action: Literal["buy", "sell", "hold"]
     proposed_order: dict[str, Any] | None = None
     risk_result: dict[str, Any] = Field(default_factory=dict)
-    decision_state: Literal["no_trade", "risk_blocked", "paper_executed"]
+    decision_state: Literal["no_trade", "risk_blocked", "paper_executed", "partially_executed", "failed"]
     blocked_reason: str | None = None
     audit_event_ids: list[str] = Field(default_factory=list)
     manifest_path: str | None = None
@@ -65,119 +67,6 @@ class AutonomousPaperResult(BaseModel):
     manifest_path: str
     audit_log_path: str
     errors: list[str] = Field(default_factory=list)
-
-
-def _build_portfolio_snapshot(
-    *,
-    cash: float,
-    positions: dict[str, BacktestPosition],
-    pending_orders: list[BacktestOrder],
-    current_price: float,
-) -> PortfolioSnapshot:
-    risk_positions: list[RiskPosition] = []
-    total_exposure = 0.0
-    for pos in positions.values():
-        notional = abs(pos.quantity * current_price)
-        side: Literal["long", "short", "flat"] = (
-            "long" if pos.quantity > 0 else "short" if pos.quantity < 0 else "flat"
-        )
-        risk_positions.append(
-            RiskPosition(
-                symbol=pos.symbol,
-                quantity=pos.quantity,
-                average_price=pos.average_entry_price,
-                market_price=current_price,
-                notional=notional,
-                side=side,
-            )
-        )
-        total_exposure += notional
-
-    open_orders: list[PendingOrder] = []
-    for o in pending_orders:
-        open_orders.append(
-            PendingOrder(
-                order_id=o.order_id,
-                symbol=o.symbol,
-                side=o.side,
-                quantity=o.quantity,
-                limit_price=o.price if o.type == "limit" else None,
-                estimated_price=o.price if o.type == "market" else None,
-                status="pending",
-                filled_quantity=0.0,
-            )
-        )
-
-    equity = cash + sum(pos.quantity * current_price for pos in positions.values())
-    return PortfolioSnapshot(
-        cash=cash,
-        equity=equity,
-        total_exposure=total_exposure,
-        positions=risk_positions,
-        open_orders=open_orders,
-    )
-
-
-def _apply_fill(
-    *,
-    fill: BacktestFill,
-    cash: float,
-    positions: dict[str, BacktestPosition],
-) -> tuple[float, dict[str, BacktestPosition]]:
-    """Return updated cash and positions after applying a paper fill."""
-    cash = float(cash)
-    positions = deepcopy(positions)
-    if fill.side == "buy":
-        cash -= (fill.notional + fill.commission)
-        pos = positions.get(fill.symbol, BacktestPosition(symbol=fill.symbol))
-        new_qty = pos.quantity + fill.quantity
-        new_avg = ((pos.quantity * pos.average_entry_price) + (fill.quantity * fill.price)) / new_qty
-        positions[fill.symbol] = BacktestPosition(
-            symbol=fill.symbol,
-            quantity=new_qty,
-            average_entry_price=new_avg,
-            notional=new_qty * fill.price,
-        )
-    else:
-        cash += (fill.notional - fill.commission)
-        pos = positions.get(fill.symbol)
-        if pos:
-            new_qty = pos.quantity - fill.quantity
-            if new_qty <= 0:
-                positions.pop(fill.symbol, None)
-            else:
-                positions[fill.symbol] = BacktestPosition(
-                    symbol=fill.symbol,
-                    quantity=new_qty,
-                    average_entry_price=pos.average_entry_price,
-                    notional=new_qty * fill.price,
-                )
-    return cash, positions
-
-
-def _observations_for_bar(bar: MarketBar, orders: list[BacktestOrder]) -> dict[str, Any]:
-    return {
-        "bar": {
-            "timestamp": bar.timestamp.isoformat(),
-            "open": bar.open,
-            "high": bar.high,
-            "low": bar.low,
-            "close": bar.close,
-            "volume": bar.volume,
-            "symbol": bar.symbol,
-        },
-        "signal_count": len(orders),
-        "signals": [
-            {
-                "side": o.side,
-                "quantity": o.quantity,
-                "price": o.price,
-                "type": o.type,
-                "order_id": o.order_id,
-            }
-            for o in orders
-        ],
-    }
 
 
 def run_autonomous_paper_loop(
@@ -344,7 +233,7 @@ def run_autonomous_paper_loop(
             )
 
             orders = strategy.generate_orders(bars=bars[: iteration + 1], context=context)
-            observations = _observations_for_bar(bar, orders)
+            observations = observations_for_bar(bar, orders)
 
             decision_event_ids: list[str] = []
 
@@ -377,7 +266,7 @@ def run_autonomous_paper_loop(
                     "price": order.price,
                 }
 
-                snapshot = _build_portfolio_snapshot(
+                snapshot = build_portfolio_snapshot(
                     cash=cash,
                     positions=positions,
                     pending_orders=pending_orders,
@@ -406,7 +295,12 @@ def run_autonomous_paper_loop(
                 if risk_decision.allowed and risk_decision.status == "allowed":
                     fill = executor.process_order(order, bar)
                     if fill:
-                        cash, positions = _apply_fill(fill=fill, cash=cash, positions=positions)
+                        cash, positions = apply_fill(
+                            fill=fill,
+                            cash=cash,
+                            positions=positions,
+                            allow_shorting=risk_manager.limits.allow_shorting,
+                        )
                         decision_state = "paper_executed"
                         trades_executed += 1
                         fill_event = audit_writer.write_event(

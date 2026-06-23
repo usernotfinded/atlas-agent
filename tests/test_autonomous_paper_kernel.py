@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -155,6 +156,31 @@ class TestKernelHelpers:
         assert obs["signal_count"] == 1
         assert obs["signals"][0]["side"] == "buy"
         assert obs["bar"]["close"] == pytest.approx(101.0)
+
+    def test_apply_fill_sell_exceeds_position_raises_when_shorting_disabled(self):
+        from atlas_agent.backtest.models import BacktestFill
+
+        positions = {
+            "DEMO-SYMBOL": BacktestPosition(
+                symbol="DEMO-SYMBOL",
+                quantity=10.0,
+                average_entry_price=100.0,
+                notional=1000.0,
+            ),
+        }
+        fill = BacktestFill(
+            fill_id="fill-003",
+            order_id="order-003",
+            timestamp=datetime(2026, 4, 20, 9, 30, 0),
+            symbol="DEMO-SYMBOL",
+            side="sell",
+            quantity=20.0,
+            price=110.0,
+            notional=2200.0,
+            commission=1.0,
+        )
+        with pytest.raises(ValueError, match="sell fill quantity exceeds position"):
+            apply_fill(fill=fill, cash=9000.0, positions=positions)
 
 
 class TestKernelCycle:
@@ -359,3 +385,156 @@ class TestKernelCycle:
         ]
         for ref in forbidden:
             assert ref not in source, f"Forbidden import/reference found: {ref}"
+
+    def test_kernel_mixed_fill_and_rejection_is_partially_executed(self, tmp_path: Path):
+        audit_writer = AuditWriter(tmp_path / "audit.jsonl")
+        audit_writer.start_run("run-partial")
+        bar = _make_bar(close=100.0)
+        orders = [
+            BacktestOrder(
+                order_id="order-001",
+                timestamp=bar.timestamp,
+                symbol="DEMO-SYMBOL",
+                side="buy",
+                quantity=1.0,
+                price=100.0,
+            ),
+            BacktestOrder(
+                order_id="order-002",
+                timestamp=bar.timestamp,
+                symbol="DEMO-SYMBOL",
+                side="buy",
+                quantity=100.0,
+                price=100.0,
+            ),
+        ]
+        risk_manager = RiskManager(
+            limits=RiskLimits(
+                max_position_notional=1_000_000.0,
+                max_single_trade_notional=500.0,
+                minimum_confidence=0.0,
+                allowed_symbols=None,
+                blocked_symbols=set(),
+                allow_shorting=False,
+            ),
+        )
+        config = BacktestConfig(run_id="run-partial", symbol="DEMO-SYMBOL", data_path=str(SAMPLE_CSV))
+        executor = ExecutionSimulator(config)
+
+        result = run_kernel_cycle(
+            bar=bar,
+            bar_index=0,
+            bars_so_far=[bar],
+            cash=10000.0,
+            positions={},
+            pending_orders=[],
+            strategy=_MockStrategy(orders=orders),
+            executor=executor,
+            risk_manager=risk_manager,
+            symbol="DEMO-SYMBOL",
+            run_id="run-partial",
+            config=config,
+            audit_writer=audit_writer,
+        )
+
+        assert result.decision_state == "partially_executed"
+        assert len(result.fills) == 1
+        assert len(result.rejected_orders) == 1
+        assert result.cash < 10000.0
+
+    def test_kernel_handles_strategy_exception(self, tmp_path: Path):
+        class _ExplodingStrategy:
+            def generate_orders(self, *, bars, context):
+                raise RuntimeError("strategy boom")
+
+        audit_writer = AuditWriter(tmp_path / "audit.jsonl")
+        audit_writer.start_run("run-strategy-err")
+        bar = _make_bar()
+        config = BacktestConfig(run_id="run-strategy-err", symbol="DEMO-SYMBOL", data_path=str(SAMPLE_CSV))
+        executor = ExecutionSimulator(config)
+        risk_manager = _permissive_risk_manager()
+
+        result = run_kernel_cycle(
+            bar=bar,
+            bar_index=0,
+            bars_so_far=[bar],
+            cash=10000.0,
+            positions={},
+            pending_orders=[],
+            strategy=_ExplodingStrategy(),
+            executor=executor,
+            risk_manager=risk_manager,
+            symbol="DEMO-SYMBOL",
+            run_id="run-strategy-err",
+            config=config,
+            audit_writer=audit_writer,
+        )
+
+        assert result.decision_state == "failed"
+        assert result.proposed_action == "hold"
+        assert result.blocked_reason == "cycle_error: RuntimeError"
+        assert result.cash == pytest.approx(10000.0)
+        assert result.positions == {}
+
+        events = [
+            json.loads(line)
+            for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        failed_events = [e for e in events if e["event_type"] == "autonomous_paper_cycle_failed"]
+        assert len(failed_events) == 1
+        assert failed_events[0]["payload"]["error_type"] == "RuntimeError"
+
+    def test_kernel_handles_audit_exception(self, tmp_path: Path):
+        class _FailingDecisionAuditWriter(AuditWriter):
+            def write_event(self, event_type, **kwargs):
+                if event_type == "autonomous_paper_decision":
+                    raise RuntimeError("audit decision boom")
+                return super().write_event(event_type, **kwargs)
+
+        audit_writer = _FailingDecisionAuditWriter(tmp_path / "audit.jsonl")
+        audit_writer.start_run("run-audit-err")
+        bar = _make_bar(close=100.0)
+        order = BacktestOrder(
+            order_id="order-001",
+            timestamp=bar.timestamp,
+            symbol="DEMO-SYMBOL",
+            side="buy",
+            quantity=1.0,
+            price=100.0,
+        )
+        config = BacktestConfig(run_id="run-audit-err", symbol="DEMO-SYMBOL", data_path=str(SAMPLE_CSV))
+        executor = ExecutionSimulator(config)
+        risk_manager = _permissive_risk_manager()
+
+        result = run_kernel_cycle(
+            bar=bar,
+            bar_index=0,
+            bars_so_far=[bar],
+            cash=10000.0,
+            positions={},
+            pending_orders=[],
+            strategy=_MockStrategy(orders=[order]),
+            executor=executor,
+            risk_manager=risk_manager,
+            symbol="DEMO-SYMBOL",
+            run_id="run-audit-err",
+            config=config,
+            audit_writer=audit_writer,
+        )
+
+        assert result.decision_state == "failed"
+        assert result.proposed_action == "hold"
+        assert result.blocked_reason == "cycle_error: RuntimeError"
+        # The fill was applied before the audit write failed; cash reflects it.
+        assert result.cash < 10000.0
+
+        events = [
+            json.loads(line)
+            for line in (tmp_path / "audit.jsonl").read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        failed_events = [e for e in events if e["event_type"] == "autonomous_paper_cycle_failed"]
+        assert len(failed_events) == 1
+        assert failed_events[0]["payload"]["error_type"] == "RuntimeError"
+        assert any(e["event_type"] == "autonomous_paper_fill" for e in events)

@@ -53,6 +53,7 @@ AuditEventType = Literal[
     "autonomous_paper_fill",
     "autonomous_paper_manifest_sealed",
     "autonomous_paper_completed",
+    "autonomous_paper_cycle_failed",
     "live_submit_opt_in_enabled",
     "live_submit_opt_in_disabled",
     "live_submit_opt_in_config_changed",
