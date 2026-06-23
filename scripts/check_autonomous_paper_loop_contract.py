@@ -28,10 +28,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DOC = REPO_ROOT / "docs" / "autonomous-paper-loop.md"
 GOVERNANCE_DOC = REPO_ROOT / "docs" / "bounded-live-autonomy-governance.md"
 SHADOW_DOC = REPO_ROOT / "docs" / "shadow-live-readiness-contract.md"
+AUTONOMOUS_PAPER_MODULE = REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper.py"
+CLI_MODULE = REPO_ROOT / "src" / "atlas_agent" / "cli.py"
+TEST_MODULE = REPO_ROOT / "tests" / "test_autonomous_paper_loop.py"
 
 REQUIRED_FILES = [
     DOC,
     SHADOW_DOC,
+    AUTONOMOUS_PAPER_MODULE,
+    CLI_MODULE,
+    TEST_MODULE,
 ]
 
 REQUIRED_DOC_PHRASES = [
@@ -82,6 +88,64 @@ NEGATIVE_CONTEXT_INDICATORS = (
     "remains blocked",
     "out of scope",
     "does **not**",
+)
+
+FORBIDDEN_MODULE_IMPORTS = (
+    "atlas_agent.brokers",
+    "atlas_agent.providers",
+    "atlas_agent.execution.live",
+    "atlas_agent.research.provider_",
+    "get_research_provider",
+)
+
+FORBIDDEN_BROKER_PATTERNS = (
+    "BrokerResolver(",
+    ".resolve_execution_broker(",
+    ".resolve_sync_provider(",
+    ".resolve_status(",
+    "guard_submit(",
+    "guard_sync(",
+)
+
+FORBIDDEN_SUBMISSION_PATTERNS = (
+    ".place_order(",
+    ".cancel_order(",
+    ".flatten_all(",
+    "broker.submit",
+    "broker.submit_order",
+    "OrderRouter(",
+    ".route(",
+    "run_submit_execution(",
+    "run_submit_dry_run(",
+    "mark_submit_requested(",
+    "mark_acknowledged(",
+    "mark_submit_failed(",
+    "mark_submit_uncertain(",
+    "compute_client_order_id(",
+)
+
+FORBIDDEN_PROVIDER_CALL_PATTERNS = (
+    "provider.execute",
+    "provider.submit",
+    "provider.complete(",
+    "provider.generate(",
+)
+
+FORBIDDEN_CREDENTIAL_PATTERNS = (
+    "load_atlas_secrets(",
+    "get_secret(",
+    "get_secret_status(",
+    "set_secret(",
+)
+
+FORBIDDEN_LIVE_FLAG_PATTERNS = (
+    "live_trading_enabled=True",
+    "paper_only=False",
+    "can_submit",
+)
+
+CREDENTIAL_ENV_REGEX = re.compile(
+    r"os\.(?:getenv|environ)\s*\[?\s*\(?\s*['\"][^'\"]*(?:ALPACA|BINANCE|CCXT|EXCHANGE|API_KEY|SECRET_KEY|SECRET|TOKEN|PASSWORD)"
 )
 
 
@@ -159,6 +223,69 @@ def _check_cross_references() -> list[str]:
     return errors
 
 
+def _check_cli_wiring() -> list[str]:
+    errors: list[str] = []
+    if not CLI_MODULE.exists():
+        return errors
+
+    text = _read(CLI_MODULE)
+    if '"autonomous-paper"' not in text:
+        errors.append("[src/atlas_agent/cli.py] Missing 'autonomous-paper' subparser registration")
+    return errors
+
+
+def _check_module_safety() -> list[str]:
+    errors: list[str] = []
+    if not AUTONOMOUS_PAPER_MODULE.exists():
+        return errors
+
+    text = _read(AUTONOMOUS_PAPER_MODULE)
+    rel = AUTONOMOUS_PAPER_MODULE.relative_to(REPO_ROOT)
+
+    for forbidden in FORBIDDEN_MODULE_IMPORTS:
+        if forbidden in text:
+            errors.append(
+                f"[{rel}] Forbidden import/reference: {forbidden}"
+            )
+
+    for forbidden in FORBIDDEN_BROKER_PATTERNS:
+        if forbidden in text:
+            errors.append(
+                f"[{rel}] Forbidden broker pattern: {forbidden}"
+            )
+
+    for forbidden in FORBIDDEN_SUBMISSION_PATTERNS:
+        if forbidden in text:
+            errors.append(
+                f"[{rel}] Forbidden submission pattern: {forbidden}"
+            )
+
+    for forbidden in FORBIDDEN_PROVIDER_CALL_PATTERNS:
+        if forbidden in text:
+            errors.append(
+                f"[{rel}] Forbidden provider call pattern: {forbidden}"
+            )
+
+    for forbidden in FORBIDDEN_CREDENTIAL_PATTERNS:
+        if forbidden in text:
+            errors.append(
+                f"[{rel}] Forbidden credential pattern: {forbidden}"
+            )
+
+    for forbidden in FORBIDDEN_LIVE_FLAG_PATTERNS:
+        if forbidden in text:
+            errors.append(
+                f"[{rel}] Forbidden live flag pattern: {forbidden}"
+            )
+
+    if CREDENTIAL_ENV_REGEX.search(text):
+        errors.append(
+            f"[{rel}] Forbidden credential environment access"
+        )
+
+    return errors
+
+
 def check_all() -> dict:
     """Run all contract checks and return a structured result."""
     errors: list[str] = []
@@ -167,6 +294,8 @@ def check_all() -> dict:
     errors.extend(_check_required_doc_phrases())
     errors.extend(_check_forbidden_doc_claims())
     errors.extend(_check_cross_references())
+    errors.extend(_check_cli_wiring())
+    errors.extend(_check_module_safety())
 
     return {
         "passed": len(errors) == 0,
