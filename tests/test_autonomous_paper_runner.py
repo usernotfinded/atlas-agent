@@ -422,3 +422,35 @@ def test_runner_slippage_changes_fill_price(tmp_path: Path):
     assert len(fills) == 1
     bars = load_market_data(config.data_path, symbol=config.symbol)
     assert fills[0]["price"] != pytest.approx(bars[0].close)
+
+
+def test_runner_writes_metrics_file_with_expected_keys(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(atlas_config, tmp_path)
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+    assert result.status == "completed"
+    assert result.metrics is not None
+
+    metrics_path = Path(config.output_dir) / f"{config.run_id}-metrics.json"
+    assert metrics_path.exists()
+    data = json.loads(metrics_path.read_text(encoding="utf-8"))
+    for key in (
+        "starting_cash",
+        "ending_cash",
+        "ending_equity",
+        "total_return_pct",
+        "max_drawdown_pct",
+        "number_of_trades",
+        "number_of_fills",
+        "number_of_rejections",
+        "gross_exposure",
+        "net_exposure",
+        "bars_processed",
+        "generated_at",
+        "notes",
+    ):
+        assert key in data, f"missing metric key: {key}"

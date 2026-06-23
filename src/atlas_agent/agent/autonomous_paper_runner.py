@@ -8,10 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from atlas_agent.agent.autonomous_paper_kernel import apply_fill, run_kernel_cycle
+from atlas_agent.agent.autonomous_paper_metrics import calculate_stateful_paper_metrics
 from atlas_agent.agent.autonomous_paper_models import (
     StatefulPaperConfig,
     StatefulPaperCursor,
-    StatefulPaperMetrics,
     StatefulPaperResult,
     StatefulPaperState,
 )
@@ -19,7 +19,7 @@ from atlas_agent.audit import AuditWriter
 from atlas_agent.audit.redaction import redact_payload
 from atlas_agent.backtest.data import load_market_data
 from atlas_agent.backtest.execution import ExecutionSimulator
-from atlas_agent.backtest.models import BacktestConfig, BacktestOrder, BacktestPosition
+from atlas_agent.backtest.models import BacktestConfig, BacktestOrder
 from atlas_agent.backtest.registry import get_strategy
 from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger
@@ -162,117 +162,6 @@ def _build_result(
         audit_log_path=str(audit_log_path),
         metrics=metrics,
         errors=errors,
-    )
-
-
-def _compute_metrics(
-    *,
-    starting_cash: float,
-    cash: float,
-    positions: dict[str, BacktestPosition],
-    fill_history: list,
-    bars_processed: int,
-    current_price: float,
-    data_source: str,
-) -> StatefulPaperMetrics:
-    ending_equity = cash + sum(
-        pos.quantity * current_price for pos in positions.values()
-    )
-    total_return_pct = (
-        (ending_equity - starting_cash) / starting_cash * 100.0
-        if starting_cash > 0
-        else 0.0
-    )
-
-    # Approximate equity curve from fills to compute a conservative drawdown.
-    equity = starting_cash
-    peak = equity
-    qty = 0.0
-    avg_price = 0.0
-    max_drawdown_pct = 0.0
-    for fill in fill_history:
-        if fill.side == "buy":
-            equity -= fill.notional + fill.commission
-            new_qty = qty + fill.quantity
-            avg_price = (
-                (qty * avg_price + fill.quantity * fill.price) / new_qty
-                if new_qty > 0
-                else fill.price
-            )
-            qty = new_qty
-        else:
-            equity += fill.notional - fill.commission
-            qty -= fill.quantity
-        position_value = qty * fill.price
-        equity_value = equity + position_value
-        if equity_value > peak:
-            peak = equity_value
-        drawdown = (peak - equity_value) / peak * 100.0 if peak > 0 else 0.0
-        if drawdown > max_drawdown_pct:
-            max_drawdown_pct = drawdown
-
-    buy_fills = [f for f in fill_history if f.side == "buy"]
-    sell_fills = [f for f in fill_history if f.side == "sell"]
-
-    realized_pnl = None
-    if sell_fills and buy_fills:
-        total_sold_notional = sum(f.notional for f in sell_fills)
-        total_sold_qty = sum(f.quantity for f in sell_fills)
-        avg_buy_price = (
-            sum(f.quantity * f.price for f in buy_fills)
-            / sum(f.quantity for f in buy_fills)
-            if buy_fills
-            else 0.0
-        )
-        realized_pnl = total_sold_notional - (total_sold_qty * avg_buy_price)
-        realized_pnl -= sum(f.commission for f in sell_fills)
-
-    unrealized_pnl = None
-    for pos in positions.values():
-        if pos.quantity > 0:
-            unrealized_pnl = (current_price - pos.average_entry_price) * pos.quantity
-            break
-
-    turnover = None
-    if fill_history:
-        avg_equity = (
-            (starting_cash + ending_equity) / 2.0
-            if ending_equity > 0
-            else starting_cash
-        )
-        turnover = (
-            sum(f.notional for f in fill_history) / avg_equity
-            if avg_equity > 0
-            else None
-        )
-
-    gross_exposure = sum(f.notional for f in fill_history)
-    net_exposure = sum(
-        f.notional if f.side == "buy" else -f.notional for f in fill_history
-    )
-
-    return StatefulPaperMetrics(
-        starting_cash=starting_cash,
-        ending_cash=cash,
-        ending_equity=ending_equity,
-        realized_pnl=realized_pnl,
-        unrealized_pnl=unrealized_pnl,
-        total_return_pct=total_return_pct,
-        max_drawdown_pct=max_drawdown_pct,
-        number_of_trades=len(buy_fills),
-        number_of_fills=len(fill_history),
-        number_of_rejections=0,
-        turnover=turnover,
-        gross_exposure=gross_exposure,
-        net_exposure=net_exposure,
-        total_commission=sum(f.commission for f in fill_history),
-        total_slippage=sum(f.slippage for f in fill_history),
-        bars_processed=bars_processed,
-        data_source_redacted=_redact_data_source(data_source),
-        generated_at=datetime.now(UTC).isoformat(),
-        notes=[
-            "max_drawdown_pct is approximated from fill points, not a full bar-by-bar equity curve"
-        ],
     )
 
 
@@ -571,7 +460,7 @@ def run_stateful_autonomous_paper(
     state.status = "completed"
 
     last_close = bars[state.cursor.last_processed_bar_index].close
-    metrics = _compute_metrics(
+    metrics = calculate_stateful_paper_metrics(
         starting_cash=config.initial_cash,
         cash=state.cash,
         positions=state.positions,
@@ -579,8 +468,8 @@ def run_stateful_autonomous_paper(
         bars_processed=state.cursor.last_processed_bar_index + 1,
         current_price=last_close,
         data_source=config.data_path,
+        number_of_rejections=total_rejections,
     )
-    metrics.number_of_rejections = total_rejections
 
     metrics_path.write_text(
         json.dumps(
