@@ -12,6 +12,7 @@ from atlas_agent.agent.autonomous_paper_kernel import (
     build_portfolio_snapshot,
     observations_for_bar,
 )
+from atlas_agent.agent.autonomous_paper_models import StatefulPaperResult
 from atlas_agent.audit import AuditWriter
 from atlas_agent.audit.redaction import redact_payload
 from atlas_agent.backtest.data import load_market_data
@@ -460,3 +461,78 @@ def build_autonomous_paper_evidence(
         json.dumps(summary, indent=2), encoding="utf-8"
     )
     return bundle_dir
+
+
+def run_stateful_autonomous_paper_loop(
+    *,
+    config: AtlasConfig,
+    symbol: str | None = None,
+    strategy_id: str | None = None,
+    strategy_parameters: dict[str, Any] | None = None,
+    data_path: str | Path | None = None,
+    max_cycles: int = 0,
+    output_dir: str | Path | None = None,
+    state_dir: str | Path | None = None,
+    resume: bool = False,
+    initial_cash: float | None = None,
+    commission_bps: float | None = None,
+    slippage_bps: float | None = None,
+    fill_timing: str = "next_bar",
+    audit_writer: AuditWriter | None = None,
+    event_logger: EventLogger | None = None,
+    run_id: str | None = None,
+) -> StatefulPaperResult:
+    """Backward-compatible entry point for stateful autonomous paper."""
+    from atlas_agent.agent.autonomous_paper_models import StatefulPaperConfig
+    from atlas_agent.agent.autonomous_paper_runner import run_stateful_autonomous_paper
+
+    effective_symbol = symbol or config.market.symbol or config.backtest.default_symbol
+    if not effective_symbol:
+        return StatefulPaperResult(
+            run_id=run_id or generate_run_id(),
+            status="failed",
+            bars_processed_this_run=0,
+            total_bars_processed=0,
+            decisions_path="",
+            fills_path="",
+            metrics_path="",
+            checkpoint_path="",
+            manifest_path="",
+            audit_log_path="",
+            errors=["No trading symbol configured. Set market.symbol or pass --symbol."],
+        )
+
+    effective_symbol = effective_symbol.upper()
+    effective_strategy = strategy_id or "moving_average_cross"
+    effective_data_path = str(data_path or config.backtest.data_path)
+    effective_output_dir = str(output_dir or (config.reports_dir / "autonomous_paper"))
+    effective_state_dir = str(
+        state_dir or (config.reports_dir / "autonomous_paper_state")
+    )
+
+    sp_config = StatefulPaperConfig(
+        run_id=run_id or generate_run_id(),
+        symbol=effective_symbol,
+        strategy_id=effective_strategy,
+        strategy_parameters=strategy_parameters or {},
+        data_path=effective_data_path,
+        output_dir=effective_output_dir,
+        state_dir=effective_state_dir,
+        initial_cash=(
+            initial_cash
+            if initial_cash is not None
+            else config.backtest.initial_cash
+        ),
+        commission_bps=commission_bps if commission_bps is not None else 0.0,
+        slippage_bps=slippage_bps if slippage_bps is not None else 0.0,
+        fill_timing=fill_timing,  # type: ignore[arg-type]
+    )
+
+    return run_stateful_autonomous_paper(
+        config=sp_config,
+        atlas_config=config,
+        resume=resume,
+        max_cycles=max_cycles,
+        audit_writer=audit_writer,
+        event_logger=event_logger,
+    )
