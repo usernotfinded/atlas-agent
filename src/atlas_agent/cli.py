@@ -849,6 +849,15 @@ Safety First:
         help="If provided, copy the decisions and manifest into an evidence bundle under this directory.",
     )
     agent_autonomous_paper.add_argument("--json", action="store_true", help="Emit result as JSON")
+    agent_autonomous_scorecard = agent_sub.add_parser(
+        "autonomous-scorecard",
+        help="Evaluate autonomous-paper decision artifacts and produce a promotion scorecard.",
+    )
+    agent_autonomous_scorecard.add_argument("--decisions", required=True, help="Path to decisions.jsonl")
+    agent_autonomous_scorecard.add_argument("--manifest", required=True, help="Path to manifest.json")
+    agent_autonomous_scorecard.add_argument("--replay-decisions", help="Optional second decisions file for replay comparison")
+    agent_autonomous_scorecard.add_argument("--output-dir", help="Directory for scorecard JSON/Markdown reports")
+    agent_autonomous_scorecard.add_argument("--json", action="store_true", help="Emit scorecard as JSON")
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
 
@@ -5848,6 +5857,25 @@ def main(argv: list[str] | None = None) -> int:
             for error in result.errors:
                 print(f"  error: {error}")
             return 0 if result.status == "completed" else 2
+        elif args.agent_command == "autonomous-scorecard":
+            from atlas_agent.agent.autonomous_paper_scorecard import (
+                build_autonomous_paper_scorecard,
+                write_autonomous_paper_scorecard_reports,
+            )
+            output_dir = getattr(args, "output_dir", None) or str(config.reports_dir / "autonomous_paper_scorecard")
+            scorecard = build_autonomous_paper_scorecard(
+                decisions_path=args.decisions,
+                manifest_path=args.manifest,
+                replay_decisions_path=getattr(args, "replay_decisions", None),
+            )
+            write_autonomous_paper_scorecard_reports(scorecard, output_dir)
+            if getattr(args, "json", False):
+                return emit_cli_success("atlas agent autonomous-scorecard", scorecard)
+            print(f"autonomous-scorecard: {scorecard['promotion_state']}")
+            print(f"  output dir: {output_dir}")
+            for blocker in scorecard.get("blockers", []):
+                print(f"  blocker: {blocker}")
+            return 0 if scorecard["promotion_state"] not in ("blocked", "not_evaluated") else 2
         elif args.agent_command == "run":
             if getattr(args, "offline", False):
                 config.model.provider = "null"

@@ -309,6 +309,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "10e. autonomous paper scorecard contract check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_autonomous_paper_scorecard_contract.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "10f. autonomous paper scorecard tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_autonomous_paper_scorecard.py tests/test_autonomous_paper_scorecard_contract.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "11. product demo and marketplace readiness check"
 echo "========================================"
 SECONDS=0

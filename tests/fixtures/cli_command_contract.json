@@ -246,6 +246,7 @@
     ],
     "agent": [
       "autonomous-paper",
+      "autonomous-scorecard",
       "learn",
       "plan",
       "reflect",

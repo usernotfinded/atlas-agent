@@ -47,6 +47,11 @@ planning only):
   through `RiskManager` in paper mode, and records tamper-evident local
   artifacts. It does not submit orders, read live broker state, or call real
   providers.
+- CAND-002 added an **autonomous paper scorecard** (`atlas agent
+  autonomous-scorecard`) that deterministically evaluates CAND-001 artifacts
+  offline, produces a fail-closed promotion state, and does not enable
+  shadow-live or live trading. It loads no credentials and calls no brokers or
+  providers.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - No profit, risk elimination, claims that live trading is safe, or

@@ -9,21 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - CAND-001: Paper Autonomous Decision Loop and Shadow-Live Readiness Contract.
+- CAND-002: Autonomous Paper Decision Quality Scorecard and Promotion Gate.
 - `atlas agent autonomous-paper` command for deterministic, paper-only autonomous decision loops on local sample/CSV data.
+- `atlas agent autonomous-scorecard` command for deterministic offline evaluation of autonomous-paper artifacts.
 - `src/atlas_agent/agent/autonomous_paper.py` decision loop with `RiskManager` paper-mode gating, local execution simulation, audit events, and manifest generation.
+- `src/atlas_agent/agent/autonomous_paper_scorecard.py` scorecard builder and promotion gate.
 - `docs/autonomous-paper-loop.md`, `scripts/check_autonomous_paper_loop_contract.py`, and `tests/test_autonomous_paper_loop_contract.py`.
+- `docs/autonomous-paper-scorecard.md`, `scripts/check_autonomous_paper_scorecard_contract.py`, `tests/test_autonomous_paper_scorecard.py`, `tests/test_autonomous_paper_scorecard_contract.py`, and `scripts/demo_autonomous_paper_scorecard.sh`.
 - `docs/shadow-live-readiness-contract.md`, `scripts/check_shadow_live_contract.py`, and `tests/test_shadow_live_contract.py`.
 - `tests/test_autonomous_paper_loop.py` covering happy path, no-trade path, risk-blocked path, malformed-config fail-closed, live-mode rejection, unreachable broker submit, no provider execution, audit artifact creation, and deterministic replay.
+- `tests/test_autonomous_paper_scorecard.py` covering valid scorecard generation, missing/malformed artifacts, risk-blocked runs, no-trade runs, kill-switch blocked runs, replay mismatch, unsafe live/provider/broker references, redaction, promotion defaults, and CLI smoke.
 
 ### Changed
-- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001 paper-only scope.
-- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001 as the implemented planning candidate.
-- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop and shadow-live contract checkers and tests.
+- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002 paper-only scope.
+- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001 and CAND-002 as implemented planning candidates.
+- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, and autonomous paper scorecard checkers and tests.
 
 ### Safety
 - PyPI was not published.
 - Live trading and live submit remain disabled by default; provider and broker execution defaults are unchanged.
-- The autonomous loop is paper-only and fails closed on missing configuration or live-mode CLI arguments.
+- The autonomous loop and scorecard are paper-only and fail closed on missing configuration, malformed artifacts, or live-mode CLI arguments.
+- The scorecard gate defaults to `blocked` and never enables shadow-live execution.
 - No protected runtime safety boundary changed in this planning phase.
 
 ## [0.6.15] - 2026-06-22

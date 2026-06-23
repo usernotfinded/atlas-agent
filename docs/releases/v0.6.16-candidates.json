@@ -12,6 +12,13 @@
       "title": "Paper Autonomous Decision Loop and Shadow-Live Readiness Contract",
       "description": "Deterministic, paper-only autonomous decision loop with local sample data, RiskManager gating, audit artifacts, and a planning-only shadow-live/read-only contract.",
       "notes": "No live trading, live submit, broker order submission, or real provider calls. No version bump, tag, release, or PyPI publication."
+    },
+    {
+      "id": "CAND-002",
+      "status": "implemented",
+      "title": "Autonomous Paper Decision Quality Scorecard and Promotion Gate",
+      "description": "Deterministic offline scorecard that evaluates autonomous-paper artifacts for future shadow-live/read-only review eligibility.",
+      "notes": "No live trading, live submit, broker order submission, or real provider calls. No version bump, tag, release, or PyPI publication."
     }
   ]
 }
