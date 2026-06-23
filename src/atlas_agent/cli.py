@@ -5816,6 +5816,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_autonomous_paper_loop,
             )
 
+            config = _effective_config_with_runtime_kill_switch(config)
             resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
             result = run_autonomous_paper_loop(
                 config=config,

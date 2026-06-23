@@ -15,7 +15,9 @@ from atlas_agent.agent.autonomous_paper import (
     run_autonomous_paper_loop,
 )
 from atlas_agent.cli import main as cli_main
+from atlas_agent.cli_safety import _effective_config_with_runtime_kill_switch
 from atlas_agent.config import AtlasConfig
+from atlas_agent.safety.kill_switch import KillSwitchController
 
 
 SAMPLE_CSV = Path(__file__).resolve().parents[1] / "data" / "sample" / "ohlcv.csv"
@@ -201,6 +203,34 @@ class TestAutonomousPaperLoopSafetyBoundaries:
         assert result.status == "completed"
         provider_spy.assert_not_called()
 
+    def test_kill_switch_config_enabled_blocks_trades(self, tmp_path: Path):
+        config = _make_config(tmp_path, safety={"kill_switch_enabled": True})
+        result = run_autonomous_paper_loop(
+            config=config,
+            max_cycles=3,
+            strategy_id="buy_and_hold",
+            strategy_parameters={"position_pct": 0.2},
+        )
+        assert result.status == "completed"
+        assert result.trades_executed == 0
+
+    def test_runtime_kill_switch_state_blocks_trades(self, tmp_path: Path):
+        config = _make_config(tmp_path, safety={"kill_switch_enabled": False})
+        controller = KillSwitchController(
+            state_path=config.memory_dir / "kill_switch_state.json",
+            enabled_flag_path=config.memory_dir / "kill_switch.enabled",
+        )
+        controller.enable(mode="soft", reason="audit test", actor="test")
+        effective = _effective_config_with_runtime_kill_switch(config)
+        result = run_autonomous_paper_loop(
+            config=effective,
+            max_cycles=3,
+            strategy_id="buy_and_hold",
+            strategy_parameters={"position_pct": 0.2},
+        )
+        assert result.status == "completed"
+        assert result.trades_executed == 0
+
     def test_deterministic_replay(self, tmp_path: Path):
         config = _make_config(tmp_path)
         run_id = "replay-run-001"
@@ -229,6 +259,15 @@ class TestAutonomousPaperLoopSafetyBoundaries:
 
 
 class TestAutonomousPaperEvidenceBundle:
+    def test_build_evidence_bundle_rejects_empty_paths(self, tmp_path: Path):
+        with pytest.raises(ValueError):
+            build_autonomous_paper_evidence(
+                run_id="test",
+                decisions_path="",
+                manifest_path="",
+                output_dir=tmp_path,
+            )
+
     def test_build_evidence_bundle(self, tmp_path: Path):
         config = _make_config(tmp_path)
         result = run_autonomous_paper_loop(
@@ -295,3 +334,40 @@ class TestAutonomousPaperCli:
         ])
         with pytest.raises(SystemExit):
             cli_main()
+
+    def test_cli_respects_runtime_kill_switch(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        data_dir = tmp_path / "data" / "sample"
+        data_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(SAMPLE_CSV, data_dir / "ohlcv.csv")
+        _write_discipline(tmp_path)
+        for dirname in ("memory", "events", "audit", "reports", "pending_orders"):
+            (tmp_path / dirname).mkdir(parents=True, exist_ok=True)
+        config_path = tmp_path / ".atlas" / "config.toml"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(
+            '[market]\nsymbol = "DEMO-SYMBOL"\n\n'
+            '[backtest]\ninitial_cash = 10000.0\ndata_path = "data/sample/ohlcv.csv"\n\n'
+            '[risk]\nmax_position_notional = 20000.0\nmax_order_notional = 20000.0\nminimum_confidence = 0.0\n\n'
+            '[safety]\nkill_switch_enabled = false\n\n'
+            '[audit]\naudit_dir = "audit"\n',
+            encoding="utf-8",
+        )
+        controller = KillSwitchController(
+            state_path=tmp_path / "memory" / "kill_switch_state.json",
+            enabled_flag_path=tmp_path / "memory" / "kill_switch.enabled",
+        )
+        controller.enable(mode="soft", reason="cli audit test", actor="test")
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(sys, "argv", [
+            "atlas", "agent", "autonomous-paper", "--max-cycles", "2", "--json",
+        ])
+        code = cli_main()
+        assert code == 0
+        captured = capsys.readouterr().out
+        summary = json.loads(captured)
+        assert summary["data"]["trades_executed"] == 0

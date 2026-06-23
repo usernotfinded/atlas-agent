@@ -520,6 +520,8 @@ def build_autonomous_paper_evidence(
 
     decisions_path = Path(decisions_path)
     manifest_path = Path(manifest_path)
+    if not decisions_path.name or not manifest_path.name:
+        raise ValueError("decisions_path and manifest_path must be non-empty")
     output_dir = Path(output_dir)
     bundle_dir = output_dir / run_id
     bundle_dir.mkdir(parents=True, exist_ok=True)
@@ -530,11 +532,11 @@ def build_autonomous_paper_evidence(
         return sha256(text.encode("utf-8")).hexdigest()
 
     checksums: dict[str, str] = {}
-    if decisions_path.exists():
+    if decisions_path.is_file():
         checksums["decisions.jsonl"] = _copy_and_hash(
             decisions_path, bundle_dir / "decisions.jsonl"
         )
-    if manifest_path.exists():
+    if manifest_path.is_file():
         checksums["manifest.json"] = _copy_and_hash(
             manifest_path, bundle_dir / "manifest.json"
         )
