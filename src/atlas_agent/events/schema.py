@@ -51,6 +51,8 @@ KNOWN_EVENT_TYPES = {
     "run_once_live_risk_evaluated",
     "run_once_live_analysis_only",
     "run_once_live_rejected",
+    "autonomous_paper_started",
+    "autonomous_paper_completed",
 }
 
 LIKELY_SECRET_PATTERNS = (

@@ -32,15 +32,23 @@ it is bounded, reversible, auditable, fail-closed, and explicitly opt-in.
 
 ## Current release truth
 
-As of the current release line (`v0.6.12` public, `v0.6.13` planning only):
+As of the current release line (`v0.6.15` public GitHub release, `v0.6.16`
+planning only):
 
 - Autonomous live trading is **not implemented**.
 - The system is **not autonomous-live-trading ready**.
-- The system is **not production-ready** for unattended or real-money trading.
+- The system is **not production-ready** for unsupervised or real-money trading.
 - Live trading and live submit remain **disabled by default**.
 - Provider/LLM output is **never** treated as broker execution authority.
 - Every live submit path is gated by deterministic risk controls, approval queues,
   kill-switch checks, and audit logging.
+- CAND-001 added a **paper-only autonomous decision loop** (`atlas agent
+  autonomous-paper`) that runs on local sample data, routes proposed orders
+  through `RiskManager` in paper mode, and records tamper-evident local
+  artifacts. It does not submit orders, read live broker state, or call real
+  providers.
+- The **shadow-live readiness contract** introduced in CAND-001 is
+  **planning-only** and does not implement, authorize, or enable live trading.
 - No profit, risk elimination, claims that live trading is safe, or
   autonomous-trading-readiness claims are made.
 

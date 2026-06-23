@@ -290,6 +290,25 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "10c. autonomous paper loop contract check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_autonomous_paper_loop_contract.py
+"$PYTHON_BIN" scripts/check_shadow_live_contract.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "10d. autonomous paper loop tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_autonomous_paper_loop.py tests/test_autonomous_paper_loop_contract.py tests/test_shadow_live_contract.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "11. product demo and marketplace readiness check"
 echo "========================================"
 SECONDS=0

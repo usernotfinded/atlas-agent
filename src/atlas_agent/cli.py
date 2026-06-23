@@ -824,6 +824,31 @@ Safety First:
     agent_status.add_argument("--json", action="store_true")
     agent_plan = agent_sub.add_parser("plan")
     agent_plan.add_argument("--json", action="store_true")
+    agent_autonomous_paper = agent_sub.add_parser(
+        "autonomous-paper",
+        help="Run a deterministic, paper-only autonomous decision loop without human step-by-step intervention.",
+    )
+    agent_autonomous_paper.add_argument("--symbol", help="Trading symbol (defaults to market.symbol config)")
+    agent_autonomous_paper.add_argument(
+        "--strategy",
+        default="moving_average_cross",
+        help="Built-in backtest strategy id to use for decisions (default: moving_average_cross)",
+    )
+    agent_autonomous_paper.add_argument(
+        "--data-path",
+        help="Path to local OHLCV CSV data (defaults to backtest.data_path config)",
+    )
+    agent_autonomous_paper.add_argument(
+        "--max-cycles",
+        type=int,
+        default=1,
+        help="Maximum number of bars to process (default: 1; 0 means all bars)",
+    )
+    agent_autonomous_paper.add_argument(
+        "--evidence-dir",
+        help="If provided, copy the decisions and manifest into an evidence bundle under this directory.",
+    )
+    agent_autonomous_paper.add_argument("--json", action="store_true", help="Emit result as JSON")
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
 
@@ -5784,6 +5809,44 @@ def main(argv: list[str] | None = None) -> int:
             )
             print(f"Reflection generated: {report}")
             return 0
+        elif args.agent_command == "autonomous-paper":
+            _check_discipline_or_exit(config)
+            from atlas_agent.agent.autonomous_paper import (
+                build_autonomous_paper_evidence,
+                run_autonomous_paper_loop,
+            )
+
+            resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
+            result = run_autonomous_paper_loop(
+                config=config,
+                symbol=resolved_symbol,
+                strategy_id=args.strategy,
+                data_path=args.data_path,
+                max_cycles=args.max_cycles,
+            )
+            evidence_dir = getattr(args, "evidence_dir", None)
+            if evidence_dir:
+                build_autonomous_paper_evidence(
+                    run_id=result.run_id,
+                    decisions_path=result.decisions_path,
+                    manifest_path=result.manifest_path,
+                    output_dir=evidence_dir,
+                )
+            if getattr(args, "json", False):
+                return emit_cli_success(
+                    "atlas agent autonomous-paper",
+                    result.model_dump(mode="json"),
+                )
+            print(f"autonomous-paper {result.status}: processed {result.bars_processed} bar(s)")
+            print(f"  decisions: {result.decisions}")
+            print(f"  trades executed: {result.trades_executed}")
+            print(f"  trades blocked: {result.trades_blocked}")
+            print(f"  no-trade decisions: {result.no_trade_count}")
+            print(f"  decisions file: {result.decisions_path}")
+            print(f"  manifest file: {result.manifest_path}")
+            for error in result.errors:
+                print(f"  error: {error}")
+            return 0 if result.status == "completed" else 2
         elif args.agent_command == "run":
             if getattr(args, "offline", False):
                 config.model.provider = "null"

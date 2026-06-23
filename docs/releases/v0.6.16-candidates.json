@@ -5,5 +5,13 @@
   "current_public_release": "v0.6.15",
   "next_planned_release": "v0.6.16",
   "pypi_published": false,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "CAND-001",
+      "status": "implemented",
+      "title": "Paper Autonomous Decision Loop and Shadow-Live Readiness Contract",
+      "description": "Deterministic, paper-only autonomous decision loop with local sample data, RiskManager gating, audit artifacts, and a planning-only shadow-live/read-only contract.",
+      "notes": "No live trading, live submit, broker order submission, or real provider calls. No version bump, tag, release, or PyPI publication."
+    }
+  ]
 }
