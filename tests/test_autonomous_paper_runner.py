@@ -545,3 +545,14 @@ def test_runner_deterministic_replay(tmp_path: Path):
 
     assert decisions_a == decisions_b
     assert fills_a == fills_b
+
+
+def test_runner_does_not_import_brokers_or_providers():
+    source = Path("src/atlas_agent/agent/autonomous_paper_runner.py").read_text()
+    forbidden = [
+        "atlas_agent.brokers",
+        "atlas_agent.providers",
+        "atlas_agent.execution.live",
+    ]
+    for pattern in forbidden:
+        assert pattern not in source, f"Forbidden reference in runner: {pattern}"
