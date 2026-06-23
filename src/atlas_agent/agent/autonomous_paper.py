@@ -536,10 +536,23 @@ def build_autonomous_paper_evidence(
         checksums["decisions.jsonl"] = _copy_and_hash(
             decisions_path, bundle_dir / "decisions.jsonl"
         )
+    bundle_manifest_path = bundle_dir / "manifest.json"
     if manifest_path.is_file():
         checksums["manifest.json"] = _copy_and_hash(
-            manifest_path, bundle_dir / "manifest.json"
+            manifest_path, bundle_manifest_path
         )
+        # Rewrite the copied manifest so its path references point to the
+        # self-contained evidence bundle. This keeps the bundle valid when the
+        # scorecard evaluates it from a different working directory.
+        bundle_manifest = json.loads(bundle_manifest_path.read_text(encoding="utf-8"))
+        bundle_manifest["decisions_path"] = str(bundle_dir / "decisions.jsonl")
+        bundle_manifest["manifest_path"] = str(bundle_manifest_path)
+        bundle_manifest_path.write_text(
+            json.dumps(bundle_manifest, indent=2), encoding="utf-8"
+        )
+        checksums["manifest.json"] = sha256(
+            bundle_manifest_path.read_text(encoding="utf-8").encode("utf-8")
+        ).hexdigest()
 
     summary = {
         "run_id": run_id,
