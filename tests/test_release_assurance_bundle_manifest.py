@@ -16,7 +16,19 @@ CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_bundle_manifest.
 RELEASE_ASSURANCE_SCRIPT = REPO_ROOT / "scripts" / "release_assurance.py"
 DEMO_SCRIPT = REPO_ROOT / "scripts" / "demo_release_assurance_snapshot_bundle.sh"
 
-RELEASE = "v0.6.14"
+RELEASE = "v0.6.15"
+
+
+def _release_fully_published() -> bool:
+    """Return True only if the release tag and GitHub release are already public."""
+    local_tag = _run("git", "tag", "-l", RELEASE, cwd=REPO_ROOT)
+    if local_tag.stdout.strip() != RELEASE:
+        return False
+    remote_tag = _run("git", "ls-remote", "--tags", "origin", RELEASE, cwd=REPO_ROOT)
+    if RELEASE not in remote_tag.stdout:
+        return False
+    gh_release = _run("gh", "release", "view", RELEASE, "--json", "url", cwd=REPO_ROOT)
+    return gh_release.returncode == 0 and RELEASE in gh_release.stdout
 
 
 def _run(*args: str | Path, cwd: Path | None = None, timeout: int = 60) -> subprocess.CompletedProcess[str]:
@@ -85,9 +97,8 @@ def test_demo_rejects_unknown_option():
 
 
 def test_manifest_checker_passes_on_valid_temp_output(tmp_path: Path):
-    local_tag = _run("git", "tag", "-l", RELEASE, cwd=REPO_ROOT)
-    if local_tag.stdout.strip() != RELEASE:
-        pytest.skip(f"{RELEASE} tag is created after pre-cutover validation")
+    if not _release_fully_published():
+        pytest.skip(f"{RELEASE} is not fully published yet; run after tag push and GitHub Release creation")
 
     baseline_dir = tmp_path / "baseline"
     snapshot_dir = tmp_path / "with-reviewer-trust-snapshot"
@@ -187,9 +198,8 @@ def test_manifest_checker_json_output(tmp_path: Path):
 
 @pytest.mark.slow
 def test_demo_runs_end_to_end(tmp_path: Path):
-    local_tag = _run("git", "tag", "-l", RELEASE, cwd=REPO_ROOT)
-    if local_tag.stdout.strip() != RELEASE:
-        pytest.skip(f"{RELEASE} tag is created after pre-cutover validation")
+    if not _release_fully_published():
+        pytest.skip(f"{RELEASE} is not fully published yet; run after tag push and GitHub Release creation")
 
     result = _run(
         "bash",

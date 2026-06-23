@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.15] - 2026-06-22
+
+### Added
+- CAND-001 through CAND-006 paper human review pack, ledger, policy simulator, replay, evidence bundle, and final-readiness gates.
+- Deterministic, offline paper human review documentation, demos, checkers, tests, and reviewer evidence.
+- `docs/releases/v0.6.15.md`, `docs/trust/v0.6.15-status.md`, `docs/releases/v0.6.15-post-release-evidence.md`, and `.json`.
+- `scripts/check_v0615_post_release_hygiene.py` and `tests/test_v0615_post_release_hygiene.py` for v0.6.15 post-release state validation.
+- `docs/releases/v0.6.16-plan.md`, `docs/releases/v0.6.16-candidates.md`, and `.json` as the next planning seed.
+
+### Changed
+- Source/package version advanced from `0.6.14` to `0.6.15` for the owner-authorized GitHub-only release.
+- Public release metadata now identifies `v0.6.15` as current, `v0.6.14` as historical, and `v0.6.16` as the next planning line.
+- README, public docs, and active checkers updated to the v0.6.15 public / v0.6.16 next posture.
+- Archived `scripts/check_v0614_post_release_hygiene.py` to `scripts/historical_release_checkers/` and updated its test to exercise it against fixtures.
+
+### Safety
+- PyPI was not published.
+- Live trading and live submit remain disabled by default; provider and broker execution defaults are unchanged.
+- No real human approval is created or recorded.
+- No protected runtime safety boundary changed in this release cutover.
+
 ## [0.6.14] - 2026-06-22
 
 ### Added

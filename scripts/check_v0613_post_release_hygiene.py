@@ -60,6 +60,11 @@ CURRENT_PUBLIC = "v0.6.13"
 SOURCE_VERSION = "0.6.13"
 NEXT_PLANNED = "v0.6.14"
 
+
+def _version_key(value: str) -> tuple[int, ...]:
+    """Parse a tag or version string into a numeric tuple for ordering."""
+    return tuple(int(part) for part in value.lstrip("v").split("."))
+
 FORBIDDEN_CLAIMS = [
     "guaranteed profit",
     "no-risk",
@@ -238,15 +243,17 @@ def _check_v0613_docs() -> list[str]:
     return errors
 
 
-def _check_source_version() -> list[str]:
+def _check_source_version(expected_version: str) -> list[str]:
     errors: list[str] = []
     for path in (PYPROJECT, INIT_PY):
         if not path.exists():
             errors.append(f"Missing source version file: {path}")
             continue
         text = path.read_text(encoding="utf-8")
-        if SOURCE_VERSION not in text:
-            errors.append(f"Source version {SOURCE_VERSION} not found in {path}")
+        if expected_version not in text:
+            errors.append(
+                f"Source version {expected_version} not found in {path}"
+            )
     return errors
 
 
@@ -396,24 +403,37 @@ def _check_historical_docs_marked() -> list[str]:
 
 
 def _successor_release_is_current() -> bool:
-    """Return true once v0.6.14 has superseded the v0.6.13 public posture."""
+    """Return true once a release after v0.6.13 has superseded its public posture."""
     try:
         data = _load_release_metadata()
     except CheckError:
         return False
+    current = data.get("current_public_release", "")
+    nxt = data.get("next_planned_release", "")
+    source = data.get("source_version", "")
     return (
-        data.get("source_version") == "0.6.14"
-        and data.get("current_public_release") == "v0.6.14"
-        and data.get("next_planned_release") == "v0.6.15"
+        _version_key(current) > _version_key(CURRENT_PUBLIC)
+        and _version_key(nxt) > _version_key(current)
+        and _version_key(source) >= _version_key(current)
         and data.get("pypi_published") is False
     )
 
 
 def _check_successor_source_version() -> list[str]:
     errors: list[str] = []
+    try:
+        expected = _load_release_metadata().get("source_version", "")
+    except CheckError as exc:
+        return [str(exc)]
+    if not expected:
+        errors.append("Release metadata source_version is empty")
+        return errors
     for path in (PYPROJECT, INIT_PY):
-        if not path.exists() or "0.6.14" not in _read_text(path):
-            errors.append(f"Successor source version 0.6.14 not found in {path}")
+        if not path.exists():
+            errors.append(f"Missing source version file: {path}")
+            continue
+        if expected not in _read_text(path):
+            errors.append(f"Source version {expected} not found in {path}")
     return errors
 
 
@@ -423,6 +443,11 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict[str, Any]]:
     checks: list[str] = []
 
     successor_current = _successor_release_is_current()
+    expected_source = (
+        _load_release_metadata().get("source_version", SOURCE_VERSION)
+        if successor_current
+        else SOURCE_VERSION
+    )
 
     checks.append("release_metadata")
     if not successor_current:
@@ -441,7 +466,7 @@ def run_check(*, json_output: bool = False) -> tuple[int, dict[str, Any]]:
     if successor_current:
         errors.extend(_check_successor_source_version())
     else:
-        errors.extend(_check_source_version())
+        errors.extend(_check_source_version(expected_source))
 
     docs = _collect_public_facing_docs()
 

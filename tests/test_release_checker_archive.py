@@ -19,6 +19,7 @@ HISTORICAL_CHECKERS = {
     "check_v060_readiness.py",
     "check_v061_candidates.py",
     "check_v061_release_prep.py",
+    "check_v0614_post_release_hygiene.py",
     "check_v062_release_prep.py",
     "check_v063_release_prep.py",
     "check_v064_candidates.py",
@@ -56,10 +57,10 @@ def test_active_gates_use_current_release_state_checkers() -> None:
         ".github/workflows/ci.yml",
     ):
         text = (ROOT / relative_path).read_text(encoding="utf-8")
-        # After the v0.6.14 public cutover, active gates validate the current
-        # v0.6.14 public / v0.6.15 next-planned posture. Older release-state
+        # After the v0.6.15 public cutover, active gates validate the current
+        # v0.6.15 public / v0.6.16 next-planned posture. Older release-state
         # gates are historical and must not block current main.
-        assert "scripts/check_v0614_post_release_hygiene.py" in text
+        assert "scripts/check_v0615_post_release_hygiene.py" in text
         assert "scripts/check_v0612_release_cutover.py" not in text
         assert "scripts/check_v0612_release_prep.py --post-release" not in text
         assert "scripts/check_v0611_release_prep.py --post-release" not in text

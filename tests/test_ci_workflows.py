@@ -133,7 +133,7 @@ class TestCiWorkflow:
         assert "check_stable_release_decision.py" in ci_content
 
     def test_includes_current_post_release_readiness(self, ci_content: str) -> None:
-        assert "check_v0614_post_release_hygiene.py" in ci_content
+        assert "check_v0615_post_release_hygiene.py" in ci_content
         assert "check_v0612_release_cutover.py" not in ci_content
         assert "check_v0612_release_prep.py --post-release" not in ci_content
 
@@ -141,13 +141,13 @@ class TestCiWorkflow:
         # The current post-release hygiene step must not silence errors with || true.
         lines = ci_content.splitlines()
         for i, line in enumerate(lines):
-            if "check_v0614_post_release_hygiene.py" in line:
+            if "check_v0615_post_release_hygiene.py" in line:
                 # Check the same line and next line for broad || true
                 window = "\n".join(lines[i : i + 2])
                 assert "|| true" not in window, "post-release check must not use || true"
                 break
         else:
-            pytest.fail("v0.6.14 post-release hygiene step not found")
+            pytest.fail("v0.6.15 post-release hygiene step not found")
 
     def test_does_not_include_stale_release_prep_gate(self, ci_content: str) -> None:
         # After the v0.6.11 public cutover, the old release-prep gate must not remain.

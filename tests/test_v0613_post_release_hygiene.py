@@ -156,7 +156,7 @@ class TestFailures:
         original = mod.RELEASE_METADATA
         try:
             mod.RELEASE_METADATA = _make_release_metadata(
-                tmp_path, next_planned_release="v0.6.15"
+                tmp_path, next_planned_release="v0.6.13"
             )
             code, result = mod.run_check()
             assert code == 1
@@ -170,15 +170,15 @@ class TestFailures:
         original_init = mod.INIT_PY
         try:
             fake_pyproject = tmp_path / "pyproject.toml"
-            fake_pyproject.write_text('version = "0.6.15"\n', encoding="utf-8")
+            fake_pyproject.write_text('version = "0.6.14"\n', encoding="utf-8")
             fake_init = tmp_path / "__init__.py"
-            fake_init.write_text('__version__ = "0.6.15"\n', encoding="utf-8")
+            fake_init.write_text('__version__ = "0.6.14"\n', encoding="utf-8")
             mod.PYPROJECT = fake_pyproject
             mod.INIT_PY = fake_init
             code, result = mod.run_check()
             assert code == 1
-            assert any("0.6.14" in e and "pyproject.toml" in e.lower() for e in result["errors"])
-            assert any("0.6.14" in e and "__init__.py" in e.lower() for e in result["errors"])
+            assert any("0.6.15" in e and "pyproject.toml" in e.lower() for e in result["errors"])
+            assert any("0.6.15" in e and "__init__.py" in e.lower() for e in result["errors"])
         finally:
             mod.PYPROJECT = original_pyproject
             mod.INIT_PY = original_init

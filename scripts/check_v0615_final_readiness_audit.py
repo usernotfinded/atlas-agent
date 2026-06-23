@@ -24,6 +24,9 @@ ARTIFACT_TYPE = "v0615_final_readiness_audit"
 CURRENT_PUBLIC = "v0.6.14"
 NEXT_PLANNED = "v0.6.15"
 SOURCE_VERSION = "0.6.14"
+POST_RELEASE_CURRENT = "v0.6.15"
+POST_RELEASE_NEXT = "v0.6.16"
+POST_RELEASE_SOURCE = "0.6.15"
 
 AUDIT_MD = "docs/releases/v0.6.15-final-readiness-audit.md"
 AUDIT_JSON = "docs/releases/v0.6.15-final-readiness-audit.json"
@@ -381,6 +384,7 @@ def _check_markdown(path: Path, errors: list[str]) -> None:
 
 
 def _check_repository_posture(root: Path, errors: list[str]) -> None:
+    """Accept the audited pre-cutover state or the authorized post-cutover state."""
     metadata_path = root / RELEASE_METADATA
     metadata = _load_json(metadata_path, errors)
     if metadata is None:
@@ -391,18 +395,22 @@ def _check_repository_posture(root: Path, errors: list[str]) -> None:
         metadata.get("current_public_release"),
         metadata.get("next_planned_release"),
     )
-    expected = (SOURCE_VERSION, CURRENT_PUBLIC, NEXT_PLANNED)
-    if posture != expected:
-        errors.append(f"release metadata posture is not the audited v0.6.15 state: {posture!r}")
+    allowed = {
+        (SOURCE_VERSION, CURRENT_PUBLIC, NEXT_PLANNED),
+        (POST_RELEASE_SOURCE, POST_RELEASE_CURRENT, POST_RELEASE_NEXT),
+    }
+    if posture not in allowed:
+        errors.append(f"release metadata posture is not an audited v0.6.15 state: {posture!r}")
     if metadata.get("pypi_published") is not False:
         errors.append("release metadata pypi_published must be false")
 
     pyproject = _read(root / "pyproject.toml")
     init_text = _read(root / "src" / "atlas_agent" / "__init__.py")
-    if f'version = "{SOURCE_VERSION}"' not in pyproject:
-        errors.append("pyproject.toml version must remain 0.6.14")
-    if f'__version__ = "{SOURCE_VERSION}"' not in init_text:
-        errors.append("src/atlas_agent/__init__.py version must remain 0.6.14")
+    expected_source = str(metadata.get("source_version", ""))
+    if f'version = "{expected_source}"' not in pyproject:
+        errors.append("pyproject.toml version must match release metadata")
+    if f'__version__ = "{expected_source}"' not in init_text:
+        errors.append("src/atlas_agent/__init__.py version must match release metadata")
 
 
 def _check_gate_integration(root: Path, errors: list[str]) -> None:

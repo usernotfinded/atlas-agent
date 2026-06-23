@@ -13,7 +13,7 @@ source "$SCRIPT_DIR/python_env.sh"
 PYTHON_BIN="$(resolve_python_bin)"
 require_python_311 "$PYTHON_BIN"
 
-DEFAULT_RELEASE="v0.6.14"
+DEFAULT_RELEASE="v0.6.15"
 RELEASE="$DEFAULT_RELEASE"
 OUTPUT_DIR=""
 DETERMINISTIC=0

@@ -164,8 +164,8 @@ def _checker_root(tmp_path: Path) -> Path:
             shutil.copy2(source, destination)
         else:
             destination.write_text("placeholder\n")
-    (root / "pyproject.toml").write_text('version = "0.6.14"\n')
-    (root / "src/atlas_agent/__init__.py").write_text('__version__ = "0.6.14"\n')
+    (root / "pyproject.toml").write_text('version = "0.6.15"\n')
+    (root / "src/atlas_agent/__init__.py").write_text('__version__ = "0.6.15"\n')
     os.chmod(root / "scripts/demo_paper_portfolio_recheck.sh", 0o755)
     return root
 

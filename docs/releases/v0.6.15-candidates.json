@@ -1,8 +1,10 @@
 {
   "release_line": "v0.6.15",
   "status": "planning-only",
+  "record_state": "historical_pre_cutover",
   "current_public_release": "v0.6.14",
   "source_version": "0.6.14",
+  "next_planned_release": "v0.6.15",
   "pypi_published": false,
   "candidates": [
     {

@@ -24,6 +24,7 @@ ARTIFACT_TYPE = "v0615_paper_human_review_evidence"
 CURRENT_PUBLIC = "v0.6.14"
 NEXT_PLANNED = "v0.6.15"
 SOURCE_VERSION = "0.6.14"
+POST_RELEASE_SOURCE_VERSION = "0.6.15"
 
 EVIDENCE_MD = "docs/releases/v0.6.15-paper-human-review-evidence.md"
 EVIDENCE_JSON = "docs/releases/v0.6.15-paper-human-review-evidence.json"
@@ -291,18 +292,29 @@ def _check_markdown(path: Path, errors: list[str]) -> None:
 
 
 def _check_repository_version(root: Path, errors: list[str]) -> None:
+    """Accept the pre-cutover audited state or the authorized post-cutover state."""
     pyproject = _read(root / "pyproject.toml")
     init_py = _read(root / "src" / "atlas_agent" / "__init__.py")
-    if f'version = "{SOURCE_VERSION}"' not in pyproject:
-        errors.append("Source/package version must remain 0.6.14 in pyproject.toml")
-    if f'__version__ = "{SOURCE_VERSION}"' not in init_py:
-        errors.append("Source/package version must remain 0.6.14 in src/atlas_agent/__init__.py")
+    source_ok = (
+        f'version = "{SOURCE_VERSION}"' in pyproject
+        and f'__version__ = "{SOURCE_VERSION}"' in init_py
+    ) or (
+        f'version = "{POST_RELEASE_SOURCE_VERSION}"' in pyproject
+        and f'__version__ = "{POST_RELEASE_SOURCE_VERSION}"' in init_py
+    )
+    if not source_ok:
+        errors.append("Source/package version must match the audited v0.6.15 state (0.6.14 or 0.6.15)")
 
     release_metadata = _read(root / "docs" / "releases" / "release-metadata.json")
-    if '"current_public_release": "v0.6.14"' not in release_metadata:
-        errors.append("Release metadata current_public_release must remain v0.6.14")
-    if '"next_planned_release": "v0.6.15"' not in release_metadata:
-        errors.append("Release metadata next_planned_release must remain v0.6.15")
+    metadata_ok = (
+        '"current_public_release": "v0.6.14"' in release_metadata
+        and '"next_planned_release": "v0.6.15"' in release_metadata
+    ) or (
+        '"current_public_release": "v0.6.15"' in release_metadata
+        and '"next_planned_release": "v0.6.16"' in release_metadata
+    )
+    if not metadata_ok:
+        errors.append("Release metadata must match the audited v0.6.15 state")
     if '"pypi_published": false' not in release_metadata:
         errors.append("Release metadata pypi_published must remain false")
 

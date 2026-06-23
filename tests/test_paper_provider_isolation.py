@@ -207,9 +207,9 @@ class TestCheckerOnCurrentRepo:
         assert result.returncode == 0, result.stdout + result.stderr
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.6.14"
-        assert data["current_public_tag"] == "v0.6.14"
-        assert data["next_planned_tag"] == "v0.6.15"
+        assert data["package_version"] == "0.6.15"
+        assert data["current_public_tag"] == "v0.6.15"
+        assert data["next_planned_tag"] == "v0.6.16"
         assert data["pypi_published"] is False
         assert data["errors"] == []
 

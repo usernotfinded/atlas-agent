@@ -27,6 +27,9 @@ SOURCE_VERSION = "0.6.13"
 POST_RELEASE_CURRENT = "v0.6.14"
 POST_RELEASE_NEXT = "v0.6.15"
 POST_RELEASE_SOURCE = "0.6.14"
+POST_V0615_CURRENT = "v0.6.15"
+POST_V0615_NEXT = "v0.6.16"
+POST_V0615_SOURCE = "0.6.15"
 
 AUDIT_MD = "docs/releases/v0.6.14-final-readiness-audit.md"
 AUDIT_JSON = "docs/releases/v0.6.14-final-readiness-audit.json"
@@ -379,6 +382,7 @@ def _check_repository_posture(root: Path, errors: list[str]) -> None:
     allowed = {
         (SOURCE_VERSION, CURRENT_PUBLIC, NEXT_PLANNED),
         (POST_RELEASE_SOURCE, POST_RELEASE_CURRENT, POST_RELEASE_NEXT),
+        (POST_V0615_SOURCE, POST_V0615_CURRENT, POST_V0615_NEXT),
     }
     if posture not in allowed:
         errors.append(f"release metadata posture is not an audited v0.6.14 state: {posture!r}")

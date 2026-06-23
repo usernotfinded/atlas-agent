@@ -22,9 +22,9 @@ from pathlib import Path
 from typing import Any
 
 
-CURRENT_PUBLIC = "v0.6.14"
-NEXT_PLANNED = "v0.6.15"
-SOURCE_VERSION = "0.6.14"
+CURRENT_PUBLIC = "v0.6.15"
+NEXT_PLANNED = "v0.6.16"
+SOURCE_VERSION = "0.6.15"
 
 REQUIRED_DOCS = [
     "docs/paper-strategy-walk-forward.md",
@@ -240,9 +240,9 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
     init_py = _read(root / "src" / "atlas_agent" / "__init__.py")
     metadata_path = root / "docs" / "releases" / "release-metadata.json"
     if SOURCE_VERSION not in pyproject:
-        errors.append("Source/package version must be 0.6.14 in pyproject.toml")
+        errors.append("Source/package version must be 0.6.15 in pyproject.toml")
     if SOURCE_VERSION not in init_py:
-        errors.append("Source/package version must be 0.6.14 in src/atlas_agent/__init__.py")
+        errors.append("Source/package version must be 0.6.15 in src/atlas_agent/__init__.py")
     if metadata_path.exists():
         try:
             metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
