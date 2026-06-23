@@ -129,6 +129,26 @@ def test_safety_sensitive_commands_present_in_contract(contract: dict) -> None:
             assert sub in contract["subcommands"][family]
 
 
+def test_agent_autonomous_commands_present_in_contract_and_parser(
+    contract: dict, real_parser: argparse.ArgumentParser
+) -> None:
+    """FINDING-02: autonomous-paper and autonomous-scorecard must not silently disappear."""
+    required = {"autonomous-paper", "autonomous-scorecard"}
+
+    contract_agent = contract.get("subcommands", {}).get("agent", [])
+    missing_in_contract = required - set(contract_agent)
+    assert not missing_in_contract, (
+        f"Missing agent subcommands in contract: {sorted(missing_in_contract)}"
+    )
+
+    actual = CHECK_MOD._collect_parser_commands(real_parser)
+    parser_agent = actual.get("agent", [])
+    missing_in_parser = required - set(parser_agent)
+    assert not missing_in_parser, (
+        f"Missing agent subcommands in parser: {sorted(missing_in_parser)}"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Negative cases with temporary mutated contracts
 # ---------------------------------------------------------------------------

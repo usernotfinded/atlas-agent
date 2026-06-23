@@ -3104,40 +3104,117 @@ def _provider_configured(workspace_path: Path | None) -> bool:
     )
 
 
+def _display_live_status(config: AtlasConfig | None) -> tuple[bool, bool, str]:
+    """Read-only, side-effect-free live broker status for CLI display.
+
+    Returns (credentials_configured, can_submit, message).  No broker or
+    kill-switch controller is instantiated, so no directories are created
+    and no state files are written merely to print status.
+    """
+    if config is None:
+        return False, False, "live broker is not configured"
+
+    broker_id = config.live_broker
+    if broker_id in {"", "none"}:
+        return False, False, "live broker is not configured"
+
+    known_brokers = {"alpaca", "binance", "ccxt", "ibkr_stub"}
+    if broker_id not in known_brokers:
+        return False, False, "live broker is not supported"
+
+    # Credentials presence check only; values are never loaded or decrypted.
+    if broker_id == "alpaca":
+        creds_ok = bool(os.getenv("ALPACA_API_KEY")) and bool(os.getenv("ALPACA_SECRET_KEY"))
+    elif broker_id == "binance":
+        creds_ok = bool(os.getenv("BINANCE_API_KEY")) or bool(os.getenv("BINANCE_TESTNET_API_KEY"))
+    elif broker_id == "ccxt":
+        creds_ok = bool(os.getenv("CCXT_API_KEY")) or bool(os.getenv("EXCHANGE_API_KEY"))
+    else:  # ibkr_stub
+        creds_ok = True
+
+    if not creds_ok:
+        return False, False, "live broker credentials are missing"
+
+    # Config-flag gates (read-only).
+    if not config.broker.enable_live_submit:
+        return creds_ok, False, "broker.enable_live_submit is false"
+    if not config.broker.enable_live_trading:
+        return creds_ok, False, "broker.enable_live_trading is false"
+    if config.trading_mode != "live":
+        return creds_ok, False, f"trading_mode is {config.trading_mode}"
+    if config.safety.order_approval_mode == "disabled_live":
+        return creds_ok, False, "order_approval_mode disables live trading"
+    if config.risk.allow_leverage:
+        return creds_ok, False, "allow_leverage is true"
+
+    # Read kill-switch state directly without instantiating KillSwitchController.
+    ks_path = Path(config.memory_dir) / "kill_switch_state.json"
+    ks_enabled_flag = Path(config.memory_dir) / "kill_switch.enabled"
+    ks_enabled = False
+    ks_mode = "soft"
+    if ks_path.exists():
+        try:
+            raw = json.loads(ks_path.read_text(encoding="utf-8"))
+            ks_enabled = bool(raw.get("enabled", False))
+            ks_mode = str(raw.get("mode", "soft")).strip().lower()
+        except (json.JSONDecodeError, OSError, ValueError):
+            return creds_ok, False, "kill switch state is unreadable"
+    elif ks_enabled_flag.exists():
+        ks_enabled = True
+        ks_mode = "soft"
+
+    if ks_enabled and ks_mode != "normal":
+        return creds_ok, False, f"kill switch is {ks_mode}"
+
+    # Opt-in record check (read-only file read via existing helper).
+    from atlas_agent.brokers.resolver import _live_submit_opt_in_status
+
+    opt_in = _live_submit_opt_in_status(config)
+    if not opt_in.valid:
+        return creds_ok, False, opt_in.message
+
+    return creds_ok, True, "ready"
+
+
 def _print_first_run_onboarding(
     *,
     config: AtlasConfig | None,
     config_error: str | None,
     resolution: WorkspaceResolution,
 ) -> None:
-    from atlas_agent.brokers.resolver import BrokerResolver
-
     _print_welcome()
     workspace_configured = resolution.path is not None
     provider_configured = _provider_configured(resolution.path)
 
     if config_error:
-        trading_mode = "not configured"
-        live_enabled = "no"
         broker_mode = "not configured"
     elif config is not None:
-        trading_mode = config.trading_mode
-        live_enabled = "yes" if config.enable_live_trading else "no"
         broker_mode = config.live_broker if config.live_broker not in {"", "none"} else "paper"
     else:
-        trading_mode = "not configured"
-        live_enabled = "no"
         broker_mode = "not configured"
 
-    live_status = BrokerResolver(config).resolve_status("live")
-    live_creds = live_status.credentials_configured
+    live_creds, can_submit, live_message = _display_live_status(config)
+
+    if not workspace_configured:
+        effective_mode = "paper (no workspace)"
+    elif config_error or config is None or broker_mode == "not configured":
+        effective_mode = "not configured"
+    elif broker_mode == "paper":
+        effective_mode = "paper"
+    else:
+        effective_mode = f"{broker_mode} (live config)"
 
     print("Current setup status:")
     print(f"- workspace configured: {'yes' if workspace_configured else 'no'}")
     print(f"- provider configured: {'yes' if provider_configured else 'no'}")
     print(f"- broker mode: {broker_mode}")
     print(f"- live broker credentials: {'configured' if live_creds else 'not configured'}")
-    print(f"- live trading enabled: {live_enabled}")
+    print(f"- effective mode: {effective_mode}")
+    if config is not None and config.enable_live_trading and not can_submit:
+        print("- live trading config flag: set")
+        print(f"- live submit possible: no (missing: {live_message})")
+    else:
+        print(f"- live submit possible: {'yes' if can_submit else 'no'}")
     if config_error:
         print(f"- config warning: {config_error}")
     if resolution.warning:
