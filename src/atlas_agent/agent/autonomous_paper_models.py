@@ -4,7 +4,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
-from atlas_agent.backtest.models import BacktestFill, BacktestPosition
+from atlas_agent.backtest.models import BacktestFill, BacktestOrder, BacktestPosition
 
 
 class StatefulPaperConfig(BaseModel):
@@ -16,8 +16,8 @@ class StatefulPaperConfig(BaseModel):
     output_dir: str
     state_dir: str
     initial_cash: float = Field(gt=0, default=10_000.0)
-    commission_bps: float = Field(ge=0, default=0.0)
-    slippage_bps: float = Field(ge=0, default=0.0)
+    commission_bps: float = Field(ge=0, default=1.0)
+    slippage_bps: float = Field(ge=0, default=1.0)
     max_orders_per_cycle: int = Field(gt=0, default=10)
     fill_timing: Literal["same_bar", "next_bar"] = "next_bar"
 
@@ -37,6 +37,7 @@ class StatefulPaperState(BaseModel):
     positions: dict[str, BacktestPosition]
     cursor: StatefulPaperCursor
     fill_history: list[BacktestFill]
+    pending_orders: list[BacktestOrder] = Field(default_factory=list)
     decision_refs: list[dict[str, Any]]
     metrics_history: list[dict[str, Any]]
     created_at: str

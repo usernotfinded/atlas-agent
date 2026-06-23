@@ -538,3 +538,48 @@ class TestKernelCycle:
         assert len(failed_events) == 1
         assert failed_events[0]["payload"]["error_type"] == "RuntimeError"
         assert any(e["event_type"] == "autonomous_paper_fill" for e in events)
+
+    def test_kernel_uses_fill_bar_for_execution(self, tmp_path: Path):
+        audit_writer = AuditWriter(tmp_path / "audit.jsonl")
+        audit_writer.start_run("run-fill-bar")
+        signal_bar = _make_bar(close=100.0)
+        fill_bar = _make_bar(close=105.0)
+        order = BacktestOrder(
+            order_id="order-001",
+            timestamp=signal_bar.timestamp,
+            symbol="DEMO-SYMBOL",
+            side="buy",
+            quantity=1.0,
+            price=100.0,
+        )
+        config = BacktestConfig(
+            run_id="run-fill-bar",
+            symbol="DEMO-SYMBOL",
+            data_path=str(SAMPLE_CSV),
+            slippage_bps=0.0,
+            commission_bps=0.0,
+        )
+        executor = ExecutionSimulator(config)
+        risk_manager = _permissive_risk_manager()
+
+        result = run_kernel_cycle(
+            bar=signal_bar,
+            fill_bar=fill_bar,
+            bar_index=0,
+            bars_so_far=[signal_bar],
+            cash=10000.0,
+            positions={},
+            pending_orders=[],
+            strategy=_MockStrategy(orders=[order]),
+            executor=executor,
+            risk_manager=risk_manager,
+            symbol="DEMO-SYMBOL",
+            run_id="run-fill-bar",
+            config=config,
+            audit_writer=audit_writer,
+        )
+
+        assert result.decision_state == "paper_executed"
+        assert len(result.fills) == 1
+        assert result.fills[0].price == pytest.approx(105.0)
+        assert result.fills[0].timestamp == fill_bar.timestamp

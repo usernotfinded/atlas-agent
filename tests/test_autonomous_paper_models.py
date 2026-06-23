@@ -113,8 +113,8 @@ class TestStatefulPaperModels:
             state_dir="state",
         )
         assert config.initial_cash == pytest.approx(10_000.0)
-        assert config.commission_bps == pytest.approx(0.0)
-        assert config.slippage_bps == pytest.approx(0.0)
+        assert config.commission_bps == pytest.approx(1.0)
+        assert config.slippage_bps == pytest.approx(1.0)
         assert config.max_orders_per_cycle == 10
         assert config.fill_timing == "next_bar"
 

@@ -20,7 +20,17 @@ from atlas_agent.backtest.data import load_market_data
 from atlas_agent.config import AtlasConfig
 from atlas_agent.safety.kill_switch import KillSwitchController
 
+import pytest
+
 SAMPLE_CSV = Path(__file__).resolve().parents[1] / "data" / "sample" / "ohlcv.csv"
+
+
+def _read_fills(fills_path: str | Path) -> list[dict[str, object]]:
+    return [
+        json.loads(line)
+        for line in Path(fills_path).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def _make_config(tmp_path: Path, **overrides: object) -> AtlasConfig:
@@ -308,3 +318,107 @@ def test_wrapper_entry_point_returns_result(tmp_path: Path):
     assert result.status == "completed"
     assert result.bars_processed_this_run == 2
     assert Path(result.checkpoint_path).exists()
+
+
+def test_runner_next_bar_fill_uses_later_price(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(
+        atlas_config,
+        tmp_path,
+        fill_timing="next_bar",
+        commission_bps=0.0,
+        slippage_bps=0.0,
+        strategy_parameters={"position_pct": 0.2},
+    )
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+    assert result.status == "completed"
+    fills = _read_fills(Path(config.output_dir) / f"{config.run_id}-fills.jsonl")
+    assert len(fills) == 1
+    bars = load_market_data(config.data_path, symbol=config.symbol)
+    assert fills[0]["price"] == pytest.approx(bars[1].close)
+
+
+def test_runner_avoids_same_bar_lookahead(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(
+        atlas_config,
+        tmp_path,
+        fill_timing="next_bar",
+        commission_bps=0.0,
+        slippage_bps=0.0,
+        strategy_parameters={"position_pct": 0.2},
+    )
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+    assert result.status == "completed"
+    fills = _read_fills(Path(config.output_dir) / f"{config.run_id}-fills.jsonl")
+    assert len(fills) == 1
+    bars = load_market_data(config.data_path, symbol=config.symbol)
+    assert fills[0]["price"] != pytest.approx(bars[0].close)
+
+
+def test_runner_commission_reduces_ending_cash(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    base_config = _make_stateful_config(
+        atlas_config,
+        tmp_path,
+        run_id="base-run",
+        fill_timing="same_bar",
+        commission_bps=0.0,
+        slippage_bps=0.0,
+        strategy_parameters={"position_pct": 0.2},
+    )
+    base_result = run_stateful_autonomous_paper(
+        config=base_config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+    assert base_result.metrics is not None
+
+    comm_config = _make_stateful_config(
+        atlas_config,
+        tmp_path,
+        run_id="comm-run",
+        fill_timing="same_bar",
+        commission_bps=10.0,
+        slippage_bps=0.0,
+        strategy_parameters={"position_pct": 0.2},
+    )
+    comm_result = run_stateful_autonomous_paper(
+        config=comm_config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+    assert comm_result.metrics is not None
+
+    assert comm_result.metrics.ending_cash < base_result.metrics.ending_cash
+    assert comm_result.metrics.ending_equity < base_result.metrics.ending_equity
+
+
+def test_runner_slippage_changes_fill_price(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(
+        atlas_config,
+        tmp_path,
+        fill_timing="same_bar",
+        commission_bps=0.0,
+        slippage_bps=10.0,
+        strategy_parameters={"position_pct": 0.2},
+    )
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=1,
+    )
+    assert result.status == "completed"
+    fills = _read_fills(Path(config.output_dir) / f"{config.run_id}-fills.jsonl")
+    assert len(fills) == 1
+    bars = load_market_data(config.data_path, symbol=config.symbol)
+    assert fills[0]["price"] != pytest.approx(bars[0].close)

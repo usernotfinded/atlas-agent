@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from atlas_agent.agent.autonomous_paper_kernel import run_kernel_cycle
+from atlas_agent.agent.autonomous_paper_kernel import apply_fill, run_kernel_cycle
 from atlas_agent.agent.autonomous_paper_models import (
     StatefulPaperConfig,
     StatefulPaperCursor,
@@ -19,7 +19,7 @@ from atlas_agent.audit import AuditWriter
 from atlas_agent.audit.redaction import redact_payload
 from atlas_agent.backtest.data import load_market_data
 from atlas_agent.backtest.execution import ExecutionSimulator
-from atlas_agent.backtest.models import BacktestConfig, BacktestPosition
+from atlas_agent.backtest.models import BacktestConfig, BacktestOrder, BacktestPosition
 from atlas_agent.backtest.registry import get_strategy
 from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger
@@ -445,7 +445,14 @@ def run_stateful_autonomous_paper(
         kill_switch_enabled=atlas_config.safety.kill_switch_enabled,
     )
 
-    pending_orders: list = []
+    # Fill timing model:
+    # - same_bar: orders generated on bar i are risk-evaluated and filled on bar i.
+    # - next_bar: orders generated on bar i are risk-evaluated on bar i, stored as
+    #   pending_orders, and filled on bar i+1 using bar i+1 as the fill bar. This
+    #   prevents same-bar lookahead because the fill price is not known when the
+    #   signal is generated.
+    fill_timing = config.fill_timing
+    pending_orders: list[BacktestOrder] = list(state.pending_orders)
     bars_processed_this_run = 0
     total_rejections = 0
 
@@ -475,6 +482,31 @@ def run_stateful_autonomous_paper(
             if bar_hash in state.cursor.processed_bar_hashes:
                 continue
 
+            # 1. Fill any orders queued from the previous bar (next-bar semantics).
+            if fill_timing == "next_bar" and pending_orders:
+                for order in pending_orders:
+                    fill = executor.process_order(order, bar)
+                    if fill:
+                        state.cash, state.positions = apply_fill(
+                            fill=fill,
+                            cash=state.cash,
+                            positions=state.positions,
+                            allow_shorting=risk_manager.limits.allow_shorting,
+                        )
+                        state.fill_history.append(deepcopy(fill))
+                        fills_file.write(
+                            json.dumps(redact_payload(fill.model_dump(mode="json")))
+                            + "\n"
+                        )
+                        audit_writer.write_event(
+                            "autonomous_paper_fill",
+                            run_id=config.run_id,
+                            iteration=bar_index,
+                            payload=redact_payload(fill.model_dump(mode="json")),
+                        )
+                pending_orders = []
+
+            # 2. Run decision/risk cycle for the current bar.
             result = run_kernel_cycle(
                 bar=bar,
                 bar_index=bar_index,
@@ -490,11 +522,19 @@ def run_stateful_autonomous_paper(
                 config=runtime_config,
                 audit_writer=audit_writer,
                 max_orders_per_cycle=config.max_orders_per_cycle,
+                execute_fills=(fill_timing == "same_bar"),
             )
 
-            state.cash = result.cash
-            state.positions = deepcopy(result.positions)
-            state.fill_history.extend(deepcopy(result.fills))
+            if fill_timing == "same_bar":
+                state.cash = result.cash
+                state.positions = deepcopy(result.positions)
+                state.fill_history.extend(deepcopy(result.fills))
+                state.pending_orders = []
+            else:
+                # Queue allowed orders to be filled on the next bar.
+                pending_orders = list(result.allowed_orders)
+                state.pending_orders = list(pending_orders)
+
             state.cursor.last_processed_bar_index = bar_index
             state.cursor.last_processed_bar_timestamp = bar.timestamp.isoformat()
             state.cursor.processed_bar_hashes.append(bar_hash)

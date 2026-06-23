@@ -23,6 +23,7 @@ class KernelCycleResult:
     risk_result: dict[str, Any]
     fills: list[BacktestFill] = field(default_factory=list)
     rejected_orders: list[BacktestOrder] = field(default_factory=list)
+    allowed_orders: list[BacktestOrder] = field(default_factory=list)
     cash: float = 0.0
     positions: dict[str, BacktestPosition] = field(default_factory=dict)
     audit_event_ids: list[str] = field(default_factory=list)
@@ -161,6 +162,7 @@ def _order_to_payload(order: BacktestOrder) -> dict[str, Any]:
 def run_kernel_cycle(
     *,
     bar: MarketBar,
+    fill_bar: MarketBar | None = None,
     bar_index: int,
     bars_so_far: list[MarketBar],
     cash: float,
@@ -174,11 +176,17 @@ def run_kernel_cycle(
     config: BacktestConfig,
     audit_writer: AuditWriter,
     max_orders_per_cycle: int = 10,
+    execute_fills: bool = True,
 ) -> KernelCycleResult:
     """Execute one execution-neutral cycle.
 
     Generates orders, evaluates each through RiskManager in paper mode,
     simulates allowed fills sequentially, and returns the updated state.
+
+    Risk evaluation uses ``bar``; fill simulation uses ``fill_bar`` if
+    provided, otherwise ``bar``. When ``execute_fills`` is False, allowed
+    orders are captured in ``allowed_orders`` without modifying cash or
+    positions.
     """
     context = StrategyContext(
         run_id=run_id,
@@ -239,6 +247,7 @@ def run_kernel_cycle(
 
         fills: list[BacktestFill] = []
         rejected_orders: list[BacktestOrder] = []
+        allowed_orders: list[BacktestOrder] = []
         blocked_reasons: list[str] = []
         order_results: list[dict[str, Any]] = []
         audit_event_ids: list[str] = []
@@ -272,22 +281,25 @@ def run_kernel_cycle(
             order_results.append(order_result)
 
             if risk_decision.allowed and risk_decision.status == "allowed":
-                fill = executor.process_order(order, bar)
-                if fill:
-                    cash, positions = apply_fill(
-                        fill=fill,
-                        cash=cash,
-                        positions=positions,
-                        allow_shorting=risk_manager.limits.allow_shorting,
-                    )
-                    fills.append(fill)
-                    fill_event = audit_writer.write_event(
-                        "autonomous_paper_fill",
-                        run_id=run_id,
-                        iteration=bar_index,
-                        payload=redact_payload(fill.model_dump(mode="json")),
-                    )
-                    audit_event_ids.append(fill_event.event_id)
+                if execute_fills:
+                    fill = executor.process_order(order, fill_bar if fill_bar is not None else bar)
+                    if fill:
+                        cash, positions = apply_fill(
+                            fill=fill,
+                            cash=cash,
+                            positions=positions,
+                            allow_shorting=risk_manager.limits.allow_shorting,
+                        )
+                        fills.append(fill)
+                        fill_event = audit_writer.write_event(
+                            "autonomous_paper_fill",
+                            run_id=run_id,
+                            iteration=bar_index,
+                            payload=redact_payload(fill.model_dump(mode="json")),
+                        )
+                        audit_event_ids.append(fill_event.event_id)
+                else:
+                    allowed_orders.append(order)
             else:
                 rejected_orders.append(order)
                 blocked_reason = risk_decision.reason or "; ".join(
@@ -296,11 +308,12 @@ def run_kernel_cycle(
                 if blocked_reason:
                     blocked_reasons.append(blocked_reason)
 
-        if fills and not rejected_orders:
+        executed_or_allowed = fills if execute_fills else allowed_orders
+        if executed_or_allowed and not rejected_orders:
             decision_state = "paper_executed"
-        elif rejected_orders and not fills:
+        elif rejected_orders and not executed_or_allowed:
             decision_state = "risk_blocked"
-        elif fills and rejected_orders:
+        elif executed_or_allowed and rejected_orders:
             decision_state = "partially_executed"
         else:
             decision_state = "no_trade"
@@ -350,6 +363,7 @@ def run_kernel_cycle(
             risk_result=risk_result,
             fills=fills,
             rejected_orders=rejected_orders,
+            allowed_orders=allowed_orders,
             cash=cash,
             positions=positions,
             audit_event_ids=audit_event_ids,
