@@ -68,12 +68,19 @@ def load_state_or_initialize(
     resume: bool = False,
 ) -> StatefulPaperState:
     state_path = _state_path(state_dir, run_id)
+    checkpoint_path = _checkpoint_path(state_dir, run_id)
     if state_path.exists() and resume:
         try:
             data = json.loads(state_path.read_text(encoding="utf-8"))
             return StatefulPaperState.model_validate(data)
         except Exception as exc:
             raise ValueError(f"malformed_state: {type(exc).__name__}") from None
+    if checkpoint_path.exists() and resume:
+        try:
+            data = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            return StatefulPaperState.model_validate(data)
+        except Exception as exc:
+            raise ValueError(f"corrupted_checkpoint: {type(exc).__name__}") from None
     return _initialize_state(config)
 
 
@@ -106,7 +113,7 @@ def _safe_error(_exc: Exception) -> str:
     name = _exc.__class__.__name__
     msg = str(_exc)
     # Preserve our own error categories while redacting paths and details.
-    for category in ("malformed_state", "state_mismatch"):
+    for category in ("malformed_state", "state_mismatch", "corrupted_checkpoint"):
         if msg.startswith(category):
             return f"{category}: error details redacted"
     return f"{name}: error details redacted"

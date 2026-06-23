@@ -386,6 +386,66 @@ class TestKernelCycle:
         for ref in forbidden:
             assert ref not in source, f"Forbidden import/reference found: {ref}"
 
+    def test_kernel_risk_blocked_does_not_affect_later_orders(self, tmp_path: Path):
+        audit_writer = AuditWriter(tmp_path / "audit.jsonl")
+        audit_writer.start_run("run-blocked-then-allowed")
+        bar = _make_bar(close=100.0)
+        orders = [
+            BacktestOrder(
+                order_id="order-001",
+                timestamp=bar.timestamp,
+                symbol="DEMO-SYMBOL",
+                side="buy",
+                quantity=100.0,
+                price=100.0,
+            ),
+            BacktestOrder(
+                order_id="order-002",
+                timestamp=bar.timestamp,
+                symbol="DEMO-SYMBOL",
+                side="buy",
+                quantity=1.0,
+                price=100.0,
+            ),
+        ]
+        risk_manager = RiskManager(
+            limits=RiskLimits(
+                max_position_notional=1_000_000.0,
+                max_single_trade_notional=500.0,
+                minimum_confidence=0.0,
+                allowed_symbols=None,
+                blocked_symbols=set(),
+                allow_shorting=False,
+            ),
+        )
+        config = BacktestConfig(run_id="run-blocked-then-allowed", symbol="DEMO-SYMBOL", data_path=str(SAMPLE_CSV))
+        executor = ExecutionSimulator(config)
+
+        result = run_kernel_cycle(
+            bar=bar,
+            bar_index=0,
+            bars_so_far=[bar],
+            cash=10000.0,
+            positions={},
+            pending_orders=[],
+            strategy=_MockStrategy(orders=orders),
+            executor=executor,
+            risk_manager=risk_manager,
+            symbol="DEMO-SYMBOL",
+            run_id="run-blocked-then-allowed",
+            config=config,
+            audit_writer=audit_writer,
+        )
+
+        assert result.decision_state == "partially_executed"
+        assert len(result.rejected_orders) == 1
+        assert len(result.fills) == 1
+        # The second order must have been evaluated against the original cash and
+        # positions, not a portfolio mutated by the blocked first order.
+        assert result.fills[0].quantity == pytest.approx(1.0)
+        assert result.cash == pytest.approx(9900.0)
+        assert result.positions["DEMO-SYMBOL"].quantity == pytest.approx(1.0)
+
     def test_kernel_mixed_fill_and_rejection_is_partially_executed(self, tmp_path: Path):
         audit_writer = AuditWriter(tmp_path / "audit.jsonl")
         audit_writer.start_run("run-partial")

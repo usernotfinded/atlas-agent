@@ -239,6 +239,9 @@ def test_runner_kill_switch_blocks(tmp_path: Path):
         kill_switch=controller,
     )
     assert result.status == "blocked"
+    assert result.bars_processed_this_run == 0
+    fills = _read_fills(Path(config.output_dir) / f"{config.run_id}-fills.jsonl")
+    assert len(fills) == 0
 
 
 def test_runner_malformed_state_error_is_redacted(tmp_path: Path):
@@ -454,3 +457,91 @@ def test_runner_writes_metrics_file_with_expected_keys(tmp_path: Path):
         "notes",
     ):
         assert key in data, f"missing metric key: {key}"
+
+
+def test_runner_corrupted_checkpoint_fails_closed(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(atlas_config, tmp_path)
+    first = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+    assert first.status == "completed"
+
+    state_path = _state_path(config.state_dir, config.run_id)
+    checkpoint_path = Path(config.state_dir) / f"{config.run_id}-checkpoint.json"
+    assert checkpoint_path.exists()
+    state_path.unlink()
+
+    # Corrupt the checkpoint JSON by truncating it.
+    raw = checkpoint_path.read_text(encoding="utf-8")
+    checkpoint_path.write_text(raw[: len(raw) // 2], encoding="utf-8")
+
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        resume=True,
+        max_cycles=2,
+    )
+    assert result.status == "failed"
+    assert any("corrupted_checkpoint" in e.lower() for e in result.errors)
+
+
+def _read_decisions(decisions_path: str | Path) -> list[dict[str, object]]:
+    return [
+        json.loads(line)
+        for line in Path(decisions_path).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+def _strip_non_deterministic(decisions: list[dict], fills: list[dict]) -> tuple[list, list]:
+    """Remove audit event ids and run-specific paths from decisions/fills."""
+    clean_decisions = []
+    for d in decisions:
+        d = dict(d)
+        d.pop("audit_event_ids", None)
+        clean_decisions.append(d)
+    clean_fills = []
+    for f in fills:
+        f = dict(f)
+        f.pop("fill_id", None)
+        clean_fills.append(f)
+    return clean_decisions, clean_fills
+
+
+def test_runner_deterministic_replay(tmp_path: Path):
+    run_id = "replay-run-001"
+
+    def run(root: Path):
+        atlas_config = _make_config(root)
+        config = _make_stateful_config(
+            atlas_config,
+            root,
+            run_id=run_id,
+            fill_timing="same_bar",
+            commission_bps=0.0,
+            slippage_bps=0.0,
+            strategy_parameters={"position_pct": 0.2},
+        )
+        result = run_stateful_autonomous_paper(
+            config=config,
+            atlas_config=atlas_config,
+            max_cycles=3,
+        )
+        assert result.status == "completed"
+        decisions = _read_decisions(
+            Path(config.output_dir) / f"{config.run_id}-decisions.jsonl"
+        )
+        fills = _read_fills(Path(config.output_dir) / f"{config.run_id}-fills.jsonl")
+        return decisions, fills
+
+    decisions_a, fills_a = run(tmp_path / "a")
+    decisions_b, fills_b = run(tmp_path / "b")
+
+    decisions_a, fills_a = _strip_non_deterministic(decisions_a, fills_a)
+    decisions_b, fills_b = _strip_non_deterministic(decisions_b, fills_b)
+
+    assert decisions_a == decisions_b
+    assert fills_a == fills_b
