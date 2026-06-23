@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - CAND-001: Paper Autonomous Decision Loop and Shadow-Live Readiness Contract.
 - CAND-002: Autonomous Paper Decision Quality Scorecard and Promotion Gate.
+- CAND-003: execution-neutral autonomous trading kernel and stateful paper runner with resume, duplicate-prevention, next-bar fills, configurable costs, and honest trading metrics.
 - `atlas agent autonomous-paper` command for deterministic, paper-only autonomous decision loops on local sample/CSV data.
 - `atlas agent autonomous-scorecard` command for deterministic offline evaluation of autonomous-paper artifacts.
 - `src/atlas_agent/agent/autonomous_paper.py` decision loop with `RiskManager` paper-mode gating, local execution simulation, audit events, and manifest generation.
@@ -30,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Live trading and live submit remain disabled by default; provider and broker execution defaults are unchanged.
 - The autonomous loop and scorecard are paper-only and fail closed on missing configuration, malformed artifacts, or live-mode CLI arguments.
 - The scorecard gate defaults to `blocked` and never enables shadow-live execution.
+- CAND-003 remains paper-only and does not enable live trading, shadow-live, broker submission, provider execution, or credential loading.
 - No protected runtime safety boundary changed in this planning phase.
 
 ## [0.6.15] - 2026-06-22

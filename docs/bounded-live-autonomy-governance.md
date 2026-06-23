@@ -52,8 +52,16 @@ planning only):
   offline, produces a fail-closed promotion state, and does not enable
   shadow-live or live trading. It loads no credentials and calls no brokers or
   providers.
+- CAND-003 added an **execution-neutral trading kernel and stateful paper
+  runner** that persists portfolio state, resumes from the last processed bar,
+  prevents duplicate bar processing, and produces honest paper-only trading
+  metrics with configurable costs and next-bar fill semantics. It does not
+  implement shadow-live, live submit, broker submission, provider execution, or
+  credential loading.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
+- `v0.6.16` remains planning-only: no source/package bump, tag, GitHub Release,
+  or PyPI publication is authorized by this documentation.
 - No profit, risk elimination, claims that live trading is safe, or
   autonomous-trading-readiness claims are made.
 
