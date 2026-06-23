@@ -481,6 +481,7 @@ def run_stateful_autonomous_paper_loop(
     audit_writer: AuditWriter | None = None,
     event_logger: EventLogger | None = None,
     run_id: str | None = None,
+    kill_switch: Any | None = None,
 ) -> StatefulPaperResult:
     """Backward-compatible entry point for stateful autonomous paper."""
     from atlas_agent.agent.autonomous_paper_models import StatefulPaperConfig
@@ -535,4 +536,5 @@ def run_stateful_autonomous_paper_loop(
         max_cycles=max_cycles,
         audit_writer=audit_writer,
         event_logger=event_logger,
+        kill_switch=kill_switch,
     )

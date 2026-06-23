@@ -135,6 +135,36 @@ def _kill_switch_enabled(kill_switch: Any) -> bool:
     return False
 
 
+def _build_result(
+    *,
+    config: StatefulPaperConfig,
+    status: str,
+    bars_processed_this_run: int,
+    total_bars_processed: int,
+    errors: list[str],
+    metrics: StatefulPaperMetrics | None = None,
+    checkpoint_path: str | None = None,
+    audit_log_path: str | Path,
+) -> StatefulPaperResult:
+    output_dir = Path(config.output_dir)
+    state_dir = Path(config.state_dir)
+    return StatefulPaperResult(
+        run_id=config.run_id,
+        status=status,
+        bars_processed_this_run=bars_processed_this_run,
+        total_bars_processed=total_bars_processed,
+        decisions_path=str(output_dir / f"{config.run_id}-decisions.jsonl"),
+        fills_path=str(output_dir / f"{config.run_id}-fills.jsonl"),
+        metrics_path=str(output_dir / f"{config.run_id}-metrics.json"),
+        checkpoint_path=checkpoint_path
+        or str(_checkpoint_path(state_dir, config.run_id)),
+        manifest_path=str(output_dir / f"{config.run_id}-manifest.json"),
+        audit_log_path=str(audit_log_path),
+        metrics=metrics,
+        errors=errors,
+    )
+
+
 def _compute_metrics(
     *,
     starting_cash: float,
@@ -305,18 +335,13 @@ def run_stateful_autonomous_paper(
     except ValueError as exc:
         error = _safe_error(exc)
         audit_writer.finish_run("failed", final_status_text=error)
-        return StatefulPaperResult(
-            run_id=config.run_id,
+        return _build_result(
+            config=config,
             status="failed",
             bars_processed_this_run=0,
             total_bars_processed=0,
-            decisions_path=str(decisions_path),
-            fills_path=str(fills_path),
-            metrics_path=str(metrics_path),
-            checkpoint_path=str(_checkpoint_path(state_dir, config.run_id)),
-            manifest_path=str(manifest_path),
-            audit_log_path=str(audit_log_path),
             errors=[error],
+            audit_log_path=audit_log_path,
         )
 
     if resume and _state_path(state_dir, config.run_id).exists():
@@ -332,18 +357,13 @@ def run_stateful_autonomous_paper(
         if mismatches:
             error = "state_mismatch"
             audit_writer.finish_run("failed", final_status_text=error)
-            return StatefulPaperResult(
-                run_id=config.run_id,
+            return _build_result(
+                config=config,
                 status="failed",
                 bars_processed_this_run=0,
                 total_bars_processed=state.cursor.last_processed_bar_index + 1,
-                decisions_path=str(decisions_path),
-                fills_path=str(fills_path),
-                metrics_path=str(metrics_path),
-                checkpoint_path=str(_checkpoint_path(state_dir, config.run_id)),
-                manifest_path=str(manifest_path),
-                audit_log_path=str(audit_log_path),
                 errors=[error],
+                audit_log_path=audit_log_path,
             )
 
     try:
@@ -351,52 +371,38 @@ def run_stateful_autonomous_paper(
     except Exception as exc:
         error = _safe_error(exc)
         audit_writer.finish_run("failed", final_status_text=error)
-        return StatefulPaperResult(
-            run_id=config.run_id,
+        return _build_result(
+            config=config,
             status="failed",
             bars_processed_this_run=0,
             total_bars_processed=state.cursor.last_processed_bar_index + 1,
-            decisions_path=str(decisions_path),
-            fills_path=str(fills_path),
-            metrics_path=str(metrics_path),
-            checkpoint_path=str(_checkpoint_path(state_dir, config.run_id)),
-            manifest_path=str(manifest_path),
-            audit_log_path=str(audit_log_path),
             errors=[error],
+            audit_log_path=audit_log_path,
         )
 
     if not bars:
         audit_writer.finish_run("failed", final_status_text="no_bars_loaded")
-        return StatefulPaperResult(
-            run_id=config.run_id,
+        return _build_result(
+            config=config,
             status="failed",
             bars_processed_this_run=0,
             total_bars_processed=state.cursor.last_processed_bar_index + 1,
-            decisions_path=str(decisions_path),
-            fills_path=str(fills_path),
-            metrics_path=str(metrics_path),
-            checkpoint_path=str(_checkpoint_path(state_dir, config.run_id)),
-            manifest_path=str(manifest_path),
-            audit_log_path=str(audit_log_path),
             errors=["No bars loaded for symbol."],
+            audit_log_path=audit_log_path,
         )
 
     start_index = state.cursor.last_processed_bar_index + 1
     if start_index >= len(bars):
         checkpoint_path = save_checkpoint(state, state_dir)
         audit_writer.finish_run("completed", final_status_text="no_new_data")
-        return StatefulPaperResult(
-            run_id=config.run_id,
+        return _build_result(
+            config=config,
             status="no_new_data",
             bars_processed_this_run=0,
             total_bars_processed=state.cursor.last_processed_bar_index + 1,
-            decisions_path=str(decisions_path),
-            fills_path=str(fills_path),
-            metrics_path=str(metrics_path),
-            checkpoint_path=str(checkpoint_path),
-            manifest_path=str(manifest_path),
-            audit_log_path=str(audit_log_path),
             errors=[],
+            checkpoint_path=str(checkpoint_path),
+            audit_log_path=audit_log_path,
         )
 
     end_index = (
@@ -456,18 +462,13 @@ def run_stateful_autonomous_paper(
                 audit_writer.finish_run(
                     "failed", final_status_text="kill_switch_blocked"
                 )
-                return StatefulPaperResult(
-                    run_id=config.run_id,
+                return _build_result(
+                    config=config,
                     status="blocked",
                     bars_processed_this_run=bars_processed_this_run,
                     total_bars_processed=state.cursor.last_processed_bar_index + 1,
-                    decisions_path=str(decisions_path),
-                    fills_path=str(fills_path),
-                    metrics_path=str(metrics_path),
-                    checkpoint_path=str(_checkpoint_path(state_dir, config.run_id)),
-                    manifest_path=str(manifest_path),
-                    audit_log_path=str(audit_log_path),
                     errors=["kill_switch_blocked"],
+                    audit_log_path=audit_log_path,
                 )
 
             bar_hash = _bar_hash(bar)
@@ -497,6 +498,12 @@ def run_stateful_autonomous_paper(
             state.cursor.last_processed_bar_index = bar_index
             state.cursor.last_processed_bar_timestamp = bar.timestamp.isoformat()
             state.cursor.processed_bar_hashes.append(bar_hash)
+            # Retain the most recent 10,000 bar hashes to bound memory growth
+            # while still detecting duplicates across typical daily runs.
+            if len(state.cursor.processed_bar_hashes) > 10_000:
+                state.cursor.processed_bar_hashes = state.cursor.processed_bar_hashes[
+                    -10_000:
+                ]
 
             decision_ref = {
                 "bar_index": bar_index,
@@ -584,17 +591,13 @@ def run_stateful_autonomous_paper(
     checkpoint_path = save_checkpoint(state, state_dir)
     save_state(state, state_dir)
 
-    return StatefulPaperResult(
-        run_id=config.run_id,
+    return _build_result(
+        config=config,
         status="completed",
         bars_processed_this_run=bars_processed_this_run,
         total_bars_processed=state.cursor.last_processed_bar_index + 1,
-        decisions_path=str(decisions_path),
-        fills_path=str(fills_path),
-        metrics_path=str(metrics_path),
-        checkpoint_path=str(checkpoint_path),
-        manifest_path=str(manifest_path),
-        audit_log_path=str(audit_log_path),
-        metrics=metrics,
         errors=[],
+        metrics=metrics,
+        checkpoint_path=str(checkpoint_path),
+        audit_log_path=audit_log_path,
     )

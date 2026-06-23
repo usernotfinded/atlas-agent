@@ -231,6 +231,69 @@ def test_runner_kill_switch_blocks(tmp_path: Path):
     assert result.status == "blocked"
 
 
+def test_runner_malformed_state_error_is_redacted(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(atlas_config, tmp_path)
+    state_path = _state_path(config.state_dir, config.run_id)
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text("not valid json", encoding="utf-8")
+
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        resume=True,
+        max_cycles=2,
+    )
+    assert result.status == "failed"
+    assert result.errors
+    error = result.errors[0]
+    assert error.startswith("malformed_state:")
+    assert "/Users/" not in error
+    assert "/tmp/" not in error
+    assert "Traceback" not in error
+    assert "JSONDecodeError" not in error
+
+
+def test_runner_data_load_error_is_redacted(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(
+        atlas_config, tmp_path, data_path=str(tmp_path / "missing.csv")
+    )
+
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+    assert result.status == "failed"
+    assert result.errors
+    error = result.errors[0]
+    assert "/Users/" not in error
+    assert str(tmp_path) not in error
+    assert "Traceback" not in error
+
+
+def test_wrapper_kill_switch_blocks(tmp_path: Path):
+    atlas_config = _make_config(tmp_path)
+    controller = KillSwitchController(
+        state_path=atlas_config.memory_dir / "kill_switch_state.json",
+        enabled_flag_path=atlas_config.memory_dir / "kill_switch.enabled",
+    )
+    controller.enable(mode="soft", reason="test", actor="test")
+
+    result = run_stateful_autonomous_paper_loop(
+        config=atlas_config,
+        symbol="DEMO-SYMBOL",
+        strategy_id="buy_and_hold",
+        strategy_parameters={"position_pct": 0.2},
+        state_dir=tmp_path / "state",
+        output_dir=tmp_path / "output",
+        max_cycles=2,
+        kill_switch=controller,
+    )
+    assert result.status == "blocked"
+
+
 def test_wrapper_entry_point_returns_result(tmp_path: Path):
     atlas_config = _make_config(tmp_path)
     result = run_stateful_autonomous_paper_loop(
