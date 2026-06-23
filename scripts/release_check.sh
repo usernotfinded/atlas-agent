@@ -231,7 +231,7 @@ echo ""
 echo "========================================"
 echo "8a. release metadata"
 SECONDS=0
-python scripts/check_release_metadata.py
+"$PYTHON_BIN" scripts/check_release_metadata.py
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
