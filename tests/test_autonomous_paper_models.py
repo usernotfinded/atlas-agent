@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 
 import pytest
+from pydantic import ValidationError
 
 from atlas_agent.agent.autonomous_paper_models import (
     StatefulPaperConfig,
@@ -32,7 +33,14 @@ class TestStatefulPaperModels:
             strategy_id="buy_and_hold",
             data_path="data/sample/ohlcv.csv",
             cash=9000.0,
-            positions={"DEMO-SYMBOL": BacktestPosition(symbol="DEMO-SYMBOL", quantity=10.0, average_entry_price=100.0, notional=1000.0)},
+            positions={
+                "DEMO-SYMBOL": BacktestPosition(
+                    symbol="DEMO-SYMBOL",
+                    quantity=10.0,
+                    average_entry_price=100.0,
+                    notional=1000.0,
+                ),
+            },
             cursor=StatefulPaperCursor(
                 last_processed_bar_index=5,
                 last_processed_bar_timestamp="2026-06-23T12:00:00",
@@ -126,3 +134,42 @@ class TestStatefulPaperModels:
         assert result.status == "no_new_data"
         assert result.metrics is None
         assert result.errors == []
+
+    def test_config_rejects_invalid_literals(self) -> None:
+        with pytest.raises(ValidationError):
+            StatefulPaperConfig(
+                run_id="run-004",
+                symbol="DEMO-SYMBOL",
+                strategy_id="buy_and_hold",
+                data_path="data/sample/ohlcv.csv",
+                output_dir="output",
+                state_dir="state",
+                fill_timing="invalid_timing",
+            )
+
+        with pytest.raises(ValidationError):
+            StatefulPaperResult(
+                run_id="run-005",
+                status="invalid_status",
+                bars_processed_this_run=0,
+                total_bars_processed=0,
+                decisions_path="output/decisions.jsonl",
+                fills_path="output/fills.jsonl",
+                metrics_path="output/metrics.json",
+                checkpoint_path="state/checkpoint.json",
+                manifest_path="output/manifest.json",
+                audit_log_path="output/audit.jsonl",
+            )
+
+    @pytest.mark.parametrize("initial_cash", [0.0, -1.0])
+    def test_config_rejects_non_positive_initial_cash(self, initial_cash: float) -> None:
+        with pytest.raises(ValidationError):
+            StatefulPaperConfig(
+                run_id="run-006",
+                symbol="DEMO-SYMBOL",
+                strategy_id="buy_and_hold",
+                data_path="data/sample/ohlcv.csv",
+                output_dir="output",
+                state_dir="state",
+                initial_cash=initial_cash,
+            )
