@@ -204,6 +204,98 @@ def test_checker_fails_on_credential_env_access(tmp_path: Path) -> None:
     assert any("credential environment access" in err for err in payload["errors"])
 
 
+def test_checker_fails_on_credential_environ_get_access(tmp_path: Path) -> None:
+    """A fake autonomous_paper.py using os.environ.get('ALPACA_API_KEY') must fail."""
+    fake_repo = _build_fake_repo(
+        tmp_path, 'key = os.environ.get("ALPACA_API_KEY")\n'
+    )
+    fake_checker = fake_repo / "scripts" / "check_autonomous_paper_loop_contract.py"
+
+    result = subprocess.run(
+        [sys.executable, str(fake_checker), "--json"],
+        cwd=fake_repo,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, f"Expected failure, got:\n{result.stdout}\n{result.stderr}"
+
+    payload = json.loads(result.stdout)
+    assert payload["passed"] is False
+    assert any("credential environment access" in err for err in payload["errors"])
+
+
+def test_checker_fails_on_broker_resolver(tmp_path: Path) -> None:
+    """A fake autonomous_paper.py instantiating BrokerResolver must fail."""
+    fake_repo = _build_fake_repo(tmp_path, "resolver = BrokerResolver(\n")
+    fake_checker = fake_repo / "scripts" / "check_autonomous_paper_loop_contract.py"
+
+    result = subprocess.run(
+        [sys.executable, str(fake_checker), "--json"],
+        cwd=fake_repo,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, f"Expected failure, got:\n{result.stdout}\n{result.stderr}"
+
+    payload = json.loads(result.stdout)
+    assert payload["passed"] is False
+    assert any("BrokerResolver(" in err for err in payload["errors"])
+
+
+def test_checker_fails_on_provider_execute(tmp_path: Path) -> None:
+    """A fake autonomous_paper.py calling provider.execute must fail."""
+    fake_repo = _build_fake_repo(tmp_path, "result = provider.execute(\n")
+    fake_checker = fake_repo / "scripts" / "check_autonomous_paper_loop_contract.py"
+
+    result = subprocess.run(
+        [sys.executable, str(fake_checker), "--json"],
+        cwd=fake_repo,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, f"Expected failure, got:\n{result.stdout}\n{result.stderr}"
+
+    payload = json.loads(result.stdout)
+    assert payload["passed"] is False
+    assert any("provider.execute" in err for err in payload["errors"])
+
+
+def test_checker_fails_on_load_atlas_secrets(tmp_path: Path) -> None:
+    """A fake autonomous_paper.py calling load_atlas_secrets must fail."""
+    fake_repo = _build_fake_repo(tmp_path, "secrets = load_atlas_secrets(\n")
+    fake_checker = fake_repo / "scripts" / "check_autonomous_paper_loop_contract.py"
+
+    result = subprocess.run(
+        [sys.executable, str(fake_checker), "--json"],
+        cwd=fake_repo,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, f"Expected failure, got:\n{result.stdout}\n{result.stderr}"
+
+    payload = json.loads(result.stdout)
+    assert payload["passed"] is False
+    assert any("load_atlas_secrets(" in err for err in payload["errors"])
+
+
+def test_checker_fails_on_paper_only_false(tmp_path: Path) -> None:
+    """A fake autonomous_paper.py setting paper_only=False must fail."""
+    fake_repo = _build_fake_repo(tmp_path, "config = Config(paper_only=False)\n")
+    fake_checker = fake_repo / "scripts" / "check_autonomous_paper_loop_contract.py"
+
+    result = subprocess.run(
+        [sys.executable, str(fake_checker), "--json"],
+        cwd=fake_repo,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1, f"Expected failure, got:\n{result.stdout}\n{result.stderr}"
+
+    payload = json.loads(result.stdout)
+    assert payload["passed"] is False
+    assert any("paper_only=False" in err for err in payload["errors"])
+
+
 def test_checker_imports_no_network_or_credentials() -> None:
     """The checker module must not import broker/provider/credential modules."""
     source = CHECKER.read_text(encoding="utf-8")

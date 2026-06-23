@@ -34,6 +34,7 @@ TEST_MODULE = REPO_ROOT / "tests" / "test_autonomous_paper_loop.py"
 
 REQUIRED_FILES = [
     DOC,
+    GOVERNANCE_DOC,
     SHADOW_DOC,
     AUTONOMOUS_PAPER_MODULE,
     CLI_MODULE,
@@ -90,7 +91,7 @@ NEGATIVE_CONTEXT_INDICATORS = (
     "does **not**",
 )
 
-FORBIDDEN_MODULE_IMPORTS = (
+FORBIDDEN_MODULE_REFERENCES = (
     "atlas_agent.brokers",
     "atlas_agent.providers",
     "atlas_agent.execution.live",
@@ -112,7 +113,6 @@ FORBIDDEN_SUBMISSION_PATTERNS = (
     ".cancel_order(",
     ".flatten_all(",
     "broker.submit",
-    "broker.submit_order",
     "OrderRouter(",
     ".route(",
     "run_submit_execution(",
@@ -145,7 +145,7 @@ FORBIDDEN_LIVE_FLAG_PATTERNS = (
 )
 
 CREDENTIAL_ENV_REGEX = re.compile(
-    r"os\.(?:getenv|environ)\s*\[?\s*\(?\s*['\"][^'\"]*(?:ALPACA|BINANCE|CCXT|EXCHANGE|API_KEY|SECRET_KEY|SECRET|TOKEN|PASSWORD)"
+    r"os\.(?:getenv|environ(?:\.get)?)\s*\[?\s*\(?\s*['\"][^'\"]*(?:ALPACA|BINANCE|CCXT|EXCHANGE|API_KEY|SECRET_KEY|SECRET|TOKEN|PASSWORD)"
 )
 
 
@@ -242,7 +242,7 @@ def _check_module_safety() -> list[str]:
     text = _read(AUTONOMOUS_PAPER_MODULE)
     rel = AUTONOMOUS_PAPER_MODULE.relative_to(REPO_ROOT)
 
-    for forbidden in FORBIDDEN_MODULE_IMPORTS:
+    for forbidden in FORBIDDEN_MODULE_REFERENCES:
         if forbidden in text:
             errors.append(
                 f"[{rel}] Forbidden import/reference: {forbidden}"
