@@ -149,6 +149,37 @@ def test_agent_autonomous_commands_present_in_contract_and_parser(
     )
 
 
+def test_agent_autonomous_paper_stateful_options_present(
+    real_parser: argparse.ArgumentParser,
+) -> None:
+    """Stateful autonomous-paper CLI options must be present on the parser."""
+    subparsers = None
+    for action in real_parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            subparsers = action
+            break
+    assert subparsers is not None
+    agent_parser = subparsers._name_parser_map["agent"]
+    agent_sub = None
+    for action in agent_parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            agent_sub = action
+            break
+    assert agent_sub is not None
+    paper_parser = agent_sub._name_parser_map["autonomous-paper"]
+    option_names = {a.dest for a in paper_parser._actions if hasattr(a, "dest")}
+    required = {
+        "state_dir",
+        "resume",
+        "initial_cash",
+        "commission_bps",
+        "slippage_bps",
+        "fill_timing",
+    }
+    missing = required - option_names
+    assert not missing, f"Missing autonomous-paper stateful options: {sorted(missing)}"
+
+
 # ---------------------------------------------------------------------------
 # Negative cases with temporary mutated contracts
 # ---------------------------------------------------------------------------

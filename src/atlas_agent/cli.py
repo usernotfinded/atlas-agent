@@ -849,6 +849,40 @@ Safety First:
         help="If provided, copy the decisions and manifest into an evidence bundle under this directory.",
     )
     agent_autonomous_paper.add_argument("--json", action="store_true", help="Emit result as JSON")
+    agent_autonomous_paper.add_argument(
+        "--state-dir",
+        default=None,
+        help="Directory to persist stateful paper runner state and checkpoints.",
+    )
+    agent_autonomous_paper.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from existing state in --state-dir if present.",
+    )
+    agent_autonomous_paper.add_argument(
+        "--initial-cash",
+        type=float,
+        default=None,
+        help="Initial cash for stateful paper runner (default from config).",
+    )
+    agent_autonomous_paper.add_argument(
+        "--commission-bps",
+        type=float,
+        default=None,
+        help="Commission in basis points for simulated fills.",
+    )
+    agent_autonomous_paper.add_argument(
+        "--slippage-bps",
+        type=float,
+        default=None,
+        help="Slippage in basis points for simulated fills.",
+    )
+    agent_autonomous_paper.add_argument(
+        "--fill-timing",
+        choices=["same_bar", "next_bar"],
+        default="next_bar",
+        help="Deterministic fill timing model (default: next_bar).",
+    )
     agent_autonomous_scorecard = agent_sub.add_parser(
         "autonomous-scorecard",
         help="Evaluate autonomous-paper decision artifacts and produce a promotion scorecard.",
@@ -3620,6 +3654,26 @@ def _configured_strategy_parameters(config: AtlasConfig, raw_items: list[str]) -
     return configured
 
 
+def _latest_stateful_run_id(state_dir: str | Path) -> str | None:
+    """Return the run_id from the most recent *-state.json in ``state_dir``.
+
+    Used by ``--resume`` to continue the latest stateful paper run rather than
+    starting a fresh run_id.
+    """
+    state_path = Path(state_dir)
+    if not state_path.exists():
+        return None
+    state_files = sorted(
+        (p for p in state_path.iterdir() if p.is_file() and p.name.endswith("-state.json")),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if not state_files:
+        return None
+    run_id = state_files[0].name[:-len("-state.json")]
+    return run_id if run_id else None
+
+
 def _list_backtest_runs(*, validate: bool = False) -> list[dict]:
     from pathlib import Path
     import json
@@ -5904,6 +5958,53 @@ def main(argv: list[str] | None = None) -> int:
 
             config = _effective_config_with_runtime_kill_switch(config)
             resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
+            strategy_parameters = dict(
+                getattr(config.backtest, "strategy_parameters", {}) or {}
+            )
+            evidence_dir = getattr(args, "evidence_dir", None)
+            if getattr(args, "state_dir", None):
+                from atlas_agent.agent.autonomous_paper import (
+                    run_stateful_autonomous_paper_loop,
+                )
+
+                run_id: str | None = None
+                if args.resume:
+                    run_id = _latest_stateful_run_id(args.state_dir)
+                result = run_stateful_autonomous_paper_loop(
+                    config=config,
+                    symbol=resolved_symbol,
+                    strategy_id=args.strategy,
+                    strategy_parameters=strategy_parameters,
+                    data_path=args.data_path,
+                    max_cycles=args.max_cycles,
+                    output_dir=evidence_dir,
+                    state_dir=args.state_dir,
+                    resume=args.resume,
+                    initial_cash=args.initial_cash,
+                    commission_bps=args.commission_bps,
+                    slippage_bps=args.slippage_bps,
+                    fill_timing=args.fill_timing,
+                    run_id=run_id,
+                )
+                if getattr(args, "json", False):
+                    return emit_cli_success(
+                        "atlas agent autonomous-paper",
+                        result.model_dump(mode="json"),
+                    )
+                print(
+                    f"autonomous-paper {result.status}: processed "
+                    f"{result.bars_processed_this_run} bar(s) "
+                    f"({result.total_bars_processed} total)"
+                )
+                print(f"  checkpoint: {result.checkpoint_path}")
+                print(f"  decisions file: {result.decisions_path}")
+                print(f"  fills file: {result.fills_path}")
+                print(f"  metrics file: {result.metrics_path}")
+                print(f"  manifest file: {result.manifest_path}")
+                for error in result.errors:
+                    print(f"  error: {error}")
+                return 0 if result.status in ("completed", "no_new_data") else 2
+
             result = run_autonomous_paper_loop(
                 config=config,
                 symbol=resolved_symbol,
@@ -5911,7 +6012,6 @@ def main(argv: list[str] | None = None) -> int:
                 data_path=args.data_path,
                 max_cycles=args.max_cycles,
             )
-            evidence_dir = getattr(args, "evidence_dir", None)
             if evidence_dir:
                 build_autonomous_paper_evidence(
                     run_id=result.run_id,
