@@ -81,7 +81,7 @@ def save_state(state: StatefulPaperState, state_dir: str | Path) -> Path:
     state_path = _state_path(state_dir, state.run_id)
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(
-        json.dumps(state.model_dump(mode="json"), indent=2),
+        json.dumps(redact_payload(state.model_dump(mode="json")), indent=2),
         encoding="utf-8",
     )
     return state_path
@@ -90,7 +90,7 @@ def save_state(state: StatefulPaperState, state_dir: str | Path) -> Path:
 def save_checkpoint(state: StatefulPaperState, state_dir: str | Path) -> Path:
     checkpoint_path = _checkpoint_path(state_dir, state.run_id)
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-    checkpoint = state.model_dump(mode="json")
+    checkpoint = redact_payload(state.model_dump(mode="json"))
     checkpoint_path.write_text(
         json.dumps(checkpoint, indent=2),
         encoding="utf-8",
@@ -486,12 +486,12 @@ def run_stateful_autonomous_paper(
         "data_source": _redact_data_source(config.data_path),
         "bars_processed_this_run": bars_processed_this_run,
         "total_bars_processed": state.cursor.last_processed_bar_index + 1,
-        "decisions_path": str(decisions_path),
-        "fills_path": str(fills_path),
-        "metrics_path": str(metrics_path),
-        "checkpoint_path": str(_checkpoint_path(state_dir, config.run_id)),
-        "manifest_path": str(manifest_path),
-        "audit_log_path": str(audit_log_path),
+        "decisions_path": decisions_path.name,
+        "fills_path": fills_path.name,
+        "metrics_path": metrics_path.name,
+        "checkpoint_path": _checkpoint_path(state_dir, config.run_id).name,
+        "manifest_path": manifest_path.name,
+        "audit_log_path": Path(audit_log_path).name,
         "metrics": metrics.model_dump(mode="json"),
         "completed_at": datetime.now(UTC).isoformat(),
     }

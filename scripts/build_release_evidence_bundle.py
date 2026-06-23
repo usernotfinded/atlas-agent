@@ -31,7 +31,6 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_BIN = os.environ.get("PYTHON_BIN", sys.executable)
 # Provide a fallback module path injection for scripts directory imports
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 try:
     from release_metadata import load_metadata, ReleaseMetadata
@@ -80,8 +79,18 @@ _PROTECTED_BOUNDARIES = [
 def _redact(text: str) -> str:
     """Redact absolute paths and credential-like strings from text."""
     home = str(Path.home())
-    redacted = text.replace(str(REPO_ROOT), "<REPO_ROOT>")
-    redacted = redacted.replace(home, "<HOME>")
+    replacements = [
+        (home, "<HOME>"),
+        (str(REPO_ROOT), "<REPO_ROOT>"),
+        ("/Users/", "<HOME>/"),
+        ("/private/var/", "<TEMP>/"),
+        ("/var/folders/", "<TEMP>/"),
+        ("/tmp/", "<TEMP>/"),
+        ("/var/tmp/", "<TEMP>/"),
+    ]
+    redacted = text
+    for prefix, replacement in replacements:
+        redacted = redacted.replace(prefix, replacement)
     lines = []
     for line in redacted.splitlines(keepends=True):
         lower = line.lower()
