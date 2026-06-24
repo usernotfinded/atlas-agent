@@ -63,6 +63,7 @@ def _build_fake_repo_with_module(
         "autonomous_paper_runner.py",
         "autonomous_paper_metrics.py",
         "autonomous_paper_models.py",
+        "autonomous_paper_lock.py",
     }
     if module_name not in valid_modules:
         raise ValueError(f"Unsupported module name: {module_name}")
@@ -361,6 +362,22 @@ def test_checker_fails_on_cancel_order_in_kernel(tmp_path: Path) -> None:
     assert payload["passed"] is False
     assert any(
         "autonomous_paper_kernel.py" in err and "cancel_order" in err
+        for err in payload["errors"]
+    )
+
+
+def test_checker_fails_on_forbidden_import_in_lock(tmp_path: Path) -> None:
+    """A forbidden broker import in autonomous_paper_lock.py must be caught."""
+    fake_repo = _build_fake_repo_with_module(
+        tmp_path, "autonomous_paper_lock.py", "import atlas_agent.brokers\n"
+    )
+    result = _run_fake_checker(fake_repo)
+    assert result.returncode == 1, f"Expected failure, got:\n{result.stdout}\n{result.stderr}"
+
+    payload = json.loads(result.stdout)
+    assert payload["passed"] is False
+    assert any(
+        "autonomous_paper_lock.py" in err and "atlas_agent.brokers" in err
         for err in payload["errors"]
     )
 

@@ -34,6 +34,7 @@ AUTONOMOUS_PAPER_MODULES = [
     REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_runner.py",
     REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_metrics.py",
     REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_models.py",
+    REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_lock.py",
 ]
 CLI_MODULE = REPO_ROOT / "src" / "atlas_agent" / "cli.py"
 TEST_MODULE = REPO_ROOT / "tests" / "test_autonomous_paper_loop.py"

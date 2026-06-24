@@ -10,6 +10,10 @@ from pathlib import Path
 from typing import Any
 
 from atlas_agent.agent.autonomous_paper_kernel import apply_fill, run_kernel_cycle
+from atlas_agent.agent.autonomous_paper_lock import (
+    StateDirectoryLockError,
+    state_directory_lock,
+)
 from atlas_agent.agent.autonomous_paper_metrics import calculate_stateful_paper_metrics
 from atlas_agent.agent.autonomous_paper_models import (
     StatefulPaperConfig,
@@ -150,9 +154,9 @@ def _redact_data_source(path: str | Path) -> str:
     return Path(path).name
 
 
-def _safe_error(_exc: Exception) -> str:
-    name = _exc.__class__.__name__
-    msg = str(_exc)
+def _safe_error(exc: Exception) -> str:
+    name = exc.__class__.__name__
+    msg = str(exc)
     # Preserve our own error categories while redacting paths and details.
     for category in ("malformed_state", "state_mismatch", "corrupted_checkpoint"):
         if msg.startswith(category):
@@ -213,7 +217,7 @@ def _build_result(
     )
 
 
-def run_stateful_autonomous_paper(
+def _run_stateful_autonomous_paper_locked(
     *,
     config: StatefulPaperConfig,
     atlas_config: AtlasConfig,
@@ -223,16 +227,8 @@ def run_stateful_autonomous_paper(
     event_logger: EventLogger | None = None,
     kill_switch: Any | None = None,
 ) -> StatefulPaperResult:
-    """Run a stateful paper loop, resuming from the last processed bar.
-
-    If no new bars are available, returns status="no_new_data" without
-    modifying state. Duplicate bars (by index and hash) are skipped.
-    """
     output_dir = Path(config.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
     state_dir = Path(config.state_dir)
-    state_dir.mkdir(parents=True, exist_ok=True)
-
     audit_log_path = Path(atlas_config.audit_dir) / "events.jsonl"
     if audit_writer is None:
         audit_writer = AuditWriter(audit_log_path)
@@ -578,3 +574,54 @@ def run_stateful_autonomous_paper(
         checkpoint_path=str(checkpoint_path),
         audit_log_path=audit_log_path,
     )
+
+
+def run_stateful_autonomous_paper(
+    *,
+    config: StatefulPaperConfig,
+    atlas_config: AtlasConfig,
+    resume: bool = False,
+    max_cycles: int = 0,
+    audit_writer: AuditWriter | None = None,
+    event_logger: EventLogger | None = None,
+    kill_switch: Any | None = None,
+) -> StatefulPaperResult:
+    """Run a stateful paper loop, resuming from the last processed bar.
+
+    If no new bars are available, returns status="no_new_data" without
+    modifying state. Duplicate bars (by index and hash) are skipped.
+    """
+    output_dir = Path(config.output_dir)
+    state_dir = Path(config.state_dir)
+
+    try:
+        with state_directory_lock(state_dir):
+            output_dir.mkdir(parents=True, exist_ok=True)
+            return _run_stateful_autonomous_paper_locked(
+                config=config,
+                atlas_config=atlas_config,
+                resume=resume,
+                max_cycles=max_cycles,
+                audit_writer=audit_writer,
+                event_logger=event_logger,
+                kill_switch=kill_switch,
+            )
+    except StateDirectoryLockError:
+        audit_log_path = Path(atlas_config.audit_dir) / "events.jsonl"
+        return StatefulPaperResult(
+            run_id=config.run_id,
+            status="failed",
+            bars_processed_this_run=0,
+            total_bars_processed=0,
+            decisions_path=str(output_dir / f"{config.run_id}-decisions.jsonl"),
+            fills_path=str(output_dir / f"{config.run_id}-fills.jsonl"),
+            metrics_path=str(output_dir / f"{config.run_id}-metrics.json"),
+            checkpoint_path=str(_checkpoint_path(state_dir, config.run_id)),
+            manifest_path=str(output_dir / f"{config.run_id}-manifest.json"),
+            audit_log_path=str(audit_log_path),
+            metrics=None,
+            errors=[
+                f"state_directory_locked: another stateful autonomous-paper run "
+                f"may already be active for {state_dir}"
+            ],
+        )

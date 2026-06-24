@@ -25,8 +25,79 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.safety.kill_switch import KillSwitchController
 
 import pytest
+import subprocess
+import sys
+import time
 
 SAMPLE_CSV = Path(__file__).resolve().parents[1] / "data" / "sample" / "ohlcv.csv"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+_HOLDER_SCRIPT = '''\
+import os
+import sys
+import time
+from pathlib import Path
+
+from atlas_agent.agent.autonomous_paper_lock import acquire_state_directory_lock
+
+state_dir = Path(sys.argv[1])
+ready_path = Path(sys.argv[2])
+stop_path = Path(sys.argv[3])
+
+lock = acquire_state_directory_lock(state_dir)
+try:
+    ready_path.write_text(str(os.getpid()), encoding="utf-8")
+    while not stop_path.exists():
+        time.sleep(0.05)
+finally:
+    lock.release()
+'''
+
+
+def _start_lock_holder(state_dir: Path, tmp_path: Path) -> tuple[subprocess.Popen, Path]:
+    helper = tmp_path / "lock_holder.py"
+    helper.write_text(_HOLDER_SCRIPT, encoding="utf-8")
+
+    ready_path = tmp_path / "holder_ready"
+    stop_path = tmp_path / "holder_stop"
+
+    env = {**os.environ, "PYTHONPATH": str(REPO_ROOT / "src")}
+    proc = subprocess.Popen(
+        [sys.executable, str(helper), str(state_dir), str(ready_path), str(stop_path)],
+        cwd=REPO_ROOT,
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    deadline = time.monotonic() + 10
+    while not ready_path.exists() and time.monotonic() < deadline and proc.poll() is None:
+        time.sleep(0.05)
+
+    if not ready_path.exists():
+        try:
+            _, errs = proc.communicate(timeout=5)
+        except subprocess.TimeoutExpired:
+            errs = ""
+        proc.kill()
+        proc.wait()
+        raise AssertionError(f"Lock holder did not start: {errs}")
+
+    return proc, stop_path
+
+
+def _stop_lock_holder(proc: subprocess.Popen, stop_path: Path) -> None:
+    stop_path.write_text("stop", encoding="utf-8")
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+    if proc.returncode != 0:
+        outs, errs = proc.communicate()
+        raise AssertionError(f"Lock holder exited {proc.returncode}: {outs}\n{errs}")
 
 
 def _read_fills(fills_path: str | Path) -> list[dict[str, object]]:
@@ -679,3 +750,97 @@ def test_runner_does_not_import_brokers_or_providers():
     ]
     for pattern in forbidden:
         assert pattern not in source, f"Forbidden reference in runner: {pattern}"
+
+
+def test_runner_fails_closed_when_state_directory_locked(tmp_path: Path) -> None:
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(atlas_config, tmp_path)
+    state_dir = Path(config.state_dir)
+
+    proc, stop_path = _start_lock_holder(state_dir, tmp_path)
+    try:
+        result = run_stateful_autonomous_paper(
+            config=config,
+            atlas_config=atlas_config,
+            max_cycles=2,
+        )
+    finally:
+        _stop_lock_holder(proc, stop_path)
+
+    assert result.status == "failed"
+    assert any("state_directory_locked" in error for error in result.errors)
+
+    output_dir = Path(config.output_dir)
+    assert not output_dir.exists() or not any(output_dir.iterdir())
+    assert not (output_dir / f"{config.run_id}-decisions.jsonl").exists()
+    assert not (output_dir / f"{config.run_id}-fills.jsonl").exists()
+    assert not (output_dir / f"{config.run_id}-metrics.json").exists()
+    assert not (output_dir / f"{config.run_id}-manifest.json").exists()
+    assert not (_state_path(config.state_dir, config.run_id)).exists()
+    assert not (_checkpoint_path(config.state_dir, config.run_id)).exists()
+
+
+def test_runner_releases_lock_after_success(tmp_path: Path) -> None:
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(atlas_config, tmp_path)
+
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+
+    assert result.status == "completed"
+    assert not (Path(config.state_dir) / ".atlas_state.lock").exists()
+
+
+def test_runner_releases_lock_after_failure(tmp_path: Path) -> None:
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(
+        atlas_config, tmp_path, data_path=str(tmp_path / "missing.csv")
+    )
+
+    result = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+
+    assert result.status == "failed"
+    assert not (Path(config.state_dir) / ".atlas_state.lock").exists()
+
+
+def test_runner_lock_failure_does_not_mutate_state_or_checkpoint(
+    tmp_path: Path,
+) -> None:
+    atlas_config = _make_config(tmp_path)
+    config = _make_stateful_config(atlas_config, tmp_path)
+
+    first = run_stateful_autonomous_paper(
+        config=config,
+        atlas_config=atlas_config,
+        max_cycles=2,
+    )
+    assert first.status == "completed"
+
+    state_path = _state_path(config.state_dir, config.run_id)
+    checkpoint_path = _checkpoint_path(config.state_dir, config.run_id)
+    original_state = state_path.read_text(encoding="utf-8")
+    original_checkpoint = checkpoint_path.read_text(encoding="utf-8")
+
+    state_dir = Path(config.state_dir)
+    proc, stop_path = _start_lock_holder(state_dir, tmp_path)
+    try:
+        result = run_stateful_autonomous_paper(
+            config=config,
+            atlas_config=atlas_config,
+            resume=True,
+            max_cycles=2,
+        )
+    finally:
+        _stop_lock_holder(proc, stop_path)
+
+    assert result.status == "failed"
+    assert any("state_directory_locked" in error for error in result.errors)
+    assert state_path.read_text(encoding="utf-8") == original_state
+    assert checkpoint_path.read_text(encoding="utf-8") == original_checkpoint
