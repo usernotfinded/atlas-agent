@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from atlas_agent.agent.autonomous_paper_quality import build_trading_quality_gate, TradingQualityThresholdPolicy
+from atlas_agent.agent.autonomous_paper_quality import build_trading_quality_gate, TradingQualityThresholdPolicy, write_trading_quality_artifacts
 
 
 def _write_artifacts(tmp_path: Path, metrics: dict, decisions: list, fills: list):
@@ -253,3 +253,19 @@ def test_recompute_consistency_succeeds_for_valid_fixtures(tmp_path: Path):
     )
     dim = next(d for d in result["dimensions"] if d["name"] == "replay_or_recompute_consistency")
     assert dim["passed"]
+
+
+def test_artifacts_written(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    report = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    json_path, md_path = write_trading_quality_artifacts(report, tmp_path / "out")
+    assert json_path.exists()
+    assert md_path.exists()
+    loaded = json.loads(json_path.read_text(encoding="utf-8"))
+    assert loaded["quality_state"] == report["quality_state"]
+    assert "Disclaimer" in md_path.read_text(encoding="utf-8")

@@ -658,6 +658,95 @@ def _evaluate_dimensions(
     return dimensions
 
 
+def _redact_path(path: str | Path | None) -> str | None:
+    if path is None:
+        return None
+    p = Path(path)
+    try:
+        rel = p.relative_to(Path.cwd())
+        return str(rel)
+    except ValueError:
+        return p.name
+
+
+def _redact_report(report: dict[str, Any]) -> dict[str, Any]:
+    report = dict(report)
+    inputs = report.get("input_artifacts", {})
+    report["input_artifacts"] = {
+        k: _redact_path(v) if isinstance(v, str) else v for k, v in inputs.items()
+    }
+    return report
+
+
+def write_trading_quality_artifacts(
+    report: dict[str, Any],
+    output_dir: str | Path,
+) -> tuple[Path, Path]:
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    report = _redact_report(report)
+    json_path = out / "trading-quality-gate.json"
+    json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True, default=str),
+        encoding="utf-8",
+    )
+    md_path = out / "trading-quality-report.md"
+    md_path.write_text(_render_markdown(report), encoding="utf-8")
+    return json_path, md_path
+
+
+def _render_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        "# Trading Quality Gate Report",
+        "",
+        f"**Run ID:** {report.get('run_id', 'unknown')}",
+        f"**Symbol:** {report.get('symbol', 'unknown')}",
+        f"**Quality State:** `{report.get('quality_state', 'unknown')}`",
+        f"**Mode:** {report.get('mode', 'unknown')}",
+        "",
+        "> **Disclaimer:** This is a paper-only evaluation. It does not claim profitability, live readiness, or autonomous live trading readiness.",
+        "",
+        "## Input Artifacts",
+        "",
+    ]
+    for key, value in report.get("input_artifacts", {}).items():
+        lines.append(f"- **{key}:** `{value}`")
+    lines.append("")
+    lines.append("## Threshold Policy")
+    lines.append("")
+    lines.append("```json")
+    lines.append(json.dumps(report.get("threshold_policy", {}), indent=2, sort_keys=True))
+    lines.append("```")
+    lines.append("")
+    lines.append("## Metrics")
+    lines.append("")
+    lines.append("```json")
+    lines.append(json.dumps(report.get("metrics"), indent=2, sort_keys=True, default=str))
+    lines.append("```")
+    lines.append("")
+    lines.append("## Benchmark Comparison")
+    lines.append("")
+    lines.append("```json")
+    lines.append(json.dumps(report.get("benchmark"), indent=2, sort_keys=True, default=str))
+    lines.append("```")
+    lines.append("")
+    lines.append("## Dimensions")
+    lines.append("")
+    lines.append("| Dimension | Passed | Score | Reason |")
+    lines.append("|-----------|--------|-------|--------|")
+    for d in report.get("dimensions", []):
+        passed = "✅" if d["passed"] else "❌"
+        lines.append(f"| {d['name']} | {passed} | {d['score']} | {d['reason']} |")
+    lines.append("")
+    if report.get("blockers"):
+        lines.append("## Blockers")
+        lines.append("")
+        for blocker in report["blockers"]:
+            lines.append(f"- {blocker}")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def build_trading_quality_gate(
     *,
     metrics_path: str | Path,
