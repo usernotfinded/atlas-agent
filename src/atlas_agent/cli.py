@@ -883,6 +883,12 @@ Safety First:
         default="next_bar",
         help="Deterministic fill timing model (default: next_bar).",
     )
+    agent_autonomous_paper.add_argument(
+        "--strategy-param",
+        action="append",
+        default=[],
+        help="Strategy parameter override as key=value. Can be repeated.",
+    )
     agent_autonomous_scorecard = agent_sub.add_parser(
         "autonomous-scorecard",
         help="Evaluate autonomous-paper decision artifacts and produce a promotion scorecard.",
@@ -5958,8 +5964,9 @@ def main(argv: list[str] | None = None) -> int:
 
             config = _effective_config_with_runtime_kill_switch(config)
             resolved_symbol = _resolve_symbol(config, getattr(args, "symbol", None))
-            strategy_parameters = dict(
-                getattr(config.backtest, "strategy_parameters", {}) or {}
+            strategy_parameters = _configured_strategy_parameters(
+                config,
+                getattr(args, "strategy_param", []),
             )
             evidence_dir = getattr(args, "evidence_dir", None)
             if getattr(args, "state_dir", None):

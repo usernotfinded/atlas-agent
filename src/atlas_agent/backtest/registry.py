@@ -3,6 +3,7 @@ from __future__ import annotations
 from importlib import metadata as importlib_metadata
 from typing import Callable
 
+from atlas_agent.backtest.demo_strategy import DemoStatefulPaperStrategy
 from atlas_agent.backtest.strategies import (
     BuyAndHoldStrategy,
     MovingAverageCrossStrategy,
@@ -59,6 +60,7 @@ def default_strategy_registry(*, include_entry_points: bool = True) -> StrategyR
     registry.register(BuyAndHoldStrategy)
     registry.register(MovingAverageCrossStrategy)
     registry.register(RSIMeanReversionStrategy)
+    registry.register(DemoStatefulPaperStrategy)
     if include_entry_points:
         _discover_entry_point_strategies(registry)
     return registry
