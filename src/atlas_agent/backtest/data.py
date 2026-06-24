@@ -20,7 +20,7 @@ def _parse_date_boundary(value: Optional[str]) -> Optional[datetime]:
 
 def load_market_data(
     file_path: str,
-    symbol: str,
+    symbol: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
 ) -> List[MarketBar]:
@@ -44,8 +44,8 @@ def load_market_data(
             raise ValueError(f"Missing required columns in CSV: {missing}")
 
         for row in reader:
-            # Skip rows for different symbols if symbol column exists
-            if "symbol" in row and row["symbol"] and row["symbol"] != symbol:
+            # Skip rows for different symbols if a symbol filter was requested
+            if symbol is not None and "symbol" in row and row["symbol"] and row["symbol"] != symbol:
                 continue
 
             try:
@@ -77,7 +77,9 @@ def load_market_data(
                 raise ValueError(f"Error parsing row {row}: {e}")
 
     if not bars:
-        raise ValueError(f"No data found for symbol {symbol} in {file_path}")
+        if symbol is not None:
+            raise ValueError(f"No data found for symbol {symbol} in {file_path}")
+        raise ValueError(f"No data found in {file_path}")
 
     # Ensure bars are sorted by timestamp
     bars.sort(key=lambda x: x.timestamp)

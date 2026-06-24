@@ -3,12 +3,10 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from atlas_agent.agent.autonomous_paper_metrics import calculate_stateful_paper_metrics
-from atlas_agent.agent.autonomous_paper_models import StatefulPaperMetrics, StatefulPaperState
 from atlas_agent.backtest.data import load_market_data
 from atlas_agent.backtest.models import BacktestFill, BacktestPosition
 
@@ -248,7 +246,7 @@ def _compute_benchmark(
             "excess_return_pct": None,
         }
     try:
-        bars = list(load_market_data(str(data_path), symbol="UNKNOWN"))
+        bars = list(load_market_data(str(data_path)))
     except Exception as exc:
         return {
             "available": False,
@@ -329,7 +327,7 @@ def _recompute_and_compare_metrics(
         defaults = {
             "fill_id": f"fill-{index}",
             "order_id": f"order-{index}",
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": fill.get("timestamp", "1970-01-01T00:00:00Z"),
             "symbol": fill.get("symbol", "DEMO-SYMBOL"),
         }
         return {**defaults, **fill}
@@ -348,7 +346,7 @@ def _recompute_and_compare_metrics(
     starting_cash = _safe_float(metrics.get("starting_cash"), 1.0)
     cash = _safe_float(metrics.get("ending_cash"), starting_cash)
     bars_processed = int(metrics.get("bars_processed", 0))
-    current_price = _safe_float(metrics.get("ending_cash"), starting_cash) / starting_cash
+    current_price = 1.0
     if fill_history:
         current_price = float(fill_history[-1].price)
 
