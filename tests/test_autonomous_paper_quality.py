@@ -1,4 +1,5 @@
 import json
+import subprocess
 from pathlib import Path
 
 from atlas_agent.agent.autonomous_paper_quality import build_trading_quality_gate, TradingQualityThresholdPolicy, write_trading_quality_artifacts
@@ -269,3 +270,24 @@ def test_artifacts_written(tmp_path: Path):
     loaded = json.loads(json_path.read_text(encoding="utf-8"))
     assert loaded["quality_state"] == report["quality_state"]
     assert "Disclaimer" in md_path.read_text(encoding="utf-8")
+
+
+def test_cli_autonomous_paper_quality_smoke(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    out_dir = tmp_path / "out"
+    result = subprocess.run(
+        [
+            "python3.11", "-m", "atlas_agent.cli",
+            "agent", "autonomous-paper-quality",
+            "--metrics", str(tmp_path / "metrics.json"),
+            "--decisions", str(tmp_path / "decisions.jsonl"),
+            "--fills", str(tmp_path / "fills.jsonl"),
+            "--output-dir", str(out_dir),
+            "--json",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode in (0, 2), result.stderr
+    assert (out_dir / "trading-quality-gate.json").exists()

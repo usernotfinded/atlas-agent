@@ -898,6 +898,19 @@ Safety First:
     agent_autonomous_scorecard.add_argument("--replay-decisions", help="Optional second decisions file for replay comparison")
     agent_autonomous_scorecard.add_argument("--output-dir", help="Directory for scorecard JSON/Markdown reports")
     agent_autonomous_scorecard.add_argument("--json", action="store_true", help="Emit scorecard as JSON")
+    agent_autonomous_quality = agent_sub.add_parser(
+        "autonomous-paper-quality",
+        help="Evaluate stateful autonomous-paper trading behavior against a quality gate (paper-only, offline).",
+    )
+    agent_autonomous_quality.add_argument("--metrics", required=True, help="Path to metrics.json")
+    agent_autonomous_quality.add_argument("--decisions", required=True, help="Path to decisions.jsonl")
+    agent_autonomous_quality.add_argument("--fills", required=True, help="Path to fills.jsonl")
+    agent_autonomous_quality.add_argument("--state", help="Path to state.json (optional)")
+    agent_autonomous_quality.add_argument("--scorecard", help="Path to autonomous-paper-scorecard.json (optional)")
+    agent_autonomous_quality.add_argument("--threshold-policy", help="Path to threshold policy JSON (optional)")
+    agent_autonomous_quality.add_argument("--data-path", help="Path to OHLCV CSV for benchmark comparison (optional)")
+    agent_autonomous_quality.add_argument("--output-dir", help="Directory for trading-quality-gate.json and trading-quality-report.md")
+    agent_autonomous_quality.add_argument("--json", action="store_true", help="Emit result as JSON")
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
 
@@ -6060,6 +6073,53 @@ def main(argv: list[str] | None = None) -> int:
             for blocker in scorecard.get("blockers", []):
                 print(f"  blocker: {blocker}")
             return 0 if scorecard["promotion_state"] not in ("blocked", "not_evaluated") else 2
+        elif args.agent_command == "autonomous-paper-quality":
+            from atlas_agent.agent.autonomous_paper_quality import (
+                TradingQualityThresholdPolicy,
+                build_trading_quality_gate,
+                write_trading_quality_artifacts,
+            )
+
+            policy = TradingQualityThresholdPolicy()
+            if getattr(args, "threshold_policy", None):
+                policy_data = json.loads(Path(args.threshold_policy).read_text(encoding="utf-8"))
+                policy = TradingQualityThresholdPolicy.from_dict(policy_data)
+
+            output_dir = getattr(args, "output_dir", None) or str(
+                config.reports_dir / "autonomous_paper_quality"
+            )
+            report = build_trading_quality_gate(
+                metrics_path=args.metrics,
+                decisions_path=args.decisions,
+                fills_path=args.fills,
+                state_path=getattr(args, "state", None),
+                scorecard_path=getattr(args, "scorecard", None),
+                data_path=getattr(args, "data_path", None),
+                policy=policy,
+            )
+            json_path, md_path = write_trading_quality_artifacts(report, output_dir)
+
+            if getattr(args, "json", False):
+                return emit_cli_success(
+                    "atlas agent autonomous-paper-quality",
+                    {
+                        "report": report,
+                        "json_path": str(json_path),
+                        "md_path": str(md_path),
+                    },
+                )
+
+            print(f"trading-quality-gate: {report['quality_state']}")
+            print(f"  json: {json_path}")
+            print(f"  md:   {md_path}")
+            if report["blockers"]:
+                print("  blockers:")
+                for blocker in report["blockers"]:
+                    print(f"    - {blocker}")
+            return 0 if report["quality_state"] in (
+                "paper_quality_reviewable",
+                "eligible_for_shadow_live_quality_review",
+            ) else 2
         elif args.agent_command == "run":
             if getattr(args, "offline", False):
                 config.model.provider = "null"
