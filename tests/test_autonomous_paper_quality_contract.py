@@ -31,14 +31,14 @@ def test_checker_json_output():
 
 
 def test_checker_fails_when_forbidden_phrase_present(tmp_path: Path):
-    checker_path = REPO_ROOT / "scripts" / "check_autonomous_paper_quality_contract.py"
-    original_text = checker_path.read_text(encoding="utf-8")
+    doc_path = REPO_ROOT / "docs" / "autonomous-paper-quality-gate.md"
+    original_text = doc_path.read_text(encoding="utf-8")
     try:
-        checker_path.write_text(original_text.replace('"risk-free"', '"paper-only"'), encoding="utf-8")
+        doc_path.write_text(original_text + "\nThis strategy is guaranteed profit.\n", encoding="utf-8")
         result = check_all()
         assert not result["passed"]
     finally:
-        checker_path.write_text(original_text, encoding="utf-8")
+        doc_path.write_text(original_text, encoding="utf-8")
 
 
 def test_checker_fails_on_forbidden_import(tmp_path: Path):
