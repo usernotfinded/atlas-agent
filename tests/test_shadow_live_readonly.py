@@ -867,7 +867,9 @@ def test_cli_shadow_live_major_divergence_exit_2(tmp_path: Path) -> None:
     assert "major_divergence" in result.stdout
 
 
-def _run_shadow_live_with_extra_flag(tmp_path: Path, flag: str) -> subprocess.CompletedProcess[str]:
+def _run_shadow_live_with_extra_flag(
+    tmp_path: Path, flag: str
+) -> subprocess.CompletedProcess[str]:
     gate = _make_eligible_gate()
     gate_path = tmp_path / "gate.json"
     gate_path.write_text(json.dumps(gate))
@@ -896,17 +898,173 @@ def _run_shadow_live_with_extra_flag(tmp_path: Path, flag: str) -> subprocess.Co
     )
 
 
-def test_cli_rejects_live_submit_flag(tmp_path: Path) -> None:
-    result = _run_shadow_live_with_extra_flag(tmp_path, "--live")
+@pytest.mark.parametrize(
+    "flag",
+    [
+        "--live",
+        "--submit",
+        "--broker",
+        "--api-key",
+        "--credentials",
+        "--provider",
+    ],
+)
+def test_cli_rejects_forbidden_flag(tmp_path: Path, flag: str) -> None:
+    result = _run_shadow_live_with_extra_flag(tmp_path, flag)
     assert result.returncode != 0
-    assert "unrecognized arguments: --live" in result.stderr
-
-    result = _run_shadow_live_with_extra_flag(tmp_path, "--submit")
-    assert result.returncode != 0
-    assert "unrecognized arguments: --submit" in result.stderr
+    assert flag in result.stderr
 
 
-def test_cli_rejects_api_key_flag(tmp_path: Path) -> None:
-    result = _run_shadow_live_with_extra_flag(tmp_path, "--api-key")
-    assert result.returncode != 0
-    assert "unrecognized arguments: --api-key" in result.stderr
+def test_cli_shadow_live_minor_divergence_exit_0(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate["metrics"]["ending_cash"] = 10110.0
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot = _make_minimal_snapshot()
+    snapshot["snapshot_freshness_timestamp"] = "2099-01-01T00:00:00Z"
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    output_dir = tmp_path / "out"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "agent",
+            "shadow-live",
+            "--quality-gate",
+            str(gate_path),
+            "--broker-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "minor_divergence" in result.stdout
+
+
+def test_cli_shadow_live_stale_snapshot_exit_2(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot = _make_minimal_snapshot()
+    snapshot["snapshot_freshness_timestamp"] = "2026-06-23T11:00:00Z"
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    output_dir = tmp_path / "out"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "agent",
+            "shadow-live",
+            "--quality-gate",
+            str(gate_path),
+            "--broker-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "stale_snapshot" in result.stdout
+
+
+def test_cli_shadow_live_incomplete_snapshot_exit_2(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot = _make_minimal_snapshot()
+    snapshot["completeness_flags"]["positions"] = False
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    output_dir = tmp_path / "out"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "agent",
+            "shadow-live",
+            "--quality-gate",
+            str(gate_path),
+            "--broker-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "incomplete_snapshot" in result.stdout
+
+
+def test_cli_shadow_live_blocked_exit_2(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate["quality_state"] = "blocked"
+    gate["blockers"] = ["quality gate below threshold"]
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot = _make_minimal_snapshot()
+    snapshot["snapshot_freshness_timestamp"] = "2099-01-01T00:00:00Z"
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    output_dir = tmp_path / "out"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "agent",
+            "shadow-live",
+            "--quality-gate",
+            str(gate_path),
+            "--broker-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "blocked" in result.stdout
+
+
+def test_cli_shadow_live_not_evaluated_exit_2(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate["quality_state"] = "not_evaluated"
+    gate["metrics"] = {}
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot = _make_minimal_snapshot()
+    snapshot["snapshot_freshness_timestamp"] = "2099-01-01T00:00:00Z"
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    output_dir = tmp_path / "out"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "agent",
+            "shadow-live",
+            "--quality-gate",
+            str(gate_path),
+            "--broker-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "not_evaluated" in result.stdout
