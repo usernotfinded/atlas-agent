@@ -85,6 +85,6 @@ def test_no_fills_blocked(tmp_path: Path):
         decisions_path=tmp_path / "decisions.jsonl",
         fills_path=tmp_path / "fills.jsonl",
     )
-    assert result["quality_state"] in ("blocked", "paper_activity_observed")
+    assert result["quality_state"] == "blocked"
     trade_dim = next(d for d in result["dimensions"] if d["name"] == "trade_activity")
     assert not trade_dim["passed"]

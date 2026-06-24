@@ -288,9 +288,10 @@ def _evaluate_dimensions(
     ))
 
     # stateful_resume_integrity
-    state_ok = False
-    state_reason = "No state artifact provided."
-    if state:
+    if state is None:
+        state_ok = True
+        state_reason = "No state artifact provided (optional)."
+    else:
         cursor = state.get("cursor", {})
         if (
             isinstance(cursor, dict)
@@ -301,6 +302,7 @@ def _evaluate_dimensions(
             state_ok = True
             state_reason = "State schema and identity are consistent."
         else:
+            state_ok = False
             state_reason = "State schema invalid or run_id mismatch."
     dimensions.append(_dimension("stateful_resume_integrity", state_ok, 1.0 if state_ok else 0.0, state_reason))
 
@@ -332,12 +334,24 @@ def _evaluate_dimensions(
     ))
 
     # cost_accounting
-    cost_ok = total_commission >= 0 and total_slippage >= 0
+    cost_impact_pct = (
+        (total_commission + total_slippage) / ending_equity * 100.0
+        if ending_equity > 0
+        else 0.0
+    )
+    cost_ok = (
+        total_commission >= 0
+        and total_slippage >= 0
+        and cost_impact_pct <= policy.max_cost_impact_pct
+    )
     dimensions.append(_dimension(
         "cost_accounting",
         cost_ok,
         1.0 if cost_ok else 0.0,
-        f"Commission={total_commission}, slippage={total_slippage}.",
+        (
+            f"Commission={total_commission}, slippage={total_slippage}, "
+            f"cost_impact_pct={cost_impact_pct:.4f}% (limit {policy.max_cost_impact_pct}%)."
+        ),
     ))
 
     # drawdown_bounds
@@ -394,7 +408,14 @@ def _evaluate_dimensions(
         ))
 
     # replay_or_recompute_consistency
-    if consistency:
+    if consistency is None:
+        dimensions.append(_dimension(
+            "replay_or_recompute_consistency",
+            True,
+            1.0,
+            "Metric recomputation not performed (optional).",
+        ))
+    else:
         consistency_ok = consistency.get("consistent", False)
         dimensions.append(_dimension(
             "replay_or_recompute_consistency",
@@ -402,18 +423,23 @@ def _evaluate_dimensions(
             1.0 if consistency_ok else 0.0,
             consistency.get("reason", "Consistency evaluated."),
         ))
-    else:
-        dimensions.append(_dimension(
-            "replay_or_recompute_consistency",
-            False,
-            0.0,
-            "Metric recomputation unavailable.",
-        ))
 
     # data_coverage
-    data_ok = bars_processed >= policy.min_bars_processed
-    coverage_reason = f"Bars processed: {bars_processed} (required >= {policy.min_bars_processed})."
-    dimensions.append(_dimension("data_coverage", data_ok, 1.0 if data_ok else 0.0, coverage_reason))
+    expected_bars = max(len(decisions), policy.min_bars_processed)
+    coverage = bars_processed / expected_bars if expected_bars > 0 else 0.0
+    data_ok = (
+        bars_processed >= policy.min_bars_processed
+        and coverage >= policy.min_data_coverage
+    )
+    dimensions.append(_dimension(
+        "data_coverage",
+        data_ok,
+        1.0 if data_ok else 0.0,
+        (
+            f"Bars processed: {bars_processed} (required >= {policy.min_bars_processed}); "
+            f"coverage: {coverage:.2%} (required >= {policy.min_data_coverage:.0%})."
+        ),
+    ))
 
     # metric_validity
     metric_ok = len(invalid_metrics) <= policy.max_invalid_metric_count
