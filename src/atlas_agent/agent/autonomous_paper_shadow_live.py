@@ -1096,10 +1096,21 @@ def _render_markdown(report: dict[str, Any]) -> str:
     return "".join(lines)
 
 
+def _redact_report_paths(report: dict[str, Any]) -> dict[str, Any]:
+    """Return a shallow copy of *report* with input_artifact paths redacted."""
+    redacted = dict(report)
+    inputs = redacted.get("input_artifacts", {})
+    redacted["input_artifacts"] = {
+        k: _redact_path(v) if isinstance(v, str) else v for k, v in inputs.items()
+    }
+    return redacted
+
+
 def write_shadow_live_artifacts(report: dict[str, Any], output_dir: str | Path) -> None:
     """Write JSON and Markdown shadow-live artifacts with redacted paths."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
+    report = _redact_report_paths(report)
     json_path = out / "shadow-live-comparison.json"
     json_path.write_text(
         json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"

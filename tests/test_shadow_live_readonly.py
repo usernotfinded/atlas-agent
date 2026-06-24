@@ -589,6 +589,26 @@ def test_path_redaction_in_artifacts(tmp_path: Path) -> None:
     assert json_data["input_artifacts"]["quality_gate"] == "gate.json"
 
 
+def test_write_shadow_live_artifacts_redacts_absolute_paths(tmp_path: Path) -> None:
+    output_dir = tmp_path / "out"
+    report = _make_eligible_gate()
+    report["artifact_type"] = "shadow_live_comparison"
+    report["schema_version"] = "shadow-live-comparison.v1"
+    report["status"] = "matched"
+    report["input_artifacts"] = {
+        "quality_gate": str(tmp_path / "secret" / "gate.json"),
+        "broker_snapshot": str(tmp_path / "secret" / "snapshot.json"),
+        "state": str(tmp_path / "secret" / "state.json"),
+    }
+    original_inputs = dict(report["input_artifacts"])
+    write_shadow_live_artifacts(report, output_dir)
+    json_data = json.loads((output_dir / "shadow-live-comparison.json").read_text())
+    assert json_data["input_artifacts"]["quality_gate"] == "gate.json"
+    assert json_data["input_artifacts"]["broker_snapshot"] == "snapshot.json"
+    assert json_data["input_artifacts"]["state"] == "state.json"
+    assert report["input_artifacts"] == original_inputs
+
+
 def test_open_orders_incomplete_not_blocking(tmp_path: Path) -> None:
     gate = _make_eligible_gate()
     gate_path = tmp_path / "gate.json"
