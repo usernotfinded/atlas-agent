@@ -252,6 +252,7 @@
       "plan",
       "reflect",
       "run",
+      "shadow-live",
       "status"
     ],
     "kill": [
@@ -533,5 +534,14 @@
     "broker_execution_enabled_by_default",
     "credential_loading_in_cli_contract_check",
     "network_calls_in_cli_contract_check"
+  ],
+  "command_help_contracts": [
+    {
+      "command": "atlas agent shadow-live --help",
+      "expected_in_stdout": [
+        "read-only fixture-first comparison",
+        "does not submit orders or call broker APIs"
+      ]
+    }
   ]
 }

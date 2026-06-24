@@ -345,6 +345,25 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "10i. shadow-live read-only contract check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_shadow_live_readonly_contract.py || exit 1
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "10j. shadow-live read-only tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_shadow_live_readonly.py -v || exit 1
+"$PYTHON_BIN" -m pytest tests/test_shadow_live_readonly_contract.py -v || exit 1
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "11. product demo and marketplace readiness check"
 echo "========================================"
 SECONDS=0
