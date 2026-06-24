@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CAND-002: Autonomous Paper Decision Quality Scorecard and Promotion Gate.
 - CAND-003: execution-neutral autonomous trading kernel and stateful paper runner with resume, duplicate-prevention, next-bar fills, configurable costs, and honest trading metrics.
 - CAND-004: Autonomous Paper Trading Quality Gate for deterministic offline evaluation of stateful paper trading behavior.
+- CAND-005: Shadow-Live Read-Only Fixture-First Comparison for deterministic, read-only comparison of a stateful paper run against a recorded local broker-like snapshot.
+- `atlas agent shadow-live` command for read-only fixture-first comparison of paper state against a recorded broker snapshot.
+- `src/atlas_agent/agent/autonomous_paper_shadow_live.py` shadow-live comparison builder, snapshot loader, comparison engine, status resolver, and artifact writers.
+- `scripts/check_shadow_live_readonly_contract.py` static contract checker and `tests/test_shadow_live_readonly.py`, `tests/test_shadow_live_readonly_contract.py` test coverage.
+- `docs/shadow-live-readonly-comparison.md` user-facing documentation for the CAND-005 read-only comparison.
 - `atlas agent autonomous-paper` command for deterministic, paper-only autonomous decision loops on local sample/CSV data.
 - `atlas agent autonomous-scorecard` command for deterministic offline evaluation of autonomous-paper artifacts.
 - `atlas agent autonomous-paper-quality` command for deterministic offline trading-quality gate evaluation.
@@ -27,9 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/test_autonomous_paper_scorecard.py` covering valid scorecard generation, missing/malformed artifacts, runs blocked by risk controls, no-trade runs, kill-switch blocked runs, replay mismatch, unsafe live/provider/broker references, redaction, promotion defaults, and CLI smoke.
 
 ### Changed
-- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004 paper-only scope.
-- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, and CAND-004 as implemented planning candidates.
-- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, autonomous paper scorecard, and autonomous paper quality gate checkers and tests.
+- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004/CAND-005 paper-only scope, including CAND-005 as a read-only fixture-first comparison stage in the staged autonomy ladder.
+- `docs/shadow-live-readiness-contract.md` clarified: CAND-005 implements local fixture-first read-only comparison only; CAND-006 remains future planning-only; read-only comparison is not live readiness.
+- `docs/autonomy-roadmap.md` marked CAND-005 implemented and CAND-006 future gated live-submit conformance rehearsal.
+- `docs/autonomous-paper-quality-gate.md` added note that `cost_impact_pct` is an approximation/proxy for directional paper-run review, not high-precision production cost analysis.
+- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, CAND-004, and CAND-005 as implemented planning candidates.
+- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, shadow-live read-only contract, autonomous paper scorecard, and autonomous paper quality gate checkers and tests.
 
 ### Safety
 - PyPI was not published.
@@ -38,6 +46,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The scorecard gate defaults to `blocked` and never enables shadow-live execution.
 - CAND-003 remains paper-only and does not enable live trading, shadow-live, broker submission, provider execution, or credential loading.
 - CAND-004 trading-quality gate is paper-only and does not enable live trading, shadow-live, broker submission, provider execution, or credential loading. It does not claim profitability or live-trading readiness.
+- CAND-005 shadow-live read-only comparison is fixture-first, calls no real broker APIs by default, loads no credentials, submits no orders, mutates no broker state, and does not claim live readiness, trading safety, profitability, or permission to submit orders.
+- CAND-006 remains future planning-only gated live-submit conformance rehearsal and does not enable real live trading.
 - No protected runtime safety boundary changed in this planning phase.
 
 ## [0.6.15] - 2026-06-22

@@ -50,6 +50,17 @@ switch.
 - Audit hash-chain records every gate decision, rejection, and state transition.
 - The project does not support unsupervised real-money trading without human approval.
 
+### Candidate status in the current planning line
+
+- **CAND-005** is implemented as a local, fixture-first, read-only comparison of
+  a stateful paper run against a recorded broker-like snapshot. It does not call
+  broker APIs, load credentials, submit orders, or indicate live readiness.
+- **CAND-006** remains future planning-only work for a gated live-submit
+  conformance rehearsal. It is not implemented and does not enable real live
+  trading.
+- No candidate in the current planning line enables unsupervised real-money
+  trading or direct AI-to-broker execution.
+
 ## Current state vs future state
 
 Atlas Agent is designed as a **supervised, human-in-the-loop workspace**, not an unattended trading system. The autonomy roadmap moves from strict manual oversight toward limited, gated automation, while keeping live execution disabled by default and real-money autonomy off the table.

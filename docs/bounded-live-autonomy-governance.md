@@ -60,6 +60,9 @@ planning only):
   credential loading.
 - CAND-004 (v0.6.16): A trading-quality gate evaluates stateful paper behavior
   only; it does not approve live trading.
+- CAND-005 (v0.6.16): A strictly local, fixture-first, read-only comparison
+  between a stateful paper run and a recorded broker-like snapshot. It does not
+  call broker APIs, load credentials, submit orders, or claim live readiness.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - `v0.6.16` remains planning-only: no source/package bump, tag, GitHub Release,
@@ -73,6 +76,7 @@ planning only):
 |---|---|---|---|
 | **L0** | Research / paper assistant | Generate local research artifacts, run backtests, print dry-runs, generate reports. No orders. | Implemented; default-safe baseline. |
 | **L1** | Autonomous paper workflows | Run scheduled paper routines autonomously within deterministic limits. No broker contact. | Implemented; paper mode is the default runtime. |
+| **L1.5** | Read-only fixture-first comparison (CAND-005) | Compare a stateful paper run against a recorded local broker-like snapshot; produce deterministic read-only artifacts. No broker API calls, no credentials, no live submit. | Implemented as local read-only comparison only; **not** live readiness. |
 | **L2** | Live analysis and suggestions with human approval | Consume live broker snapshots for analysis and propose orders; every proposal requires explicit human approval. | Implemented as analysis-only/suggestion path; live submit remains approval-gated. |
 | **L3** | Bounded live-autonomy research tier | A tightly bounded research concept requiring per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. | **Not implemented.** Not production-ready; not unattended-safe; not enabled by default. |
 | **L4** | Broad autonomous live execution | A hypothetical future tier with broader execution authority. | **Not a current capability or milestone.** Cannot be claimed or pursued without external legal, security, risk, operational, and regulatory review. |
@@ -83,6 +87,9 @@ planning only):
 - **Paper strategy evaluation is L1 research only.** It ranks sample-data
   backtests for paper follow-up; see [Paper Strategy Evaluation](paper-strategy-evaluation.md)
 - [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md).
+- **L1.5 is not live broker sync or live readiness.** It compares paper artifacts
+  against a local, recorded broker-like fixture only. See
+  [Shadow-Live Read-Only Comparison](shadow-live-readonly-comparison.md).
 - **L2 is not autonomous order submission.** Proposals are advisory until a human approves them.
 - **L3 is not unsupervised trading.** The operator remains responsible for configuration, broker selection, risk limits, and monitoring.
 - **L4 is not a current goal.** It is a hypothetical direction that requires explicit external gates before any consideration.
@@ -150,6 +157,8 @@ and disabled by default. It must preserve:
 
 - [Shadow-Live Readiness Contract](shadow-live-readiness-contract.md) — the
   planning-only contract for any future shadow-live/read-only stage.
+- [Shadow-Live Read-Only Comparison](shadow-live-readonly-comparison.md) — the
+  CAND-005 local fixture-first read-only comparison documentation.
 - [Autonomous Paper Trading Quality Gate](autonomous-paper-quality-gate.md) —
   the CAND-004 deterministic, paper-only trading-quality gate.
 - [Autonomy Roadmap](autonomy-roadmap.md) — staged autonomy levels and current/future state.

@@ -42,6 +42,20 @@
         "Does not load credentials or call real brokers/providers.",
         "Does not approve live trading or claim profitability."
       ]
+    },
+    {
+      "id": "CAND-005",
+      "status": "implemented",
+      "title": "Shadow-Live Read-Only Fixture-First Comparison",
+      "description": "Adds a strictly read-only, fixture-first comparison between a stateful paper run and a recorded local broker-like snapshot. Consumes the CAND-004 trading-quality gate and produces deterministic shadow-live-comparison.json and shadow-live-report.md artifacts. No broker API calls, no credential loading, no live submit, no live readiness claim.",
+      "notes": [
+        "Implemented as local fixture comparison only.",
+        "Does not call real broker APIs by default.",
+        "Does not load credentials or secrets.",
+        "Does not submit orders or mutate broker state.",
+        "Does not indicate live readiness, trading safety, profitability, or permission to submit orders.",
+        "CAND-006 remains future planning-only gated live-submit conformance rehearsal."
+      ]
     }
   ]
 }

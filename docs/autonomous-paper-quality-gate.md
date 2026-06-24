@@ -130,6 +130,15 @@ human-reviewed shadow-live/read-only comparison stage.
 | `metric_validity` | Key metrics (sharpe, sortino, max drawdown, win rate, etc.) are finite, non-missing, and internally consistent. |
 | `no_live_side_effects` | All artifacts report `mode == "paper"` and contain no live broker/provider references. |
 
+## Cost impact approximation note
+
+The `cost_impact_pct` metric produced by the trading-quality gate is an
+approximation and a directional proxy for paper-run review. It is intended to
+help reviewers quickly identify whether simulated commission and slippage costs
+are materially affecting the run, not to provide high-precision production cost
+analysis. Do not use it as a guarantee of live trading costs, profitability, or
+execution quality.
+
 ## Artifacts
 
 - `src/atlas_agent/agent/autonomous_paper_quality.py` — trading-quality gate
