@@ -62,7 +62,9 @@ REQUIRED_ARTIFACT_NAMES = (
 
 REQUIRED_DOC_PHRASES = (
     "read-only fixture comparison",
+    "read-only fixture-first comparison",
     "does not indicate live readiness",
+    "does not implement live trading or live readiness",
     "does not submit orders or call broker APIs",
     "does not load credentials",
     "eligible_for_shadow_live_quality_review",
@@ -72,9 +74,30 @@ REQUIRED_DOC_PHRASES = (
 
 REQUIRED_SOURCE_PHRASES = (
     "read-only fixture comparison",
+    "read-only fixture-first comparison",
     "does not indicate live readiness",
+    "does not implement live trading or live readiness",
     "does not submit orders or call broker APIs",
     "does not load credentials",
+)
+
+REQUIRED_CLI_OPTIONS = (
+    "--quality-gate",
+    "--broker-snapshot",
+    "--output-dir",
+    "--max-snapshot-age-seconds",
+    "--state",
+    "--metrics",
+    "--decisions",
+    "--fills",
+    "--json",
+)
+
+REQUIRED_CLI_HELP_PHRASES = (
+    "read-only fixture-first comparison",
+    "does not submit orders or call broker APIs",
+    "does not load credentials",
+    "does not implement live trading or live readiness",
 )
 
 FORBIDDEN_DOC_PHRASES = (
@@ -276,12 +299,35 @@ def _check_cli_wiring() -> list[str]:
     if not CLI_MODULE.exists():
         return errors
     text = _read(CLI_MODULE)
+    try:
+        rel = CLI_MODULE.relative_to(REPO_ROOT)
+    except ValueError:
+        rel = str(CLI_MODULE)
     if '"shadow-live"' not in text:
-        errors.append("[src/atlas_agent/cli.py] Missing 'shadow-live' subparser registration")
+        errors.append(f"[{rel}] Missing 'shadow-live' subparser registration")
     if not re.search(r"agent_sub\.add_parser\([\s\S]*?\"shadow-live\"", text):
-        errors.append(
-            "[src/atlas_agent/cli.py] 'shadow-live' not wired under agent subparser"
-        )
+        errors.append(f"[{rel}] 'shadow-live' not wired under agent subparser")
+
+    # Isolate the shadow-live parser block so options and disclaimers are
+    # verified for this specific command rather than any other subcommand.
+    match = re.search(
+        r"agent_sub\.add_parser\(\s*\"shadow-live\".*?(?=^\s*agent_sub\.add_parser\()",
+        text,
+        re.DOTALL | re.MULTILINE,
+    )
+    region = match.group(0) if match else text
+
+    for option in REQUIRED_CLI_OPTIONS:
+        if option not in region:
+            errors.append(f"[{rel}] shadow-live missing required CLI option: {option}")
+
+    normalized = re.sub(r"\s+", " ", region.replace('"', "")).lower()
+    for phrase in REQUIRED_CLI_HELP_PHRASES:
+        if phrase.lower() not in normalized:
+            errors.append(
+                f"[{rel}] shadow-live help/description missing required phrase: {phrase}"
+            )
+
     return errors
 
 

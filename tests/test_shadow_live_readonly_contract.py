@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import scripts.check_shadow_live_readonly_contract as _checker
 from scripts.check_shadow_live_readonly_contract import check_all
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -98,3 +99,36 @@ def test_checker_imports_no_network_or_credentials() -> None:
     assert "requests" not in imports
     assert "urllib" not in imports
     assert not any("get_secret" in imp for imp in imports)
+
+
+def test_checker_fails_when_shadow_live_cli_option_removed(tmp_path: Path) -> None:
+    original_cli = _checker.CLI_MODULE
+    temp_cli = tmp_path / "cli.py"
+    temp_cli.write_text(original_cli.read_text(encoding="utf-8"), encoding="utf-8")
+    text = temp_cli.read_text(encoding="utf-8")
+    text = text.replace('"--quality-gate"', '"--quality-removed"')
+    temp_cli.write_text(text, encoding="utf-8")
+    try:
+        _checker.CLI_MODULE = temp_cli
+        result = _checker.check_all()
+        assert not result["passed"], result["errors"]
+    finally:
+        _checker.CLI_MODULE = original_cli
+
+
+def test_checker_fails_when_shadow_live_help_phrase_removed(tmp_path: Path) -> None:
+    original_cli = _checker.CLI_MODULE
+    temp_cli = tmp_path / "cli.py"
+    temp_cli.write_text(original_cli.read_text(encoding="utf-8"), encoding="utf-8")
+    text = temp_cli.read_text(encoding="utf-8")
+    text = text.replace(
+        "does not submit orders or call broker APIs",
+        "may submit orders and call broker APIs",
+    )
+    temp_cli.write_text(text, encoding="utf-8")
+    try:
+        _checker.CLI_MODULE = temp_cli
+        result = _checker.check_all()
+        assert not result["passed"], result["errors"]
+    finally:
+        _checker.CLI_MODULE = original_cli
