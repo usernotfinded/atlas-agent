@@ -1,13 +1,9 @@
 from __future__ import annotations
 
 import json
-import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
-from atlas_agent.agent.autonomous_paper_metrics import calculate_stateful_paper_metrics
-from atlas_agent.agent.autonomous_paper_models import StatefulPaperMetrics, StatefulPaperState
 
 
 @dataclass(frozen=True)
