@@ -252,11 +252,6 @@ def _evaluate_dimensions(
     total_slippage = _safe_float(metrics.get("total_slippage"), 0.0)
     ending_equity = _safe_float(metrics.get("ending_equity"), 0.0)
     starting_cash = _safe_float(metrics.get("starting_cash"), 1.0)
-    cost_impact_pct = (
-        (total_commission + total_slippage) / ending_equity * 100.0
-        if ending_equity > 0
-        else 0.0
-    )
 
     invalid_metrics: list[str] = []
     for key, value in metrics.items():

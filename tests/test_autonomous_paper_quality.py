@@ -88,3 +88,145 @@ def test_no_fills_blocked(tmp_path: Path):
     assert result["quality_state"] == "blocked"
     trade_dim = next(d for d in result["dimensions"] if d["name"] == "trade_activity")
     assert not trade_dim["passed"]
+
+
+def test_malformed_metrics_fail_closed(tmp_path: Path):
+    (tmp_path / "metrics.json").write_text("not json", encoding="utf-8")
+    (tmp_path / "decisions.jsonl").write_text("{}", encoding="utf-8")
+    (tmp_path / "fills.jsonl").write_text("{}", encoding="utf-8")
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["quality_state"] == "not_evaluated"
+
+
+def test_missing_decisions_fail_closed(tmp_path: Path):
+    metrics, _, fills = _minimal_valid_fixtures()
+    _write_artifacts(tmp_path, metrics, [], fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["quality_state"] == "blocked"
+    artifact_dim = next(d for d in result["dimensions"] if d["name"] == "artifact_integrity")
+    assert not artifact_dim["passed"]
+
+
+def test_no_risk_rejections_blocked(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    decisions = [d for d in decisions if d["decision_state"] != "risk_blocked"]
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    dim = next(d for d in result["dimensions"] if d["name"] == "risk_rejection_coverage")
+    assert not dim["passed"]
+
+
+def test_no_no_trade_decisions_blocked(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    decisions = [d for d in decisions if d["decision_state"] != "no_trade"]
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    dim = next(d for d in result["dimensions"] if d["name"] == "no_trade_coverage")
+    assert not dim["passed"]
+
+
+def test_drawdown_above_threshold_blocks(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics["max_drawdown_pct"] = 60.0
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+        policy=TradingQualityThresholdPolicy(max_drawdown_pct=50.0),
+    )
+    dim = next(d for d in result["dimensions"] if d["name"] == "drawdown_bounds")
+    assert not dim["passed"]
+
+
+def test_exposure_above_threshold_blocks(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics["gross_exposure"] = 50000.0
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+        policy=TradingQualityThresholdPolicy(max_exposure_pct=200.0),
+    )
+    dim = next(d for d in result["dimensions"] if d["name"] == "exposure_bounds")
+    assert not dim["passed"]
+
+
+def test_turnover_above_threshold_blocks(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics["turnover"] = 150.0
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+        policy=TradingQualityThresholdPolicy(max_turnover=100.0),
+    )
+    dim = next(d for d in result["dimensions"] if d["name"] == "turnover_bounds")
+    assert not dim["passed"]
+
+
+def test_invalid_nan_metric_blocks(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics["total_return_pct"] = float("nan")
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["quality_state"] == "blocked"
+    dim = next(d for d in result["dimensions"] if d["name"] == "metric_validity")
+    assert not dim["passed"]
+
+
+def test_valid_gate_reaches_reviewable(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["quality_state"] in ("paper_quality_reviewable", "eligible_for_shadow_live_quality_review")
+
+
+def test_threshold_policy_serialized(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    policy = TradingQualityThresholdPolicy(min_bars_processed=5)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+        policy=policy,
+    )
+    assert result["threshold_policy"]["min_bars_processed"] == 5
+
+
+def test_artifact_paths_are_redacted(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert str(tmp_path) not in str(result["input_artifacts"])
