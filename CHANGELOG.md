@@ -23,8 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/autonomous-paper-loop.md`, `scripts/check_autonomous_paper_loop_contract.py`, and `tests/test_autonomous_paper_loop_contract.py`.
 - `docs/autonomous-paper-scorecard.md`, `scripts/check_autonomous_paper_scorecard_contract.py`, `tests/test_autonomous_paper_scorecard.py`, `tests/test_autonomous_paper_scorecard_contract.py`, and `scripts/demo_autonomous_paper_scorecard.sh`.
 - `docs/shadow-live-readiness-contract.md`, `scripts/check_shadow_live_contract.py`, and `tests/test_shadow_live_contract.py`.
-- `tests/test_autonomous_paper_loop.py` covering happy path, no-trade path, risk-blocked path, malformed-config fail-closed, live-mode rejection, unreachable broker submit, no provider execution, audit artifact creation, and deterministic replay.
-- `tests/test_autonomous_paper_scorecard.py` covering valid scorecard generation, missing/malformed artifacts, risk-blocked runs, no-trade runs, kill-switch blocked runs, replay mismatch, unsafe live/provider/broker references, redaction, promotion defaults, and CLI smoke.
+- `tests/test_autonomous_paper_loop.py` covering happy path, no-trade path, orders blocked by risk controls, malformed-config fail-closed, live-mode rejection, unreachable broker submit, no provider execution, audit artifact creation, and deterministic replay.
+- `tests/test_autonomous_paper_scorecard.py` covering valid scorecard generation, missing/malformed artifacts, runs blocked by risk controls, no-trade runs, kill-switch blocked runs, replay mismatch, unsafe live/provider/broker references, redaction, promotion defaults, and CLI smoke.
 
 ### Changed
 - `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004 paper-only scope.

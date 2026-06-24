@@ -80,8 +80,8 @@ def _redact(text: str) -> str:
     """Redact absolute paths and credential-like strings from text."""
     home = str(Path.home())
     replacements = [
-        (home, "<HOME>"),
         (str(REPO_ROOT), "<REPO_ROOT>"),
+        (home, "<HOME>"),
         ("/Users/", "<HOME>/"),
         ("/private/var/", "<TEMP>/"),
         ("/var/folders/", "<TEMP>/"),

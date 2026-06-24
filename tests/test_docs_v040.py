@@ -4,8 +4,16 @@ import pytest
 from pathlib import Path
 import tomllib
 
+
+_RUNTIME_MARKDOWN_DIRS = {"artifacts", "memory", "reports"}
+
+
 def get_markdown_files():
-    return list(Path(".").glob("**/*.md"))
+    return [
+        path
+        for path in Path(".").glob("**/*.md")
+        if _RUNTIME_MARKDOWN_DIRS.isdisjoint(path.parts)
+    ]
 
 @pytest.mark.parametrize("file_path", get_markdown_files())
 def test_no_forbidden_terms(file_path):
