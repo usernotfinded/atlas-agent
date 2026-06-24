@@ -376,6 +376,9 @@ def _recompute_and_compare_metrics(
             data_source=data_source,
             number_of_rejections=number_of_rejections,
         )
+        # Pin the generated timestamp so the recomputed output is deterministic
+        # for audit/replay reproducibility.
+        recomputed.generated_at = str(metrics.get("generated_at", "1970-01-01T00:00:00Z"))
     except Exception as exc:
         return {
             "consistent": False,
