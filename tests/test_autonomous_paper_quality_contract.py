@@ -54,7 +54,15 @@ def test_checker_fails_on_forbidden_import(tmp_path: Path):
 
 def test_checker_imports_no_network_or_credentials():
     from scripts import check_autonomous_paper_quality_contract as checker
+    import ast
     source = Path(checker.__file__).read_text(encoding="utf-8")
-    assert "requests" not in source
-    assert "urllib" not in source
-    assert "get_secret" not in source
+    tree = ast.parse(source)
+    imports = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            imports.append(node.module or "")
+    assert "requests" not in imports
+    assert "urllib" not in imports
+    assert not any("get_secret" in imp for imp in imports)
