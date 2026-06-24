@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -789,3 +791,122 @@ def test_not_evaluated_quality_gate(tmp_path: Path) -> None:
         now=_FIXED_NOW,
     )
     assert report["status"] == "not_evaluated"
+
+
+def test_cli_help_includes_readonly_disclaimer() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "atlas_agent.cli", "agent", "shadow-live", "--help"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "read-only fixture-first comparison" in result.stdout
+    assert "does not submit orders or call broker APIs" in result.stdout
+    assert "does not load credentials" in result.stdout
+    assert "does not implement live trading or live readiness" in result.stdout
+
+
+def test_cli_shadow_live_matched_exit_0(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot = _make_minimal_snapshot()
+    snapshot["snapshot_freshness_timestamp"] = "2099-01-01T00:00:00Z"
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    output_dir = tmp_path / "out"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "agent",
+            "shadow-live",
+            "--quality-gate",
+            str(gate_path),
+            "--broker-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert (output_dir / "shadow-live-comparison.json").exists()
+
+
+def test_cli_shadow_live_major_divergence_exit_2(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate["metrics"]["ending_equity"] = 12000.0
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot = _make_minimal_snapshot()
+    snapshot["snapshot_freshness_timestamp"] = "2099-01-01T00:00:00Z"
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    output_dir = tmp_path / "out"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "agent",
+            "shadow-live",
+            "--quality-gate",
+            str(gate_path),
+            "--broker-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 2
+    assert "major_divergence" in result.stdout
+
+
+def _run_shadow_live_with_extra_flag(tmp_path: Path, flag: str) -> subprocess.CompletedProcess[str]:
+    gate = _make_eligible_gate()
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot = _make_minimal_snapshot()
+    snapshot["snapshot_freshness_timestamp"] = "2099-01-01T00:00:00Z"
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(snapshot))
+    output_dir = tmp_path / "out"
+    return subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "atlas_agent.cli",
+            "agent",
+            "shadow-live",
+            "--quality-gate",
+            str(gate_path),
+            "--broker-snapshot",
+            str(snapshot_path),
+            "--output-dir",
+            str(output_dir),
+            flag,
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_cli_rejects_live_submit_flag(tmp_path: Path) -> None:
+    result = _run_shadow_live_with_extra_flag(tmp_path, "--live")
+    assert result.returncode != 0
+    assert "unrecognized arguments: --live" in result.stderr
+
+    result = _run_shadow_live_with_extra_flag(tmp_path, "--submit")
+    assert result.returncode != 0
+    assert "unrecognized arguments: --submit" in result.stderr
+
+
+def test_cli_rejects_api_key_flag(tmp_path: Path) -> None:
+    result = _run_shadow_live_with_extra_flag(tmp_path, "--api-key")
+    assert result.returncode != 0
+    assert "unrecognized arguments: --api-key" in result.stderr

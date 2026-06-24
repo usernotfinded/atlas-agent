@@ -911,6 +911,26 @@ Safety First:
     agent_autonomous_quality.add_argument("--data-path", help="Path to OHLCV CSV for benchmark comparison (optional)")
     agent_autonomous_quality.add_argument("--output-dir", help="Directory for trading-quality-gate.json and trading-quality-report.md")
     agent_autonomous_quality.add_argument("--json", action="store_true", help="Emit result as JSON")
+    agent_shadow_live = agent_sub.add_parser(
+        "shadow-live",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="read-only fixture-first comparison of paper state against a recorded broker snapshot",
+        description=(
+            "read-only fixture-first comparison.\n"
+            "does not submit orders or call broker APIs.\n"
+            "does not load credentials.\n"
+            "does not implement live trading or live readiness."
+        ),
+    )
+    agent_shadow_live.add_argument("--quality-gate", required=True, help="path to trading-quality-gate.json")
+    agent_shadow_live.add_argument("--broker-snapshot", required=True, help="path to local broker snapshot JSON fixture")
+    agent_shadow_live.add_argument("--output-dir", required=True, help="directory for shadow-live artifacts")
+    agent_shadow_live.add_argument("--state", default=None, help="optional persisted runner state JSON")
+    agent_shadow_live.add_argument("--metrics", default=None, help="optional metrics JSON")
+    agent_shadow_live.add_argument("--decisions", default=None, help="optional decisions jsonl")
+    agent_shadow_live.add_argument("--fills", default=None, help="optional fills jsonl")
+    agent_shadow_live.add_argument("--max-snapshot-age-seconds", type=int, default=300, help="max snapshot age in seconds")
+    agent_shadow_live.add_argument("--json", action="store_true", help="print comparison JSON to stdout")
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
 
@@ -3757,6 +3777,34 @@ def _validate_report_file(data: dict):
     return get_schema_validation_result(data)
 
 
+def cmd_agent_shadow_live(args: argparse.Namespace) -> int:
+    """Run the read-only shadow-live comparison CLI."""
+    from atlas_agent.agent.autonomous_paper_shadow_live import (
+        ShadowLiveThresholdPolicy,
+        build_shadow_live_comparison,
+    )
+
+    policy = ShadowLiveThresholdPolicy(max_snapshot_age_seconds=args.max_snapshot_age_seconds)
+    report = build_shadow_live_comparison(
+        quality_gate_path=args.quality_gate,
+        broker_snapshot_path=args.broker_snapshot,
+        output_dir=args.output_dir,
+        state_path=args.state,
+        metrics_path=args.metrics,
+        decisions_path=args.decisions,
+        fills_path=args.fills,
+        policy=policy,
+    )
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        print(f"shadow-live: {report['status']}")
+        print(f"  output dir: {args.output_dir}")
+        for blocker in report.get("blockers", []):
+            print(f"  blocker: {blocker}")
+    return 0 if report.get("status") in ("matched", "minor_divergence") else 2
+
+
 def main(argv: list[str] | None = None) -> int:
     import json
 
@@ -6120,6 +6168,8 @@ def main(argv: list[str] | None = None) -> int:
                 "paper_quality_reviewable",
                 "eligible_for_shadow_live_quality_review",
             ) else 2
+        elif args.agent_command == "shadow-live":
+            return cmd_agent_shadow_live(args)
         elif args.agent_command == "run":
             if getattr(args, "offline", False):
                 config.model.provider = "null"
