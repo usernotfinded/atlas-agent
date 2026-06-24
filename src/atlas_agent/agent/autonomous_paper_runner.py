@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import tempfile
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
@@ -12,6 +14,7 @@ from atlas_agent.agent.autonomous_paper_metrics import calculate_stateful_paper_
 from atlas_agent.agent.autonomous_paper_models import (
     StatefulPaperConfig,
     StatefulPaperCursor,
+    StatefulPaperMetrics,
     StatefulPaperResult,
     StatefulPaperState,
 )
@@ -60,6 +63,30 @@ def _initialize_state(config: StatefulPaperConfig) -> StatefulPaperState:
     )
 
 
+def _load_state_or_initialize(
+    *,
+    state_dir: str | Path,
+    run_id: str,
+    config: StatefulPaperConfig,
+    resume: bool = False,
+) -> tuple[StatefulPaperState, str]:
+    state_path = _state_path(state_dir, run_id)
+    checkpoint_path = _checkpoint_path(state_dir, run_id)
+    if state_path.exists() and resume:
+        try:
+            data = json.loads(state_path.read_text(encoding="utf-8"))
+            return StatefulPaperState.model_validate(data), "state"
+        except Exception as exc:
+            raise ValueError(f"malformed_state: {type(exc).__name__}") from None
+    if checkpoint_path.exists() and resume:
+        try:
+            data = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+            return StatefulPaperState.model_validate(data), "checkpoint"
+        except Exception as exc:
+            raise ValueError(f"corrupted_checkpoint: {type(exc).__name__}") from None
+    return _initialize_state(config), "init"
+
+
 def load_state_or_initialize(
     *,
     state_dir: str | Path,
@@ -67,42 +94,56 @@ def load_state_or_initialize(
     config: StatefulPaperConfig,
     resume: bool = False,
 ) -> StatefulPaperState:
-    state_path = _state_path(state_dir, run_id)
-    checkpoint_path = _checkpoint_path(state_dir, run_id)
-    if state_path.exists() and resume:
-        try:
-            data = json.loads(state_path.read_text(encoding="utf-8"))
-            return StatefulPaperState.model_validate(data)
-        except Exception as exc:
-            raise ValueError(f"malformed_state: {type(exc).__name__}") from None
-    if checkpoint_path.exists() and resume:
-        try:
-            data = json.loads(checkpoint_path.read_text(encoding="utf-8"))
-            return StatefulPaperState.model_validate(data)
-        except Exception as exc:
-            raise ValueError(f"corrupted_checkpoint: {type(exc).__name__}") from None
-    return _initialize_state(config)
+    return _load_state_or_initialize(
+        state_dir=state_dir,
+        run_id=run_id,
+        config=config,
+        resume=resume,
+    )[0]
+
+
+def _atomic_write_text(path: Path, content: str) -> Path:
+    """Write ``content`` to ``path`` atomically via a same-directory temp file.
+
+    The temp file is created in the target directory, explicitly flushed and
+    fsynced, then moved into place with ``os.replace``. If anything fails, the
+    temp file is removed but the original target (if any) is left untouched.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        dir=path.parent, prefix="._atomic-", suffix=".tmp"
+    )
+    tmp_path = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
+            tmp_file.write(content)
+            tmp_file.flush()
+            os.fsync(tmp_file.fileno())
+        os.replace(tmp_path, path)
+    except Exception:
+        if tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+        raise
+    return path
 
 
 def save_state(state: StatefulPaperState, state_dir: str | Path) -> Path:
     state_path = _state_path(state_dir, state.run_id)
-    state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(
+    return _atomic_write_text(
+        state_path,
         json.dumps(redact_payload(state.model_dump(mode="json")), indent=2),
-        encoding="utf-8",
     )
-    return state_path
 
 
 def save_checkpoint(state: StatefulPaperState, state_dir: str | Path) -> Path:
     checkpoint_path = _checkpoint_path(state_dir, state.run_id)
-    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
-    checkpoint = redact_payload(state.model_dump(mode="json"))
-    checkpoint_path.write_text(
-        json.dumps(checkpoint, indent=2),
-        encoding="utf-8",
+    return _atomic_write_text(
+        checkpoint_path,
+        json.dumps(redact_payload(state.model_dump(mode="json")), indent=2),
     )
-    return checkpoint_path
 
 
 def _redact_data_source(path: str | Path) -> str:
@@ -222,7 +263,7 @@ def run_stateful_autonomous_paper(
     manifest_path = output_dir / f"{config.run_id}-manifest.json"
 
     try:
-        state = load_state_or_initialize(
+        state, loaded_from = _load_state_or_initialize(
             state_dir=state_dir,
             run_id=config.run_id,
             config=config,
@@ -240,7 +281,7 @@ def run_stateful_autonomous_paper(
             audit_log_path=audit_log_path,
         )
 
-    if resume and _state_path(state_dir, config.run_id).exists():
+    if resume and loaded_from != "init":
         mismatches: list[str] = []
         if state.run_id != config.run_id:
             mismatches.append("run_id")

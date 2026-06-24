@@ -1,19 +1,23 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 from pathlib import Path
 
 from atlas_agent.agent.autonomous_paper import run_stateful_autonomous_paper_loop
 from atlas_agent.agent.autonomous_paper_models import (
     StatefulPaperConfig,
+    StatefulPaperCursor,
     StatefulPaperState,
 )
 from atlas_agent.agent.autonomous_paper_runner import (
     _bar_hash,
+    _checkpoint_path,
     _state_path,
     load_state_or_initialize,
     run_stateful_autonomous_paper,
+    save_checkpoint,
     save_state,
 )
 from atlas_agent.backtest.data import load_market_data
@@ -545,6 +549,125 @@ def test_runner_deterministic_replay(tmp_path: Path):
 
     assert decisions_a == decisions_b
     assert fills_a == fills_b
+
+
+def _make_minimal_state(run_id: str = "atomic-run-001") -> StatefulPaperState:
+    now = "2026-01-01T00:00:00+00:00"
+    return StatefulPaperState(
+        run_id=run_id,
+        symbol="DEMO-SYMBOL",
+        strategy_id="buy_and_hold",
+        data_path="data/sample/ohlcv.csv",
+        cash=10000.0,
+        positions={},
+        cursor=StatefulPaperCursor(),
+        fill_history=[],
+        decision_refs=[],
+        metrics_history=[],
+        created_at=now,
+        updated_at=now,
+        status="active",
+        errors=[],
+    )
+
+
+def test_save_state_uses_atomic_replace(tmp_path: Path, monkeypatch):
+    state = _make_minimal_state()
+    state_dir = tmp_path / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+
+    captured: dict[str, object] = {}
+    original_replace = os.replace
+
+    def capture_replace(src: str | Path, dst: str | Path) -> None:
+        captured["src"] = Path(src)
+        captured["dst"] = Path(dst)
+        original_replace(src, dst)
+
+    monkeypatch.setattr("atlas_agent.agent.autonomous_paper_runner.os.replace", capture_replace)
+
+    save_state(state, state_dir)
+
+    assert captured["dst"] == _state_path(state_dir, state.run_id)
+    assert captured["src"].parent == state_dir
+    assert captured["src"].name.startswith("._atomic-")
+    assert captured["src"].name.endswith(".tmp")
+
+
+def test_save_checkpoint_uses_atomic_replace(tmp_path: Path, monkeypatch):
+    state = _make_minimal_state()
+    state_dir = tmp_path / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+
+    captured: dict[str, object] = {}
+    original_replace = os.replace
+
+    def capture_replace(src: str | Path, dst: str | Path) -> None:
+        captured["src"] = Path(src)
+        captured["dst"] = Path(dst)
+        original_replace(src, dst)
+
+    monkeypatch.setattr("atlas_agent.agent.autonomous_paper_runner.os.replace", capture_replace)
+
+    save_checkpoint(state, state_dir)
+
+    assert captured["dst"] == _checkpoint_path(state_dir, state.run_id)
+    assert captured["src"].parent == state_dir
+    assert captured["src"].name.startswith("._atomic-")
+    assert captured["src"].name.endswith(".tmp")
+
+
+def test_atomic_write_failure_preserves_existing_target(tmp_path: Path, monkeypatch):
+    state = _make_minimal_state()
+    state_dir = tmp_path / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+
+    # Establish a valid existing state file.
+    original_path = save_state(state, state_dir)
+    original_content = original_path.read_text(encoding="utf-8")
+    assert original_path.exists()
+
+    # Force the atomic replace step to fail.
+    def failing_replace(src: str | Path, dst: str | Path) -> None:
+        raise OSError("simulated replace failure")
+
+    monkeypatch.setattr("atlas_agent.agent.autonomous_paper_runner.os.replace", failing_replace)
+
+    state.cash = 999.0
+    with pytest.raises(OSError, match="simulated replace failure"):
+        save_state(state, state_dir)
+
+    # The original file must remain intact.
+    assert original_path.read_text(encoding="utf-8") == original_content
+
+
+def test_save_state_produces_loadable_state(tmp_path: Path):
+    state = _make_minimal_state()
+    state_dir = tmp_path / "state"
+
+    save_state(state, state_dir)
+
+    loaded = load_state_or_initialize(
+        state_dir=state_dir,
+        run_id=state.run_id,
+        config=_make_stateful_config(_make_config(tmp_path), tmp_path, run_id=state.run_id),
+        resume=True,
+    )
+    assert loaded.run_id == state.run_id
+    assert loaded.cash == state.cash
+
+
+def test_save_checkpoint_produces_loadable_checkpoint(tmp_path: Path):
+    state = _make_minimal_state()
+    state_dir = tmp_path / "state"
+
+    save_checkpoint(state, state_dir)
+
+    checkpoint_path = _checkpoint_path(state_dir, state.run_id)
+    data = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    loaded = StatefulPaperState.model_validate(data)
+    assert loaded.run_id == state.run_id
+    assert loaded.cash == state.cash
 
 
 def test_runner_does_not_import_brokers_or_providers():

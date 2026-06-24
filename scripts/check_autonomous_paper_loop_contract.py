@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static check for the autonomous paper decision loop contract (CAND-001).
+"""Static check for the autonomous paper decision loop contract (CAND-003).
 
 Deterministic, local-only, read-only. Does not:
 - call the network
@@ -28,7 +28,13 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DOC = REPO_ROOT / "docs" / "autonomous-paper-loop.md"
 GOVERNANCE_DOC = REPO_ROOT / "docs" / "bounded-live-autonomy-governance.md"
 SHADOW_DOC = REPO_ROOT / "docs" / "shadow-live-readiness-contract.md"
-AUTONOMOUS_PAPER_MODULE = REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper.py"
+AUTONOMOUS_PAPER_MODULES = [
+    REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper.py",
+    REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_kernel.py",
+    REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_runner.py",
+    REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_metrics.py",
+    REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_models.py",
+]
 CLI_MODULE = REPO_ROOT / "src" / "atlas_agent" / "cli.py"
 TEST_MODULE = REPO_ROOT / "tests" / "test_autonomous_paper_loop.py"
 
@@ -36,7 +42,7 @@ REQUIRED_FILES = [
     DOC,
     GOVERNANCE_DOC,
     SHADOW_DOC,
-    AUTONOMOUS_PAPER_MODULE,
+    *AUTONOMOUS_PAPER_MODULES,
     CLI_MODULE,
     TEST_MODULE,
 ]
@@ -236,52 +242,53 @@ def _check_cli_wiring() -> list[str]:
 
 def _check_module_safety() -> list[str]:
     errors: list[str] = []
-    if not AUTONOMOUS_PAPER_MODULE.exists():
-        return errors
+    for module_path in AUTONOMOUS_PAPER_MODULES:
+        if not module_path.exists():
+            continue
 
-    text = _read(AUTONOMOUS_PAPER_MODULE)
-    rel = AUTONOMOUS_PAPER_MODULE.relative_to(REPO_ROOT)
+        text = _read(module_path)
+        rel = module_path.relative_to(REPO_ROOT)
 
-    for forbidden in FORBIDDEN_MODULE_REFERENCES:
-        if forbidden in text:
+        for forbidden in FORBIDDEN_MODULE_REFERENCES:
+            if forbidden in text:
+                errors.append(
+                    f"[{rel}] Forbidden import/reference: {forbidden}"
+                )
+
+        for forbidden in FORBIDDEN_BROKER_PATTERNS:
+            if forbidden in text:
+                errors.append(
+                    f"[{rel}] Forbidden broker pattern: {forbidden}"
+                )
+
+        for forbidden in FORBIDDEN_SUBMISSION_PATTERNS:
+            if forbidden in text:
+                errors.append(
+                    f"[{rel}] Forbidden submission pattern: {forbidden}"
+                )
+
+        for forbidden in FORBIDDEN_PROVIDER_CALL_PATTERNS:
+            if forbidden in text:
+                errors.append(
+                    f"[{rel}] Forbidden provider call pattern: {forbidden}"
+                )
+
+        for forbidden in FORBIDDEN_CREDENTIAL_PATTERNS:
+            if forbidden in text:
+                errors.append(
+                    f"[{rel}] Forbidden credential pattern: {forbidden}"
+                )
+
+        for forbidden in FORBIDDEN_LIVE_FLAG_PATTERNS:
+            if forbidden in text:
+                errors.append(
+                    f"[{rel}] Forbidden live flag pattern: {forbidden}"
+                )
+
+        if CREDENTIAL_ENV_REGEX.search(text):
             errors.append(
-                f"[{rel}] Forbidden import/reference: {forbidden}"
+                f"[{rel}] Forbidden credential environment access"
             )
-
-    for forbidden in FORBIDDEN_BROKER_PATTERNS:
-        if forbidden in text:
-            errors.append(
-                f"[{rel}] Forbidden broker pattern: {forbidden}"
-            )
-
-    for forbidden in FORBIDDEN_SUBMISSION_PATTERNS:
-        if forbidden in text:
-            errors.append(
-                f"[{rel}] Forbidden submission pattern: {forbidden}"
-            )
-
-    for forbidden in FORBIDDEN_PROVIDER_CALL_PATTERNS:
-        if forbidden in text:
-            errors.append(
-                f"[{rel}] Forbidden provider call pattern: {forbidden}"
-            )
-
-    for forbidden in FORBIDDEN_CREDENTIAL_PATTERNS:
-        if forbidden in text:
-            errors.append(
-                f"[{rel}] Forbidden credential pattern: {forbidden}"
-            )
-
-    for forbidden in FORBIDDEN_LIVE_FLAG_PATTERNS:
-        if forbidden in text:
-            errors.append(
-                f"[{rel}] Forbidden live flag pattern: {forbidden}"
-            )
-
-    if CREDENTIAL_ENV_REGEX.search(text):
-        errors.append(
-            f"[{rel}] Forbidden credential environment access"
-        )
 
     return errors
 
