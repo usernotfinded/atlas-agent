@@ -327,6 +327,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "10g. autonomous paper quality gate contract check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_autonomous_paper_quality_contract.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "10h. autonomous paper quality gate tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_autonomous_paper_quality.py tests/test_autonomous_paper_quality_contract.py -q
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "11. product demo and marketplace readiness check"
 echo "========================================"
 SECONDS=0

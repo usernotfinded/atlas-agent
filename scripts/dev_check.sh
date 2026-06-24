@@ -181,6 +181,20 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "4q. autonomous paper quality gate contract check"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_autonomous_paper_quality_contract.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "4r. autonomous paper quality gate tests"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_autonomous_paper_quality.py tests/test_autonomous_paper_quality_contract.py -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "4h. paper strategy evaluation tests"
 SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_paper_strategy_evaluation.py tests/test_paper_strategy_sensitivity.py tests/test_paper_strategy_robustness.py tests/test_paper_strategy_walk_forward.py tests/test_paper_strategy_scorecard.py tests/test_paper_portfolio_proposal.py tests/test_paper_portfolio_stress.py tests/test_paper_portfolio_monitoring.py tests/test_paper_portfolio_recheck.py tests/test_paper_portfolio_dossier.py tests/test_paper_portfolio_replay.py tests/test_v0614_paper_portfolio_evidence.py tests/test_v0614_final_readiness_audit.py tests/test_v0613_paper_autonomy_evidence.py tests/test_v0613_final_reviewer_index.py tests/test_v0613_release_cutover_preflight.py tests/test_v0613_final_readiness_audit.py tests/test_paper_human_review_pack.py tests/test_paper_human_review_ledger.py tests/test_paper_human_review_policy.py tests/test_paper_human_review_replay.py tests/test_v0615_paper_human_review_evidence.py tests/test_v0615_final_readiness_audit.py -q "${PYTEST_EXTRA_ARGS[@]}"
