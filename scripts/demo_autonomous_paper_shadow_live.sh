@@ -182,20 +182,6 @@ fi
 
 printf 'Quality state: %s\n' "$QUALITY_STATE"
 
-# CAND-005 shadow-live expects the quality gate schema_version to be a string.
-# Keep the original gate intact and write a normalized copy for the comparison.
-SHADOW_QUALITY_JSON="$WORKSPACE/shadow-live-quality-gate.json"
-"$PYTHON_BIN" - "$QUALITY_JSON" "$SHADOW_QUALITY_JSON" <<'PY'
-import json
-import sys
-src_path, dst_path = sys.argv[1], sys.argv[2]
-report = json.loads(open(src_path, encoding="utf-8").read())
-report["schema_version"] = "trading-quality-gate.v1"
-open(dst_path, "w", encoding="utf-8").write(
-    json.dumps(report, indent=2, sort_keys=True, default=str) + "\n"
-)
-PY
-
 # Step 3: write a local broker snapshot fixture.
 printf '\n=== Writing local broker snapshot fixture ===\n'
 BROKER_SNAPSHOT="$WORKSPACE/broker-snapshot.json"
@@ -244,7 +230,7 @@ PY
 printf '\n=== Running shadow-live comparison ===\n'
 SHADOW_EXIT=0
 atlas agent shadow-live \
-  --quality-gate "$SHADOW_QUALITY_JSON" \
+  --quality-gate "$QUALITY_JSON" \
   --broker-snapshot "$BROKER_SNAPSHOT" \
   --output-dir shadow_live \
   --state "$STATE_FILE" \

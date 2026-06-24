@@ -239,6 +239,28 @@ def test_load_quality_gate_rejects_non_paper_mode(tmp_path: Path) -> None:
     assert any("mode" in e for e in errors)
 
 
+def test_load_quality_gate_accepts_integer_schema_version_one(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate["schema_version"] = 1
+    path = tmp_path / "gate.json"
+    path.write_text(json.dumps(gate))
+    result, errors = load_quality_gate(path)
+    assert result is not None
+    assert not errors
+    assert result["schema_version"] == 1
+
+
+def test_load_quality_gate_accepts_string_schema_version_v1(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate["schema_version"] = "trading-quality-gate.v1"
+    path = tmp_path / "gate.json"
+    path.write_text(json.dumps(gate))
+    result, errors = load_quality_gate(path)
+    assert result is not None
+    assert not errors
+    assert result["schema_version"] == "trading-quality-gate.v1"
+
+
 def test_compare_matched() -> None:
     paper_state: dict[str, Any] = {
         "cash": 10000.0,

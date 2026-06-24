@@ -110,6 +110,12 @@ STATUSES = (
     "not_evaluated",
 )
 
+TRADING_QUALITY_GATE_SCHEMA_VERSIONS = (
+    "trading-quality-gate.v1",
+    1,
+    "1",
+)
+
 
 def _is_finite(value: Any) -> bool:
     if value is None:
@@ -420,7 +426,7 @@ def load_quality_gate(path: str | Path) -> tuple[dict[str, Any] | None, list[str
         return None, ["Quality gate is not a JSON object"]
     if data.get("artifact_type") != "trading_quality_gate":
         errors.append("Quality gate artifact_type mismatch")
-    if data.get("schema_version") != "trading-quality-gate.v1":
+    if data.get("schema_version") not in TRADING_QUALITY_GATE_SCHEMA_VERSIONS:
         errors.append("Quality gate schema_version mismatch")
     if data.get("mode") != "paper":
         errors.append("Quality gate mode must be 'paper'")
