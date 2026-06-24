@@ -3,8 +3,14 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from atlas_agent.agent.autonomous_paper_metrics import calculate_stateful_paper_metrics
+from atlas_agent.agent.autonomous_paper_models import StatefulPaperMetrics, StatefulPaperState
+from atlas_agent.backtest.data import load_market_data
+from atlas_agent.backtest.models import BacktestFill, BacktestPosition
 
 
 @dataclass(frozen=True)
@@ -223,6 +229,193 @@ def _dimension(name: str, passed: bool, score: float, reason: str) -> dict[str, 
         "passed": bool(passed),
         "score": float(max(0.0, min(1.0, score))),
         "reason": reason,
+    }
+
+
+def _compute_benchmark(
+    *,
+    data_path: str | Path | None,
+    starting_cash: float,
+    decisions: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Compute a deterministic buy-and-hold benchmark if data is available."""
+    if data_path is None:
+        return {
+            "available": False,
+            "reason": "No data_path provided; benchmark unavailable.",
+            "strategy_total_return_pct": None,
+            "benchmark_total_return_pct": None,
+            "excess_return_pct": None,
+        }
+    try:
+        bars = list(load_market_data(str(data_path), symbol="UNKNOWN"))
+    except Exception as exc:
+        return {
+            "available": False,
+            "reason": f"Failed to load market data: {exc}",
+            "strategy_total_return_pct": None,
+            "benchmark_total_return_pct": None,
+            "excess_return_pct": None,
+        }
+    if not bars:
+        return {
+            "available": False,
+            "reason": "Market data is empty.",
+            "strategy_total_return_pct": None,
+            "benchmark_total_return_pct": None,
+            "excess_return_pct": None,
+        }
+
+    if decisions:
+        first_idx = min(
+            (d.get("bar_index", 0) for d in decisions if isinstance(d.get("bar_index"), int)),
+            default=0,
+        )
+        last_idx = max(
+            (d.get("bar_index", 0) for d in decisions if isinstance(d.get("bar_index"), int)),
+            default=len(bars) - 1,
+        )
+    else:
+        first_idx = 0
+        last_idx = len(bars) - 1
+
+    if first_idx < 0 or last_idx >= len(bars) or first_idx >= last_idx:
+        return {
+            "available": False,
+            "reason": "Decision window does not overlap with market data.",
+            "strategy_total_return_pct": None,
+            "benchmark_total_return_pct": None,
+            "excess_return_pct": None,
+        }
+
+    start_price = float(bars[first_idx].close)
+    end_price = float(bars[last_idx].close)
+    if start_price <= 0:
+        return {
+            "available": False,
+            "reason": "Start price non-positive; cannot compute benchmark.",
+            "strategy_total_return_pct": None,
+            "benchmark_total_return_pct": None,
+            "excess_return_pct": None,
+        }
+
+    benchmark_return_pct = (end_price - start_price) / start_price * 100.0
+
+    return {
+        "available": True,
+        "reason": "Buy-and-hold benchmark computed over evaluated bar window.",
+        "strategy_total_return_pct": None,
+        "benchmark_total_return_pct": benchmark_return_pct,
+        "excess_return_pct": None,
+    }
+
+
+def _recompute_and_compare_metrics(
+    *,
+    metrics: dict[str, Any],
+    fills: list[dict[str, Any]],
+    state: dict[str, Any] | None,
+    decisions: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Recompute metrics from fills/state and compare to provided metrics."""
+    if not fills:
+        return {
+            "consistent": False,
+            "reason": "No fills available for recomputation.",
+            "recomputed": None,
+        }
+
+    def _normalize_fill(index: int, fill: dict[str, Any]) -> dict[str, Any]:
+        defaults = {
+            "fill_id": f"fill-{index}",
+            "order_id": f"order-{index}",
+            "timestamp": datetime.now(UTC).isoformat(),
+            "symbol": fill.get("symbol", "DEMO-SYMBOL"),
+        }
+        return {**defaults, **fill}
+
+    try:
+        fill_history = [
+            BacktestFill(**_normalize_fill(i, f)) for i, f in enumerate(fills)
+        ]
+    except Exception as exc:
+        return {
+            "consistent": False,
+            "reason": f"Could not parse fills: {exc}",
+            "recomputed": None,
+        }
+
+    starting_cash = _safe_float(metrics.get("starting_cash"), 1.0)
+    cash = _safe_float(metrics.get("ending_cash"), starting_cash)
+    bars_processed = int(metrics.get("bars_processed", 0))
+    current_price = _safe_float(metrics.get("ending_cash"), starting_cash) / starting_cash
+    if fill_history:
+        current_price = float(fill_history[-1].price)
+
+    positions: dict[str, BacktestPosition] = {}
+    if state and isinstance(state.get("positions"), dict):
+        try:
+            for symbol, pos in state["positions"].items():
+                positions[symbol] = BacktestPosition(**pos)
+        except Exception as exc:
+            return {
+                "consistent": False,
+                "reason": f"Could not parse positions: {exc}",
+                "recomputed": None,
+            }
+
+    number_of_rejections = int(metrics.get("number_of_rejections", 0))
+    data_source = metrics.get("data_source_redacted", "unknown")
+
+    try:
+        recomputed = calculate_stateful_paper_metrics(
+            starting_cash=starting_cash,
+            cash=cash,
+            positions=positions,
+            fill_history=fill_history,
+            bars_processed=bars_processed,
+            current_price=current_price,
+            data_source=data_source,
+            number_of_rejections=number_of_rejections,
+        )
+    except Exception as exc:
+        return {
+            "consistent": False,
+            "reason": f"Recomputation failed: {exc}",
+            "recomputed": None,
+        }
+
+    tolerance = 1e-6
+    fields = [
+        ("total_return_pct", recomputed.total_return_pct),
+        ("max_drawdown_pct", abs(recomputed.max_drawdown_pct)),
+        ("number_of_fills", float(recomputed.number_of_fills)),
+        ("total_commission", recomputed.total_commission),
+        ("total_slippage", recomputed.total_slippage),
+    ]
+    mismatches: list[str] = []
+    for name, recomputed_value in fields:
+        provided = _safe_float(metrics.get(name), 0.0)
+        if name == "max_drawdown_pct":
+            provided = abs(provided)
+        if name == "number_of_fills":
+            provided = float(metrics.get(name, 0))
+        diff = abs(provided - recomputed_value)
+        threshold = max(abs(provided), 1.0)
+        if diff > tolerance and diff / threshold > tolerance:
+            mismatches.append(f"{name}: provided={provided}, recomputed={recomputed_value}")
+
+    if mismatches:
+        return {
+            "consistent": False,
+            "reason": "Metric mismatch: " + "; ".join(mismatches),
+            "recomputed": recomputed.model_dump(),
+        }
+
+    return {
+        "consistent": True,
+        "reason": "Recomputed metrics match provided metrics within tolerance.",
+        "recomputed": recomputed.model_dump(),
     }
 
 
@@ -498,6 +691,24 @@ def build_trading_quality_gate(
             "disclaimer": "This is a paper-only evaluation. It does not claim profitability or live readiness.",
         }
 
+    benchmark = _compute_benchmark(
+        data_path=data_path,
+        starting_cash=_safe_float(metrics.get("starting_cash"), 1.0),
+        decisions=decisions,
+    )
+    if benchmark.get("available") and _is_finite(metrics.get("total_return_pct")):
+        strategy_return = _safe_float(metrics.get("total_return_pct"), 0.0)
+        benchmark_return = _safe_float(benchmark.get("benchmark_total_return_pct"), 0.0)
+        benchmark["strategy_total_return_pct"] = strategy_return
+        benchmark["excess_return_pct"] = strategy_return - benchmark_return
+
+    consistency = _recompute_and_compare_metrics(
+        metrics=metrics,
+        fills=fills,
+        state=state,
+        decisions=decisions,
+    )
+
     dimensions = _evaluate_dimensions(
         metrics=metrics,
         decisions=decisions,
@@ -505,8 +716,8 @@ def build_trading_quality_gate(
         state=state,
         scorecard=scorecard,
         policy=policy,
-        benchmark=None,
-        consistency=None,
+        benchmark=benchmark if benchmark.get("available") else None,
+        consistency=consistency,
     )
 
     dimension_map = {d["name"]: d for d in dimensions}
@@ -544,7 +755,7 @@ def build_trading_quality_gate(
         "blockers": blockers,
         "dimensions": dimensions,
         "metrics": metrics,
-        "benchmark": None,
+        "benchmark": benchmark,
         "threshold_policy": policy.to_dict(),
         "input_artifacts": {
             "metrics": Path(metrics_path).name,

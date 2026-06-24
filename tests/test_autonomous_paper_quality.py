@@ -57,10 +57,10 @@ def _minimal_valid_fixtures():
     metrics = {
         "run_id": "r1",
         "starting_cash": 10000.0,
-        "ending_cash": 10000.99,
-        "ending_equity": 10000.99,
-        "total_return_pct": 0.0099,
-        "max_drawdown_pct": 0.0,
+        "ending_cash": 10000.98,
+        "ending_equity": 10000.98,
+        "total_return_pct": 0.0098,
+        "max_drawdown_pct": 0.0001,
         "number_of_trades": 1,
         "number_of_fills": 2,
         "number_of_rejections": 1,
@@ -230,3 +230,26 @@ def test_artifact_paths_are_redacted(tmp_path: Path):
         fills_path=tmp_path / "fills.jsonl",
     )
     assert str(tmp_path) not in str(result["input_artifacts"])
+
+
+def test_benchmark_unavailable_without_data_path(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["benchmark"]["available"] is False
+
+
+def test_recompute_consistency_succeeds_for_valid_fixtures(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    dim = next(d for d in result["dimensions"] if d["name"] == "replay_or_recompute_consistency")
+    assert dim["passed"]
