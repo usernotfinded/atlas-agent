@@ -10,6 +10,7 @@ def test_default_registry_lists_builtin_buy_and_hold() -> None:
 
     assert [item.strategy_id for item in strategies] == [
         "buy_and_hold",
+        "demo_stateful_paper",
         "moving_average_cross",
         "rsi_mean_reversion",
     ]

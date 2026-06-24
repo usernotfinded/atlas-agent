@@ -515,10 +515,10 @@ def _run_stateful_autonomous_paper_locked(
         number_of_rejections=total_rejections,
     )
 
+    metrics_payload = redact_payload(metrics.model_dump(mode="json"))
+    metrics_payload["run_id"] = config.run_id
     metrics_path.write_text(
-        json.dumps(
-            redact_payload(metrics.model_dump(mode="json")), indent=2
-        ),
+        json.dumps(metrics_payload, indent=2),
         encoding="utf-8",
     )
 
