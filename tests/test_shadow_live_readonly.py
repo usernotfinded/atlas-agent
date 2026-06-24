@@ -4,6 +4,7 @@ import hashlib
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -237,7 +238,7 @@ def test_load_quality_gate_rejects_non_paper_mode(tmp_path: Path) -> None:
 
 
 def test_compare_matched() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 10500.0,
         "buying_power": None,
@@ -253,7 +254,7 @@ def test_compare_matched() -> None:
 
 
 def test_compare_minor_divergence_cash() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10110.0,
         "equity": 10500.0,
         "buying_power": None,
@@ -267,7 +268,7 @@ def test_compare_minor_divergence_cash() -> None:
 
 
 def test_compare_major_divergence_equity() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 12000.0,
         "buying_power": None,
@@ -281,7 +282,7 @@ def test_compare_major_divergence_equity() -> None:
 
 
 def test_compare_major_divergence_position_quantity() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 10500.0,
         "buying_power": None,
@@ -308,7 +309,7 @@ def test_compare_major_divergence_position_quantity() -> None:
 
 
 def test_incomplete_snapshot_missing_critical_flag() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 10500.0,
         "buying_power": None,
@@ -325,13 +326,15 @@ def test_incomplete_snapshot_missing_critical_flag() -> None:
     )
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
-    status, blockers = resolve_shadow_live_status(result, snapshot, policy, now=_FIXED_NOW)
+    status, blockers = resolve_shadow_live_status(
+        result, snapshot, policy, now=_FIXED_NOW
+    )
     assert status == "incomplete_snapshot"
     assert any("positions" in b for b in blockers)
 
 
 def test_stale_snapshot() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 10500.0,
         "buying_power": None,
@@ -605,7 +608,7 @@ def test_open_orders_incomplete_not_blocking(tmp_path: Path) -> None:
 
 
 def test_open_order_differences_detected() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 10500.0,
         "buying_power": None,
@@ -644,7 +647,7 @@ def test_open_order_differences_detected() -> None:
 
 
 def test_fill_differences_detected() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 10500.0,
         "buying_power": None,
@@ -681,7 +684,7 @@ def test_fill_differences_detected() -> None:
 
 
 def test_paper_only_and_broker_only_positions() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 10500.0,
         "buying_power": None,
@@ -710,7 +713,7 @@ def test_paper_only_and_broker_only_positions() -> None:
 
 
 def test_signed_quantity_short_position() -> None:
-    paper_state = {
+    paper_state: dict[str, Any] = {
         "cash": 10000.0,
         "equity": 10500.0,
         "buying_power": None,

@@ -5,7 +5,7 @@ import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -131,7 +131,9 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
 
 
 def _to_float_or_none(value: Any) -> float | None:
-    return float(cast(float, value)) if value is not None else None
+    if value is not None and _is_finite(value):
+        return float(value)
+    return None
 
 
 def _parse_iso_timestamp(value: Any) -> tuple[datetime | None, str | None]:
@@ -186,7 +188,9 @@ def _validate_snapshot_schema(data: Any) -> list[str]:
     return errors
 
 
-def _parse_position(raw: Any, idx: int) -> tuple[BrokerPositionSnapshot | None, list[str]]:
+def _parse_position(
+    raw: Any, idx: int
+) -> tuple[BrokerPositionSnapshot | None, list[str]]:
     """Parse a single broker position object."""
     if not isinstance(raw, dict):
         return None, [f"position[{idx}] is not an object"]
@@ -244,13 +248,17 @@ def _parse_order(raw: Any, idx: int) -> tuple[BrokerOrderSnapshot | None, list[s
 
     filled_quantity = raw.get("filled_quantity")
     if not _is_finite(filled_quantity) or _safe_float(filled_quantity) < 0:
-        errors.append(f"open_order[{idx}] filled_quantity must be finite and non-negative")
+        errors.append(
+            f"open_order[{idx}] filled_quantity must be finite and non-negative"
+        )
 
     limit_price = raw.get("limit_price")
     if limit_price is not None and (
         not _is_finite(limit_price) or _safe_float(limit_price) <= 0
     ):
-        errors.append(f"open_order[{idx}] limit_price must be finite and positive or null")
+        errors.append(
+            f"open_order[{idx}] limit_price must be finite and positive or null"
+        )
 
     return BrokerOrderSnapshot(
         order_id=str(raw.get("order_id", "")),
@@ -297,22 +305,24 @@ def _parse_fill(raw: Any, idx: int) -> tuple[BrokerFillSnapshot | None, list[str
     ), errors
 
 
-def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None, list[str]]:
+def load_broker_snapshot(
+    path: str | Path,
+) -> tuple[BrokerAccountSnapshot | None, list[str]]:
     """Load and strictly validate a local broker snapshot fixture."""
     p = Path(path)
     errors: list[str] = []
     if not p.is_file():
-        return None, [f"Broker snapshot file not found: {p.name}"]
+        return None, [f"broker snapshot file not found: {p.name}"]
     try:
         text = p.read_text(encoding="utf-8")
     except Exception as exc:
         return None, [f"Failed to read broker snapshot: {exc}"]
     if not text.strip():
-        return None, ["Broker snapshot file is empty"]
+        return None, ["broker snapshot file is empty."]
     try:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
-        return None, [f"Broker snapshot is not valid JSON: {exc}"]
+        return None, [f"broker snapshot is not valid JSON: {exc}"]
 
     errors = _validate_snapshot_schema(data)
     if errors:
@@ -379,7 +389,9 @@ def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None
         cash=_safe_float(data["cash"]),
         equity=_safe_float(data["equity"]),
         buying_power=_safe_float(data["buying_power"]),
-        market_timestamp=str(data["market_timestamp"]) if data.get("market_timestamp") is not None else None,
+        market_timestamp=str(data["market_timestamp"])
+        if data.get("market_timestamp") is not None
+        else None,
         snapshot_freshness_timestamp=str(data["snapshot_freshness_timestamp"]),
         positions=tuple(positions),
         open_orders=tuple(open_orders),
@@ -393,17 +405,17 @@ def load_quality_gate(path: str | Path) -> tuple[dict[str, Any] | None, list[str
     p = Path(path)
     errors: list[str] = []
     if not p.is_file():
-        return None, [f"Quality gate file not found: {p.name}"]
+        return None, [f"quality gate file not found: {p.name}"]
     try:
         text = p.read_text(encoding="utf-8")
     except Exception as exc:
         return None, [f"Failed to read quality gate: {exc}"]
     if not text.strip():
-        return None, ["Quality gate file is empty"]
+        return None, ["quality gate file is empty."]
     try:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
-        return None, [f"Quality gate is not valid JSON: {exc}"]
+        return None, [f"quality gate is not valid JSON: {exc}"]
     if not isinstance(data, dict):
         return None, ["Quality gate is not a JSON object"]
     if data.get("artifact_type") != "trading_quality_gate":
@@ -430,13 +442,13 @@ def _load_json(path: str | Path, label: str) -> tuple[dict[str, Any] | None, lis
     except Exception as exc:
         return None, [f"Failed to read {label} file: {exc}"]
     if not text.strip():
-        return None, [f"{label} file is empty"]
+        return None, [f"{label} file is empty."]
     try:
         obj = json.loads(text)
     except json.JSONDecodeError as exc:
         return None, [f"{label} is not valid JSON: {exc}"]
     if not isinstance(obj, dict):
-        return None, [f"{label} is not a JSON object"]
+        return None, [f"{label} is not a JSON object."]
     return obj, []
 
 
@@ -448,6 +460,8 @@ def _load_jsonl(path: str | Path, label: str) -> tuple[list[dict[str, Any]], lis
         text = p.read_text(encoding="utf-8")
     except Exception as exc:
         return [], [f"Failed to read {label} file: {exc}"]
+    if not text.strip():
+        return [], []
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
     for line_number, raw_line in enumerate(text.splitlines(), start=1):
@@ -571,10 +585,14 @@ def _market_value(pos: BrokerPositionSnapshot | dict[str, Any]) -> float | None:
     if isinstance(pos, BrokerPositionSnapshot):
         return pos.market_value
     val = pos.get("market_value")
-    return float(val) if _is_finite(val) else None
+    if val is not None and _is_finite(val):
+        return float(val)
+    return None
 
 
-def _pct_diff(diff: float, broker_value: float | None, paper_value: float | None) -> float:
+def _pct_diff(
+    diff: float, broker_value: float | None, paper_value: float | None
+) -> float:
     denom = max(
         abs(broker_value) if broker_value is not None else 0.0,
         abs(paper_value) if paper_value is not None else 0.0,
@@ -610,7 +628,10 @@ def compare_paper_to_broker(
             "difference": _safe_float(paper_buying_power) - snapshot.buying_power,
         }
     else:
-        buying_power_result = {"available": False, "reason": "paper_buying_power_unavailable"}
+        buying_power_result = {
+            "available": False,
+            "reason": "paper_buying_power_unavailable",
+        }
 
     paper_positions = paper_state.get("positions", [])
     paper_pos_by_symbol: dict[str, BrokerPositionSnapshot | dict[str, Any]] = {}
@@ -633,16 +654,24 @@ def compare_paper_to_broker(
             entry["broker_only"] = True
             entry["broker_quantity"] = broker_pos.quantity if broker_pos else None
             entry["broker_side"] = broker_pos.side if broker_pos else None
-            entry["quantity_difference"] = -_signed_quantity(broker_pos) if broker_pos else None
-            entry["market_value_difference"] = -(_market_value(broker_pos) or 0.0) if broker_pos else None
+            entry["quantity_difference"] = (
+                -_signed_quantity(broker_pos) if broker_pos else None
+            )
+            entry["market_value_difference"] = (
+                -(_market_value(broker_pos) or 0.0) if broker_pos else None
+            )
         elif broker_pos is None:
             entry["paper_only"] = True
             entry["broker_only"] = False
             entry["paper_quantity"] = (
-                paper_pos.quantity if isinstance(paper_pos, BrokerPositionSnapshot) else paper_pos.get("quantity")
+                paper_pos.quantity
+                if isinstance(paper_pos, BrokerPositionSnapshot)
+                else paper_pos.get("quantity")
             )
             entry["paper_side"] = (
-                paper_pos.side if isinstance(paper_pos, BrokerPositionSnapshot) else paper_pos.get("side")
+                paper_pos.side
+                if isinstance(paper_pos, BrokerPositionSnapshot)
+                else paper_pos.get("side")
             )
             entry["quantity_difference"] = _signed_quantity(paper_pos)
             entry["market_value_difference"] = _market_value(paper_pos) or 0.0
@@ -650,14 +679,20 @@ def compare_paper_to_broker(
             entry["paper_only"] = False
             entry["broker_only"] = False
             entry["paper_quantity"] = (
-                paper_pos.quantity if isinstance(paper_pos, BrokerPositionSnapshot) else paper_pos.get("quantity")
+                paper_pos.quantity
+                if isinstance(paper_pos, BrokerPositionSnapshot)
+                else paper_pos.get("quantity")
             )
             entry["paper_side"] = (
-                paper_pos.side if isinstance(paper_pos, BrokerPositionSnapshot) else paper_pos.get("side")
+                paper_pos.side
+                if isinstance(paper_pos, BrokerPositionSnapshot)
+                else paper_pos.get("side")
             )
             entry["broker_quantity"] = broker_pos.quantity
             entry["broker_side"] = broker_pos.side
-            entry["quantity_difference"] = _signed_quantity(paper_pos) - _signed_quantity(broker_pos)
+            entry["quantity_difference"] = _signed_quantity(
+                paper_pos
+            ) - _signed_quantity(broker_pos)
             pmv = _market_value(paper_pos)
             bmv = _market_value(broker_pos)
             entry["paper_market_value"] = pmv
@@ -718,7 +753,9 @@ def _compare_records(
             continue
         raw_id = raw.get(id_field)
         if not raw_id:
-            raw_id = "paper-derived-" + "-".join(str(raw.get(k, "")) for k in fallback_fields)
+            raw_id = "paper-derived-" + "-".join(
+                str(raw.get(k, "")) for k in fallback_fields
+            )
         record_id = str(raw_id)
         paper_ids.add(record_id)
 
@@ -727,7 +764,11 @@ def _compare_records(
             differences.append({id_field: record_id, "paper_only": True})
             continue
 
-        diff: dict[str, Any] = {id_field: record_id, "paper_only": False, "broker_only": False}
+        diff: dict[str, Any] = {
+            id_field: record_id,
+            "paper_only": False,
+            "broker_only": False,
+        }
         has_field_diff = False
         for field in fields:
             pv = raw.get(field)
@@ -746,7 +787,9 @@ def _compare_records(
 
 
 def _is_snapshot_stale(
-    snapshot: BrokerAccountSnapshot, policy: ShadowLiveThresholdPolicy, now: datetime | None = None
+    snapshot: BrokerAccountSnapshot,
+    policy: ShadowLiveThresholdPolicy,
+    now: datetime | None = None,
 ) -> bool:
     if now is None:
         now = datetime.now(timezone.utc)
@@ -799,29 +842,43 @@ def resolve_shadow_live_status(
     if divergence.get("equity_difference") is not None:
         equity_pct = _pct_diff(divergence["equity_difference"], snapshot.equity, None)
         if equity_pct > policy.major_equity_pct:
-            blockers.append(f"equity divergence {equity_pct:.2f}% exceeds major threshold")
+            blockers.append(
+                f"equity divergence {equity_pct:.2f}% exceeds major threshold"
+            )
             return "major_divergence", blockers
         if equity_pct > policy.minor_equity_pct:
-            blockers.append(f"equity divergence {equity_pct:.2f}% exceeds minor threshold")
+            blockers.append(
+                f"equity divergence {equity_pct:.2f}% exceeds minor threshold"
+            )
 
     has_minor = bool(blockers)
     for pos in divergence.get("position_differences", []):
         qd = pos.get("quantity_difference")
         if qd is not None:
             if abs(qd) > policy.major_position_qty_abs:
-                blockers.append(f"position {pos['symbol']} quantity divergence exceeds major threshold")
+                blockers.append(
+                    f"position {pos['symbol']} quantity divergence exceeds major threshold"
+                )
                 return "major_divergence", blockers
             if abs(qd) > policy.minor_position_qty_abs:
-                blockers.append(f"position {pos['symbol']} quantity divergence exceeds minor threshold")
+                blockers.append(
+                    f"position {pos['symbol']} quantity divergence exceeds minor threshold"
+                )
                 has_minor = True
         mvd = pos.get("market_value_difference")
         if mvd is not None:
-            mv_pct = _pct_diff(mvd, pos.get("broker_market_value"), pos.get("paper_market_value"))
+            mv_pct = _pct_diff(
+                mvd, pos.get("broker_market_value"), pos.get("paper_market_value")
+            )
             if mv_pct > policy.major_position_value_pct:
-                blockers.append(f"position {pos['symbol']} market value divergence exceeds major threshold")
+                blockers.append(
+                    f"position {pos['symbol']} market value divergence exceeds major threshold"
+                )
                 return "major_divergence", blockers
             if mv_pct > policy.minor_position_value_pct:
-                blockers.append(f"position {pos['symbol']} market value divergence exceeds minor threshold")
+                blockers.append(
+                    f"position {pos['symbol']} market value divergence exceeds minor threshold"
+                )
                 has_minor = True
 
     if has_minor:
@@ -829,9 +886,9 @@ def resolve_shadow_live_status(
     return "matched", blockers
 
 
-def _redact_path(path: Any) -> str:
+def _redact_path(path: str | Path | None) -> str | None:
     if path is None:
-        return ""
+        return None
     p = Path(path)
     try:
         rel = p.relative_to(Path.cwd())
@@ -906,7 +963,9 @@ def build_shadow_live_comparison(
         base_report["blockers"].append(
             f"quality_state is '{quality_state}', required 'eligible_for_shadow_live_quality_review'"
         )
-        base_report["status"] = "blocked" if quality_state not in ("not_evaluated",) else "not_evaluated"
+        base_report["status"] = (
+            "blocked" if quality_state not in ("not_evaluated",) else "not_evaluated"
+        )
         return base_report
 
     if snapshot is None:
@@ -923,7 +982,9 @@ def build_shadow_live_comparison(
         return base_report
     base_report["blockers"].extend(paper_errors)
 
-    if not _is_finite(paper_state.get("cash")) or not _is_finite(paper_state.get("equity")):
+    if not _is_finite(paper_state.get("cash")) or not _is_finite(
+        paper_state.get("equity")
+    ):
         base_report["blockers"].append("insufficient paper-side data for comparison")
         base_report["status"] = "not_evaluated"
         return base_report
@@ -999,7 +1060,9 @@ def _render_markdown(report: dict[str, Any]) -> str:
     if bp.get("available"):
         lines.append(f"- **Buying power difference:** {bp.get('difference')}\n")
     else:
-        lines.append(f"- **Buying power difference:** unavailable ({bp.get('reason')})\n")
+        lines.append(
+            f"- **Buying power difference:** unavailable ({bp.get('reason')})\n"
+        )
     lines.append("\n### Position differences\n")
     for pos in divergence.get("position_differences", []):
         lines.append(
@@ -1038,7 +1101,9 @@ def write_shadow_live_artifacts(report: dict[str, Any], output_dir: str | Path) 
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     json_path = out / "shadow-live-comparison.json"
-    json_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    json_path.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
     md_path = out / "shadow-live-report.md"
     md_path.write_text(_render_markdown(report), encoding="utf-8")
