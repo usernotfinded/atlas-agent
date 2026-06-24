@@ -108,7 +108,7 @@ class BrokerAccountSnapshot:
     completeness_flags: dict[str, bool]
 ```
 
-Required `completeness_flags`:
+`completeness_flags` must include the following keys:
 
 ```json
 {
@@ -119,6 +119,23 @@ Required `completeness_flags`:
   "market_prices": true
 }
 ```
+
+Critical by default:
+
+- `account`
+- `positions`
+- `market_prices`
+
+If any critical flag is missing or `false`, the comparison resolves to `incomplete_snapshot`.
+
+Optional by default:
+
+- `open_orders`
+- `recent_fills`
+
+If `open_orders` is `false`, emit `"open_order_differences": {"available": false, "reason": "open_orders_incomplete"}`.  
+If `recent_fills` is `false`, emit `"fill_differences": {"available": false, "reason": "recent_fills_incomplete"}`.  
+The comparison does not block solely because optional sections are unavailable.
 
 Rules:
 
@@ -143,8 +160,8 @@ Outputs:
 - `equity_difference`
 - `buying_power_difference` (with `available: false` if paper value unavailable)
 - `position_differences`
-- `open_order_differences`
-- `fill_differences` (only if both sides complete)
+- `open_order_differences` (or `{"available": false, "reason": "open_orders_incomplete"}` if optional flag false)
+- `fill_differences` (only if both sides complete; otherwise `{"available": false, "reason": "recent_fills_incomplete"}`)
 - `missing_critical_fields`
 - `stale_snapshot`
 
@@ -173,11 +190,13 @@ Statuses (fail-closed hierarchy):
 
 1. Quality gate missing/malformed/not `eligible_for_shadow_live_quality_review` → `blocked` or `not_evaluated`
 2. Broker snapshot missing/malformed → `blocked`
-3. Required snapshot fields missing/invalid → `incomplete_snapshot`
+3. Critical snapshot fields missing/invalid → `incomplete_snapshot`
 4. Snapshot older than `--max-snapshot-age-seconds` → `stale_snapshot`
 5. Divergence exceeds major thresholds → `major_divergence`
 6. Divergence exceeds minor thresholds → `minor_divergence`
 7. Otherwise → `matched`
+
+Optional sections (`open_orders`, `recent_fills`) being unavailable do not cause `incomplete_snapshot`; they produce `available: false` output sections.
 
 Implemented statuses:
 
