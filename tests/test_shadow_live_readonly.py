@@ -143,6 +143,45 @@ def test_load_broker_snapshot_invalid_finite_check(tmp_path: Path) -> None:
     assert any("finite" in e.lower() for e in errors)
 
 
+def test_load_broker_snapshot_rejects_bad_schema_version(tmp_path: Path) -> None:
+    snapshot = _make_minimal_snapshot()
+    snapshot["schema_version"] = "shadow-live-snapshot.v0"
+    path = tmp_path / "snapshot.json"
+    path.write_text(json.dumps(snapshot))
+    result, errors = load_broker_snapshot(path)
+    assert result is None
+    assert any("schema_version" in e for e in errors)
+
+
+def test_load_broker_snapshot_rejects_invalid_market_timestamp(tmp_path: Path) -> None:
+    snapshot = _make_minimal_snapshot()
+    snapshot["market_timestamp"] = "not-a-timestamp"
+    path = tmp_path / "snapshot.json"
+    path.write_text(json.dumps(snapshot))
+    result, errors = load_broker_snapshot(path)
+    assert result is None
+    assert any("market_timestamp" in e for e in errors)
+
+
+def test_load_broker_snapshot_rejects_invalid_filled_at(tmp_path: Path) -> None:
+    snapshot = _make_minimal_snapshot()
+    snapshot["recent_fills"] = [
+        {
+            "fill_id": "fill-1",
+            "symbol": "AAPL",
+            "side": "buy",
+            "quantity": 5,
+            "price": 150.0,
+            "filled_at": "not-a-timestamp",
+        }
+    ]
+    path = tmp_path / "snapshot.json"
+    path.write_text(json.dumps(snapshot))
+    result, errors = load_broker_snapshot(path)
+    assert result is None
+    assert any("filled_at" in e for e in errors)
+
+
 def test_load_quality_gate_eligible(tmp_path: Path) -> None:
     gate = _make_eligible_gate()
     path = tmp_path / "gate.json"
@@ -159,6 +198,16 @@ def test_load_quality_gate_malformed(tmp_path: Path) -> None:
     result, errors = load_quality_gate(path)
     assert result is None
     assert errors
+
+
+def test_load_quality_gate_rejects_non_paper_mode(tmp_path: Path) -> None:
+    gate = _make_eligible_gate()
+    gate["mode"] = "live"
+    path = tmp_path / "gate.json"
+    path.write_text(json.dumps(gate))
+    result, errors = load_quality_gate(path)
+    assert result is not None
+    assert any("mode" in e for e in errors)
 
 
 def test_compare_matched() -> None:
@@ -495,6 +544,25 @@ def test_build_shadow_live_comparison_malformed_snapshot(tmp_path: Path) -> None
         now=_FIXED_NOW,
     )
     assert report["status"] == "blocked"
+
+
+def test_build_shadow_live_comparison_not_evaluated_insufficient_paper_data(
+    tmp_path: Path,
+) -> None:
+    gate = _make_eligible_gate()
+    gate["metrics"] = {}
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(_make_minimal_snapshot()))
+    report = build_shadow_live_comparison(
+        quality_gate_path=gate_path,
+        broker_snapshot_path=snapshot_path,
+        output_dir=tmp_path / "out",
+        now=_FIXED_NOW,
+    )
+    assert report["status"] == "not_evaluated"
+    assert any("insufficient paper-side data" in b for b in report["blockers"])
 
 
 def test_artifact_writers_produce_files(tmp_path: Path) -> None:

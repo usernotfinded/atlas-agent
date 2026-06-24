@@ -174,6 +174,9 @@ def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None
         if key not in data:
             errors.append(f"missing required snapshot field: {key}")
 
+    if data.get("schema_version") != "shadow-live-snapshot.v1":
+        errors.append("broker snapshot schema_version mismatch")
+
     if errors:
         return None, errors
 
@@ -253,6 +256,9 @@ def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None
             errors.append(f"recent_fill[{idx}] quantity must be finite and non-negative")
         if not _is_finite(raw.get("price")) or float(raw.get("price", -1)) <= 0:
             errors.append(f"recent_fill[{idx}] price must be finite and positive")
+        _, fill_ts_err = _parse_iso_timestamp(raw.get("filled_at"))
+        if fill_ts_err:
+            errors.append(f"recent_fill[{idx}] filled_at: {fill_ts_err}")
         recent_fills.append(
             BrokerFillSnapshot(
                 fill_id=str(raw.get("fill_id", "")),
@@ -276,6 +282,11 @@ def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None
     _, ts_err = _parse_iso_timestamp(data.get("snapshot_freshness_timestamp"))
     if ts_err:
         errors.append(f"snapshot_freshness_timestamp: {ts_err}")
+
+    if data.get("market_timestamp") is not None:
+        _, market_ts_err = _parse_iso_timestamp(data.get("market_timestamp"))
+        if market_ts_err:
+            errors.append(f"market_timestamp: {market_ts_err}")
 
     if errors:
         return None, errors
@@ -317,6 +328,8 @@ def load_quality_gate(path: str | Path) -> tuple[dict[str, Any] | None, list[str
         return None, ["quality gate is not a JSON object"]
     if data.get("artifact_type") != "trading_quality_gate":
         errors.append("quality gate artifact_type mismatch")
+    if data.get("schema_version") != "trading-quality-gate.v1":
+        errors.append("quality gate schema_version mismatch")
     if data.get("mode") != "paper":
         errors.append("quality gate mode must be 'paper'")
     if "quality_state" not in data:
@@ -822,6 +835,11 @@ def build_shadow_live_comparison(
         base_report["status"] = "blocked"
         return base_report
     base_report["blockers"].extend(paper_errors)
+
+    if not _is_finite(paper_state.get("cash")) or not _is_finite(paper_state.get("equity")):
+        base_report["blockers"].append("insufficient paper-side data for comparison")
+        base_report["status"] = "not_evaluated"
+        return base_report
 
     divergence = compare_paper_to_broker(paper_state, snapshot, policy)
     status, blockers = resolve_shadow_live_status(divergence, snapshot, policy, now)
