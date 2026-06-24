@@ -524,8 +524,8 @@ def run_stateful_autonomous_paper_loop(
             if initial_cash is not None
             else config.backtest.initial_cash
         ),
-        commission_bps=commission_bps if commission_bps is not None else 0.0,
-        slippage_bps=slippage_bps if slippage_bps is not None else 0.0,
+        commission_bps=commission_bps,
+        slippage_bps=slippage_bps,
         fill_timing=fill_timing,  # type: ignore[arg-type]
     )
 

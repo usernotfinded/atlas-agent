@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from atlas_agent.backtest.models import BacktestFill, BacktestOrder, BacktestPosition
 
@@ -20,6 +20,12 @@ class StatefulPaperConfig(BaseModel):
     slippage_bps: float = Field(ge=0, default=1.0)
     max_orders_per_cycle: int = Field(gt=0, default=10)
     fill_timing: Literal["same_bar", "next_bar"] = "next_bar"
+
+    @field_validator("commission_bps", "slippage_bps", mode="before")
+    @classmethod
+    def _default_bps_when_none(cls, value: Any) -> Any:
+        """Allow callers to pass None and fall back to conservative defaults."""
+        return 1.0 if value is None else value
 
 
 class StatefulPaperCursor(BaseModel):
