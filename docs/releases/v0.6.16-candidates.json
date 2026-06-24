@@ -30,6 +30,18 @@
         "Does not implement live submit.",
         "Does not load credentials or call real brokers/providers."
       ]
+    },
+    {
+      "id": "CAND-004",
+      "status": "implemented",
+      "title": "Autonomous Paper Trading Quality Gate",
+      "description": "Adds a deterministic, offline trading-quality gate that evaluates stateful paper trading behavior for future shadow-live/read-only quality review eligibility. Reads local metrics, decisions, fills, and runner-state artifacts. Paper-only; no live trading, no broker submission, no provider calls.",
+      "notes": [
+        "Does not implement shadow-live.",
+        "Does not implement live submit.",
+        "Does not load credentials or call real brokers/providers.",
+        "Does not approve live trading or claim profitability."
+      ]
     }
   ]
 }

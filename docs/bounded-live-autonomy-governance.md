@@ -58,6 +58,8 @@ planning only):
   metrics with configurable costs and next-bar fill semantics. It does not
   implement shadow-live, live submit, broker submission, provider execution, or
   credential loading.
+- CAND-004 (v0.6.16): A trading-quality gate evaluates stateful paper behavior
+  only; it does not approve live trading.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - `v0.6.16` remains planning-only: no source/package bump, tag, GitHub Release,
@@ -146,6 +148,10 @@ and disabled by default. It must preserve:
 
 ## Relationship to other documents
 
+- [Shadow-Live Readiness Contract](shadow-live-readiness-contract.md) — the
+  planning-only contract for any future shadow-live/read-only stage.
+- [Autonomous Paper Trading Quality Gate](autonomous-paper-quality-gate.md) —
+  the CAND-004 deterministic, paper-only trading-quality gate.
 - [Autonomy Roadmap](autonomy-roadmap.md) — staged autonomy levels and current/future state.
 - [Autonomous Paper Workflow](autonomous-paper-workflow.md) — concrete L1 autonomy proof (paper-only, local-only, no broker/provider contact).
 - [Paper Strategy Evaluation](paper-strategy-evaluation.md) — deterministic paper-only strategy comparison and follow-up gate.
