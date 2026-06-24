@@ -5,7 +5,7 @@ import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 @dataclass(frozen=True)
@@ -41,6 +41,11 @@ class ShadowLiveThresholdPolicy:
         kwargs: dict[str, Any] = {}
         for name in cls.__dataclass_fields__:
             if name in data:
+                if not _is_finite(data[name]):
+                    raise ValueError(
+                        f"threshold policy field {name} must be a finite number, "
+                        f"got {data[name]!r}"
+                    )
                 kwargs[name] = float(data[name])
         return cls(**kwargs)
 
@@ -115,6 +120,20 @@ def _is_finite(value: Any) -> bool:
         return False
 
 
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    try:
+        f = float(value)
+        return f if math.isfinite(f) else default
+    except (TypeError, ValueError):
+        return default
+
+
+def _to_float_or_none(value: Any) -> float | None:
+    return float(cast(float, value)) if value is not None else None
+
+
 def _parse_iso_timestamp(value: Any) -> tuple[datetime | None, str | None]:
     if value is None:
         return None, None
@@ -140,24 +159,11 @@ def _parse_iso_timestamp(value: Any) -> tuple[datetime | None, str | None]:
         return None, f"invalid ISO timestamp: {exc}"
 
 
-def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None, list[str]]:
-    """Load and strictly validate a local broker snapshot fixture."""
-    p = Path(path)
+def _validate_snapshot_schema(data: Any) -> list[str]:
+    """Validate top-level broker snapshot fields and schema version."""
     errors: list[str] = []
-    if not p.is_file():
-        return None, [f"broker snapshot file not found: {p.name}"]
-    try:
-        text = p.read_text(encoding="utf-8")
-    except Exception as exc:
-        return None, [f"failed to read broker snapshot: {exc}"]
-    if not text.strip():
-        return None, ["broker snapshot file is empty"]
-    try:
-        data = json.loads(text)
-    except json.JSONDecodeError as exc:
-        return None, [f"broker snapshot is not valid JSON: {exc}"]
     if not isinstance(data, dict):
-        return None, ["broker snapshot is not a JSON object"]
+        return ["Broker snapshot is not a JSON object"]
 
     required_top = (
         "schema_version",
@@ -172,11 +178,143 @@ def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None
     )
     for key in required_top:
         if key not in data:
-            errors.append(f"missing required snapshot field: {key}")
+            errors.append(f"Missing required snapshot field: {key}")
 
     if data.get("schema_version") != "shadow-live-snapshot.v1":
-        errors.append("broker snapshot schema_version mismatch")
+        errors.append("Broker snapshot schema_version mismatch")
 
+    return errors
+
+
+def _parse_position(raw: Any, idx: int) -> tuple[BrokerPositionSnapshot | None, list[str]]:
+    """Parse a single broker position object."""
+    if not isinstance(raw, dict):
+        return None, [f"position[{idx}] is not an object"]
+
+    errors: list[str] = []
+    for key in ("symbol", "quantity", "side"):
+        if key not in raw:
+            errors.append(f"position[{idx}] missing {key}")
+
+    quantity = raw.get("quantity")
+    if not _is_finite(quantity):
+        errors.append(f"position[{idx}] quantity must be finite")
+    elif _safe_float(quantity) < 0:
+        errors.append(f"position[{idx}] quantity must be non-negative")
+
+    if raw.get("side") not in ("long", "short"):
+        errors.append(f"position[{idx}] side must be 'long' or 'short'")
+
+    for key in ("average_price", "market_price", "market_value"):
+        if raw.get(key) is not None and not _is_finite(raw.get(key)):
+            errors.append(f"position[{idx}] {key} must be finite or null")
+
+    return BrokerPositionSnapshot(
+        symbol=str(raw.get("symbol", "")),
+        quantity=_safe_float(quantity),
+        side=str(raw.get("side", "")),
+        average_price=_to_float_or_none(raw.get("average_price")),
+        market_price=_to_float_or_none(raw.get("market_price")),
+        market_value=_to_float_or_none(raw.get("market_value")),
+    ), errors
+
+
+def _parse_order(raw: Any, idx: int) -> tuple[BrokerOrderSnapshot | None, list[str]]:
+    """Parse a single broker open order object."""
+    if not isinstance(raw, dict):
+        return None, [f"open_order[{idx}] is not an object"]
+
+    errors: list[str] = []
+    required_keys = (
+        "order_id",
+        "symbol",
+        "side",
+        "order_type",
+        "quantity",
+        "filled_quantity",
+        "status",
+    )
+    for key in required_keys:
+        if key not in raw:
+            errors.append(f"open_order[{idx}] missing {key}")
+
+    quantity = raw.get("quantity")
+    if not _is_finite(quantity) or _safe_float(quantity) < 0:
+        errors.append(f"open_order[{idx}] quantity must be finite and non-negative")
+
+    filled_quantity = raw.get("filled_quantity")
+    if not _is_finite(filled_quantity) or _safe_float(filled_quantity) < 0:
+        errors.append(f"open_order[{idx}] filled_quantity must be finite and non-negative")
+
+    limit_price = raw.get("limit_price")
+    if limit_price is not None and (
+        not _is_finite(limit_price) or _safe_float(limit_price) <= 0
+    ):
+        errors.append(f"open_order[{idx}] limit_price must be finite and positive or null")
+
+    return BrokerOrderSnapshot(
+        order_id=str(raw.get("order_id", "")),
+        symbol=str(raw.get("symbol", "")),
+        side=str(raw.get("side", "")),
+        order_type=str(raw.get("order_type", "")),
+        quantity=_safe_float(quantity),
+        filled_quantity=_safe_float(filled_quantity),
+        limit_price=_to_float_or_none(limit_price),
+        status=str(raw.get("status", "")),
+    ), errors
+
+
+def _parse_fill(raw: Any, idx: int) -> tuple[BrokerFillSnapshot | None, list[str]]:
+    """Parse a single broker fill object."""
+    if not isinstance(raw, dict):
+        return None, [f"recent_fill[{idx}] is not an object"]
+
+    errors: list[str] = []
+    for key in ("fill_id", "symbol", "side", "quantity", "price", "filled_at"):
+        if key not in raw:
+            errors.append(f"recent_fill[{idx}] missing {key}")
+
+    quantity = raw.get("quantity")
+    if not _is_finite(quantity) or _safe_float(quantity) < 0:
+        errors.append(f"recent_fill[{idx}] quantity must be finite and non-negative")
+
+    price = raw.get("price")
+    if not _is_finite(price) or _safe_float(price) <= 0:
+        errors.append(f"recent_fill[{idx}] price must be finite and positive")
+
+    _, fill_ts_err = _parse_iso_timestamp(raw.get("filled_at"))
+    if fill_ts_err:
+        errors.append(f"recent_fill[{idx}] filled_at: {fill_ts_err}")
+
+    return BrokerFillSnapshot(
+        fill_id=str(raw.get("fill_id", "")),
+        order_id=str(raw["order_id"]) if raw.get("order_id") is not None else None,
+        symbol=str(raw.get("symbol", "")),
+        side=str(raw.get("side", "")),
+        quantity=_safe_float(quantity),
+        price=_safe_float(price),
+        filled_at=str(raw.get("filled_at", "")),
+    ), errors
+
+
+def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None, list[str]]:
+    """Load and strictly validate a local broker snapshot fixture."""
+    p = Path(path)
+    errors: list[str] = []
+    if not p.is_file():
+        return None, [f"Broker snapshot file not found: {p.name}"]
+    try:
+        text = p.read_text(encoding="utf-8")
+    except Exception as exc:
+        return None, [f"Failed to read broker snapshot: {exc}"]
+    if not text.strip():
+        return None, ["Broker snapshot file is empty"]
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return None, [f"Broker snapshot is not valid JSON: {exc}"]
+
+    errors = _validate_snapshot_schema(data)
     if errors:
         return None, errors
 
@@ -184,92 +322,32 @@ def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None
     for key in numeric_fields:
         if not _is_finite(data.get(key)):
             errors.append(f"{key} must be a finite number")
-        elif float(data[key]) < 0:
+        elif _safe_float(data[key]) < 0:
             errors.append(f"{key} must be non-negative")
 
     positions: list[BrokerPositionSnapshot] = []
+    position_errors: list[str] = []
     for idx, raw in enumerate(data.get("positions", [])):
-        if not isinstance(raw, dict):
-            errors.append(f"position[{idx}] is not an object")
-            continue
-        for key in ("symbol", "quantity", "side"):
-            if key not in raw:
-                errors.append(f"position[{idx}] missing {key}")
-        if not _is_finite(raw.get("quantity")):
-            errors.append(f"position[{idx}] quantity must be finite")
-        elif float(raw["quantity"]) < 0:
-            errors.append(f"position[{idx}] quantity must be non-negative")
-        if raw.get("side") not in ("long", "short"):
-            errors.append(f"position[{idx}] side must be 'long' or 'short'")
-        for key in ("average_price", "market_price", "market_value"):
-            if raw.get(key) is not None and not _is_finite(raw.get(key)):
-                errors.append(f"position[{idx}] {key} must be finite or null")
-        positions.append(
-            BrokerPositionSnapshot(
-                symbol=str(raw.get("symbol", "")),
-                quantity=float(raw.get("quantity", 0)),
-                side=str(raw.get("side", "")),
-                average_price=float(raw["average_price"]) if raw.get("average_price") is not None else None,
-                market_price=float(raw["market_price"]) if raw.get("market_price") is not None else None,
-                market_value=float(raw["market_value"]) if raw.get("market_value") is not None else None,
-            )
-        )
+        pos, pos_errs = _parse_position(raw, idx)
+        if pos is not None:
+            positions.append(pos)
+        position_errors.extend(pos_errs)
 
     open_orders: list[BrokerOrderSnapshot] = []
+    order_errors: list[str] = []
     for idx, raw in enumerate(data.get("open_orders", [])):
-        if not isinstance(raw, dict):
-            errors.append(f"open_order[{idx}] is not an object")
-            continue
-        for key in ("order_id", "symbol", "side", "order_type", "quantity", "filled_quantity", "status"):
-            if key not in raw:
-                errors.append(f"open_order[{idx}] missing {key}")
-        if not _is_finite(raw.get("quantity")) or float(raw.get("quantity", -1)) < 0:
-            errors.append(f"open_order[{idx}] quantity must be finite and non-negative")
-        if not _is_finite(raw.get("filled_quantity")) or float(raw.get("filled_quantity", -1)) < 0:
-            errors.append(f"open_order[{idx}] filled_quantity must be finite and non-negative")
-        if raw.get("limit_price") is not None and (
-            not _is_finite(raw.get("limit_price")) or float(raw["limit_price"]) <= 0
-        ):
-            errors.append(f"open_order[{idx}] limit_price must be finite and positive or null")
-        open_orders.append(
-            BrokerOrderSnapshot(
-                order_id=str(raw.get("order_id", "")),
-                symbol=str(raw.get("symbol", "")),
-                side=str(raw.get("side", "")),
-                order_type=str(raw.get("order_type", "")),
-                quantity=float(raw.get("quantity", 0)),
-                filled_quantity=float(raw.get("filled_quantity", 0)),
-                limit_price=float(raw["limit_price"]) if raw.get("limit_price") is not None else None,
-                status=str(raw.get("status", "")),
-            )
-        )
+        order, order_errs = _parse_order(raw, idx)
+        if order is not None:
+            open_orders.append(order)
+        order_errors.extend(order_errs)
 
     recent_fills: list[BrokerFillSnapshot] = []
+    fill_errors: list[str] = []
     for idx, raw in enumerate(data.get("recent_fills", [])):
-        if not isinstance(raw, dict):
-            errors.append(f"recent_fill[{idx}] is not an object")
-            continue
-        for key in ("fill_id", "symbol", "side", "quantity", "price", "filled_at"):
-            if key not in raw:
-                errors.append(f"recent_fill[{idx}] missing {key}")
-        if not _is_finite(raw.get("quantity")) or float(raw.get("quantity", -1)) < 0:
-            errors.append(f"recent_fill[{idx}] quantity must be finite and non-negative")
-        if not _is_finite(raw.get("price")) or float(raw.get("price", -1)) <= 0:
-            errors.append(f"recent_fill[{idx}] price must be finite and positive")
-        _, fill_ts_err = _parse_iso_timestamp(raw.get("filled_at"))
-        if fill_ts_err:
-            errors.append(f"recent_fill[{idx}] filled_at: {fill_ts_err}")
-        recent_fills.append(
-            BrokerFillSnapshot(
-                fill_id=str(raw.get("fill_id", "")),
-                order_id=str(raw["order_id"]) if raw.get("order_id") is not None else None,
-                symbol=str(raw.get("symbol", "")),
-                side=str(raw.get("side", "")),
-                quantity=float(raw.get("quantity", 0)),
-                price=float(raw.get("price", 0)),
-                filled_at=str(raw.get("filled_at", "")),
-            )
-        )
+        fill, fill_errs = _parse_fill(raw, idx)
+        if fill is not None:
+            recent_fills.append(fill)
+        fill_errors.extend(fill_errs)
 
     completeness = data.get("completeness_flags", {})
     if not isinstance(completeness, dict):
@@ -288,6 +366,8 @@ def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None
         if market_ts_err:
             errors.append(f"market_timestamp: {market_ts_err}")
 
+    errors.extend(position_errors + order_errors + fill_errors)
+
     if errors:
         return None, errors
 
@@ -296,9 +376,9 @@ def load_broker_snapshot(path: str | Path) -> tuple[BrokerAccountSnapshot | None
         account_label=str(data["account_label"]),
         broker_source=str(data["broker_source"]),
         currency=str(data["currency"]),
-        cash=float(data["cash"]),
-        equity=float(data["equity"]),
-        buying_power=float(data["buying_power"]),
+        cash=_safe_float(data["cash"]),
+        equity=_safe_float(data["equity"]),
+        buying_power=_safe_float(data["buying_power"]),
         market_timestamp=str(data["market_timestamp"]) if data.get("market_timestamp") is not None else None,
         snapshot_freshness_timestamp=str(data["snapshot_freshness_timestamp"]),
         positions=tuple(positions),
@@ -313,29 +393,29 @@ def load_quality_gate(path: str | Path) -> tuple[dict[str, Any] | None, list[str
     p = Path(path)
     errors: list[str] = []
     if not p.is_file():
-        return None, [f"quality gate file not found: {p.name}"]
+        return None, [f"Quality gate file not found: {p.name}"]
     try:
         text = p.read_text(encoding="utf-8")
     except Exception as exc:
-        return None, [f"failed to read quality gate: {exc}"]
+        return None, [f"Failed to read quality gate: {exc}"]
     if not text.strip():
-        return None, ["quality gate file is empty"]
+        return None, ["Quality gate file is empty"]
     try:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
-        return None, [f"quality gate is not valid JSON: {exc}"]
+        return None, [f"Quality gate is not valid JSON: {exc}"]
     if not isinstance(data, dict):
-        return None, ["quality gate is not a JSON object"]
+        return None, ["Quality gate is not a JSON object"]
     if data.get("artifact_type") != "trading_quality_gate":
-        errors.append("quality gate artifact_type mismatch")
+        errors.append("Quality gate artifact_type mismatch")
     if data.get("schema_version") != "trading-quality-gate.v1":
-        errors.append("quality gate schema_version mismatch")
+        errors.append("Quality gate schema_version mismatch")
     if data.get("mode") != "paper":
-        errors.append("quality gate mode must be 'paper'")
+        errors.append("Quality gate mode must be 'paper'")
     if "quality_state" not in data:
-        errors.append("quality gate missing quality_state")
+        errors.append("Quality gate missing quality_state")
     if "metrics" not in data or not isinstance(data.get("metrics"), dict):
-        errors.append("quality gate missing metrics object")
+        errors.append("Quality gate missing metrics object")
     if errors:
         return None, errors
     return data, errors
@@ -348,7 +428,7 @@ def _load_json(path: str | Path, label: str) -> tuple[dict[str, Any] | None, lis
     try:
         text = p.read_text(encoding="utf-8")
     except Exception as exc:
-        return None, [f"failed to read {label} file: {exc}"]
+        return None, [f"Failed to read {label} file: {exc}"]
     if not text.strip():
         return None, [f"{label} file is empty"]
     try:
@@ -367,7 +447,7 @@ def _load_jsonl(path: str | Path, label: str) -> tuple[list[dict[str, Any]], lis
     try:
         text = p.read_text(encoding="utf-8")
     except Exception as exc:
-        return [], [f"failed to read {label} file: {exc}"]
+        return [], [f"Failed to read {label} file: {exc}"]
     rows: list[dict[str, Any]] = []
     errors: list[str] = []
     for line_number, raw_line in enumerate(text.splitlines(), start=1):
@@ -421,19 +501,19 @@ def extract_paper_state(
 
     paper_cash: float | None = None
     if state and _is_finite(state.get("cash")):
-        paper_cash = float(state["cash"])
+        paper_cash = _safe_float(state["cash"])
     elif _is_finite(metrics.get("ending_cash")):
-        paper_cash = float(metrics["ending_cash"])
+        paper_cash = _safe_float(metrics["ending_cash"])
 
     paper_equity: float | None = None
     if state and _is_finite(state.get("equity")):
-        paper_equity = float(state["equity"])
+        paper_equity = _safe_float(state["equity"])
     elif _is_finite(metrics.get("ending_equity")):
-        paper_equity = float(metrics["ending_equity"])
+        paper_equity = _safe_float(metrics["ending_equity"])
 
     paper_buying_power: float | None = None
     if state and _is_finite(state.get("buying_power")):
-        paper_buying_power = float(state["buying_power"])
+        paper_buying_power = _safe_float(state["buying_power"])
 
     paper_positions: list[dict[str, Any]] = []
     if state and isinstance(state.get("positions"), list):
@@ -468,14 +548,14 @@ def _to_position_snapshot(raw: dict[str, Any]) -> BrokerPositionSnapshot | None:
     side = raw.get("side")
     if not _is_finite(quantity) or side not in ("long", "short"):
         return None
-    qty = float(quantity)
+    qty = _safe_float(quantity)
     return BrokerPositionSnapshot(
         symbol=str(raw.get("symbol", "")),
         quantity=qty,
         side=str(side),
-        average_price=float(raw["average_price"]) if _is_finite(raw.get("average_price")) else None,
-        market_price=float(raw["market_price"]) if _is_finite(raw.get("market_price")) else None,
-        market_value=float(raw["market_value"]) if _is_finite(raw.get("market_value")) else None,
+        average_price=_to_float_or_none(raw.get("average_price")),
+        market_price=_to_float_or_none(raw.get("market_price")),
+        market_value=_to_float_or_none(raw.get("market_value")),
     )
 
 
@@ -515,19 +595,19 @@ def compare_paper_to_broker(
 
     cash_diff: float | None = None
     if _is_finite(paper_cash):
-        cash_diff = float(paper_cash) - snapshot.cash
+        cash_diff = _safe_float(paper_cash) - snapshot.cash
 
     equity_diff: float | None = None
     if _is_finite(paper_equity):
-        equity_diff = float(paper_equity) - snapshot.equity
+        equity_diff = _safe_float(paper_equity) - snapshot.equity
 
     buying_power_result: dict[str, Any]
     if _is_finite(paper_buying_power):
         buying_power_result = {
             "available": True,
-            "paper_buying_power": float(paper_buying_power),
+            "paper_buying_power": _safe_float(paper_buying_power),
             "broker_buying_power": snapshot.buying_power,
-            "difference": float(paper_buying_power) - snapshot.buying_power,
+            "difference": _safe_float(paper_buying_power) - snapshot.buying_power,
         }
     else:
         buying_power_result = {"available": False, "reason": "paper_buying_power_unavailable"}
@@ -587,13 +667,25 @@ def compare_paper_to_broker(
 
     open_order_result: dict[str, Any]
     if snapshot.completeness_flags.get("open_orders"):
-        open_order_result = _compare_open_orders(paper_state.get("open_orders", []), snapshot.open_orders)
+        open_order_result = _compare_records(
+            paper_state.get("open_orders", []),
+            snapshot.open_orders,
+            ("symbol", "side", "quantity", "filled_quantity", "limit_price", "status"),
+            "order_id",
+            ("symbol", "side", "quantity"),
+        )
     else:
         open_order_result = {"available": False, "reason": "open_orders_incomplete"}
 
     fill_result: dict[str, Any]
     if snapshot.completeness_flags.get("recent_fills"):
-        fill_result = _compare_fills(paper_state.get("fills", []), snapshot.recent_fills)
+        fill_result = _compare_records(
+            paper_state.get("fills", []),
+            snapshot.recent_fills,
+            ("symbol", "side", "quantity", "price", "filled_at"),
+            "fill_id",
+            ("symbol", "filled_at"),
+        )
     else:
         fill_result = {"available": False, "reason": "recent_fills_incomplete"}
 
@@ -609,59 +701,47 @@ def compare_paper_to_broker(
     }
 
 
-def _compare_open_orders(
-    paper_orders: list[Any], broker_orders: tuple[BrokerOrderSnapshot, ...]
+def _compare_records(
+    paper_records: list[Any],
+    broker_records: tuple[Any, ...],
+    fields: tuple[str, ...],
+    id_field: str,
+    fallback_fields: tuple[str, ...],
 ) -> dict[str, Any]:
-    broker_by_id = {o.order_id: o for o in broker_orders}
+    """Compare a list of paper-side records against broker-side records."""
+    broker_by_id = {getattr(r, id_field): r for r in broker_records}
     differences: list[dict[str, Any]] = []
     paper_ids: set[str] = set()
-    for raw in paper_orders:
+
+    for raw in paper_records:
         if not isinstance(raw, dict):
             continue
-        order_id = raw.get("order_id") or f"paper-derived-{raw.get('symbol')}-{raw.get('side')}-{raw.get('quantity')}"
-        paper_ids.add(order_id)
-        broker_order = broker_by_id.get(order_id)
-        if broker_order is None:
-            differences.append({"order_id": order_id, "paper_only": True})
+        raw_id = raw.get(id_field)
+        if not raw_id:
+            raw_id = "paper-derived-" + "-".join(str(raw.get(k, "")) for k in fallback_fields)
+        record_id = str(raw_id)
+        paper_ids.add(record_id)
+
+        broker_record = broker_by_id.get(record_id)
+        if broker_record is None:
+            differences.append({id_field: record_id, "paper_only": True})
             continue
-        diff: dict[str, Any] = {"order_id": order_id, "paper_only": False, "broker_only": False}
-        for field in ("symbol", "side", "quantity", "filled_quantity", "limit_price", "status"):
+
+        diff: dict[str, Any] = {id_field: record_id, "paper_only": False, "broker_only": False}
+        has_field_diff = False
+        for field in fields:
             pv = raw.get(field)
-            bv = getattr(broker_order, field)
+            bv = getattr(broker_record, field)
             if pv != bv:
                 diff[f"{field}_difference"] = {"paper": pv, "broker": bv}
-        if len(diff) > 3:
+                has_field_diff = True
+        if has_field_diff:
             differences.append(diff)
-    for order_id, broker_order in broker_by_id.items():
-        if order_id not in paper_ids:
-            differences.append({"order_id": order_id, "broker_only": True})
-    return {"available": True, "differences": differences, "count": len(differences)}
 
+    for record_id, broker_record in broker_by_id.items():
+        if record_id not in paper_ids:
+            differences.append({id_field: record_id, "broker_only": True})
 
-def _compare_fills(paper_fills: list[Any], broker_fills: tuple[BrokerFillSnapshot, ...]) -> dict[str, Any]:
-    broker_by_id = {f.fill_id: f for f in broker_fills}
-    differences: list[dict[str, Any]] = []
-    paper_ids: set[str] = set()
-    for raw in paper_fills:
-        if not isinstance(raw, dict):
-            continue
-        fill_id = raw.get("fill_id") or f"paper-derived-{raw.get('symbol')}-{raw.get('filled_at')}"
-        paper_ids.add(fill_id)
-        broker_fill = broker_by_id.get(fill_id)
-        if broker_fill is None:
-            differences.append({"fill_id": fill_id, "paper_only": True})
-            continue
-        diff: dict[str, Any] = {"fill_id": fill_id, "paper_only": False, "broker_only": False}
-        for field in ("symbol", "side", "quantity", "price", "filled_at"):
-            pv = raw.get(field)
-            bv = getattr(broker_fill, field)
-            if pv != bv:
-                diff[f"{field}_difference"] = {"paper": pv, "broker": bv}
-        if len(diff) > 3:
-            differences.append(diff)
-    for fill_id, broker_fill in broker_by_id.items():
-        if fill_id not in paper_ids:
-            differences.append({"fill_id": fill_id, "broker_only": True})
     return {"available": True, "differences": differences, "count": len(differences)}
 
 
@@ -752,10 +832,12 @@ def resolve_shadow_live_status(
 def _redact_path(path: Any) -> str:
     if path is None:
         return ""
+    p = Path(path)
     try:
-        return Path(path).name
-    except Exception:
-        return str(path)
+        rel = p.relative_to(Path.cwd())
+        return str(rel)
+    except ValueError:
+        return p.name
 
 
 def build_shadow_live_comparison(
@@ -803,7 +885,10 @@ def build_shadow_live_comparison(
         "missing_critical_fields": [],
         "threshold_policy": policy.to_dict(),
         "input_artifacts": input_artifacts,
-        "disclaimer": "This is a read-only fixture comparison. It does not indicate live readiness, trading safety, profitability, or permission to submit orders.",
+        "disclaimer": (
+            "This is a read-only fixture comparison. It does not indicate live "
+            "readiness, trading safety, profitability, or permission to submit orders."
+        ),
     }
 
     if gate is None:
@@ -872,19 +957,13 @@ def build_shadow_live_comparison(
     return base_report
 
 
-def write_shadow_live_artifacts(report: dict[str, Any], output_dir: str | Path) -> None:
-    """Write JSON and Markdown shadow-live artifacts with redacted paths."""
-    out = Path(output_dir)
-    out.mkdir(parents=True, exist_ok=True)
-    json_path = out / "shadow-live-comparison.json"
-    json_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-
-    md_path = out / "shadow-live-report.md"
+def _render_markdown(report: dict[str, Any]) -> str:
+    """Render a shadow-live comparison report as Markdown."""
     lines: list[str] = []
     lines.append("# Shadow-Live Read-Only Comparison Report\n")
     lines.append(
-        "> **This is a read-only fixture comparison.** It does not indicate live readiness, "
-        "trading safety, profitability, or permission to submit orders.\n"
+        "> **This is a read-only fixture comparison.** It does not indicate live "
+        "readiness, trading safety, profitability, or permission to submit orders.\n"
     )
     lines.append(f"**Status:** `{report['status']}`\n")
     lines.append(f"**Quality gate state:** `{report['quality_state']}`\n")
@@ -907,7 +986,10 @@ def write_shadow_live_artifacts(report: dict[str, Any], output_dir: str | Path) 
     lines.append("## Freshness assessment\n")
     freshness = report.get("freshness_assessment", {})
     lines.append(f"- **Stale:** {freshness.get('stale', 'unknown')}\n")
-    lines.append(f"- **Snapshot freshness timestamp:** {freshness.get('snapshot_freshness_timestamp', 'N/A')}\n\n")
+    lines.append(
+        f"- **Snapshot freshness timestamp:** "
+        f"{freshness.get('snapshot_freshness_timestamp', 'N/A')}\n\n"
+    )
 
     lines.append("## Divergence results\n")
     divergence = report.get("divergence_results", {})
@@ -948,4 +1030,15 @@ def write_shadow_live_artifacts(report: dict[str, Any], output_dir: str | Path) 
     lines.append("## Disclaimer\n\n")
     lines.append(report.get("disclaimer", "") + "\n")
 
-    md_path.write_text("".join(lines), encoding="utf-8")
+    return "".join(lines)
+
+
+def write_shadow_live_artifacts(report: dict[str, Any], output_dir: str | Path) -> None:
+    """Write JSON and Markdown shadow-live artifacts with redacted paths."""
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    json_path = out / "shadow-live-comparison.json"
+    json_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+    md_path = out / "shadow-live-report.md"
+    md_path.write_text(_render_markdown(report), encoding="utf-8")

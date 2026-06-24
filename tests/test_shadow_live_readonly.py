@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import pytest
-
-_FIXED_NOW = datetime.fromisoformat("2026-06-23T12:10:00+00:00")
 
 from atlas_agent.agent.autonomous_paper_shadow_live import (
     BrokerAccountSnapshot,
@@ -22,6 +20,8 @@ from atlas_agent.agent.autonomous_paper_shadow_live import (
     resolve_shadow_live_status,
     write_shadow_live_artifacts,
 )
+
+_FIXED_NOW = datetime.fromisoformat("2026-06-23T12:10:00+00:00")
 
 
 def _make_minimal_snapshot() -> dict:
@@ -91,18 +91,44 @@ def _make_eligible_gate() -> dict:
     }
 
 
-def test_load_broker_snapshot_minimal(tmp_path: Path) -> None:
-    snapshot = _make_minimal_snapshot()
-    snapshot["positions"] = [
-        {
-            "symbol": "AAPL",
-            "quantity": 10,
-            "side": "long",
-            "average_price": 150.0,
-            "market_price": 155.0,
-            "market_value": 1550.0,
+def _make_broker_account_snapshot(
+    *,
+    positions: tuple[BrokerPositionSnapshot, ...] = (),
+    open_orders: tuple[BrokerOrderSnapshot, ...] = (),
+    recent_fills: tuple[BrokerFillSnapshot, ...] = (),
+    completeness_flags: dict[str, bool] | None = None,
+    snapshot_freshness_timestamp: str = "2026-06-23T12:05:00Z",
+    cash: float = 10000.0,
+    equity: float = 10500.0,
+    buying_power: float = 20000.0,
+) -> BrokerAccountSnapshot:
+    if completeness_flags is None:
+        completeness_flags = {
+            "account": True,
+            "positions": True,
+            "open_orders": True,
+            "recent_fills": True,
+            "market_prices": True,
         }
-    ]
+    return BrokerAccountSnapshot(
+        schema_version="shadow-live-snapshot.v1",
+        account_label="paper-shadow-001",
+        broker_source="fixture",
+        currency="USD",
+        cash=cash,
+        equity=equity,
+        buying_power=buying_power,
+        market_timestamp="2026-06-23T12:00:00Z",
+        snapshot_freshness_timestamp=snapshot_freshness_timestamp,
+        positions=positions,
+        open_orders=open_orders,
+        recent_fills=recent_fills,
+        completeness_flags=completeness_flags,
+    )
+
+
+def test_load_broker_snapshot_minimal(tmp_path: Path) -> None:
+    snapshot = _make_snapshot_with_position()
     path = tmp_path / "snapshot.json"
     path.write_text(json.dumps(snapshot))
     result, errors = load_broker_snapshot(path)
@@ -217,27 +243,7 @@ def test_compare_matched() -> None:
         "buying_power": None,
         "positions": [],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
-        positions=(),
-        open_orders=(),
-        recent_fills=(),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
-    )
+    snapshot = _make_broker_account_snapshot()
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
     assert result["cash_difference"] == 0.0
@@ -253,27 +259,7 @@ def test_compare_minor_divergence_cash() -> None:
         "buying_power": None,
         "positions": [],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
-        positions=(),
-        open_orders=(),
-        recent_fills=(),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
-    )
+    snapshot = _make_broker_account_snapshot()
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
     status, _ = resolve_shadow_live_status(result, snapshot, policy, now=_FIXED_NOW)
@@ -287,27 +273,7 @@ def test_compare_major_divergence_equity() -> None:
         "buying_power": None,
         "positions": [],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
-        positions=(),
-        open_orders=(),
-        recent_fills=(),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
-    )
+    snapshot = _make_broker_account_snapshot()
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
     status, _ = resolve_shadow_live_status(result, snapshot, policy, now=_FIXED_NOW)
@@ -323,16 +289,7 @@ def test_compare_major_divergence_position_quantity() -> None:
             {"symbol": "AAPL", "quantity": 10, "side": "long", "market_value": 1550.0}
         ],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
+    snapshot = _make_broker_account_snapshot(
         positions=(
             BrokerPositionSnapshot(
                 symbol="AAPL",
@@ -343,15 +300,6 @@ def test_compare_major_divergence_position_quantity() -> None:
                 market_value=155.0,
             ),
         ),
-        open_orders=(),
-        recent_fills=(),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
     )
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
@@ -366,19 +314,7 @@ def test_incomplete_snapshot_missing_critical_flag() -> None:
         "buying_power": None,
         "positions": [],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
-        positions=(),
-        open_orders=(),
-        recent_fills=(),
+    snapshot = _make_broker_account_snapshot(
         completeness_flags={
             "account": True,
             "positions": False,
@@ -401,26 +337,8 @@ def test_stale_snapshot() -> None:
         "buying_power": None,
         "positions": [],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
+    snapshot = _make_broker_account_snapshot(
         snapshot_freshness_timestamp="2026-06-23T11:00:00Z",
-        positions=(),
-        open_orders=(),
-        recent_fills=(),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
     )
     policy = ShadowLiveThresholdPolicy()
     now = datetime.fromisoformat("2026-06-23T12:10:00+00:00")
@@ -686,7 +604,7 @@ def test_open_orders_incomplete_not_blocking(tmp_path: Path) -> None:
     assert report["divergence_results"]["open_order_differences"]["available"] is False
 
 
-def test_open_order_differences_detected(tmp_path: Path) -> None:
+def test_open_order_differences_detected() -> None:
     paper_state = {
         "cash": 10000.0,
         "equity": 10500.0,
@@ -705,17 +623,7 @@ def test_open_order_differences_detected(tmp_path: Path) -> None:
             }
         ],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
-        positions=(),
+    snapshot = _make_broker_account_snapshot(
         open_orders=(
             BrokerOrderSnapshot(
                 order_id="order-1",
@@ -728,14 +636,6 @@ def test_open_order_differences_detected(tmp_path: Path) -> None:
                 status="open",
             ),
         ),
-        recent_fills=(),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
     )
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
@@ -761,18 +661,7 @@ def test_fill_differences_detected() -> None:
             }
         ],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
-        positions=(),
-        open_orders=(),
+    snapshot = _make_broker_account_snapshot(
         recent_fills=(
             BrokerFillSnapshot(
                 fill_id="fill-1",
@@ -784,13 +673,6 @@ def test_fill_differences_detected() -> None:
                 filled_at="2026-06-23T12:00:00Z",
             ),
         ),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
     )
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
@@ -807,16 +689,7 @@ def test_paper_only_and_broker_only_positions() -> None:
             {"symbol": "AAPL", "quantity": 10, "side": "long", "market_value": 1550.0}
         ],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
+    snapshot = _make_broker_account_snapshot(
         positions=(
             BrokerPositionSnapshot(
                 symbol="TSLA",
@@ -827,15 +700,6 @@ def test_paper_only_and_broker_only_positions() -> None:
                 market_value=-3550.0,
             ),
         ),
-        open_orders=(),
-        recent_fills=(),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
     )
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
@@ -854,16 +718,7 @@ def test_signed_quantity_short_position() -> None:
             {"symbol": "TSLA", "quantity": 5, "side": "short", "market_value": -3550.0}
         ],
     }
-    snapshot = BrokerAccountSnapshot(
-        schema_version="shadow-live-snapshot.v1",
-        account_label="paper-shadow-001",
-        broker_source="fixture",
-        currency="USD",
-        cash=10000.0,
-        equity=10500.0,
-        buying_power=20000.0,
-        market_timestamp="2026-06-23T12:00:00Z",
-        snapshot_freshness_timestamp="2026-06-23T12:05:00Z",
+    snapshot = _make_broker_account_snapshot(
         positions=(
             BrokerPositionSnapshot(
                 symbol="TSLA",
@@ -874,15 +729,6 @@ def test_signed_quantity_short_position() -> None:
                 market_value=-3550.0,
             ),
         ),
-        open_orders=(),
-        recent_fills=(),
-        completeness_flags={
-            "account": True,
-            "positions": True,
-            "open_orders": True,
-            "recent_fills": True,
-            "market_prices": True,
-        },
     )
     policy = ShadowLiveThresholdPolicy()
     result = compare_paper_to_broker(paper_state, snapshot, policy)
@@ -899,6 +745,11 @@ def test_threshold_policy_to_dict_roundtrip() -> None:
     assert data["minor_cash_pct"] == 2.0
     assert data["major_cash_pct"] == 10.0
     assert data["max_snapshot_age_seconds"] == 600.0
+
+
+def test_threshold_policy_from_dict_rejects_non_numeric() -> None:
+    with pytest.raises(ValueError, match="must be a finite number"):
+        ShadowLiveThresholdPolicy.from_dict({"minor_cash_pct": "not-a-number"})
 
 
 def test_not_evaluated_quality_gate(tmp_path: Path) -> None:
