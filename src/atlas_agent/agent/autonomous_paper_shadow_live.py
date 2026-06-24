@@ -336,6 +336,8 @@ def load_quality_gate(path: str | Path) -> tuple[dict[str, Any] | None, list[str
         errors.append("quality gate missing quality_state")
     if "metrics" not in data or not isinstance(data.get("metrics"), dict):
         errors.append("quality gate missing metrics object")
+    if errors:
+        return None, errors
     return data, errors
 
 

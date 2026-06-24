@@ -206,7 +206,7 @@ def test_load_quality_gate_rejects_non_paper_mode(tmp_path: Path) -> None:
     path = tmp_path / "gate.json"
     path.write_text(json.dumps(gate))
     result, errors = load_quality_gate(path)
-    assert result is not None
+    assert result is None
     assert any("mode" in e for e in errors)
 
 
@@ -537,6 +537,42 @@ def test_build_shadow_live_comparison_malformed_snapshot(tmp_path: Path) -> None
     gate_path.write_text(json.dumps(gate))
     snapshot_path = tmp_path / "snapshot.json"
     snapshot_path.write_text("not json")
+    report = build_shadow_live_comparison(
+        quality_gate_path=gate_path,
+        broker_snapshot_path=snapshot_path,
+        output_dir=tmp_path / "out",
+        now=_FIXED_NOW,
+    )
+    assert report["status"] == "blocked"
+
+
+def test_build_shadow_live_comparison_blocks_bad_quality_gate_schema_version(
+    tmp_path: Path,
+) -> None:
+    gate = _make_eligible_gate()
+    gate["schema_version"] = "trading-quality-gate.v0"
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(_make_minimal_snapshot()))
+    report = build_shadow_live_comparison(
+        quality_gate_path=gate_path,
+        broker_snapshot_path=snapshot_path,
+        output_dir=tmp_path / "out",
+        now=_FIXED_NOW,
+    )
+    assert report["status"] == "blocked"
+
+
+def test_build_shadow_live_comparison_blocks_bad_quality_gate_artifact_type(
+    tmp_path: Path,
+) -> None:
+    gate = _make_eligible_gate()
+    gate["artifact_type"] = "trading_quality_gate_bad"
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate))
+    snapshot_path = tmp_path / "snapshot.json"
+    snapshot_path.write_text(json.dumps(_make_minimal_snapshot()))
     report = build_shadow_live_comparison(
         quality_gate_path=gate_path,
         broker_snapshot_path=snapshot_path,
