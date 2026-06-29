@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
-from dataclasses import dataclass, field
+import tempfile
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -1736,3 +1738,301 @@ def _redact_path(path: Path | None) -> str | None:
     if path is None:
         return None
     return path.name
+
+
+_InputEntry = tuple[str, Path, tuple[int, int] | None]
+
+
+def _replace_gate_status(
+    gates: tuple[GateResult, ...],
+    gate_id: str,
+    status: Literal["pass", "fail", "not_run"],
+    reason: str = "",
+) -> tuple[GateResult, ...]:
+    """Return a new gate sequence with the matching gate updated."""
+    return tuple(
+        GateResult(
+            gate_id=g.gate_id,
+            status=status,
+            reason=reason,
+            details=g.details,
+        )
+        if g.gate_id == gate_id
+        else g
+        for g in gates
+    )
+
+
+def _resolve_input_entries(report: ReadinessEnvelopeReport) -> list[_InputEntry]:
+    """Resolve input artifact paths and capture device/inode identities."""
+    entries: list[_InputEntry] = []
+    for label, value in report.input_artifacts.items():
+        if not isinstance(value, str) or value == "":
+            continue
+        try:
+            resolved = Path(value).resolve()
+        except Exception as exc:
+            raise ReadinessValidationError(
+                f"input path {label} cannot be resolved: {exc}"
+            ) from None
+        identity: tuple[int, int] | None = None
+        if resolved.exists():
+            try:
+                st = resolved.stat()
+                identity = (st.st_dev, st.st_ino)
+            except Exception:
+                identity = None
+        entries.append((label, resolved, identity))
+    return entries
+
+
+def _candidate_aliases_input(
+    candidate: Path, input_entries: list[_InputEntry]
+) -> str | None:
+    """Return an error string if ``candidate`` aliases an input path."""
+    try:
+        cand_resolved = candidate.resolve()
+    except Exception:
+        return None
+    cand_identity: tuple[int, int] | None = None
+    if cand_resolved.exists():
+        try:
+            st = cand_resolved.stat()
+            cand_identity = (st.st_dev, st.st_ino)
+        except Exception:
+            cand_identity = None
+    for label, resolved, identity in input_entries:
+        if cand_resolved == resolved:
+            return f"{candidate.name} aliases input path {label}"
+        if cand_identity is not None and identity is not None and cand_identity == identity:
+            return f"{candidate.name} is a hard link alias of input path {label}"
+    return None
+
+
+def _check_output_path_aliases(
+    output_dir: Path, input_entries: list[_InputEntry]
+) -> str | None:
+    """Reject output directory or artifact paths that alias an input path."""
+    try:
+        output_dir_resolved = output_dir.resolve()
+    except Exception as exc:
+        return f"output_dir cannot be resolved: {exc}"
+    if output_dir.exists() and not output_dir.is_dir():
+        return "output_dir exists and is not a directory"
+
+    out_identity: tuple[int, int] | None = None
+    if output_dir_resolved.exists():
+        try:
+            st = output_dir_resolved.stat()
+            out_identity = (st.st_dev, st.st_ino)
+        except Exception:
+            out_identity = None
+
+    for label, resolved, identity in input_entries:
+        if resolved == output_dir_resolved:
+            return f"output_dir aliases input path {label}"
+        if identity is not None and out_identity is not None and identity == out_identity:
+            return f"output_dir is a hard link alias of input path {label}"
+
+    for name, filename in (
+        ("JSON artifact", _JSON_ARTIFACT_NAME),
+        ("Markdown artifact", _MARKDOWN_ARTIFACT_NAME),
+    ):
+        candidate = output_dir_resolved / filename
+        alias = _candidate_aliases_input(candidate, input_entries)
+        if alias is not None:
+            return f"{name} {alias}"
+
+    return None
+
+
+def _atomic_write_text(
+    output_dir: Path,
+    filename: str,
+    content: str,
+    input_entries: list[_InputEntry],
+) -> Path:
+    """Write ``content`` to ``output_dir / filename`` atomically via ``os.replace``."""
+    fd, temp_name = tempfile.mkstemp(dir=output_dir, suffix=f".{filename}.tmp")
+    temp_path = Path(temp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
+
+        alias = _candidate_aliases_input(temp_path, input_entries)
+        if alias is not None:
+            raise ReadinessValidationError(f"temporary file {alias}")
+
+        final_path = output_dir / filename
+        alias = _candidate_aliases_input(final_path, input_entries)
+        if alias is not None:
+            raise ReadinessValidationError(alias)
+
+        os.replace(temp_path, final_path)
+        return final_path
+    except Exception:
+        try:
+            temp_path.unlink(missing_ok=True)
+        except Exception:
+            pass
+        raise
+
+
+def _render_markdown_report(report: ReadinessEnvelopeReport) -> str:
+    """Render an informational Markdown report from a readiness envelope report.
+
+    The Markdown artifact must never contain raw fixture bodies, absolute paths,
+    usernames, credentials, account IDs, endpoint URLs, stack traces, or raw
+    broker/provider payloads.
+    """
+    lines: list[str] = []
+    lines.append(
+        "> **Safety notice:** " + report.disclaimer
+    )
+    lines.append("")
+    lines.append("# Runtime Readiness Envelope Report")
+    lines.append("")
+    lines.append("| Field | Value |")
+    lines.append("|-------|-------|")
+    for key, value in (
+        ("status", report.status),
+        ("evaluation_id", report.evaluation_id),
+        ("as_of", report.as_of),
+        ("symbol", report.symbol or "-"),
+        ("run_id", report.run_id or "-"),
+    ):
+        lines.append(f"| {key} | `{value}` |")
+    lines.append("")
+
+    lines.append("## Gates")
+    lines.append("")
+    lines.append("| Gate | Status | Reason |")
+    lines.append("|------|--------|--------|")
+    for gate in report.gates:
+        reason = gate.reason or "-"
+        lines.append(f"| `{gate.gate_id}` | `{gate.status}` | {reason} |")
+    lines.append("")
+
+    lines.append("## Upstream evidence summaries")
+    lines.append("")
+    lines.append("```json")
+    lines.append(json.dumps(report.upstream_summaries, indent=2, sort_keys=True))
+    lines.append("```")
+    lines.append("")
+
+    lines.append("## Fixture summaries")
+    lines.append("")
+    lines.append("```json")
+    lines.append(json.dumps(report.fixture_summaries, indent=2, sort_keys=True))
+    lines.append("```")
+    lines.append("")
+
+    lines.append("## Envelope assertions")
+    lines.append("")
+    lines.append("| Assertion | Value |")
+    lines.append("|-----------|-------|")
+    for assertion, value in report.envelope_assertions.items():
+        lines.append(f"| `{assertion}` | `{value}` |")
+    lines.append("")
+
+    lines.append("## Input artifacts")
+    lines.append("")
+    for label, name in report.input_artifacts.items():
+        fp = report.input_fingerprints.get(label, "")
+        lines.append(f"- **{label}:** `{name or '-'}` ({fp})")
+    lines.append("")
+
+    lines.append("## Blockers")
+    lines.append("")
+    if report.blocked_reasons:
+        for reason in report.blocked_reasons:
+            lines.append(f"- {reason}")
+    else:
+        lines.append("- None")
+    lines.append("")
+
+    lines.append("## Disclaimer")
+    lines.append("")
+    lines.append(report.disclaimer)
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def _blocked_writer_report(
+    report: ReadinessEnvelopeReport, reason: str
+) -> ReadinessEnvelopeReport:
+    """Return a new report indicating the artifact writer was blocked."""
+    return replace(
+        report,
+        status="blocked",
+        exit_code=2,
+        recording={"json_written": False, "markdown_written": False},
+        blocked_reasons=list(report.blocked_reasons) + [reason],
+    )
+
+
+def write_runtime_readiness_envelope_artifacts(
+    report: ReadinessEnvelopeReport,
+    output_dir: Path | str,
+) -> ReadinessEnvelopeReport:
+    """Atomically write the JSON and Markdown artifacts for a report.
+
+    JSON is the authoritative artifact and is replaced last. Markdown is
+    informational. If either write fails, the function returns a report with
+    ``status="blocked"`` and ``recording`` set to false.
+    """
+    out = Path(output_dir)
+
+    try:
+        out.mkdir(parents=True, exist_ok=True)
+    except Exception as exc:
+        return _blocked_writer_report(
+            report, f"artifact writer failed to create output directory: {exc}"
+        )
+
+    try:
+        input_entries = _resolve_input_entries(report)
+    except ReadinessValidationError as exc:
+        return _blocked_writer_report(report, str(exc))
+
+    alias_error = _check_output_path_aliases(out, input_entries)
+    if alias_error is not None:
+        return _blocked_writer_report(
+            report, f"artifact writer path alias rejected: {alias_error}"
+        )
+
+    recorded_report = replace(
+        report,
+        status="readiness_envelope_recorded",
+        exit_code=0,
+        gates=_replace_gate_status(
+            report.gates,
+            "artifact_recording_gate",
+            "pass",
+            reason="artifacts recorded",
+        ),
+        recording={"json_written": True, "markdown_written": True},
+        blocked_reasons=list(report.blocked_reasons),
+    )
+
+    markdown = _render_markdown_report(recorded_report)
+    try:
+        _atomic_write_text(out, _MARKDOWN_ARTIFACT_NAME, markdown, input_entries)
+    except Exception as exc:
+        return _blocked_writer_report(report, f"markdown write failed: {exc}")
+
+    json_text = json.dumps(
+        recorded_report.to_dict(),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=True,
+    )
+    try:
+        _atomic_write_text(out, _JSON_ARTIFACT_NAME, json_text + "\n", input_entries)
+    except Exception as exc:
+        return _blocked_writer_report(report, f"json write failed: {exc}")
+
+    return recorded_report

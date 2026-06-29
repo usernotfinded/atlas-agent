@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -11,10 +12,12 @@ from atlas_agent.agent.runtime_readiness_envelope import (
     GATE_SEQUENCE,
     EVIDENCE_ONLY_DISCLAIMER,
     ReadinessEnvelopeInputs,
+    ReadinessEnvelopeReport,
     canonical_json_bytes,
     fingerprint_json,
     parse_as_of_utc,
     build_runtime_readiness_envelope_report,
+    write_runtime_readiness_envelope_artifacts,
     _validate_quality_gate,
     _validate_shadow_comparison,
     _validate_submit_conformance,
@@ -567,15 +570,18 @@ def test_correlate_evidence_finds_symbol_mismatch() -> None:
 def test_valid_all_pass_envelope(tmp_path: Path) -> None:
     inputs, _ = _make_valid_inputs(tmp_path)
     report = build_runtime_readiness_envelope_report(inputs)
-    assert report.status == "envelope_synthesized"
-    assert report.exit_code == 2
-    gate_statuses = {g.gate_id: g.status for g in report.gates}
+    recorded = write_runtime_readiness_envelope_artifacts(report, tmp_path / "out")
+    assert recorded.status == "readiness_envelope_recorded"
+    assert recorded.exit_code == 0
+    gate_statuses = {g.gate_id: g.status for g in recorded.gates}
     assert gate_statuses["schema_preflight"] == "pass"
     assert gate_statuses["cand004_evidence_gate"] == "pass"
     assert gate_statuses["cand005_evidence_gate"] == "pass"
     assert gate_statuses["cand006_evidence_gate"] == "pass"
     assert gate_statuses["envelope_synthesis_gate"] == "pass"
-    assert gate_statuses["artifact_recording_gate"] == "not_run"
+    assert gate_statuses["artifact_recording_gate"] == "pass"
+    assert (tmp_path / "out" / "runtime-readiness-envelope.json").is_file()
+    assert (tmp_path / "out" / "runtime-readiness-envelope-report.md").is_file()
 
 
 def test_run_id_mismatch_blocks(tmp_path: Path) -> None:
@@ -883,3 +889,66 @@ def test_report_to_dict_is_json_serializable(tmp_path: Path) -> None:
     report = build_runtime_readiness_envelope_report(inputs)
     text = json.dumps(report.to_dict(), sort_keys=True, ensure_ascii=True)
     assert "envelope_synthesized" in text
+
+
+def test_json_and_markdown_agree(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    report = build_runtime_readiness_envelope_report(inputs)
+    recorded = write_runtime_readiness_envelope_artifacts(report, tmp_path / "out")
+    json_path = tmp_path / "out" / "runtime-readiness-envelope.json"
+    md_path = tmp_path / "out" / "runtime-readiness-envelope-report.md"
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    md = md_path.read_text(encoding="utf-8")
+    assert data["evaluation_id"] == recorded.evaluation_id
+    assert data["as_of"] == recorded.as_of
+    assert data["status"] == recorded.status == "readiness_envelope_recorded"
+    assert recorded.evaluation_id in md
+    assert recorded.as_of in md
+    assert recorded.status in md
+
+
+def test_json_write_failure_rolls_back_status(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    report = build_runtime_readiness_envelope_report(inputs)
+    output_dir = tmp_path / "out"
+    output_dir.mkdir()
+    # Make the final JSON path a directory so the atomic replace fails after
+    # Markdown has been written.
+    (output_dir / "runtime-readiness-envelope.json").mkdir()
+    blocked = write_runtime_readiness_envelope_artifacts(report, output_dir)
+    assert blocked.status != "readiness_envelope_recorded"
+    assert blocked.exit_code == 2
+    assert blocked.recording == {"json_written": False, "markdown_written": False}
+
+
+def test_disclaimer_present_in_json_and_markdown(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    report = build_runtime_readiness_envelope_report(inputs)
+    write_runtime_readiness_envelope_artifacts(report, tmp_path / "out")
+    json_path = tmp_path / "out" / "runtime-readiness-envelope.json"
+    md_path = tmp_path / "out" / "runtime-readiness-envelope-report.md"
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    md = md_path.read_text(encoding="utf-8")
+    assert data["disclaimer"] == EVIDENCE_ONLY_DISCLAIMER
+    assert EVIDENCE_ONLY_DISCLAIMER in md
+
+
+def test_output_path_alias_rejected(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    report = build_runtime_readiness_envelope_report(inputs)
+    input_file = tmp_path / "quality_gate.json"
+    input_file.write_text(json.dumps(_make_quality_gate()), encoding="utf-8")
+    output_dir = tmp_path / "out"
+    output_dir.mkdir()
+    symlink = output_dir / "runtime-readiness-envelope.json"
+    symlink.symlink_to(input_file)
+
+    # Record the absolute input path so the writer can detect the alias.
+    aliased_report = replace(
+        report,
+        input_artifacts={**report.input_artifacts, "quality_gate": str(input_file)},
+    )
+    blocked = write_runtime_readiness_envelope_artifacts(aliased_report, output_dir)
+    assert blocked.status == "blocked"
+    assert blocked.exit_code == 2
+    assert any("alias" in reason.lower() for reason in blocked.blocked_reasons)
