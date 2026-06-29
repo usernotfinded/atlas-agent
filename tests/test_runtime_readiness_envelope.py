@@ -243,8 +243,8 @@ def test_approved_statuses_include_required_values() -> None:
         assert status in APPROVED_FINAL_STATUSES
 
 
-def test_gate_sequence_includes_required_gates() -> None:
-    expected = [
+def test_gate_sequence_matches_expected() -> None:
+    EXPECTED_GATE_SEQUENCE = (
         "schema_preflight",
         "cand004_evidence_gate",
         "cand005_evidence_gate",
@@ -256,8 +256,8 @@ def test_gate_sequence_includes_required_gates() -> None:
         "audit_policy_fixture_gate",
         "envelope_synthesis_gate",
         "artifact_recording_gate",
-    ]
-    assert [g for g in GATE_SEQUENCE if g in expected] == expected
+    )
+    assert GATE_SEQUENCE == EXPECTED_GATE_SEQUENCE
 
 
 def test_evidence_only_disclaimer_present() -> None:

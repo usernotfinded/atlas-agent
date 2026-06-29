@@ -852,7 +852,11 @@ def _validate_operator_policy_fixture(
     if schema_version != _OPERATOR_POLICY_SCHEMA_VERSION:
         raise ReadinessValidationError("operator_policy_fixture schema_version mismatch")
 
-    for field_name in ("requires_manual_review", "requires_explicit_approval", "unattended_operation_allowed"):
+    for field_name in (
+        "requires_manual_review",
+        "requires_explicit_approval",
+        "unattended_operation_allowed",
+    ):
         if not isinstance(data.get(field_name), bool):
             raise ReadinessValidationError(
                 f"operator_policy_fixture {field_name} must be a boolean"
@@ -1046,7 +1050,7 @@ def _validate_audit_policy_fixture(data: dict[str, Any], as_of: str) -> dict[str
     }
 
 
-def _parse_or_fail(value: str, label: str) -> Any:
+def _parse_or_fail(value: str, label: str) -> datetime:
     parsed = _parse_iso_timestamp(value)
     if parsed is None:
         raise ReadinessValidationError(f"{label} is not a valid ISO-8601 UTC timestamp")
