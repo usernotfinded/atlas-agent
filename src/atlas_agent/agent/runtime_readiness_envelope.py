@@ -378,7 +378,11 @@ def _universal_reject_scan(
             )
     elif isinstance(obj, list):
         for idx, value in enumerate(obj):
-            findings.extend(_universal_reject_scan(value, f"{path}[{idx}]"))
+            findings.extend(
+                _universal_reject_scan(
+                    value, f"{path}[{idx}]", include_forbidden_keys=include_forbidden_keys
+                )
+            )
     elif isinstance(obj, str):
         lower = obj.lower()
         for pattern in _SECRET_VALUE_PATTERNS:
@@ -495,7 +499,12 @@ def _cand006_age_hours(cand006_as_of: str, cand007_as_of: str) -> float:
 def _validate_submit_conformance(
     data: dict[str, Any], cand007_as_of: str
 ) -> dict[str, Any]:
-    """Project CAND-006 to accepted keys and enforce the 24-hour freshness rule."""
+    """Project CAND-006 to accepted keys and validate the as_of timestamp.
+
+    The 24-hour freshness rule is enforced at the ``cand006_evidence_gate`` in
+    ``build_runtime_readiness_envelope_report``; this validator only checks that
+    ``as_of`` exists and is a valid ISO-8601 UTC timestamp.
+    """
     artifact_type = _require_string(
         data.get("artifact_type"), "submit_conformance.artifact_type"
     )
