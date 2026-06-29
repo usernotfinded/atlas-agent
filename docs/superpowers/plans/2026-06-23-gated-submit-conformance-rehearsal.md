@@ -1117,11 +1117,11 @@ Required checks:
   artifacts.
 - Forbidden-claim checks ignore negative disclaimer contexts but still fail on
   affirmative claims. Docs do not contain affirmative claims such as:
-  - `risk-free`
-  - `guaranteed profit`
-  - `live-ready`
-  - `safe to trade real money`
-  - `production-ready`
+  - "risk free" (hyphenated form)
+  - "guaranteed gains" (profit-like claims)
+  - "live ready"
+  - "safe to trade real money"
+  - "production ready"
 
 Support `--json`. Exit `0` on pass, `2` on findings.
 
