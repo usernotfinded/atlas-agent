@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Literal
@@ -245,11 +246,11 @@ def fingerprint_json(value: Any) -> str:
     return f"sha256:{digest}"
 
 
-def _format_utc_timestamp(dt: Any) -> str:
+def _format_utc_timestamp(dt: datetime) -> str:
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _parse_iso_timestamp(value: str) -> Any | None:
+def _parse_iso_timestamp(value: str) -> datetime | None:
     """Parse an ISO timestamp, returning a UTC datetime or None."""
     if not isinstance(value, str):
         return None
@@ -260,8 +261,6 @@ def _parse_iso_timestamp(value: str) -> Any | None:
     if candidate.endswith("Z"):
         candidate = candidate[:-1] + "+00:00"
     try:
-        from datetime import datetime
-
         parsed = datetime.fromisoformat(candidate)
     except ValueError:
         return None
@@ -270,8 +269,6 @@ def _parse_iso_timestamp(value: str) -> Any | None:
     offset = parsed.utcoffset()
     if offset is None or offset.total_seconds() != 0:
         return None
-    from datetime import timezone
-
     return parsed.astimezone(timezone.utc)
 
 
@@ -492,7 +489,7 @@ def _cand006_age_hours(cand006_as_of: str, cand007_as_of: str) -> float:
     dt7 = _parse_iso_timestamp(cand007_as_of)
     if dt6 is None or dt7 is None:
         raise ReadinessValidationError("invalid timestamp for CAND-006 age check")
-    diff = dt7 - dt6
+    diff: timedelta = dt7 - dt6
     return diff.total_seconds() / 3600.0
 
 
@@ -540,6 +537,16 @@ def _validate_submit_conformance(
         raise ReadinessValidationError(
             "submit_conformance dry_run_request.transmission must be an object"
         )
+    if not isinstance(transmission.get("allowed"), bool):
+        raise ReadinessValidationError(
+            "submit_conformance dry_run_request.transmission.allowed must be a boolean"
+        )
+    for field_name in ("broker_adapter", "provider"):
+        value = transmission.get(field_name)
+        if value is not None and not isinstance(value, str):
+            raise ReadinessValidationError(
+                f"submit_conformance dry_run_request.transmission.{field_name} must be null or a string"
+            )
     if not isinstance(blockers, list):
         raise ReadinessValidationError("submit_conformance blockers must be a list")
 
@@ -621,6 +628,19 @@ def _validate_runtime_envelope_fixture(
         raise ReadinessValidationError(
             "runtime_envelope_fixture forbidden_modes must be a list"
         )
+
+    for field_name in (
+        "live_submit_enabled",
+        "require_human_approval",
+        "require_kill_switch_inactive",
+        "require_risk_gate",
+        "require_audit_recording",
+        "require_broker_capability_manifest",
+    ):
+        if not isinstance(data.get(field_name), bool):
+            raise ReadinessValidationError(
+                f"runtime_envelope_fixture {field_name} must be a boolean"
+            )
 
     max_order_notional = _positive_decimal_string(data.get("max_order_notional"))
     max_symbol_exposure = _positive_decimal_string(data.get("max_symbol_exposure"))
@@ -803,7 +823,7 @@ def _validate_broker_capability_manifest(
 
 
 def _validate_operator_policy_fixture(
-    data: dict[str, Any], as_of: str, symbol: str
+    data: dict[str, Any], as_of: str
 ) -> dict[str, Any]:
     """Closed-schema validation for the operator policy fixture."""
     allowed = {
@@ -1070,7 +1090,7 @@ def _load_and_validate_all(
         raw["broker_capabilities"], as_of
     )
     operator_policy = _validate_operator_policy_fixture(
-        raw["operator_policy"], as_of, quality_gate["symbol"]
+        raw["operator_policy"], as_of
     )
     kill_switch_policy = _validate_kill_switch_policy_fixture(
         raw["kill_switch_policy"], as_of

@@ -244,8 +244,20 @@ def test_approved_statuses_include_required_values() -> None:
 
 
 def test_gate_sequence_includes_required_gates() -> None:
-    for gate_id in GATE_SEQUENCE:
-        assert gate_id in GATE_SEQUENCE
+    expected = [
+        "schema_preflight",
+        "cand004_evidence_gate",
+        "cand005_evidence_gate",
+        "cand006_evidence_gate",
+        "runtime_envelope_fixture_gate",
+        "broker_capability_manifest_gate",
+        "operator_policy_fixture_gate",
+        "kill_switch_policy_fixture_gate",
+        "audit_policy_fixture_gate",
+        "envelope_synthesis_gate",
+        "artifact_recording_gate",
+    ]
+    assert [g for g in GATE_SEQUENCE if g in expected] == expected
 
 
 def test_evidence_only_disclaimer_present() -> None:
@@ -349,6 +361,41 @@ def test_submit_conformance_future_as_of_blocks(tmp_path: Path) -> None:
     assert report.exit_code == 2
 
 
+def test_validate_submit_conformance_rejects_malformed_transmission() -> None:
+    data = _make_submit_conformance(
+        dry_run_request={
+            "transmission": {
+                "allowed": "false",
+                "broker_adapter": None,
+                "provider": None,
+            }
+        }
+    )
+    with pytest.raises(ReadinessValidationError):
+        _validate_submit_conformance(data, _AS_OF)
+
+    data = _make_submit_conformance(
+        dry_run_request={
+            "transmission": {
+                "allowed": False,
+                "broker_adapter": 123,
+                "provider": None,
+            }
+        }
+    )
+    with pytest.raises(ReadinessValidationError):
+        _validate_submit_conformance(data, _AS_OF)
+
+
+def test_submit_conformance_exact_24_hour_age_passes(tmp_path: Path) -> None:
+    inputs, fixtures = _make_valid_inputs(tmp_path)
+    fixtures["submit_conformance"]["as_of"] = "2026-06-23T10:00:00Z"
+    _write_fixture(inputs.submit_conformance_path, fixtures["submit_conformance"])
+    report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "envelope_synthesized"
+    assert report.exit_code == 2
+
+
 # ---------------------------------------------------------------------------
 # Closed-schema fixture validators
 # ---------------------------------------------------------------------------
@@ -374,6 +421,20 @@ def test_validate_runtime_envelope_fixture_rejects_non_integer_max_daily_orders(
         )
 
 
+def test_validate_runtime_envelope_fixture_rejects_zero_max_daily_orders() -> None:
+    with pytest.raises(ReadinessValidationError):
+        _validate_runtime_envelope_fixture(
+            _make_runtime_envelope(max_daily_orders=0), _AS_OF
+        )
+
+
+def test_validate_runtime_envelope_fixture_rejects_non_bool_flag() -> None:
+    with pytest.raises(ReadinessValidationError):
+        _validate_runtime_envelope_fixture(
+            _make_runtime_envelope(require_human_approval="yes"), _AS_OF
+        )
+
+
 def test_validate_broker_capability_manifest_pass() -> None:
     result = _validate_broker_capability_manifest(_make_broker_capabilities(), _AS_OF)
     assert result["sandbox_only"] is True
@@ -388,14 +449,21 @@ def test_validate_broker_capability_manifest_rejects_non_bool_flag() -> None:
 
 
 def test_validate_operator_policy_fixture_pass() -> None:
-    result = _validate_operator_policy_fixture(_make_operator_policy(), _AS_OF, "AAPL")
+    result = _validate_operator_policy_fixture(_make_operator_policy(), _AS_OF)
     assert result["approval_scope"] == "simulated_only"
 
 
 def test_validate_operator_policy_fixture_rejects_non_bool_flag() -> None:
     with pytest.raises(ReadinessValidationError):
         _validate_operator_policy_fixture(
-            _make_operator_policy(requires_manual_review="yes"), _AS_OF, "AAPL"
+            _make_operator_policy(requires_manual_review="yes"), _AS_OF
+        )
+
+
+def test_validate_operator_policy_fixture_rejects_non_positive_integer() -> None:
+    with pytest.raises(ReadinessValidationError):
+        _validate_operator_policy_fixture(
+            _make_operator_policy(max_runtime_window_seconds=0), _AS_OF
         )
 
 
@@ -714,6 +782,15 @@ def test_operator_policy_symbol_allow_and_block(
     _write_fixture(inputs.operator_policy_path, fixtures["operator_policy"])
     report = build_runtime_readiness_envelope_report(inputs)
     assert report.status == "operator_policy_blocked"
+    assert report.exit_code == 2
+
+
+def test_operator_policy_empty_allowed_symbols_does_not_block(tmp_path: Path) -> None:
+    inputs, fixtures = _make_valid_inputs(tmp_path)
+    fixtures["operator_policy"]["allowed_symbols"] = []
+    _write_fixture(inputs.operator_policy_path, fixtures["operator_policy"])
+    report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "envelope_synthesized"
     assert report.exit_code == 2
 
 
