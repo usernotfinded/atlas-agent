@@ -21,6 +21,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -468,27 +469,23 @@ def _check_forbidden_module_references() -> list[str]:
             r'("""|\'\'\').*?\1', "", filtered_text, flags=re.DOTALL
         )
 
-        for forbidden in FORBIDDEN_ATLAS_MODULE_IMPORTS:
-            if forbidden in filtered_text:
-                errors.append(f"[{rel}] Forbidden Atlas import/reference: {forbidden}")
-        for pattern in FORBIDDEN_SUBMISSION_PATTERNS:
-            if pattern in filtered_text:
-                errors.append(f"[{rel}] Forbidden submission pattern: {pattern}")
-
-        # Scan credential words in a sanitized view with comments and quoted
-        # literals removed, so defensive scanner definitions and disclaimers are
-        # not false positives.
+        # Sanitized view has comments and all quoted literals removed so that
+        # defensive scanner definitions and safety disclaimers are not false
+        # positives. Atlas forbidden imports, submission patterns, credential
+        # words, and network modules are all scanned against this view.
         sanitized = re.sub(r"#[^\n]*", "", filtered_text)
         sanitized = re.sub(r'(["\'])(?:\\\1|.)*?\1', "", sanitized)
         lower_sanitized = sanitized.lower()
+
+        for forbidden in FORBIDDEN_ATLAS_MODULE_IMPORTS:
+            if forbidden in sanitized:
+                errors.append(f"[{rel}] Forbidden Atlas import/reference: {forbidden}")
+        for pattern in FORBIDDEN_SUBMISSION_PATTERNS:
+            if pattern in sanitized:
+                errors.append(f"[{rel}] Forbidden submission pattern: {pattern}")
         for pattern in FORBIDDEN_CREDENTIAL_PATTERNS:
             if re.search(r"\b" + re.escape(pattern) + r"\b", lower_sanitized):
                 errors.append(f"[{rel}] Forbidden credential/secret pattern: {pattern}")
-
-        # Network module references (imports or usage) are forbidden in CAND-007 code.
-        sanitized = re.sub(r"#[^\n]*", "", filtered_text)
-        sanitized = re.sub(r'(["\'])(?:\\\1|.)*?\1', "", sanitized)
-        lower_sanitized = sanitized.lower()
         for module in FORBIDDEN_NETWORK_MODULES:
             # Match import-like or attribute usage, but not when it is part of a
             # larger identifier that happens to contain the substring.
@@ -502,8 +499,12 @@ def _check_ordered_sequence(text: str, rel: str, sequence: tuple[str, ...], labe
     errors: list[str] = []
     prev = -1
     for item in sequence:
-        needle = f'"{item}"'
-        idx = text.find(needle)
+        double = f'"{item}"'
+        single = f"'{item}'"
+        idx_double = text.find(double)
+        idx_single = text.find(single)
+        candidates = [i for i in (idx_double, idx_single) if i != -1]
+        idx = min(candidates) if candidates else -1
         if idx == -1:
             errors.append(f"[{rel}] Missing {label}: {item}")
         elif idx <= prev:

@@ -51,6 +51,25 @@ def test_checker_fails_when_forbidden_doc_claim_present(tmp_path: Path) -> None:
         _checker.DOC = original_doc
 
 
+def test_checker_cli_returns_two_on_failure() -> None:
+    doc_path = _checker.DOC
+    original_text = doc_path.read_text(encoding="utf-8")
+    try:
+        doc_path.write_text(
+            original_text + "\nThis feature is guaranteed profit.\n",
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [sys.executable, "scripts/check_runtime_readiness_envelope_contract.py"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert proc.returncode == 2, proc.stdout + proc.stderr
+    finally:
+        doc_path.write_text(original_text, encoding="utf-8")
+
+
 def test_checker_fails_on_forbidden_import(tmp_path: Path) -> None:
     temp_engine = tmp_path / "runtime_readiness_envelope.py"
     temp_engine.write_text(
