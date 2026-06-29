@@ -2194,7 +2194,7 @@ Required checks:
 - Core source enforces output-path aliasing protection.
 - Source contains the exact evidence-only disclaimer constant.
 - Docs contain the evidence-only disclaimer.
-- Docs do not contain affirmative live-readiness/profit/risk-free claims.
+- Docs do not contain affirmative live-readiness/profit or implied safety claims.
 - Stale-doc prevention: docs no longer say CAND-007 is future/unimplemented.
 
 Support `--json`. Exit `0` on pass, `2` on findings.
