@@ -1877,6 +1877,11 @@ def _write_temp_file(
         raise
 
 
+def _escape_md_table_cell(value: str) -> str:
+    """Escape characters that would break a Markdown table cell."""
+    return value.replace("\\", "\\\\").replace("|", "\\|").replace("`", "\\`")
+
+
 def _render_markdown_report(report: ReadinessEnvelopeReport) -> str:
     """Render an informational Markdown report from a readiness envelope report.
 
@@ -1908,7 +1913,7 @@ def _render_markdown_report(report: ReadinessEnvelopeReport) -> str:
     lines.append("| Gate | Status | Reason |")
     lines.append("|------|--------|--------|")
     for gate in report.gates:
-        reason = gate.reason or "-"
+        reason = _escape_md_table_cell(gate.reason) if gate.reason else "-"
         lines.append(f"| `{gate.gate_id}` | `{gate.status}` | {reason} |")
     lines.append("")
 
@@ -1966,6 +1971,12 @@ def _blocked_writer_report(
         report,
         status="blocked",
         exit_code=2,
+        gates=_replace_gate_status(
+            report.gates,
+            "artifact_recording_gate",
+            "fail",
+            reason=reason,
+        ),
         recording={"json_written": False, "markdown_written": False},
         blocked_reasons=list(report.blocked_reasons) + [reason],
     )
@@ -1981,6 +1992,18 @@ def write_runtime_readiness_envelope_artifacts(
     informational. If either write fails, the function returns a report with
     ``status="blocked"`` and ``recording`` set to false.
     """
+    if report.status != "envelope_synthesized":
+        return _blocked_writer_report(report, "report is not ready for recording")
+
+    if (
+        not report.gates
+        or report.gates[-1].gate_id != "artifact_recording_gate"
+        or report.gates[-1].status != "not_run"
+    ):
+        return _blocked_writer_report(
+            report, "artifact_recording_gate is not in expected not_run state"
+        )
+
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
     except Exception as exc:

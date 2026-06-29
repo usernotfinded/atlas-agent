@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import replace
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +12,6 @@ from atlas_agent.agent.runtime_readiness_envelope import (
     GATE_SEQUENCE,
     EVIDENCE_ONLY_DISCLAIMER,
     ReadinessEnvelopeInputs,
-    ReadinessEnvelopeReport,
     canonical_json_bytes,
     fingerprint_json,
     parse_as_of_utc,
@@ -914,11 +913,14 @@ def test_json_write_failure_rolls_back_status(tmp_path: Path) -> None:
     output_dir.mkdir()
     # Make the final JSON path a directory so the atomic replace fails after
     # Markdown has been written.
-    (output_dir / "runtime-readiness-envelope.json").mkdir()
+    json_obstruction = output_dir / "runtime-readiness-envelope.json"
+    json_obstruction.mkdir()
     blocked = write_runtime_readiness_envelope_artifacts(report, output_dir)
     assert blocked.status != "readiness_envelope_recorded"
     assert blocked.exit_code == 2
     assert blocked.recording == {"json_written": False, "markdown_written": False}
+    # Clean up the directory obstruction so pytest's tmp_path removal succeeds.
+    shutil.rmtree(json_obstruction, ignore_errors=True)
 
 
 def test_disclaimer_present_in_json_and_markdown(tmp_path: Path) -> None:
