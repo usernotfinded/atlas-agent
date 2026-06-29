@@ -99,6 +99,21 @@ Other configless or lightweight commands include:
 - `portfolio show`
 - `backtest run` (when given `--data`)
 
+### Bootstrap-only configless commands
+
+Two commands are routed configlessly by the narrow bootstrap pre-router in
+`src/atlas_agent/cli_bootstrap.py` before the legacy CLI is loaded:
+
+- `atlas agent submit-conformance` (CAND-006)
+- `atlas agent readiness-envelope` (CAND-007)
+
+These commands use dedicated stdlib-only handlers and do not load `AtlasConfig`, broker adapters,
+provider adapters, `RiskManager`, or runtime kill-switch state. They are recorded in the CLI command
+contract fixture at `tests/fixtures/cli_command_contract.json` under the `bootstrap_only_commands`
+section. The compatibility check script verifies that the legacy CLI registers minimal subparsers
+for both commands so that delegated forms such as `atlas --workspace X agent readiness-envelope --help`
+remain consistent.
+
 ### Safety-sensitive commands
 
 These commands can affect trading state, broker opt-in, or kill-switch posture. They require explicit user action and are never enabled by default:

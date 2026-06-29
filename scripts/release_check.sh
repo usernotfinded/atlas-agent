@@ -382,6 +382,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "10m. runtime readiness envelope evaluation contract check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_runtime_readiness_envelope_contract.py || exit 1
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "10n. runtime readiness envelope evaluation tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_runtime_readiness_envelope.py tests/test_runtime_readiness_envelope_cli.py tests/test_runtime_readiness_envelope_contract.py tests/test_runtime_readiness_envelope_import_trace.py -v || exit 1
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "11. product demo and marketplace readiness check"
 echo "========================================"
 SECONDS=0

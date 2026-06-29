@@ -24,6 +24,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/atlas_agent/cli_bootstrap.py` narrow pre-router that intercepts `atlas agent submit-conformance` before the legacy CLI to avoid loading configuration, credentials, or heavy dependencies.
 - `scripts/check_gated_submit_conformance_contract.py` static contract checker and `tests/test_gated_submit_conformance.py`, `tests/test_gated_submit_conformance_cli.py`, `tests/test_gated_submit_conformance_import_trace.py` test coverage.
 - `docs/gated-submit-conformance.md` user-facing documentation for the CAND-006 rehearsal.
+- CAND-007: Runtime Readiness Envelope Evaluation (Simulated Only) for deterministic, fixture-first evaluation of the runtime readiness envelope without submitting orders.
+- `atlas agent readiness-envelope` command and configless `atlas agent readiness-envelope` bootstrap route for simulated-only envelope evaluation.
+- `src/atlas_agent/agent/runtime_readiness_envelope.py` closed-schema engine, projection validators, universal rejection scanner, gate sequence, fingerprinting, and artifact writers.
+- `src/atlas_agent/agent/runtime_readiness_envelope_cli.py` CLI handler for the CAND-007 envelope evaluator.
+- `scripts/check_runtime_readiness_envelope_contract.py` static contract checker and `tests/test_runtime_readiness_envelope.py`, `tests/test_runtime_readiness_envelope_cli.py`, `tests/test_runtime_readiness_envelope_contract.py`, `tests/test_runtime_readiness_envelope_import_trace.py` test coverage.
+- `docs/runtime-readiness-envelope.md` user-facing documentation for the CAND-007 envelope evaluator.
 - `atlas agent autonomous-paper` command for deterministic, paper-only autonomous decision loops on local sample/CSV data.
 - `atlas agent autonomous-scorecard` command for deterministic offline evaluation of autonomous-paper artifacts.
 - `atlas agent autonomous-paper-quality` command for deterministic offline trading-quality gate evaluation.
@@ -39,12 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/test_autonomous_paper_scorecard.py` covering valid scorecard generation, missing/malformed artifacts, runs blocked by risk controls, no-trade runs, kill-switch blocked runs, replay mismatch, unsafe live/provider/broker references, redaction, promotion defaults, and CLI smoke.
 
 ### Changed
-- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004/CAND-005 paper-only scope, including CAND-005 as a read-only fixture-first comparison stage in the staged autonomy ladder.
-- `docs/shadow-live-readiness-contract.md` clarified: CAND-005 implements local fixture-first read-only comparison only; CAND-006 remains future planning-only; read-only comparison is not live readiness.
-- `docs/autonomy-roadmap.md` marked CAND-005 implemented and CAND-006 future gated live-submit conformance rehearsal.
+- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004/CAND-005/CAND-007 paper-only scope, including CAND-005 as a read-only fixture-first comparison stage and CAND-007 as an envelope evaluator stage in the staged autonomy ladder.
+- `docs/shadow-live-readiness-contract.md` clarified: CAND-005 implements local fixture-first read-only comparison only; CAND-006 is a simulated-only gated submit conformance rehearsal; CAND-007 is a simulated-only runtime readiness envelope evaluator.
+- `docs/autonomy-roadmap.md` marked CAND-005, CAND-006, and CAND-007 implemented in planning.
+- `docs/runtime-readiness-envelope-design.md` updated to note that the CAND-007 implementation has landed.
+- `docs/architecture.md` documented `atlas agent readiness-envelope` as a second bootstrap-only configless route.
+- `docs/cli-command-compatibility.md` documented the second bootstrap-only command exception for CAND-007.
+- `docs/gated-submit-conformance.md` added forward reference to CAND-007 as the next envelope stage.
 - `docs/autonomous-paper-quality-gate.md` added note that `cost_impact_pct` is an approximation/proxy for directional paper-run review, not high-precision production cost analysis.
-- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, CAND-004, and CAND-005 as implemented planning candidates.
-- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, shadow-live read-only contract, autonomous paper scorecard, autonomous paper quality gate, and gated submit conformance rehearsal checkers and tests.
+- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, CAND-004, CAND-005, and CAND-007 as implemented planning candidates.
+- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, shadow-live read-only contract, autonomous paper scorecard, autonomous paper quality gate, gated submit conformance rehearsal, and runtime readiness envelope checkers and tests.
 - `pyproject.toml` console entry point updated from `atlas_agent.cli:main` to `atlas_agent.cli_bootstrap:main` to enable the configless CAND-006 route.
 - `tests/fixtures/cli_command_contract.json` updated with `agent submit-conformance`.
 - `tests/test_package_distribution_check.py` fake wheels now reflect the `atlas_agent.cli_bootstrap:main` entry point.
@@ -58,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CAND-004 trading-quality gate is paper-only and does not enable live trading, shadow-live, broker submission, provider execution, or credential loading. It does not claim profitability or live-trading readiness.
 - CAND-005 shadow-live read-only comparison is fixture-first, calls no real broker APIs by default, loads no credentials, submits no orders, mutates no broker state, and does not claim live readiness, trading safety, profitability, or permission to submit orders.
 - CAND-006 gated submit conformance rehearsal is simulated-only: it submits no orders, calls no broker or provider APIs, loads no credentials, creates no real or pending orders, does not instantiate runtime `Order`/`OrderRouter`/`RiskManager`/`ApprovalManager`/kill-switch objects, and does not claim live readiness or permission to submit orders.
+- CAND-007 runtime readiness envelope evaluation is simulated-only: it submits no orders, calls no broker or provider APIs, loads no credentials, creates no real or pending orders, does not instantiate runtime `Order`/`OrderRouter`/`RiskManager`/`ApprovalManager`/kill-switch objects, and does not claim live readiness, trading safety, profitability, or permission to submit orders. The status `readiness_envelope_recorded` is evidence-recording status only.
 - No protected runtime safety boundary changed in this planning phase.
 
 ## [0.6.15] - 2026-06-22

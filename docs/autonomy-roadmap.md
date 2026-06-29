@@ -61,6 +61,13 @@ switch.
   and records a non-transmittable dry-run submit request. It does not submit
   orders, call brokers or providers, load credentials, instantiate runtime
   trading objects, mutate state, or indicate live readiness.
+- **CAND-007** is implemented as a simulated-only runtime readiness envelope
+  evaluator. It consumes CAND-004, CAND-005, and CAND-006 evidence plus five
+  static local policy fixtures, evaluates them in strict fail-closed order, and
+  records `runtime-readiness-envelope.json` and `runtime-readiness-envelope-report.md`.
+  It does not submit orders, call brokers or providers, load credentials,
+  instantiate runtime trading objects, mutate state, or indicate live readiness.
+  The status `readiness_envelope_recorded` is evidence-recording status only.
 - No candidate in the current planning line enables unsupervised real-money
   trading or direct AI-to-broker execution.
 

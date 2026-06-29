@@ -69,6 +69,14 @@ planning only):
   non-transmittable dry-run submit request. It does not submit orders, call
   broker or provider APIs, load credentials, instantiate runtime trading
   objects, mutate state, or indicate live readiness.
+- CAND-007 (v0.6.16): A simulated-only runtime readiness envelope evaluator that
+  consumes CAND-004, CAND-005, and CAND-006 evidence plus five static local
+  policy fixtures, evaluates them in strict fail-closed order, and records a
+  runtime readiness envelope artifact. It is an envelope evaluator, not a live
+  path; it does not submit orders, call broker or provider APIs, load
+  credentials, instantiate runtime trading objects, mutate state, or indicate
+  live readiness. The status `readiness_envelope_recorded` is evidence-recording
+  status only.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - `v0.6.16` remains planning-only: no source/package bump, tag, GitHub Release,
@@ -83,6 +91,7 @@ planning only):
 | **L0** | Research / paper assistant | Generate local research artifacts, run backtests, print dry-runs, generate reports. No orders. | Implemented; default-safe baseline. |
 | **L1** | Autonomous paper workflows | Run scheduled paper routines autonomously within deterministic limits. No broker contact. | Implemented; paper mode is the default runtime. |
 | **L1.5** | Read-only fixture-first comparison (CAND-005) | Compare a stateful paper run against a recorded local broker-like snapshot; produce deterministic read-only artifacts. No broker API calls, no credentials, no live submit. | Implemented as local read-only comparison only; **not** live readiness. |
+| **L1.75** | Runtime readiness envelope evaluation (CAND-007) | Evaluate CAND-004/CAND-005/CAND-006 evidence plus static local policy fixtures for internal coherence. No broker/provider calls, no credentials, no live submit. | Implemented as envelope evaluator only; **not** a live path and **not** live readiness. |
 | **L2** | Live analysis and suggestions with human approval | Consume live broker snapshots for analysis and propose orders; every proposal requires explicit human approval. | Implemented as analysis-only/suggestion path; live submit remains approval-gated. |
 | **L3** | Bounded live-autonomy research tier | A tightly bounded research concept requiring per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. | **Not implemented.** Not production-ready; not unattended-safe; not enabled by default. |
 | **L4** | Broad autonomous live execution | A hypothetical future tier with broader execution authority. | **Not a current capability or milestone.** Cannot be claimed or pursued without external legal, security, risk, operational, and regulatory review. |
@@ -96,6 +105,11 @@ planning only):
 - **L1.5 is not live broker sync or live readiness.** It compares paper artifacts
   against a local, recorded broker-like fixture only. See
   [Shadow-Live Read-Only Comparison](shadow-live-readonly-comparison.md).
+- **L1.75 is not a live path or live readiness.** CAND-007 is an envelope evaluator
+  that consumes recorded evidence and static fixtures; it does not submit orders,
+  call brokers or providers, or authorize live trading. The status
+  `readiness_envelope_recorded` is evidence-recording status only. See
+  [Runtime Readiness Envelope](runtime-readiness-envelope.md).
 - **L2 is not autonomous order submission.** Proposals are advisory until a human approves them.
 - **L3 is not unsupervised trading.** The operator remains responsible for configuration, broker selection, risk limits, and monitoring.
 - **L4 is not a current goal.** It is a hypothetical direction that requires explicit external gates before any consideration.

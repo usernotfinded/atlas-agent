@@ -89,6 +89,13 @@ The report JSON includes the following safety assertions, all `true`:
 - CAND-006 consumes both, plus hypothetical order-intent and simulated
   kill-switch, risk-envelope, and approval fixtures, to rehearse the submit
   gate without ever submitting an order.
+- CAND-007 (`atlas agent readiness-envelope`) is the next envelope stage. It
+  consumes CAND-004, CAND-005, and CAND-006 evidence plus five static local
+  policy fixtures to evaluate whether the candidate chain forms a coherent,
+  internally consistent, fail-closed runtime readiness envelope. CAND-007 is an
+  envelope evaluator, not a live path; it does not submit orders or indicate
+  live readiness. The status `readiness_envelope_recorded` is evidence-recording
+  status only.
 
 ## See also
 

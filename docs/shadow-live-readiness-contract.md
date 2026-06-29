@@ -10,6 +10,12 @@
 > submission, or live-trading readiness. CAND-006 is implemented as a
 > simulated-only gated submit conformance rehearsal; it does not submit orders,
 > call brokers or providers, load credentials, or indicate live readiness.
+> CAND-007 is implemented as a simulated-only runtime readiness envelope
+> evaluator; it consumes CAND-004, CAND-005, and CAND-006 evidence plus static
+> local policy fixtures and records an envelope artifact. It is an envelope
+> evaluator, not a live path, and does not submit orders, call brokers or
+> providers, load credentials, or indicate live readiness. The status
+> `readiness_envelope_recorded` is evidence-recording status only.
 >
 > A read-only comparison is **not** live readiness.
 >
@@ -72,6 +78,16 @@ It consumes CAND-004 and CAND-005 evidence plus hypothetical order-intent and
 simulated kill-switch, risk-envelope, and approval fixtures, and records a
 non-transmittable dry-run submit request. It does not submit orders, call brokers
 or providers, load credentials, mutate broker state, or indicate live readiness.
+
+CAND-007 is implemented as a simulated-only runtime readiness envelope evaluator.
+It consumes CAND-004, CAND-005, and CAND-006 evidence plus five static local
+policy fixtures (runtime envelope, broker capability manifest, operator policy,
+kill-switch policy, audit policy), evaluates them in strict fail-closed order,
+and records `runtime-readiness-envelope.json` and `runtime-readiness-envelope-report.md`.
+It is an envelope evaluator, not a live path. It does not submit orders, call
+brokers or providers, load credentials, instantiate runtime trading objects,
+mutate state, or indicate live readiness. The status `readiness_envelope_recorded`
+is evidence-recording status only.
 
 ## 4. Safety boundaries
 
