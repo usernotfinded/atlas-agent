@@ -45,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/test_autonomous_paper_scorecard.py` covering valid scorecard generation, missing/malformed artifacts, runs blocked by risk controls, no-trade runs, kill-switch blocked runs, replay mismatch, unsafe live/provider/broker references, redaction, promotion defaults, and CLI smoke.
 
 ### Changed
-- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004/CAND-005/CAND-007 paper-only scope, including CAND-005 as a read-only fixture-first comparison stage and CAND-007 as an envelope evaluator stage in the staged autonomy ladder.
+- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004/CAND-005/CAND-006/CAND-007 paper-only scope, including CAND-005 as a read-only fixture-first comparison stage and CAND-007 as an envelope evaluator stage in the staged autonomy ladder.
 - `docs/shadow-live-readiness-contract.md` clarified: CAND-005 implements local fixture-first read-only comparison only; CAND-006 is a simulated-only gated submit conformance rehearsal; CAND-007 is a simulated-only runtime readiness envelope evaluator.
 - `docs/autonomy-roadmap.md` marked CAND-005, CAND-006, and CAND-007 implemented in planning.
 - `docs/runtime-readiness-envelope-design.md` updated to note that the CAND-007 implementation has landed.

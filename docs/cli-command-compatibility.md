@@ -36,7 +36,8 @@ These command families are used in public docs, demos, and release checklists. T
 - `providers` (list)
 - `broker` (list, sync, opt-in, opt-out)
 - `backtest` (run)
-- `agent` (run, status, plan, learn, reflect, autonomous-paper, autonomous-scorecard)
+- `agent` (run, status, plan, learn, reflect, autonomous-paper, autonomous-scorecard, submit-conformance, readiness-envelope)
+  - `agent submit-conformance` and `agent readiness-envelope` are bootstrap-only configless commands documented separately; they are routed by `src/atlas_agent/cli_bootstrap.py` and do not load `AtlasConfig`, broker adapters, provider adapters, `RiskManager`, or runtime kill-switch state.
   - `agent autonomous-paper` supports a stateful mode via `--state-dir`, which persists runner state and checkpoints across invocations. Additional options: `--resume`, `--initial-cash`, `--commission-bps`, `--slippage-bps`, `--fill-timing` (`same_bar` or `next_bar`).
 - `skills` (list, propose, create-from-journal, improve, approve, archive, show, diff)
 - `memory` (ingest, search, rebuild-index, summarize, nudge, doctor)

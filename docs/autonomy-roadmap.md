@@ -171,7 +171,7 @@ Level 1 is **operator-supervised, local-only automation that runs entirely insid
 
 - [Autonomous Paper Workflow](autonomous-paper-workflow.md) — a deterministic, offline, no-credential L1 paper workflow demonstration. It is not a live-trading or production-readiness claim.
 - [Paper Mode Provider Isolation](paper-provider-isolation.md) — paper-mode agentic workflows can run without an AI provider API key or network access; explicit `--offline` path and automatic missing-credential fallback are available. Live mode remains fail-closed.
-- [Paper Strategy Evaluation](paper-strategy-evaluation.md)
+- [Paper Strategy Evaluation](paper-strategy-evaluation.md) — deterministic sample-data strategy comparison and ranking for paper-only follow-up decisions.
 - [Paper Strategy Sensitivity Evaluation](paper-strategy-sensitivity.md) — deterministic sample-data strategy comparison with paper-only follow-up decisions.
 - [Paper Strategy Robustness Report](paper-strategy-robustness.md) — deterministic synthetic multi-regime strategy robustness for paper-only follow-up.
 - [Paper Portfolio Stress Constraints](paper-portfolio-stress.md) — deterministic synthetic stress checks for paper-only portfolio proposal follow-up.
