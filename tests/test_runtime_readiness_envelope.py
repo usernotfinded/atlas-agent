@@ -623,7 +623,7 @@ def test_quality_gate_wrong_mode_blocks(tmp_path: Path) -> None:
     assert report.exit_code == 2
 
 
-def test_shadow_comparison_not_matched_blocks(tmp_path: Path) -> None:
+def test_shadow_comparison_minor_divergence_blocks(tmp_path: Path) -> None:
     inputs, fixtures = _make_valid_inputs(tmp_path)
     fixtures["shadow_comparison"]["status"] = "minor_divergence"
     _write_fixture(inputs.shadow_comparison_path, fixtures["shadow_comparison"])
@@ -699,7 +699,7 @@ def test_missing_submit_conformance_blocks(tmp_path: Path) -> None:
     assert report.gates[0].status == "fail"
 
 
-def test_runtime_envelope_live_submit_enabled_blocks(tmp_path: Path) -> None:
+def test_runtime_envelope_live_submit_enabled_true_blocks(tmp_path: Path) -> None:
     inputs, fixtures = _make_valid_inputs(tmp_path)
     fixtures["runtime_envelope"]["live_submit_enabled"] = True
     _write_fixture(inputs.runtime_envelope_path, fixtures["runtime_envelope"])
@@ -728,7 +728,7 @@ def test_runtime_envelope_empty_supported_time_in_force_blocks(
     assert report.exit_code == 2
 
 
-def test_broker_capability_credentials_present_blocks(tmp_path: Path) -> None:
+def test_broker_capability_credentials_present_true_blocks(tmp_path: Path) -> None:
     inputs, fixtures = _make_valid_inputs(tmp_path)
     fixtures["broker_capabilities"]["credentials_present"] = True
     _write_fixture(inputs.broker_capabilities_path, fixtures["broker_capabilities"])
@@ -737,7 +737,7 @@ def test_broker_capability_credentials_present_blocks(tmp_path: Path) -> None:
     assert report.exit_code == 2
 
 
-def test_broker_capability_endpoint_present_blocks(tmp_path: Path) -> None:
+def test_broker_capability_endpoint_present_true_blocks(tmp_path: Path) -> None:
     inputs, fixtures = _make_valid_inputs(tmp_path)
     fixtures["broker_capabilities"]["endpoint_present"] = True
     _write_fixture(inputs.broker_capabilities_path, fixtures["broker_capabilities"])
@@ -946,3 +946,39 @@ def test_output_path_alias_rejected(tmp_path: Path) -> None:
     assert blocked.status == "blocked"
     assert blocked.exit_code == 2
     assert any("alias" in reason.lower() for reason in blocked.blocked_reasons)
+
+
+def test_write_artifacts_promotes_status(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    report = build_runtime_readiness_envelope_report(inputs)
+    recorded = write_runtime_readiness_envelope_artifacts(report, tmp_path / "out")
+    assert recorded.status == "readiness_envelope_recorded"
+    assert recorded.exit_code == 0
+    assert (tmp_path / "out" / "runtime-readiness-envelope.json").is_file()
+    assert (tmp_path / "out" / "runtime-readiness-envelope-report.md").is_file()
+
+
+def test_artifact_schema_contains_required_keys(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    report = build_runtime_readiness_envelope_report(inputs)
+    recorded = write_runtime_readiness_envelope_artifacts(report, tmp_path / "out")
+    json_path = tmp_path / "out" / "runtime-readiness-envelope.json"
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert data["artifact_type"] == "runtime_readiness_envelope"
+    assert data["candidate"] == "CAND-007"
+    assert data["disclaimer"] == recorded.disclaimer
+    assert data["envelope_digest"].startswith("sha256:")
+    for key in (
+        "artifact_type",
+        "candidate",
+        "disclaimer",
+        "envelope_digest",
+        "gate_sequence",
+        "gates",
+        "input_fingerprints",
+        "input_digest",
+        "upstream_summaries",
+        "fixture_summaries",
+        "envelope_assertions",
+    ):
+        assert key in data
