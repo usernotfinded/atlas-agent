@@ -936,19 +936,13 @@ def test_disclaimer_present_in_json_and_markdown(tmp_path: Path) -> None:
 def test_output_path_alias_rejected(tmp_path: Path) -> None:
     inputs, _ = _make_valid_inputs(tmp_path)
     report = build_runtime_readiness_envelope_report(inputs)
-    input_file = tmp_path / "quality_gate.json"
-    input_file.write_text(json.dumps(_make_quality_gate()), encoding="utf-8")
+    # input_artifacts stays basename-only; input_paths carries the real paths.
+    assert report.input_artifacts["quality_gate"] == "quality_gate.json"
     output_dir = tmp_path / "out"
     output_dir.mkdir()
     symlink = output_dir / "runtime-readiness-envelope.json"
-    symlink.symlink_to(input_file)
-
-    # Record the absolute input path so the writer can detect the alias.
-    aliased_report = replace(
-        report,
-        input_artifacts={**report.input_artifacts, "quality_gate": str(input_file)},
-    )
-    blocked = write_runtime_readiness_envelope_artifacts(aliased_report, output_dir)
+    symlink.symlink_to(inputs.quality_gate_path)
+    blocked = write_runtime_readiness_envelope_artifacts(report, output_dir)
     assert blocked.status == "blocked"
     assert blocked.exit_code == 2
     assert any("alias" in reason.lower() for reason in blocked.blocked_reasons)

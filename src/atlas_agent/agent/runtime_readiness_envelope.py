@@ -193,6 +193,7 @@ class ReadinessEnvelopeReport:
     gate_sequence: tuple[str, ...]
     gates: tuple[GateResult, ...]
     input_artifacts: dict[str, str | None]
+    input_paths: dict[str, Path]
     input_fingerprints: dict[str, str]
     input_digest: str
     envelope_digest: str
@@ -1530,6 +1531,9 @@ def _build_report(
     input_artifacts = {
         label: _redact_path(getattr(inputs, f"{label}_path")) for label in _INPUT_LABELS
     }
+    input_paths = {
+        label: getattr(inputs, f"{label}_path") for label in _INPUT_LABELS
+    }
 
     upstream_summaries = (
         _build_upstream_summaries(normalized) if normalized is not None else {}
@@ -1568,6 +1572,7 @@ def _build_report(
         gate_sequence=GATE_SEQUENCE,
         gates=tuple(gate_results),
         input_artifacts=input_artifacts,
+        input_paths=input_paths,
         input_fingerprints=fingerprints,
         input_digest=input_digest,
         envelope_digest=envelope_digest,
@@ -1766,11 +1771,9 @@ def _replace_gate_status(
 def _resolve_input_entries(report: ReadinessEnvelopeReport) -> list[_InputEntry]:
     """Resolve input artifact paths and capture device/inode identities."""
     entries: list[_InputEntry] = []
-    for label, value in report.input_artifacts.items():
-        if not isinstance(value, str) or value == "":
-            continue
+    for label, path in report.input_paths.items():
         try:
-            resolved = Path(value).resolve()
+            resolved = path.resolve()
         except Exception as exc:
             raise ReadinessValidationError(
                 f"input path {label} cannot be resolved: {exc}"
