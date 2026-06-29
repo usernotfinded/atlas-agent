@@ -934,6 +934,15 @@ Safety First:
     from atlas_agent.agent.gated_submit_conformance_cli import (
         CLI_DESCRIPTION as _GSC_DESCRIPTION,
     )
+    from atlas_agent.agent.runtime_readiness_envelope_cli import (
+        CLI_DESCRIPTION as _RE_DESCRIPTION,
+    )
+
+    def _run_readiness_envelope_legacy_help(args: argparse.Namespace) -> int:
+        print("Runtime readiness envelope (CAND-007) is implemented configlessly as:")
+        print("  atlas agent readiness-envelope ...")
+        print("Use the configless form above; this delegated form is for --workspace compatibility only.")
+        return 0 if getattr(args, "help", False) else 2
 
     agent_submit_conformance = agent_sub.add_parser(
         "submit-conformance",
@@ -950,6 +959,26 @@ Safety First:
     agent_submit_conformance.add_argument("--output-dir", required=True)
     agent_submit_conformance.add_argument("--as-of", required=True)
     agent_submit_conformance.add_argument("--json", action="store_true")
+
+    agent_readiness_envelope = agent_sub.add_parser(
+        "readiness-envelope",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="Runtime readiness envelope evaluation (CAND-007) — simulated only.",
+        description=_RE_DESCRIPTION,
+    )
+    agent_readiness_envelope.add_argument("--quality-gate", help="Path to CAND-004 trading-quality-gate.json.")
+    agent_readiness_envelope.add_argument("--shadow-comparison", help="Path to CAND-005 shadow-live-comparison.json.")
+    agent_readiness_envelope.add_argument("--submit-conformance", help="Path to CAND-006 gated-submit-conformance.json.")
+    agent_readiness_envelope.add_argument("--runtime-envelope", help="Path to the runtime envelope fixture.")
+    agent_readiness_envelope.add_argument("--broker-capabilities", help="Path to the broker capability manifest fixture.")
+    agent_readiness_envelope.add_argument("--operator-policy", help="Path to the operator policy fixture.")
+    agent_readiness_envelope.add_argument("--kill-switch-policy", help="Path to the kill-switch policy fixture.")
+    agent_readiness_envelope.add_argument("--audit-policy", help="Path to the audit policy fixture.")
+    agent_readiness_envelope.add_argument("--output-dir", help="Output directory for artifacts.")
+    agent_readiness_envelope.add_argument("--as-of", help="ISO-8601 UTC timestamp.")
+    agent_readiness_envelope.add_argument("--json", action="store_true", help="Emit JSON on stdout.")
+    agent_readiness_envelope.set_defaults(func=_run_readiness_envelope_legacy_help)
+
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
 
@@ -6205,6 +6234,8 @@ def main(argv: list[str] | None = None) -> int:
             if getattr(args, "json", False):
                 gsc_args.append("--json")
             return gsc_main(gsc_args)
+        elif args.agent_command == "readiness-envelope":
+            return args.func(args)
         elif args.agent_command == "run":
             if getattr(args, "offline", False):
                 config.model.provider = "null"
