@@ -253,7 +253,8 @@
       "reflect",
       "run",
       "shadow-live",
-      "status"
+      "status",
+      "submit-conformance"
     ],
     "kill": [
       "cancel-all",

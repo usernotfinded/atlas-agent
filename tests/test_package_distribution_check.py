@@ -63,7 +63,7 @@ def _make_fake_wheel(
             + "".join(f"Requires-Dist: {dep}\n" for dep in requires_dist)
         )
         zf.writestr("atlas_agent-0.0.0.dist-info/METADATA", metadata)
-        entry_points = "[console_scripts]\natlas = atlas_agent.cli:main\n"
+        entry_points = "[console_scripts]\natlas = atlas_agent.cli_bootstrap:main\n"
         zf.writestr("atlas_agent-0.0.0.dist-info/entry_points.txt", entry_points)
 
 
@@ -422,7 +422,7 @@ class TestWheelMetadataParser:
             zf.writestr("atlas_agent-0.0.0.dist-info/METADATA", metadata)
             zf.writestr(
                 "atlas_agent-0.0.0.dist-info/entry_points.txt",
-                "[console_scripts]\natlas = atlas_agent.cli:main\n",
+                "[console_scripts]\natlas = atlas_agent.cli_bootstrap:main\n",
             )
         ok, errors = cpd._check_wheel_metadata(wheel_path)
         assert not ok

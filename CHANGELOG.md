@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/atlas_agent/agent/autonomous_paper_shadow_live.py` shadow-live comparison builder, snapshot loader, comparison engine, status resolver, and artifact writers.
 - `scripts/check_shadow_live_readonly_contract.py` static contract checker and `tests/test_shadow_live_readonly.py`, `tests/test_shadow_live_readonly_contract.py` test coverage.
 - `docs/shadow-live-readonly-comparison.md` user-facing documentation for the CAND-005 read-only comparison.
+- CAND-006: Gated Submit Conformance Rehearsal (Simulated Only) for deterministic, fixture-first rehearsal of the submit gate without submitting orders.
+- `atlas agent submit-conformance` command and configless `atlas agent submit-conformance` bootstrap route for simulated-only conformance rehearsal.
+- `src/atlas_agent/agent/gated_submit_conformance.py` closed-schema engine, gate sequence, dry-run request builder, fingerprinting, and artifact writers.
+- `src/atlas_agent/agent/gated_submit_conformance_cli.py` CLI handler for the CAND-006 rehearsal.
+- `src/atlas_agent/cli_bootstrap.py` narrow pre-router that intercepts `atlas agent submit-conformance` before the legacy CLI to avoid loading configuration, credentials, or heavy dependencies.
+- `scripts/check_gated_submit_conformance_contract.py` static contract checker and `tests/test_gated_submit_conformance.py`, `tests/test_gated_submit_conformance_cli.py`, `tests/test_gated_submit_conformance_import_trace.py` test coverage.
+- `docs/gated-submit-conformance.md` user-facing documentation for the CAND-006 rehearsal.
 - `atlas agent autonomous-paper` command for deterministic, paper-only autonomous decision loops on local sample/CSV data.
 - `atlas agent autonomous-scorecard` command for deterministic offline evaluation of autonomous-paper artifacts.
 - `atlas agent autonomous-paper-quality` command for deterministic offline trading-quality gate evaluation.
@@ -37,7 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/autonomy-roadmap.md` marked CAND-005 implemented and CAND-006 future gated live-submit conformance rehearsal.
 - `docs/autonomous-paper-quality-gate.md` added note that `cost_impact_pct` is an approximation/proxy for directional paper-run review, not high-precision production cost analysis.
 - `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, CAND-004, and CAND-005 as implemented planning candidates.
-- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, shadow-live read-only contract, autonomous paper scorecard, and autonomous paper quality gate checkers and tests.
+- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, shadow-live read-only contract, autonomous paper scorecard, autonomous paper quality gate, and gated submit conformance rehearsal checkers and tests.
+- `pyproject.toml` console entry point updated from `atlas_agent.cli:main` to `atlas_agent.cli_bootstrap:main` to enable the configless CAND-006 route.
+- `tests/fixtures/cli_command_contract.json` updated with `agent submit-conformance`.
+- `tests/test_package_distribution_check.py` fake wheels now reflect the `atlas_agent.cli_bootstrap:main` entry point.
 
 ### Safety
 - PyPI was not published.
@@ -47,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CAND-003 remains paper-only and does not enable live trading, shadow-live, broker submission, provider execution, or credential loading.
 - CAND-004 trading-quality gate is paper-only and does not enable live trading, shadow-live, broker submission, provider execution, or credential loading. It does not claim profitability or live-trading readiness.
 - CAND-005 shadow-live read-only comparison is fixture-first, calls no real broker APIs by default, loads no credentials, submits no orders, mutates no broker state, and does not claim live readiness, trading safety, profitability, or permission to submit orders.
-- CAND-006 remains future planning-only gated live-submit conformance rehearsal and does not enable real live trading.
+- CAND-006 gated submit conformance rehearsal is simulated-only: it submits no orders, calls no broker or provider APIs, loads no credentials, creates no real or pending orders, does not instantiate runtime `Order`/`OrderRouter`/`RiskManager`/`ApprovalManager`/kill-switch objects, and does not claim live readiness or permission to submit orders.
 - No protected runtime safety boundary changed in this planning phase.
 
 ## [0.6.15] - 2026-06-22

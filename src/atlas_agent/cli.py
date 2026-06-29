@@ -931,6 +931,25 @@ Safety First:
     agent_shadow_live.add_argument("--fills", default=None, help="optional fills jsonl")
     agent_shadow_live.add_argument("--max-snapshot-age-seconds", type=int, default=300, help="max snapshot age in seconds")
     agent_shadow_live.add_argument("--json", action="store_true", help="print comparison JSON to stdout")
+    from atlas_agent.agent.gated_submit_conformance_cli import (
+        CLI_DESCRIPTION as _GSC_DESCRIPTION,
+    )
+
+    agent_submit_conformance = agent_sub.add_parser(
+        "submit-conformance",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="Gated submit conformance rehearsal (CAND-006) — simulated only.",
+        description=_GSC_DESCRIPTION,
+    )
+    agent_submit_conformance.add_argument("--quality-gate", required=True)
+    agent_submit_conformance.add_argument("--shadow-comparison", required=True)
+    agent_submit_conformance.add_argument("--order-intent", required=True)
+    agent_submit_conformance.add_argument("--kill-switch", required=True)
+    agent_submit_conformance.add_argument("--risk-envelope", required=True)
+    agent_submit_conformance.add_argument("--approval", required=True)
+    agent_submit_conformance.add_argument("--output-dir", required=True)
+    agent_submit_conformance.add_argument("--as-of", required=True)
+    agent_submit_conformance.add_argument("--json", action="store_true")
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
 
@@ -6170,6 +6189,22 @@ def main(argv: list[str] | None = None) -> int:
             ) else 2
         elif args.agent_command == "shadow-live":
             return cmd_agent_shadow_live(args)
+        elif args.agent_command == "submit-conformance":
+            from atlas_agent.agent.gated_submit_conformance_cli import main as gsc_main
+
+            gsc_args = [
+                "--quality-gate", args.quality_gate,
+                "--shadow-comparison", args.shadow_comparison,
+                "--order-intent", args.order_intent,
+                "--kill-switch", args.kill_switch,
+                "--risk-envelope", args.risk_envelope,
+                "--approval", args.approval,
+                "--output-dir", args.output_dir,
+                "--as-of", args.as_of,
+            ]
+            if getattr(args, "json", False):
+                gsc_args.append("--json")
+            return gsc_main(gsc_args)
         elif args.agent_command == "run":
             if getattr(args, "offline", False):
                 config.model.provider = "null"

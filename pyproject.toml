@@ -33,7 +33,7 @@ dev = [
 ]
 
 [project.scripts]
-atlas = "atlas_agent.cli:main"
+atlas = "atlas_agent.cli_bootstrap:main"
 
 [project.entry-points."atlas_agent.backtest_strategies"]
 buy_and_hold = "atlas_agent.backtest.strategies:BuyAndHoldStrategy"

@@ -364,6 +364,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "10k. gated submit conformance rehearsal contract check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_gated_submit_conformance_contract.py || exit 1
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "10l. gated submit conformance rehearsal tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_gated_submit_conformance.py tests/test_gated_submit_conformance_cli.py tests/test_gated_submit_conformance_import_trace.py -v || exit 1
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "11. product demo and marketplace readiness check"
 echo "========================================"
 SECONDS=0
