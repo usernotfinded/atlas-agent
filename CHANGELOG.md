@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/cli-command-compatibility.md` documented the second bootstrap-only command exception for CAND-007.
 - `docs/gated-submit-conformance.md` added forward reference to CAND-007 as the next envelope stage.
 - `docs/autonomous-paper-quality-gate.md` added note that `cost_impact_pct` is an approximation/proxy for directional paper-run review, not high-precision production cost analysis.
-- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, CAND-004, CAND-005, and CAND-007 as implemented planning candidates.
+- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, CAND-004, CAND-005, CAND-006, and CAND-007 as implemented planning candidates.
 - `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, shadow-live read-only contract, autonomous paper scorecard, autonomous paper quality gate, gated submit conformance rehearsal, and runtime readiness envelope checkers and tests.
 - `pyproject.toml` console entry point updated from `atlas_agent.cli:main` to `atlas_agent.cli_bootstrap:main` to enable the configless CAND-006 route.
 - `tests/fixtures/cli_command_contract.json` updated with `agent submit-conformance`.

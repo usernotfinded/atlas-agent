@@ -178,7 +178,7 @@ Validation rules:
 - `blockers` must be an empty list.
 
 No wall-clock reads are used for staleness. The fixed maximum evidence age is
-24 hours relative to CAND-006's own `as_of`.
+24 hours relative to CAND-007's `--as-of`.
 
 > **Deterministic time note:** CAND-007 intentionally uses only caller-supplied
 > `--as-of` and fixture timestamps. It performs no wall-clock reads. Therefore it
@@ -381,7 +381,7 @@ Stale evidence:
 
 - Any CAND-007-owned fixture with `expires_at` ≤ `as_of` is rejected as stale.
 - CAND-006 `as_of` must be ≤ CAND-007 `--as-of`.
-- CAND-006 evidence age must be ≤ 24 hours relative to CAND-006 `as_of`.
+- CAND-006 evidence age must be ≤ 24 hours relative to CAND-007's `--as-of`.
 - CAND-006 `dry_run_request.transmission.allowed` must be `false`.
 
 Missing fingerprints or malformed artifacts cause immediate `not_evaluated` /
@@ -1042,7 +1042,7 @@ The CLI delegates to these, emits JSON or text, and returns
 - [ ] Operator policy requires evaluated symbol in `allowed_symbols` (if non-empty) and absent from `blocked_symbols`.
 - [ ] Broker `broker_label` starts with `local-`, `simulated-`, `fixture-`, or `redacted-`.
 - [ ] URL/protocol patterns `http://`, `https://`, `ws://`, `wss://` and endpoint-like keys are rejected; `.com`/`.net`/`.org` are not globally rejected.
-- [ ] CAND-006 evidence age is bounded by 24 hours relative to CAND-006 `as_of`.
+- [ ] CAND-006 evidence age is bounded by 24 hours relative to CAND-007's `--as-of`.
 - [ ] Status model uses `envelope_synthesized` pre-recording and `readiness_envelope_recorded` post-recording with the exact evidence-recording-only disclaimer.
 - [ ] All other safety boundaries from the original design are preserved.
 - [ ] Docs and release metadata are updated without version bump, tag, release, or PyPI claim.

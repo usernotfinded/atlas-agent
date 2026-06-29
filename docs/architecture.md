@@ -1,6 +1,6 @@
 # Architecture
 
-Atlas Agent v0.5.7.dev10 is a tool-driven supervised system.
+Atlas Agent 0.6.15 (current public release v0.6.15; v0.6.16 planning-only) is a tool-driven supervised system.
 
 ## High-Level Flow
 

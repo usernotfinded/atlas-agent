@@ -190,4 +190,4 @@ This contract is versioned independently of the package version. Update the cont
 - The research command spec layer changes.
 
 Current contract version: `1`  
-Package series: `0.5.9.5`
+Package series: `0.6.15` / `v0.6.16` planning line

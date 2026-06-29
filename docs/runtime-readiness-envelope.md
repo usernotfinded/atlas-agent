@@ -133,7 +133,7 @@ Only successful completion of gate 11 returns exit code `0`.
 | `broker_capability_blocked` | The broker capability manifest fixture violates credential/endpoint/broker-label rules. |
 | `operator_policy_blocked` | The operator policy fixture violates manual-approval, unattended-operation, or symbol rules. |
 | `kill_switch_policy_blocked` | The kill-switch policy fixture does not require a fail-closed kill switch. |
-| `audit_policy_fixture_gate` | The audit policy fixture does not require local artifact recording and hash-chain recording. |
+| `audit_policy_blocked` | The audit policy fixture does not require local artifact recording and hash-chain recording. |
 | `envelope_synthesized` | All evidence and fixture gates passed; the envelope has been synthesized but not yet recorded. |
 | `readiness_envelope_recorded` | Both JSON and Markdown artifacts were written successfully. |
 
