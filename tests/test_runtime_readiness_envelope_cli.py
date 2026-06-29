@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import io
 import json
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 
@@ -232,8 +234,6 @@ def test_help_returns_zero() -> None:
 def test_json_emits_valid_readiness_envelope_recorded(tmp_path: Path) -> None:
     paths = _make_fixtures(tmp_path)
     output_dir = tmp_path / "out"
-    import io
-    from unittest.mock import patch
 
     with patch("sys.stdout", new=io.StringIO()) as fake_stdout:
         ret = main(_cli_args(paths, output_dir, ["--json"]))
@@ -259,6 +259,25 @@ def test_unsafe_flag_rejected(flag: str) -> None:
     assert code == 2
 
 
+@pytest.mark.parametrize("flag", ["--mode=live", "--live=true", "--broker=alpaca", "--api-key=sk-xxx"])
+def test_unsafe_flag_equals_syntax_rejected(flag: str) -> None:
+    code = _run_and_capture_code(main, [flag])
+    assert code == 2
+
+
+def test_safe_flag_equals_syntax_allowed(tmp_path: Path) -> None:
+    """A safe required flag using ``=`` syntax must not be confused with unsafe flags."""
+    paths = _make_fixtures(tmp_path)
+    output_dir = tmp_path / "out"
+    args = _cli_args(paths, output_dir)
+    # Replace one safe required value with ``=`` form.
+    idx = args.index("--as-of")
+    args[idx] = "--as-of=2026-06-24T10:00:00Z"
+    args.pop(idx + 1)
+    ret = main(args)
+    assert ret == 0
+
+
 def test_valid_fixture_set_writes_artifacts_and_exits_zero(tmp_path: Path) -> None:
     paths = _make_fixtures(tmp_path)
     output_dir = tmp_path / "out"
@@ -273,8 +292,6 @@ def test_unknown_fixture_fields_rejected(tmp_path: Path) -> None:
     runtime_envelope = _make_runtime_envelope(extra_field="x")
     _write_fixture(paths["runtime_envelope"], runtime_envelope)
     output_dir = tmp_path / "out"
-    import io
-    from unittest.mock import patch
 
     with patch("sys.stdout", new=io.StringIO()) as fake_stdout:
         ret = main(_cli_args(paths, output_dir, ["--json"]))

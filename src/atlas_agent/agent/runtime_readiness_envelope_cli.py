@@ -65,12 +65,14 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _reject_unsafe_flags(argv: list[str] | None) -> None:
+def _reject_unsafe_flags(argv: list[str] | None) -> int:
     args = argv if argv is not None else []
     for token in args:
-        if token in _UNSAFE_FLAGS:
-            print(f"error: unsafe flag rejected: {token}", file=sys.stderr)
-            sys.exit(2)
+        name = token.split("=", 1)[0]
+        if name in _UNSAFE_FLAGS:
+            print(f"error: unsafe flag rejected: {name}", file=sys.stderr)
+            return 2
+    return 0
 
 
 def _print_text_report(report: Any) -> None:
@@ -94,7 +96,9 @@ def _print_text_report(report: Any) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    _reject_unsafe_flags(argv)
+    reject_code = _reject_unsafe_flags(argv)
+    if reject_code != 0:
+        return reject_code
     parser = build_parser()
     args = parser.parse_args(argv)
 

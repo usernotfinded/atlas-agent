@@ -938,11 +938,11 @@ Safety First:
         CLI_DESCRIPTION as _RE_DESCRIPTION,
     )
 
-    def _run_readiness_envelope_legacy_help(args: argparse.Namespace) -> int:
+    def _run_readiness_envelope_legacy_help(_args: argparse.Namespace) -> int:
         print("Runtime readiness envelope (CAND-007) is implemented configlessly as:")
         print("  atlas agent readiness-envelope ...")
         print("Use the configless form above; this delegated form is for --workspace compatibility only.")
-        return 0 if getattr(args, "help", False) else 2
+        return 2
 
     agent_submit_conformance = agent_sub.add_parser(
         "submit-conformance",
