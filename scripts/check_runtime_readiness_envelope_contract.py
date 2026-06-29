@@ -21,7 +21,6 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -436,6 +435,7 @@ def _check_forbidden_module_references() -> list[str]:
             "FORBIDDEN_ATLAS_MODULE_IMPORTS",
             "FORBIDDEN_SUBMISSION_PATTERNS",
             "FORBIDDEN_NETWORK_MODULES",
+            "FORBIDDEN_CREDENTIAL_PATTERNS",
             "_SECRET_KEYS",
             "_SECRET_VALUE_PATTERNS",
             "_ENDPOINT_KEYS",
@@ -694,7 +694,7 @@ def _check_safety_assertions() -> list[str]:
     return errors
 
 
-def check_all() -> dict[str, Any]:
+def check_all() -> dict[str, bool | list[str]]:
     """Run all contract checks and return a structured result."""
     errors: list[str] = []
 

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import ast
+import contextlib
 import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Generator
 
 import pytest
 
@@ -16,6 +18,18 @@ ENGINE_MODULE = (
     REPO_ROOT / "src" / "atlas_agent" / "agent" / "runtime_readiness_envelope.py"
 )
 BOOTSTRAP_MODULE = REPO_ROOT / "src" / "atlas_agent" / "cli_bootstrap.py"
+
+
+@contextlib.contextmanager
+def _mutate_doc_temporarily(extra: str) -> Generator[Path, None, None]:
+    """Temporarily append ``extra`` to the checker doc and restore it on exit."""
+    doc_path = _checker.DOC
+    original_text = doc_path.read_text(encoding="utf-8")
+    try:
+        doc_path.write_text(original_text + extra, encoding="utf-8")
+        yield doc_path
+    finally:
+        doc_path.write_text(original_text, encoding="utf-8")
 
 
 def test_checker_passes_on_real_repo() -> None:
@@ -52,13 +66,7 @@ def test_checker_fails_when_forbidden_doc_claim_present(tmp_path: Path) -> None:
 
 
 def test_checker_cli_returns_two_on_failure() -> None:
-    doc_path = _checker.DOC
-    original_text = doc_path.read_text(encoding="utf-8")
-    try:
-        doc_path.write_text(
-            original_text + "\nThis feature is guaranteed profit.\n",
-            encoding="utf-8",
-        )
+    with _mutate_doc_temporarily("\nThis feature is guaranteed profit.\n"):
         proc = subprocess.run(
             [sys.executable, "scripts/check_runtime_readiness_envelope_contract.py"],
             cwd=REPO_ROOT,
@@ -66,8 +74,6 @@ def test_checker_cli_returns_two_on_failure() -> None:
             text=True,
         )
         assert proc.returncode == 2, proc.stdout + proc.stderr
-    finally:
-        doc_path.write_text(original_text, encoding="utf-8")
 
 
 def test_checker_fails_on_forbidden_import(tmp_path: Path) -> None:
