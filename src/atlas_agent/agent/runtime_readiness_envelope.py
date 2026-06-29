@@ -524,14 +524,10 @@ def _validate_submit_conformance(
     if not isinstance(blockers, list):
         raise ReadinessValidationError("submit_conformance blockers must be a list")
 
-    cand6_dt = _parse_iso_timestamp(as_of)
-    cand7_dt = _parse_iso_timestamp(cand007_as_of)
-    if cand6_dt is None or cand7_dt is None:
-        raise ReadinessValidationError("invalid timestamp for CAND-006 freshness check")
-    if cand6_dt > cand7_dt:
-        raise ReadinessValidationError("CAND-006 as_of is later than CAND-007 as_of")
-    if _cand006_age_hours(as_of, cand007_as_of) > 24.0:
-        raise ReadinessValidationError("CAND-006 evidence is older than 24 hours")
+    if _parse_iso_timestamp(as_of) is None:
+        raise ReadinessValidationError(
+            "submit_conformance as_of is not a valid ISO-8601 UTC timestamp"
+        )
 
     return {
         "artifact_type": artifact_type,
@@ -1198,6 +1194,17 @@ def build_runtime_readiness_envelope_report(
         )
     if submit_conformance["blockers"]:
         cand006_failures.append("submit_conformance blockers are non-empty")
+
+    cand6_as_of = submit_conformance["as_of"]
+    cand6_dt = _parse_iso_timestamp(cand6_as_of)
+    cand7_dt = _parse_iso_timestamp(as_of)
+    if cand6_dt is None or cand7_dt is None:
+        cand006_failures.append("invalid timestamp for CAND-006 freshness check")
+    elif cand6_dt > cand7_dt:
+        cand006_failures.append("CAND-006 as_of is later than CAND-007 as_of")
+    elif _cand006_age_hours(cand6_as_of, as_of) > 24.0:
+        cand006_failures.append("CAND-006 evidence is older than 24 hours")
+
     if not all(submit_conformance["safety_assertions"].values()):
         cand006_failures.append("not all submit_conformance safety_assertions are true")
     transmission = submit_conformance["dry_run_request"]["transmission"]

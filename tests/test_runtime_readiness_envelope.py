@@ -340,10 +340,13 @@ def test_validate_submit_conformance_rejects_non_dict_safety_assertions() -> Non
         )
 
 
-def test_validate_submit_conformance_rejects_future_as_of() -> None:
-    data = _make_submit_conformance(as_of="2026-06-25T10:00:00Z")
-    with pytest.raises(ReadinessValidationError):
-        _validate_submit_conformance(data, _AS_OF)
+def test_submit_conformance_future_as_of_blocks(tmp_path: Path) -> None:
+    inputs, fixtures = _make_valid_inputs(tmp_path)
+    fixtures["submit_conformance"]["as_of"] = "2026-06-25T10:00:00Z"
+    _write_fixture(inputs.submit_conformance_path, fixtures["submit_conformance"])
+    report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "submit_conformance_blocked"
+    assert report.exit_code == 2
 
 
 # ---------------------------------------------------------------------------
@@ -583,8 +586,12 @@ def test_submit_conformance_stale_evidence_blocks(tmp_path: Path) -> None:
     fixtures["submit_conformance"]["as_of"] = "2026-06-23T09:00:00Z"
     _write_fixture(inputs.submit_conformance_path, fixtures["submit_conformance"])
     report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "submit_conformance_blocked"
     assert report.exit_code == 2
-    assert report.status != "envelope_synthesized"
+    assert any(
+        g.gate_id == "cand006_evidence_gate" and g.status == "fail" and "older than 24 hours" in g.reason
+        for g in report.gates
+    )
 
 
 def test_runtime_envelope_live_submit_enabled_blocks(tmp_path: Path) -> None:
