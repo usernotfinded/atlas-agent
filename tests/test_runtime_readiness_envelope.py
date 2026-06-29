@@ -594,6 +594,37 @@ def test_submit_conformance_stale_evidence_blocks(tmp_path: Path) -> None:
     )
 
 
+def test_missing_quality_gate_blocks(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    inputs.quality_gate_path.rename(inputs.quality_gate_path.with_suffix(".missing"))
+    report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "not_evaluated"
+    assert report.exit_code == 2
+    assert report.gates[0].status == "fail"
+
+
+def test_missing_shadow_comparison_blocks(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    inputs.shadow_comparison_path.rename(
+        inputs.shadow_comparison_path.with_suffix(".missing")
+    )
+    report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "not_evaluated"
+    assert report.exit_code == 2
+    assert report.gates[0].status == "fail"
+
+
+def test_missing_submit_conformance_blocks(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    inputs.submit_conformance_path.rename(
+        inputs.submit_conformance_path.with_suffix(".missing")
+    )
+    report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "not_evaluated"
+    assert report.exit_code == 2
+    assert report.gates[0].status == "fail"
+
+
 def test_runtime_envelope_live_submit_enabled_blocks(tmp_path: Path) -> None:
     inputs, fixtures = _make_valid_inputs(tmp_path)
     fixtures["runtime_envelope"]["live_submit_enabled"] = True
@@ -606,6 +637,17 @@ def test_runtime_envelope_live_submit_enabled_blocks(tmp_path: Path) -> None:
 def test_runtime_envelope_empty_supported_order_types_blocks(tmp_path: Path) -> None:
     inputs, fixtures = _make_valid_inputs(tmp_path)
     fixtures["runtime_envelope"]["supported_order_types"] = []
+    _write_fixture(inputs.runtime_envelope_path, fixtures["runtime_envelope"])
+    report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "runtime_envelope_blocked"
+    assert report.exit_code == 2
+
+
+def test_runtime_envelope_empty_supported_time_in_force_blocks(
+    tmp_path: Path,
+) -> None:
+    inputs, fixtures = _make_valid_inputs(tmp_path)
+    fixtures["runtime_envelope"]["supported_time_in_force"] = []
     _write_fixture(inputs.runtime_envelope_path, fixtures["runtime_envelope"])
     report = build_runtime_readiness_envelope_report(inputs)
     assert report.status == "runtime_envelope_blocked"
@@ -651,6 +693,24 @@ def test_operator_policy_unattended_allowed_blocks(tmp_path: Path) -> None:
 def test_operator_policy_symbol_blocked_blocks(tmp_path: Path) -> None:
     inputs, fixtures = _make_valid_inputs(tmp_path)
     fixtures["operator_policy"]["blocked_symbols"] = ["AAPL"]
+    _write_fixture(inputs.operator_policy_path, fixtures["operator_policy"])
+    report = build_runtime_readiness_envelope_report(inputs)
+    assert report.status == "operator_policy_blocked"
+    assert report.exit_code == 2
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        {"allowed_symbols": ["TSLA"], "blocked_symbols": []},
+        {"allowed_symbols": [], "blocked_symbols": ["AAPL"]},
+    ],
+)
+def test_operator_policy_symbol_allow_and_block(
+    tmp_path: Path, mutation: dict[str, Any]
+) -> None:
+    inputs, fixtures = _make_valid_inputs(tmp_path)
+    fixtures["operator_policy"].update(mutation)
     _write_fixture(inputs.operator_policy_path, fixtures["operator_policy"])
     report = build_runtime_readiness_envelope_report(inputs)
     assert report.status == "operator_policy_blocked"

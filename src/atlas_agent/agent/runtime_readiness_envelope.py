@@ -122,6 +122,7 @@ _FORBIDDEN_FIXTURE_KEYS = {
     "account_id",
     "broker",
     "broker_id",
+    "provider",
     "api_key",
     "token",
     "secret",
@@ -345,8 +346,15 @@ def _secret_value_match(lower_value: str, pattern: str) -> bool:
     return re.search(r"(?:^|\W)" + re.escape(pattern), lower_value) is not None
 
 
-def _universal_reject_scan(obj: Any, path: str = "") -> list[str]:
-    """Return a list of secret/endpoint/URL findings in a parsed JSON object."""
+def _universal_reject_scan(
+    obj: Any, path: str = "", *, include_forbidden_keys: bool = True
+) -> list[str]:
+    """Return a list of secret/endpoint/URL findings in a parsed JSON object.
+
+    ``include_forbidden_keys`` is used to apply the fixture-specific forbidden
+    key set only to CAND-007-owned fixtures, while still scanning upstream
+    artifacts for secret/endpoint/URL content.
+    """
     findings: list[str] = []
     if isinstance(obj, dict):
         for key, value in obj.items():
@@ -355,7 +363,7 @@ def _universal_reject_scan(obj: Any, path: str = "") -> list[str]:
                 findings.append(f"secret-like key at {path}: {key}")
             if key_lower in _ENDPOINT_KEYS:
                 findings.append(f"endpoint-like key at {path}: {key}")
-            if key_lower in _FORBIDDEN_FIXTURE_KEYS:
+            if include_forbidden_keys and key_lower in _FORBIDDEN_FIXTURE_KEYS:
                 findings.append(f"forbidden key at {path}: {key}")
             for pattern in _SECRET_VALUE_PATTERNS:
                 if _secret_value_match(key_lower, pattern):
@@ -364,7 +372,9 @@ def _universal_reject_scan(obj: Any, path: str = "") -> list[str]:
                 if _secret_value_match(key_lower, pattern):
                     findings.append(f"url-like key fragment at {path}: {key}")
             findings.extend(
-                _universal_reject_scan(value, f"{path}.{key}" if path else key)
+                _universal_reject_scan(
+                    value, f"{path}.{key}" if path else key, include_forbidden_keys=include_forbidden_keys
+                )
             )
     elif isinstance(obj, list):
         for idx, value in enumerate(obj):
@@ -612,6 +622,10 @@ def _validate_runtime_envelope_fixture(
         raise ReadinessValidationError(
             "runtime_envelope_fixture max_daily_orders must be an integer"
         )
+    if max_daily_orders <= 0:
+        raise ReadinessValidationError(
+            "runtime_envelope_fixture max_daily_orders must be positive"
+        )
 
     supported_order_types = data.get("supported_order_types")
     if not isinstance(supported_order_types, list):
@@ -825,6 +839,10 @@ def _validate_operator_policy_fixture(
             raise ReadinessValidationError(
                 f"operator_policy_fixture {field_name} must be an integer"
             )
+        if value <= 0:
+            raise ReadinessValidationError(
+                f"operator_policy_fixture {field_name} must be positive"
+            )
 
     allowed_symbols = data.get("allowed_symbols")
     if not isinstance(allowed_symbols, list):
@@ -1014,9 +1032,22 @@ def _load_and_validate_all(
         label: getattr(inputs, f"{label}_path") for label in _INPUT_LABELS
     }
     raw: dict[str, dict[str, Any]] = {}
+    fixture_labels = {
+        "runtime_envelope",
+        "broker_capabilities",
+        "operator_policy",
+        "kill_switch_policy",
+        "audit_policy",
+    }
     for label, path in paths.items():
         raw[label] = _load_json_object(path, label)
-        findings = _universal_reject_scan(raw[label], label)
+        # Forbidden fixture keys apply only to CAND-007-owned fixtures; upstream
+        # CAND-004/005/006 artifacts are scanned for secrets/endpoints/URLs only.
+        findings = _universal_reject_scan(
+            raw[label],
+            label,
+            include_forbidden_keys=(label in fixture_labels),
+        )
         if findings:
             raise ReadinessValidationError(
                 "universal rejection: " + "; ".join(findings)
