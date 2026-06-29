@@ -218,6 +218,8 @@ def test_all_pass_artifacts_dry_run_recorded(tmp_path: Path) -> None:
     assert report.exit_code == 0
     assert (inputs.output_dir / "gated-submit-conformance.json").exists()
     assert (inputs.output_dir / "gated-submit-conformance-report.md").exists()
+    gate_statuses = {g.gate_id: g.status for g in report.gates}
+    assert gate_statuses["atomic_artifact_recording"] == "pass"
 
 
 def test_evaluation_id_deterministic(tmp_path: Path) -> None:
@@ -612,6 +614,8 @@ def test_json_write_failure_after_markdown_exits_blocked(tmp_path: Path, monkeyp
     assert report.status != "dry_run_recorded"
     assert report.exit_code == 2
     assert any("json write failed" in b.lower() for b in report.blockers)
+    gate_statuses = {g.gate_id: g.status for g in report.gates}
+    assert gate_statuses["atomic_artifact_recording"] != "pass"
 
 
 def test_gate_sequence_order() -> None:
@@ -625,3 +629,35 @@ def test_gate_sequence_order() -> None:
         "dry_run_conversion",
         "atomic_artifact_recording",
     )
+
+
+def test_artifacts_json_and_markdown_agree_on_status_and_evaluation_id(tmp_path: Path) -> None:
+    inputs, _ = _make_inputs(tmp_path)
+    report = build_gated_submit_conformance_report(inputs)
+    report = write_gated_submit_conformance_artifacts(report, inputs.output_dir)
+    json_data = json.loads((inputs.output_dir / "gated-submit-conformance.json").read_text())
+    md_text = (inputs.output_dir / "gated-submit-conformance-report.md").read_text()
+    assert json_data["status"] == report.status == "dry_run_recorded"
+    assert json_data["evaluation_id"] == report.evaluation_id
+    assert f"**final_status:** `{report.status}`" in md_text
+    assert report.evaluation_id in md_text
+    json_gate_statuses = {g["gate_id"]: g["status"] for g in json_data["gates"]}
+    assert json_gate_statuses["atomic_artifact_recording"] == "pass"
+    assert "`atomic_artifact_recording` | `pass`" in md_text
+
+
+def test_markdown_write_failure_does_not_report_dry_run_recorded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    inputs, _ = _make_inputs(tmp_path)
+    report = build_gated_submit_conformance_report(inputs)
+    inputs.output_dir.mkdir(parents=True, exist_ok=True)
+
+    def _failing_atomic(output_dir: Path, filename: str, content: str) -> Path:
+        raise OSError("simulated markdown write failure")
+
+    monkeypatch.setattr(gated_submit_conformance, "_atomic_write_text", _failing_atomic)
+    report = write_gated_submit_conformance_artifacts(report, inputs.output_dir)
+    assert report.status != "dry_run_recorded"
+    assert report.exit_code == 2
+    assert any("markdown write failed" in b.lower() for b in report.blockers)
+    gate_statuses = {g.gate_id: g.status for g in report.gates}
+    assert gate_statuses["atomic_artifact_recording"] != "pass"

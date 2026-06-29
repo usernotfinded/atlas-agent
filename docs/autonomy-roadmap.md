@@ -55,9 +55,12 @@ switch.
 - **CAND-005** is implemented as a local, fixture-first, read-only comparison of
   a stateful paper run against a recorded broker-like snapshot. It does not call
   broker APIs, load credentials, submit orders, or indicate live readiness.
-- **CAND-006** remains future planning-only work for a gated live-submit
-  conformance rehearsal. It is not implemented and does not enable real live
-  trading.
+- **CAND-006** is implemented as a simulated-only gated submit conformance
+  rehearsal. It consumes CAND-004 and CAND-005 evidence plus hypothetical
+  order-intent and simulated kill-switch, risk-envelope, and approval fixtures,
+  and records a non-transmittable dry-run submit request. It does not submit
+  orders, call brokers or providers, load credentials, instantiate runtime
+  trading objects, mutate state, or indicate live readiness.
 - No candidate in the current planning line enables unsupervised real-money
   trading or direct AI-to-broker execution.
 

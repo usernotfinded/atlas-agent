@@ -53,8 +53,22 @@
         "Does not call real broker APIs by default.",
         "Does not load credentials or secrets.",
         "Does not submit orders or mutate broker state.",
+        "Does not indicate live readiness, trading safety, profitability, or permission to submit orders."
+      ]
+    },
+    {
+      "id": "CAND-006",
+      "status": "implemented",
+      "title": "Gated Submit Conformance Rehearsal",
+      "description": "Adds a simulated-only, fixture-driven conformance rehearsal that consumes CAND-004 quality evidence, CAND-005 shadow-live comparison evidence, a hypothetical order-intent fixture, and simulated kill-switch, risk-envelope, and approval fixtures, and records a non-transmittable dry-run submit request.",
+      "notes": [
+        "Simulated-only conformance rehearsal.",
+        "Does not submit orders or mutate broker state.",
+        "Does not call real broker or provider APIs.",
+        "Does not load credentials or secrets.",
+        "Does not instantiate runtime Order, OrderRouter, RiskManager, ApprovalManager, or kill-switch objects.",
         "Does not indicate live readiness, trading safety, profitability, or permission to submit orders.",
-        "CAND-006 remains future planning-only gated live-submit conformance rehearsal."
+        "No version bump, tag, GitHub Release, or PyPI publication."
       ]
     }
   ]

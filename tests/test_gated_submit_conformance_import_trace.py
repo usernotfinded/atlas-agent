@@ -12,6 +12,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 _FORBIDDEN_MODULES = (
+    "atlas_agent.cli",
     "atlas_agent.brokers",
     "atlas_agent.providers",
     "atlas_agent.execution",
@@ -161,6 +162,67 @@ print(json.dumps(sorted(sys.modules)))
     loaded = json.loads(lines[-1])
     for forbidden in _FORBIDDEN_MODULES:
         assert forbidden not in loaded, f"forbidden module imported: {forbidden}"
+
+
+def test_configless_help_route_imports_no_forbidden_modules() -> None:
+    script = """
+import io, sys, json
+from atlas_agent.cli_bootstrap import main
+old_stdout = sys.stdout
+old_stderr = sys.stderr
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+try:
+    main(["agent", "submit-conformance", "--help"])
+except SystemExit:
+    pass
+finally:
+    sys.stdout = old_stdout
+    sys.stderr = old_stderr
+print(json.dumps(sorted(sys.modules)))
+"""
+    rc, stdout, stderr = _run_subprocess_code(script)
+    output = stdout + stderr
+    lines = output.strip().splitlines()
+    loaded = json.loads(lines[-1])
+    assert "atlas_agent.cli" not in loaded
+    for forbidden in _FORBIDDEN_MODULES:
+        assert forbidden not in loaded, f"forbidden module imported: {forbidden}"
+
+
+def test_configless_valid_route_imports_no_atlas_agent_cli(tmp_path: Path) -> None:
+    tmp_dir = str(tmp_path)
+    script = f"""
+{_make_fixture_script(tmp_dir)}
+import io, sys, json
+from atlas_agent.cli_bootstrap import main
+old_stdout = sys.stdout
+old_stderr = sys.stderr
+sys.stdout = io.StringIO()
+sys.stderr = io.StringIO()
+try:
+    rc = main([
+        "agent", "submit-conformance",
+        "--quality-gate", str(tmp / "quality_gate.json"),
+        "--shadow-comparison", str(tmp / "shadow_comparison.json"),
+        "--order-intent", str(tmp / "order_intent.json"),
+        "--kill-switch", str(tmp / "kill_switch.json"),
+        "--risk-envelope", str(tmp / "risk_envelope.json"),
+        "--approval", str(tmp / "approval.json"),
+        "--output-dir", str(tmp / "out"),
+        "--as-of", "2026-06-24T10:00:00Z",
+    ])
+finally:
+    sys.stdout = old_stdout
+    sys.stderr = old_stderr
+print(rc)
+print("atlas_agent.cli" in sys.modules)
+"""
+    rc, stdout, stderr = _run_subprocess_code(script)
+    output = stdout + stderr
+    lines = output.strip().splitlines()
+    assert lines[0] == "0", output
+    assert lines[-1] == "False", output
 
 
 def test_delegated_help_imports_legacy_cli() -> None:

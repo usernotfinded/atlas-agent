@@ -194,6 +194,42 @@ FORBIDDEN_NETWORK_PATTERNS = (
     "aiohttp.",
 )
 
+# Docs that must not regress to stale "CAND-006 is future/unimplemented" claims.
+STALE_CAND006_DOC_PATHS = (
+    REPO_ROOT / "docs" / "autonomy-roadmap.md",
+    REPO_ROOT / "docs" / "shadow-live-readiness-contract.md",
+    REPO_ROOT / "docs" / "bounded-live-autonomy-governance.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.16-plan.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.16-candidates.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.16-candidate-selection.md",
+    REPO_ROOT / "docs" / "releases" / "v0.6.16-candidates.json",
+)
+
+# Stale claims that must not re-enter docs. These are exact substrings; safety
+# disclaimers use different wording ("is not live trading", "does not submit
+# orders", etc.) and are intentionally not matched.
+STALE_CAND006_CLAIMS = (
+    "CAND-006 remains future",
+    "CAND-006 is not implemented",
+    "CAND-006 remains planning-only",
+    "submit-conformance is future work",
+    "gated submit conformance is not implemented",
+)
+
+# If a matched line contains one of these safety-continuation markers, treat it
+# as a disclaimer rather than a stale claim. This protects phrases like
+# "CAND-006 is not implemented as a live trading feature" when they are used to
+# reinforce the safety boundary.
+CAND006_SAFETY_CONTINUATIONS = (
+    "live trading",
+    "live readiness",
+    "submit orders",
+    "call broker",
+    "load credentials",
+    "mutate",
+    "not a ",
+)
+
 FORBIDDEN_CREDENTIAL_PATTERNS = (
     "api_key",
     "apikey",
@@ -418,6 +454,36 @@ def _check_safety_assertions() -> list[str]:
     return errors
 
 
+def _check_stale_cand006_doc_claims() -> list[str]:
+    """Fail if any governance/release doc regresses to stale CAND-006 claims."""
+    errors: list[str] = []
+    for path in STALE_CAND006_DOC_PATHS:
+        if not path.exists():
+            continue
+        text = _read(path)
+        lower_text = text.lower()
+        for claim in STALE_CAND006_CLAIMS:
+            claim_lower = claim.lower()
+            start = 0
+            while True:
+                idx = lower_text.find(claim_lower, start)
+                if idx == -1:
+                    break
+                # Extract the surrounding line/phrase for context.
+                line_start = lower_text.rfind("\n", 0, idx) + 1
+                line_end = lower_text.find("\n", idx)
+                if line_end == -1:
+                    line_end = len(lower_text)
+                context = lower_text[line_start:line_end]
+                # If the context continues into a safety disclaimer, skip it.
+                if not any(cont in context for cont in CAND006_SAFETY_CONTINUATIONS):
+                    errors.append(
+                        f"[{_rel(path)}] Stale CAND-006 claim: {claim!r}"
+                    )
+                start = idx + len(claim_lower)
+    return errors
+
+
 def check_all() -> dict:
     """Run all contract checks and return a structured result."""
     errors: list[str] = []
@@ -431,6 +497,7 @@ def check_all() -> dict:
     errors.extend(_check_cli_wiring())
     errors.extend(_check_module_safety())
     errors.extend(_check_safety_assertions())
+    errors.extend(_check_stale_cand006_doc_claims())
 
     return {
         "passed": len(errors) == 0,

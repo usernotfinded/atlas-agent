@@ -7,8 +7,9 @@
 >
 > **Update:** CAND-005 implements a strictly local, fixture-first, read-only
 > comparison only. It does not implement shadow-live broker sync, live order
-> submission, or live-trading readiness. CAND-006 remains future planning-only
-> work for a gated live-submit conformance rehearsal.
+> submission, or live-trading readiness. CAND-006 is implemented as a
+> simulated-only gated submit conformance rehearsal; it does not submit orders,
+> call brokers or providers, load credentials, or indicate live readiness.
 >
 > A read-only comparison is **not** live readiness.
 >
@@ -66,8 +67,11 @@ far, and it is intentionally narrow: it uses local JSON fixtures, never calls a
 real broker API, never loads credentials, and only produces a comparison report.
 It is not a step toward autonomous live trading.
 
-CAND-006 remains future planning-only work for a gated live-submit conformance
-rehearsal. No real live trading is enabled.
+CAND-006 is implemented as a simulated-only gated submit conformance rehearsal.
+It consumes CAND-004 and CAND-005 evidence plus hypothetical order-intent and
+simulated kill-switch, risk-envelope, and approval fixtures, and records a
+non-transmittable dry-run submit request. It does not submit orders, call brokers
+or providers, load credentials, mutate broker state, or indicate live readiness.
 
 ## 4. Safety boundaries
 
@@ -107,7 +111,9 @@ Before accepting changes related to this contract, reviewers should confirm:
 - [ ] The static checker `scripts/check_shadow_live_contract.py` passes.
 - [ ] The test file `tests/test_shadow_live_contract.py` passes.
 - [ ] CAND-005 is described as a local, fixture-first, read-only comparison only.
-- [ ] CAND-006 remains future planning-only and does not enable real live trading.
+- [ ] CAND-006 is described as a simulated-only gated submit conformance
+      rehearsal that does not submit orders, call brokers/providers, load
+      credentials, or indicate live readiness.
 
 Run the verification commands:
 
@@ -124,7 +130,10 @@ pytest tests/test_shadow_live_contract.py -v
 - Shadow live is **not** intended for real-money production deployment.
 - Shadow live does **not** guarantee profits, reduce risk to zero, or validate that any strategy will perform favorably in live markets.
 - CAND-005 read-only fixture comparison is **not** live readiness, trading safety, profitability, or permission to submit orders.
-- CAND-006 gated live-submit conformance rehearsal, if ever pursued, remains planning-only and does not enable real live trading without explicit external gates.
+- CAND-006 gated submit conformance rehearsal is implemented as simulated-only
+  and does not submit orders, call brokers or providers, load credentials, or
+  indicate live readiness, trading safety, profitability, or permission to
+  submit orders.
 
 ---
 

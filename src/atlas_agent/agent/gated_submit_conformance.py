@@ -1569,6 +1569,26 @@ def _atomic_write_text(output_dir: Path, filename: str, content: str) -> Path:
         raise
 
 
+def _update_gate_to_pass(
+    gates: tuple[GateResult, ...], gate_id: str
+) -> tuple[GateResult, ...]:
+    """Return a new gates tuple with ``gate_id`` marked passed."""
+    new_gates: list[GateResult] = []
+    for gate in gates:
+        if gate.gate_id == gate_id:
+            new_gates.append(
+                GateResult(
+                    gate_id=gate.gate_id,
+                    status="pass",
+                    reason="artifacts written",
+                    details={"json_written": True, "markdown_written": True},
+                )
+            )
+        else:
+            new_gates.append(gate)
+    return tuple(new_gates)
+
+
 def write_gated_submit_conformance_artifacts(
     report: SubmitConformanceReport,
     output_dir: str | Path,
@@ -1582,7 +1602,7 @@ def write_gated_submit_conformance_artifacts(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
-    # Markdown is informational; write it first.
+    # Markdown is informational; write a provisional copy first.
     markdown = _render_markdown(report)
     try:
         _atomic_write_text(out, _MARKDOWN_ARTIFACT_NAME, markdown)
@@ -1590,17 +1610,36 @@ def write_gated_submit_conformance_artifacts(
         report.blockers.append(f"markdown write failed: {exc}")
         return report
 
+    # Only promote a rehearsal that actually passed every gate to recorded.
+    # We tentatively update the report so the authoritative JSON artifact shows
+    # the recorded state. If the JSON write fails, we roll back.
+    original_status = report.status
+    original_exit_code = report.exit_code
+    original_gates = report.gates
+    if report.status == "dry_run_ready":
+        object.__setattr__(report, "status", "dry_run_recorded")
+        object.__setattr__(report, "exit_code", 0)
+        object.__setattr__(report, "gates", _update_gate_to_pass(report.gates, "atomic_artifact_recording"))
+
     json_text = json.dumps(report.to_dict(), indent=2, sort_keys=True, ensure_ascii=True)
     try:
         _atomic_write_text(out, _JSON_ARTIFACT_NAME, json_text + "\n")
     except Exception as exc:
+        # JSON is the authoritative commit marker. Roll back the promotion and
+        # record the failure.
+        object.__setattr__(report, "status", original_status)
+        object.__setattr__(report, "exit_code", original_exit_code)
+        object.__setattr__(report, "gates", original_gates)
         report.blockers.append(f"json write failed: {exc}")
-        # JSON is the authoritative commit marker. Do not claim recorded.
         return report
 
     object.__setattr__(report, "recording", {"json_written": True, "markdown_written": True})
-    # Only promote a rehearsal that actually passed every gate to recorded.
-    if report.status == "dry_run_ready":
-        object.__setattr__(report, "status", "dry_run_recorded")
-        object.__setattr__(report, "exit_code", 0)
+    # Re-render Markdown so it agrees with the authoritative JSON status.
+    markdown = _render_markdown(report)
+    try:
+        _atomic_write_text(out, _MARKDOWN_ARTIFACT_NAME, markdown)
+    except Exception as exc:
+        # JSON succeeded, but Markdown could not be refreshed. This is a partial
+        # recording; keep the recorded status but note the Markdown failure.
+        report.blockers.append(f"markdown refresh failed: {exc}")
     return report

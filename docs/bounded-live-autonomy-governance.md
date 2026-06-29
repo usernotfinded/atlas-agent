@@ -63,6 +63,12 @@ planning only):
 - CAND-005 (v0.6.16): A strictly local, fixture-first, read-only comparison
   between a stateful paper run and a recorded broker-like snapshot. It does not
   call broker APIs, load credentials, submit orders, or claim live readiness.
+- CAND-006 (v0.6.16): A simulated-only gated submit conformance rehearsal that
+  consumes CAND-004 and CAND-005 evidence plus hypothetical order-intent and
+  simulated kill-switch, risk-envelope, and approval fixtures, and records a
+  non-transmittable dry-run submit request. It does not submit orders, call
+  broker or provider APIs, load credentials, instantiate runtime trading
+  objects, mutate state, or indicate live readiness.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - `v0.6.16` remains planning-only: no source/package bump, tag, GitHub Release,
