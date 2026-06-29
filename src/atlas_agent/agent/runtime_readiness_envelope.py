@@ -1846,13 +1846,13 @@ def _check_output_path_aliases(
     return None
 
 
-def _atomic_write_text(
+def _write_temp_file(
     output_dir: Path,
     filename: str,
     content: str,
     input_entries: list[_InputEntry],
 ) -> Path:
-    """Write ``content`` to ``output_dir / filename`` atomically via ``os.replace``."""
+    """Create a flushed, fsync'd temp file next to ``filename`` and return its path."""
     fd, temp_name = tempfile.mkstemp(dir=output_dir, suffix=f".{filename}.tmp")
     temp_path = Path(temp_name)
     try:
@@ -1865,13 +1865,7 @@ def _atomic_write_text(
         if alias is not None:
             raise ReadinessValidationError(f"temporary file {alias}")
 
-        final_path = output_dir / filename
-        alias = _candidate_aliases_input(final_path, input_entries)
-        if alias is not None:
-            raise ReadinessValidationError(alias)
-
-        os.replace(temp_path, final_path)
-        return final_path
+        return temp_path
     except Exception:
         try:
             temp_path.unlink(missing_ok=True)
@@ -1976,7 +1970,7 @@ def _blocked_writer_report(
 
 def write_runtime_readiness_envelope_artifacts(
     report: ReadinessEnvelopeReport,
-    output_dir: Path | str,
+    output_dir: Path,
 ) -> ReadinessEnvelopeReport:
     """Atomically write the JSON and Markdown artifacts for a report.
 
@@ -1984,10 +1978,8 @@ def write_runtime_readiness_envelope_artifacts(
     informational. If either write fails, the function returns a report with
     ``status="blocked"`` and ``recording`` set to false.
     """
-    out = Path(output_dir)
-
     try:
-        out.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
     except Exception as exc:
         return _blocked_writer_report(
             report, f"artifact writer failed to create output directory: {exc}"
@@ -1998,7 +1990,7 @@ def write_runtime_readiness_envelope_artifacts(
     except ReadinessValidationError as exc:
         return _blocked_writer_report(report, str(exc))
 
-    alias_error = _check_output_path_aliases(out, input_entries)
+    alias_error = _check_output_path_aliases(output_dir, input_entries)
     if alias_error is not None:
         return _blocked_writer_report(
             report, f"artifact writer path alias rejected: {alias_error}"
@@ -2020,7 +2012,9 @@ def write_runtime_readiness_envelope_artifacts(
 
     markdown = _render_markdown_report(recorded_report)
     try:
-        _atomic_write_text(out, _MARKDOWN_ARTIFACT_NAME, markdown, input_entries)
+        md_temp = _write_temp_file(
+            output_dir, _MARKDOWN_ARTIFACT_NAME, markdown, input_entries
+        )
     except Exception as exc:
         return _blocked_writer_report(report, f"markdown write failed: {exc}")
 
@@ -2031,8 +2025,29 @@ def write_runtime_readiness_envelope_artifacts(
         ensure_ascii=True,
     )
     try:
-        _atomic_write_text(out, _JSON_ARTIFACT_NAME, json_text + "\n", input_entries)
+        json_temp = _write_temp_file(
+            output_dir, _JSON_ARTIFACT_NAME, json_text + "\n", input_entries
+        )
     except Exception as exc:
+        try:
+            md_temp.unlink(missing_ok=True)
+        except Exception:
+            pass
         return _blocked_writer_report(report, f"json write failed: {exc}")
+
+    md_final = output_dir / _MARKDOWN_ARTIFACT_NAME
+    json_final = output_dir / _JSON_ARTIFACT_NAME
+    try:
+        os.replace(md_temp, md_final)
+        os.replace(json_temp, json_final)
+    except Exception as exc:
+        for p in (md_final, json_final, md_temp, json_temp):
+            try:
+                p.unlink(missing_ok=True)
+            except Exception:
+                pass
+        return _blocked_writer_report(
+            report, f"artifact replacement failed: {exc}"
+        )
 
     return recorded_report
