@@ -2,16 +2,17 @@
 
 ## Design Specification
 
-**Candidate ID:** CAND-009  
-**Candidate line:** v0.6.17  
-**Current public release:** v0.6.16  
-**Status:** design-only (no implementation code in this change)  
-**Date:** 2026-06-30  
+**Candidate ID:** CAND-009
+**Candidate line:** v0.6.17
+**Current public release:** v0.6.16
+**Status:** implemented / accepted into the `v0.6.17` candidate chain
+**Date:** 2026-06-30
 **Design document path:** `docs/safety-state-atomic-write-hardening-design.md`
 
-> **Design-only disclaimer.** This document is a specification. It does not modify
-> source code, tests, release metadata, or CLI behavior. No version bump, tag,
-> release, PyPI publication, or live-trading enablement is part of this candidate.
+> **Acceptance disclaimer.** CAND-009 acceptance is documentation/governance
+> acceptance only. It does not authorize `v0.6.17` release cutover and does not
+> enable live trading, live submit, order placement, broker/provider execution,
+> credential loading, or approval queue mutation.
 
 ---
 
@@ -28,10 +29,13 @@ fail-closed behavior.
 ## 2. Current baseline
 
 - Branch: `main`
-- HEAD: `4032d122bc2970e1138c54d0353801bc9de2166c`
+- Implementation HEAD: `ab997c55781e24744fff2f992c3dd358842e15fd`
 - Current public release: `v0.6.16`
 - Package version: `0.6.16`
+- Candidate line: `v0.6.17`
 - Next planned release: `v0.6.17`
+- Release status: planning-only / not released
+- Release authorization: not granted
 - PyPI: not published
 - Live mode: fail-closed (`atlas run --mode live` exits 2)
 

@@ -86,6 +86,23 @@ CAND-008 as a bounded, evidence-only, simulated-only governance release.
 - No candidate in the `v0.6.16` release enables unsupervised real-money
   trading or direct AI-to-broker execution.
 
+### Candidate status in the `v0.6.17` planning line
+
+`v0.6.17` is planning-only / not released. It includes CAND-009 as an accepted
+safety-state persistence hardening candidate.
+
+- **CAND-009** is accepted into the `v0.6.17` candidate chain as a safety-state
+  atomic-write hardening change. It replaces fixed `<target>.tmp` writes in
+  `heartbeat.py`, `deadman.py`, `kill_switch.py`, and `state.py` with a
+  stdlib-only unique same-directory atomic-write helper, preserving file
+  formats, public APIs, permissions, and fail-closed behavior. It does not
+  introduce live trading, live submit, order placement, broker/provider
+  execution, credential loading, or approval queue mutation. Acceptance is
+  documentation/governance acceptance only and is not `v0.6.17` release
+  authorization.
+- No candidate in the `v0.6.17` planning line enables unsupervised real-money
+  trading or direct AI-to-broker execution.
+
 ## Current state vs future state
 
 Atlas Agent is designed as a **supervised, human-in-the-loop workspace**, not an unattended trading system. The autonomy roadmap moves from strict manual oversight toward limited, gated automation, while keeping live execution disabled by default and real-money autonomy off the table.

@@ -1,0 +1,27 @@
+{
+  "release_line": "v0.6.17",
+  "status": "planning",
+  "source_version": "0.6.16",
+  "current_public_release": "v0.6.16",
+  "next_planned_release": "v0.6.17",
+  "release_date": null,
+  "pypi_published": false,
+  "candidates": [
+    {
+      "id": "CAND-009",
+      "status": "implemented",
+      "accepted": true,
+      "acceptance_date": "2026-06-30",
+      "acceptance_verdict": "PASS",
+      "title": "Safety State Atomic-Write Hardening",
+      "description": "Replaces fixed <target>.tmp safety-state persistence patterns with a stdlib-only unique same-directory atomic-write helper. Migrates heartbeat, deadman, kill-switch, and safety-state writes while preserving file formats, public APIs, permissions, and fail-closed behavior.",
+      "notes": [
+        "Accepted into the v0.6.17 candidate chain; remains planning-only.",
+        "Does not enable live trading, live submit, order placement, broker/provider execution, credential loading, or approval queue mutation.",
+        "No version bump, tag, GitHub Release, or PyPI publication.",
+        "Resolves the doctor CLI compatibility contract warning.",
+        "Adds regression and concurrency tests under tests/safety/."
+      ]
+    }
+  ]
+}

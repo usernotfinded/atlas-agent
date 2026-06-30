@@ -19,7 +19,11 @@
 - **Target release line:** v0.6.17 planning-only
 - **Current public release:** v0.6.16
 - **Package version:** 0.6.16
-- **Status:** implemented on `main`; no version bump, tag, release, or PyPI publication.
+- **Status:** implemented on `main` and accepted into the `v0.6.17` candidate chain; no version bump, tag, release, or PyPI publication.
+- **Acceptance verdict:** PASS
+- **Acceptance source:** independent CAND-009 implementation review
+- **Implementation HEAD:** `ab997c55781e24744fff2f992c3dd358842e15fd`
+- **Release authorization:** not granted
 
 ---
 
@@ -29,12 +33,16 @@
 |---|---|
 | Repository | `usernotfinded/atlas-agent` |
 | Branch | `main` |
-| Planning HEAD | `4032d122bc2970e1138c54d0353801bc9de2166c` |
+| Planning HEAD | `ab997c55781e24744fff2f992c3dd358842e15fd` |
 | Design document | `docs/safety-state-atomic-write-hardening-design.md` |
 | Design review verdict | `PASS_WITH_WARNINGS` |
+| Implementation review verdict | `PASS` |
 | Public release | `v0.6.16` |
 | Package version | `0.6.16` |
+| Candidate line | `v0.6.17` |
 | Next planned release | `v0.6.17` |
+| Release status | planning-only / not released |
+| Release authorization | not granted |
 | PyPI published | `false` |
 | Live mode | fail-closed (`atlas run --mode live` exits 2) |
 

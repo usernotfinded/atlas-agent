@@ -86,12 +86,24 @@ planning-only):
   state or approval queues, or indicate live readiness. The status
   `operator_gate_recorded` is evidence-recording status only and is not
   authorization to submit orders.
+- CAND-009 (v0.6.17 planning-only): Accepted into the `v0.6.17` candidate chain
+  as a safety-state atomic-write hardening change. It replaces fixed
+  `<target>.tmp` writes in `heartbeat.py`, `deadman.py`, `kill_switch.py`, and
+  `state.py` with a stdlib-only unique same-directory atomic-write helper,
+  preserving file formats, public APIs, permissions, and fail-closed behavior.
+  It does not enable live trading, live submit, order placement, broker/provider
+  execution, credential loading, or approval queue mutation. Acceptance is
+  documentation/governance acceptance only and is not `v0.6.17` release
+  authorization.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - `v0.6.16` is released as a bounded/evidence/simulated-only governance release.
   It includes CAND-001 through CAND-008 with no live trading, no live submit, no
   broker/provider execution, no credential loading, and no order placement. PyPI
   was not published.
+- `v0.6.17` is planning-only / not released. It includes CAND-009 as an accepted
+  safety-state persistence hardening candidate. No tag, GitHub Release, or PyPI
+  publication exists for `v0.6.17`.
 - No profit, risk elimination, claims that live trading is safe, or
   autonomous-trading-readiness claims are made.
 
