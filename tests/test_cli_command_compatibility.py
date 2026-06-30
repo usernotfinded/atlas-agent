@@ -116,6 +116,10 @@ def test_contract_forbidden_default_behaviors_present(contract: dict) -> None:
     assert required.issubset(set(forbidden))
 
 
+def test_doctor_is_in_contract(contract: dict) -> None:
+    assert "doctor" in contract["top_level_commands"]
+
+
 def test_safety_sensitive_commands_present_in_contract(contract: dict) -> None:
     assert len(contract["safety_sensitive_commands"]) > 0
     for item in contract["safety_sensitive_commands"]:
