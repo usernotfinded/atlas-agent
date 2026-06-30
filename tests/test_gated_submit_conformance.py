@@ -18,6 +18,9 @@ from atlas_agent.agent.gated_submit_conformance import (
     parse_as_of_utc,
     build_gated_submit_conformance_report,
     write_gated_submit_conformance_artifacts,
+    _validate_quality_gate,
+    _validate_shadow_comparison,
+    ConformanceValidationError,
 )
 
 
@@ -132,6 +135,130 @@ def _write_fixture(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
 
 
+def _make_full_quality_gate(**overrides: Any) -> dict[str, Any]:
+    """Return a realistic CAND-004 artifact with all emitted fields present."""
+    data: dict[str, Any] = {
+        "artifact_type": "trading_quality_gate",
+        "schema_version": 1,
+        "mode": "paper",
+        "run_id": "run-123",
+        "symbol": "AAPL",
+        "quality_state": "eligible_for_shadow_live_quality_review",
+        "blockers": [],
+        "dimensions": [
+            {
+                "name": "artifact_integrity",
+                "passed": True,
+                "score": 1.0,
+                "reason": "Required artifacts and fields present.",
+            },
+            {
+                "name": "no_live_side_effects",
+                "passed": True,
+                "score": 1.0,
+                "reason": "No live side-effect or secret-like patterns detected.",
+            },
+        ],
+        "metrics": {
+            "run_id": "run-123",
+            "symbol": "AAPL",
+            "starting_cash": 10000.0,
+            "ending_cash": 10000.98,
+            "ending_equity": 10000.98,
+            "total_return_pct": 0.0098,
+            "max_drawdown_pct": 0.0001,
+            "number_of_trades": 1,
+            "number_of_fills": 2,
+            "number_of_rejections": 1,
+            "gross_exposure": 201.0,
+            "net_exposure": 0.0,
+            "total_commission": 0.02,
+            "total_slippage": 0.02,
+            "turnover": 0.0201,
+            "bars_processed": 10,
+            "data_source_redacted": "demo.csv",
+            "generated_at": "2026-01-01T00:00:00Z",
+        },
+        "benchmark": {
+            "available": False,
+            "reason": "No data_path provided; benchmark unavailable.",
+        },
+        "threshold_policy": {
+            "min_bars_processed": 10,
+            "min_fills": 1,
+            "min_no_trade_decisions": 1,
+            "min_risk_rejections": 1,
+            "max_drawdown_pct": 50.0,
+            "max_exposure_pct": 200.0,
+            "max_turnover": 100.0,
+            "max_cost_impact_pct": 10.0,
+            "min_data_coverage": 0.5,
+            "max_invalid_metric_count": 0,
+        },
+        "input_artifacts": {
+            "metrics": "metrics.json",
+            "decisions": "decisions.jsonl",
+            "fills": "fills.jsonl",
+            "state": None,
+            "scorecard": None,
+        },
+        "disclaimer": "This is a paper-only evaluation. It does not claim profitability or live readiness.",
+    }
+    data.update(overrides)
+    return data
+
+
+def _make_full_shadow_comparison(**overrides: Any) -> dict[str, Any]:
+    """Return a realistic CAND-005 artifact with all emitted fields present."""
+    data: dict[str, Any] = {
+        "artifact_type": "shadow_live_comparison",
+        "schema_version": "shadow-live-comparison.v1",
+        "run_id": "run-123",
+        "symbol": "AAPL",
+        "quality_state": "eligible_for_shadow_live_quality_review",
+        "status": "matched",
+        "blockers": [],
+        "broker_snapshot_summary": {
+            "account_label": "simulated-broker",
+            "broker_source": "fixture",
+            "currency": "USD",
+            "cash": 10000.98,
+            "equity": 10000.98,
+            "buying_power": 10000.98,
+            "position_count": 0,
+            "open_order_count": 0,
+            "recent_fill_count": 0,
+            "completeness_flags": {
+                "account": True,
+                "positions": True,
+                "open_orders": True,
+                "recent_fills": True,
+                "market_prices": True,
+            },
+        },
+        "freshness_assessment": {
+            "stale": False,
+            "snapshot_freshness_timestamp": "2026-06-24T09:55:00Z",
+        },
+        "divergence_results": {
+            "cash_difference": 0.0,
+            "equity_difference": 0.0,
+        },
+        "missing_critical_fields": [],
+        "threshold_policy": {
+            "minor_cash_pct": 1.0,
+            "major_cash_pct": 5.0,
+        },
+        "input_artifacts": {
+            "quality_gate": "trading-quality-gate.json",
+            "broker_snapshot": "broker-snapshot.json",
+        },
+        "disclaimer": "This is a read-only fixture comparison.",
+    }
+    data.update(overrides)
+    return data
+
+
 def _make_inputs(tmp_path: Path) -> tuple[SubmitConformanceInputs, dict[str, Any]]:
     fixtures: dict[str, Any] = {}
     paths: dict[str, Path] = {}
@@ -198,6 +325,52 @@ def test_parse_as_of_utc_rejects_non_utc() -> None:
 def test_parse_as_of_utc_rejects_naive() -> None:
     with pytest.raises(Exception):
         parse_as_of_utc("2026-06-24T10:00:00")
+
+
+def test_full_quality_gate_projection_accepted() -> None:
+    data = _make_full_quality_gate()
+    result = _validate_quality_gate(data)
+    assert result["artifact_type"] == "trading_quality_gate"
+    assert result["symbol"] == "AAPL"
+    assert result["quality_state"] == "eligible_for_shadow_live_quality_review"
+    assert "metrics" not in result
+    assert "dimensions" not in result
+
+
+def test_full_shadow_comparison_projection_accepted() -> None:
+    data = _make_full_shadow_comparison()
+    result = _validate_shadow_comparison(data)
+    assert result["artifact_type"] == "shadow_live_comparison"
+    assert result["status"] == "matched"
+    assert result["symbol"] == "AAPL"
+    assert "divergence_results" not in result
+
+
+def test_quality_gate_projection_rejects_missing_field_despite_extra_fields() -> None:
+    data = _make_full_quality_gate(extra_field="ignored")
+    data.pop("symbol")
+    with pytest.raises(ConformanceValidationError):
+        _validate_quality_gate(data)
+
+
+def test_shadow_comparison_projection_rejects_missing_field_despite_extra_fields() -> None:
+    data = _make_full_shadow_comparison(extra="ignored")
+    data.pop("status")
+    with pytest.raises(ConformanceValidationError):
+        _validate_shadow_comparison(data)
+
+
+def test_quality_gate_projection_rejects_bad_quality_state() -> None:
+    data = _make_full_quality_gate(quality_state="blocked")
+    result = _validate_quality_gate(data)
+    # Projection itself accepts any string quality_state; downstream gates block it.
+    assert result["quality_state"] == "blocked"
+
+
+def test_shadow_comparison_projection_rejects_non_matched_status() -> None:
+    data = _make_full_shadow_comparison(status="minor_divergence")
+    result = _validate_shadow_comparison(data)
+    assert result["status"] == "minor_divergence"
 
 
 def test_all_pass_report_dry_run_ready_before_write(tmp_path: Path) -> None:

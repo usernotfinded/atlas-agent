@@ -368,23 +368,42 @@ def _secret_value_match(lower_value: str, pattern: str) -> bool:
     return re.search(r"(?:^|\W)" + re.escape(pattern), lower_value) is not None
 
 
-def _secret_scan(obj: Any, path: str = "") -> list[str]:
-    """Return a list of secret-like findings in a parsed JSON object."""
+def _secret_scan(
+    obj: Any, path: str = "", *, include_forbidden_keys: bool = True
+) -> list[str]:
+    """Return findings for sensitive keys or values in a parsed JSON object.
+
+    ``include_forbidden_keys`` applies the fixture-specific forbidden key set
+    only to CAND-006-owned fixtures, while upstream CAND-004/CAND-005 artifacts
+    are scanned for sensitive content without the fixture-only key set.
+    """
     findings: list[str] = []
     if isinstance(obj, dict):
         for key, value in obj.items():
             key_lower = key.lower()
             if key_lower in _SECRET_KEYS:
                 findings.append(f"secret-like key at {path}: {key}")
-            if key_lower in _FORBIDDEN_FIXTURE_KEYS:
+            if include_forbidden_keys and key_lower in _FORBIDDEN_FIXTURE_KEYS:
                 findings.append(f"forbidden key at {path}: {key}")
             for pattern in _SECRET_VALUE_PATTERNS:
                 if _secret_value_match(key_lower, pattern):
                     findings.append(f"secret-like key fragment at {path}: {key}")
-            findings.extend(_secret_scan(value, f"{path}.{key}" if path else key))
+            findings.extend(
+                _secret_scan(
+                    value,
+                    f"{path}.{key}" if path else key,
+                    include_forbidden_keys=include_forbidden_keys,
+                )
+            )
     elif isinstance(obj, list):
         for idx, value in enumerate(obj):
-            findings.extend(_secret_scan(value, f"{path}[{idx}]"))
+            findings.extend(
+                _secret_scan(
+                    value,
+                    f"{path}[{idx}]",
+                    include_forbidden_keys=include_forbidden_keys,
+                )
+            )
     elif isinstance(obj, str):
         lower = obj.lower()
         for pattern in _SECRET_VALUE_PATTERNS:
@@ -773,18 +792,11 @@ def _validate_approval(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _validate_quality_gate(data: dict[str, Any]) -> dict[str, Any]:
-    """Project CAND-004 to accepted keys and normalize for downstream gates."""
-    accepted = {
-        "artifact_type",
-        "schema_version",
-        "mode",
-        "run_id",
-        "symbol",
-        "quality_state",
-        "blockers",
-    }
-    _require_exact_keys(data, accepted, "quality_gate (projected)")
+    """Project CAND-004 to accepted keys and normalize for downstream gates.
 
+    Extra upstream fields are ignored; only the projected fields are required
+    and validated.
+    """
     artifact_type = _require_string(
         data.get("artifact_type"), "quality_gate.artifact_type"
     )
@@ -816,19 +828,11 @@ def _validate_quality_gate(data: dict[str, Any]) -> dict[str, Any]:
 
 
 def _validate_shadow_comparison(data: dict[str, Any]) -> dict[str, Any]:
-    """Project CAND-005 to accepted keys and normalize for downstream gates."""
-    accepted = {
-        "artifact_type",
-        "schema_version",
-        "run_id",
-        "symbol",
-        "quality_state",
-        "status",
-        "freshness_assessment",
-        "blockers",
-    }
-    _require_exact_keys(data, accepted, "shadow_comparison (projected)")
+    """Project CAND-005 to accepted keys and normalize for downstream gates.
 
+    Extra upstream fields are ignored; only the projected fields are required
+    and validated.
+    """
     artifact_type = _require_string(
         data.get("artifact_type"), "shadow_comparison.artifact_type"
     )
@@ -881,10 +885,17 @@ def _load_and_validate_all(
         "risk_envelope": inputs.risk_envelope_path,
         "approval": inputs.approval_path,
     }
+    fixture_labels = {"order_intent", "kill_switch", "risk_envelope", "approval"}
     raw: dict[str, dict[str, Any]] = {}
     for label, path in paths.items():
         raw[label] = _load_json_object(path, label)
-        secrets = _secret_scan(raw[label], label)
+        # Forbidden fixture keys apply only to CAND-006-owned fixtures; upstream
+        # CAND-004/CAND-005 artifacts are scanned for sensitive content only.
+        secrets = _secret_scan(
+            raw[label],
+            label,
+            include_forbidden_keys=(label in fixture_labels),
+        )
         if secrets:
             raise ConformanceValidationError(
                 "secret-like content rejected: " + "; ".join(secrets)
