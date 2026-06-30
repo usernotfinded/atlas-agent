@@ -12,6 +12,7 @@ from atlas_agent.agent.runtime_readiness_envelope import (
     GATE_SEQUENCE,
     EVIDENCE_ONLY_DISCLAIMER,
     ReadinessEnvelopeInputs,
+    ReadinessEnvelopeReport,
     canonical_json_bytes,
     fingerprint_json,
     parse_as_of_utc,
@@ -947,7 +948,7 @@ def test_output_path_alias_rejected(tmp_path: Path) -> None:
     blocked = write_runtime_readiness_envelope_artifacts(report, output_dir)
     assert blocked.status == "blocked"
     assert blocked.exit_code == 2
-    assert any("alias" in reason.lower() for reason in blocked.blocked_reasons)
+    assert any("alias" in reason.lower() for reason in blocked.blockers)
 
 
 def test_write_artifacts_promotes_status(tmp_path: Path) -> None:
@@ -984,3 +985,33 @@ def test_artifact_schema_contains_required_keys(tmp_path: Path) -> None:
         "envelope_assertions",
     ):
         assert key in data
+
+
+def test_artifact_uses_blockers_not_blocked_reasons(tmp_path: Path) -> None:
+    inputs, _ = _make_valid_inputs(tmp_path)
+    report = build_runtime_readiness_envelope_report(inputs)
+    recorded = write_runtime_readiness_envelope_artifacts(report, tmp_path / "out")
+    json_path = tmp_path / "out" / "runtime-readiness-envelope.json"
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert "blockers" in data
+    assert "blocked_reasons" not in data
+    assert data["blockers"] == recorded.blockers
+
+    # Also verify a blocked report dict uses blockers.
+    blocked_dir = tmp_path / "blocked"
+    blocked_dir.mkdir()
+    inputs2, fixtures2 = _make_valid_inputs(blocked_dir)
+    fixtures2["shadow_comparison"]["status"] = "minor_divergence"
+    _write_fixture(inputs2.shadow_comparison_path, fixtures2["shadow_comparison"])
+    blocked_report = build_runtime_readiness_envelope_report(inputs2)
+    blocked_data = blocked_report.to_dict()
+    assert "blockers" in blocked_data
+    assert "blocked_reasons" not in blocked_data
+    assert len(blocked_data["blockers"]) > 0
+
+
+def test_report_object_uses_blockers_attribute() -> None:
+    # ReadinessEnvelopeReport must expose blockers, not blocked_reasons.
+    assert hasattr(ReadinessEnvelopeReport, "__dataclass_fields__")
+    assert "blockers" in ReadinessEnvelopeReport.__dataclass_fields__
+    assert "blocked_reasons" not in ReadinessEnvelopeReport.__dataclass_fields__

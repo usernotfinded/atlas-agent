@@ -87,9 +87,9 @@ def _print_text_report(report: Any) -> None:
     for gate in report.gates:
         reason = f" ({gate.reason})" if gate.reason else ""
         print(f"  {gate.gate_id}: {gate.status}{reason}")
-    if report.blocked_reasons:
+    if report.blockers:
         print("blockers:")
-        for reason in report.blocked_reasons:
+        for reason in report.blockers:
             print(f"  - {reason}")
     if report.status == "readiness_envelope_recorded":
         print("artifacts recorded.")

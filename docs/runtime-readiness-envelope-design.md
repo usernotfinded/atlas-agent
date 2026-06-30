@@ -693,7 +693,7 @@ code 0 is returned.
     "no_endpoints_in_fixtures": true,
     "no_account_ids_in_fixtures": true
   },
-  "blocked_reasons": [],
+  "blockers": [],
   "recording": {
     "json_written": true,
     "markdown_written": true

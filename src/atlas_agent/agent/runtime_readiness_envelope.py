@@ -200,7 +200,7 @@ class ReadinessEnvelopeReport:
     upstream_summaries: dict[str, Any]
     fixture_summaries: dict[str, Any]
     envelope_assertions: dict[str, bool]
-    blocked_reasons: list[str]
+    blockers: list[str]
     recording: dict[str, Any]
     disclaimer: str
 
@@ -226,7 +226,7 @@ class ReadinessEnvelopeReport:
             "upstream_summaries": self.upstream_summaries,
             "fixture_summaries": self.fixture_summaries,
             "envelope_assertions": self.envelope_assertions,
-            "blocked_reasons": self.blocked_reasons,
+            "blockers": self.blockers,
             "recording": self.recording,
             "disclaimer": self.disclaimer,
         }
@@ -1579,7 +1579,7 @@ def _build_report(
         upstream_summaries=upstream_summaries,
         fixture_summaries=fixture_summaries,
         envelope_assertions=envelope_assertions,
-        blocked_reasons=list(blockers),
+        blockers=list(blockers),
         recording={"json_written": False, "markdown_written": False},
         disclaimer=EVIDENCE_ONLY_DISCLAIMER,
     )
@@ -1948,8 +1948,8 @@ def _render_markdown_report(report: ReadinessEnvelopeReport) -> str:
 
     lines.append("## Blockers")
     lines.append("")
-    if report.blocked_reasons:
-        for reason in report.blocked_reasons:
+    if report.blockers:
+        for reason in report.blockers:
             lines.append(f"- {reason}")
     else:
         lines.append("- None")
@@ -1978,7 +1978,7 @@ def _blocked_writer_report(
             reason=reason,
         ),
         recording={"json_written": False, "markdown_written": False},
-        blocked_reasons=list(report.blocked_reasons) + [reason],
+        blockers=list(report.blockers) + [reason],
     )
 
 
@@ -2033,7 +2033,7 @@ def write_runtime_readiness_envelope_artifacts(
             reason="artifacts recorded",
         ),
         recording={"json_written": True, "markdown_written": True},
-        blocked_reasons=list(report.blocked_reasons),
+        blockers=list(report.blockers),
     )
 
     markdown = _render_markdown_report(recorded_report)
