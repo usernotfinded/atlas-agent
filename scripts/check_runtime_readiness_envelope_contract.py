@@ -28,6 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # User-facing design doc is checked because docs/runtime-readiness-envelope.md
 # is created in a later documentation task.
 DOC = REPO_ROOT / "docs" / "runtime-readiness-envelope-design.md"
+USER_DOC = REPO_ROOT / "docs" / "runtime-readiness-envelope.md"
 GOVERNANCE_DOC = REPO_ROOT / "docs" / "bounded-live-autonomy-governance.md"
 ENGINE_MODULE = (
     REPO_ROOT / "src" / "atlas_agent" / "agent" / "runtime_readiness_envelope.py"
@@ -694,6 +695,97 @@ def _check_safety_assertions() -> list[str]:
     return errors
 
 
+def _check_canonical_blockers_field() -> list[str]:
+    """Assert the canonical CAND-007 output field is ``blockers``."""
+    errors: list[str] = []
+
+    if ENGINE_MODULE.exists():
+        text = _read(ENGINE_MODULE)
+        rel = _rel(ENGINE_MODULE)
+        if "blockers: list[str]" not in text:
+            errors.append(f"[{rel}] ReadinessEnvelopeReport missing blockers field")
+        if '"blockers": self.blockers' not in text:
+            errors.append(f"[{rel}] ReadinessEnvelopeReport.to_dict missing blockers key")
+        if "## Blockers" not in text:
+            errors.append(f"[{rel}] Markdown renderer missing Blockers section")
+
+    if CLI_MODULE.exists():
+        text = _read(CLI_MODULE)
+        rel = _rel(CLI_MODULE)
+        if "if report.blockers:" not in text:
+            errors.append(f"[{rel}] CLI text output missing blockers list guard")
+        if "report.to_dict()" not in text:
+            errors.append(f"[{rel}] CLI JSON output must serialize report.to_dict()")
+
+    for path, label in ((DOC, "design doc"), (USER_DOC, "user doc")):
+        if path.exists():
+            text = _read(path).lower()
+            if "blockers" not in text:
+                errors.append(f"[{_rel(path)}] {label} missing blockers description")
+
+    return errors
+
+
+def _is_archived_doc(path: Path) -> bool:
+    """Return True if a markdown document is clearly marked superseded/archived."""
+    if not path.exists():
+        return False
+    head = "\n".join(_read(path).splitlines()[:30]).lower()
+    return any(
+        marker in head
+        for marker in (
+            "superseded",
+            "archived",
+            "historical",
+            "obsolete",
+            "retained as historical",
+        )
+    )
+
+
+def _check_blocked_reasons_not_active() -> list[str]:
+    """Assert ``blocked_reasons`` is not emitted as a CAND-007 artifact field."""
+    errors: list[str] = []
+
+    active_sources = [
+        ENGINE_MODULE,
+        CLI_MODULE,
+        BOOTSTRAP_MODULE,
+        LEGACY_CLI_MODULE,
+    ]
+    for path in active_sources:
+        if not path.exists():
+            continue
+        if "blocked_reasons" in _read(path):
+            errors.append(
+                f"[{_rel(path)}] Active source still references legacy blocked_reasons"
+            )
+
+    active_docs = [DOC, USER_DOC, GOVERNANCE_DOC]
+    for path in active_docs:
+        if not path.exists():
+            continue
+        if "blocked_reasons" in _read(path):
+            errors.append(
+                f"[{_rel(path)}] Active doc still references legacy blocked_reasons"
+            )
+
+    # Any other markdown file may mention the old term only if clearly archived.
+    for path in REPO_ROOT.rglob("*.md"):
+        if path in active_docs:
+            continue
+        if not path.is_file():
+            continue
+        text = _read(path)
+        if "blocked_reasons" in text and not _is_archived_doc(path):
+            errors.append(
+                f"[{_rel(path)}] Doc references blocked_reasons but is not "
+                "marked superseded/archived"
+            )
+
+    return errors
+
+
 def check_all() -> dict[str, bool | list[str]]:
     """Run all contract checks and return a structured result."""
     errors: list[str] = []
@@ -717,6 +809,8 @@ def check_all() -> dict[str, bool | list[str]]:
     errors.extend(_check_forbidden_doc_claims())
     errors.extend(_check_stale_cand007_doc_claims())
     errors.extend(_check_safety_assertions())
+    errors.extend(_check_canonical_blockers_field())
+    errors.extend(_check_blocked_reasons_not_active())
 
     return {
         "passed": len(errors) == 0,

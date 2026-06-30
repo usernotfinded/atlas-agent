@@ -117,6 +117,54 @@ def test_checker_fails_on_forbidden_pattern(pattern: str, tmp_path: Path) -> Non
         _checker.ENGINE_MODULE = original_engine
 
 
+def test_checker_enforces_canonical_blockers_field(tmp_path: Path) -> None:
+    original_text = ENGINE_MODULE.read_text(encoding="utf-8")
+    temp_engine = tmp_path / "runtime_readiness_envelope.py"
+    temp_engine.write_text(
+        original_text.replace('"blockers": self.blockers', '"legacy_blockers": self.blockers'),
+        encoding="utf-8",
+    )
+    original_engine = _checker.ENGINE_MODULE
+    try:
+        _checker.ENGINE_MODULE = temp_engine
+        result = check_all()
+        assert not result["passed"], result["errors"]
+        assert any("blockers" in e for e in result["errors"]), result["errors"]
+    finally:
+        _checker.ENGINE_MODULE = original_engine
+
+
+def test_checker_fails_if_blocked_reasons_reintroduced(tmp_path: Path) -> None:
+    original_text = ENGINE_MODULE.read_text(encoding="utf-8")
+    temp_engine = tmp_path / "runtime_readiness_envelope.py"
+    temp_engine.write_text(
+        original_text + "\n# Legacy field reference\nblocked_reasons: list[str]\n",
+        encoding="utf-8",
+    )
+    original_engine = _checker.ENGINE_MODULE
+    try:
+        _checker.ENGINE_MODULE = temp_engine
+        result = check_all()
+        assert not result["passed"], result["errors"]
+        assert any("blocked_reasons" in e for e in result["errors"]), result["errors"]
+    finally:
+        _checker.ENGINE_MODULE = original_engine
+
+
+def test_checker_allows_archived_blocked_reasons_reference(tmp_path: Path) -> None:
+    archived_doc = REPO_ROOT / "_test_archived_blocked_reasons_note.md"
+    archived_doc.write_text(
+        "# Archived note\n\n> Status: superseded / archived.\n\n"
+        "Earlier drafts used `blocked_reasons`.\n",
+        encoding="utf-8",
+    )
+    try:
+        result = check_all()
+        assert result["passed"], result["errors"]
+    finally:
+        archived_doc.unlink(missing_ok=True)
+
+
 def test_checker_imports_no_network_or_credentials() -> None:
     source = Path(_checker.__file__).read_text(encoding="utf-8")
     tree = ast.parse(source)

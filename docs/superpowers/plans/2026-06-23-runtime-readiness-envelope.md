@@ -1,5 +1,10 @@
 # CAND-007 Runtime Readiness Envelope Implementation Plan
 
+> **Status: superseded / archived.** This document is retained as historical
+> context for the CAND-007 design process. The canonical CAND-007 artifact field
+> is `blockers`; the legacy `blocked_reasons` references below describe an earlier
+> draft and do not reflect the active schema or implementation.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement `atlas agent readiness-envelope` as a deterministic, local-only, fixture-only, evidence-only runtime readiness envelope evaluator that consumes CAND-004/CAND-005/CAND-006 artifacts plus five static policy fixtures and records `runtime-readiness-envelope.json` and `runtime-readiness-envelope-report.md` without ever submitting orders, calling brokers/providers, loading credentials, or importing runtime trading modules.
