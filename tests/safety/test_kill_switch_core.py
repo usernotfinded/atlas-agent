@@ -181,3 +181,10 @@ def test_kill_switch_emits_audit_events_on_transitions(tmp_path) -> None:
     assert "kill_switch_enabled" in event_types
     assert "kill_switch_noop" in event_types
     assert "kill_switch_disabled" in event_types
+
+
+def test_kill_switch_no_fixed_tmp_after_write(tmp_path: Path) -> None:
+    controller = make_controller(tmp_path)
+    controller.enable(mode="soft", reason="test", actor="user:1")
+    assert (tmp_path / "kill-switch-state.json").exists()
+    assert not (tmp_path / "kill-switch-state.json.tmp").exists()

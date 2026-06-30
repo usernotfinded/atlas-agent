@@ -4,6 +4,8 @@ import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+import json
+
 from atlas_agent.execution.order import AccountSnapshot, FlattenResult, Order, OrderResult
 from atlas_agent.portfolio.positions import Position
 from atlas_agent.safety.deadman import DeadmanConfig, DeadmanSwitch, write_deadman_heartbeat
@@ -307,3 +309,12 @@ def test_deadman_flatten_propagates_strategy_and_bps_to_broker(tmp_path) -> None
     assert broker.flatten_calls == 1
     assert broker.last_strategy == "aggressive_limit"
     assert broker.last_bps == 42
+
+
+def test_deadman_heartbeat_write_is_atomic(tmp_path: Path) -> None:
+    target = tmp_path / "deadman_heartbeat.json"
+    write_deadman_heartbeat(target, source="test", actor="user:1")
+    payload = json.loads(target.read_text(encoding="utf-8"))
+    assert payload["source"] == "test"
+    assert payload["actor"] == "user:1"
+    assert not (tmp_path / "deadman_heartbeat.json.tmp").exists()
