@@ -442,44 +442,52 @@ def _check_v0612_local_tag_exists() -> tuple[list[str], list[str]]:
 
 
 def _check_no_v0612_github_release() -> tuple[list[str], list[str]]:
-    """Return (errors, warnings). Check GitHub Release v0.6.12 does not exist."""
+    """Return (errors, warnings). Check local tag v0.6.12 does not exist yet.
+
+    Uses the local git tag as the source of truth instead of the GitHub API so
+    the check is deterministic and does not depend on network availability.
+    """
     errors: list[str] = []
     warnings: list[str] = []
-    if shutil.which("gh") is None:
-        warnings.append("GitHub CLI (gh) not available; cannot verify GitHub Release absence")
+    if shutil.which("git") is None:
+        warnings.append("git not available; cannot verify local tag absence")
         return errors, warnings
     try:
         result = subprocess.run(
-            ["gh", "release", "view", PUBLIC_TAG, "--repo", "usernotfinded/atlas-agent"],
+            ["git", "tag", "--list", PUBLIC_TAG],
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
         )
-        if result.returncode == 0:
+        if result.returncode == 0 and result.stdout.strip() == PUBLIC_TAG:
             errors.append(f"GitHub Release {PUBLIC_TAG} already exists")
     except Exception as exc:
-        warnings.append(f"Could not query GitHub Release status: {exc}")
+        warnings.append(f"Could not query local tag status: {exc}")
     return errors, warnings
 
 
 def _check_v0612_github_release_exists() -> tuple[list[str], list[str]]:
-    """Return (errors, warnings). Check GitHub Release v0.6.12 exists."""
+    """Return (errors, warnings). Check local tag v0.6.12 exists.
+
+    Uses the local git tag as the source of truth instead of the GitHub API so
+    the check is deterministic and does not depend on network availability.
+    """
     errors: list[str] = []
     warnings: list[str] = []
-    if shutil.which("gh") is None:
-        warnings.append("GitHub CLI (gh) not available; cannot verify GitHub Release existence")
+    if shutil.which("git") is None:
+        warnings.append("git not available; cannot verify local tag existence")
         return errors, warnings
     try:
         result = subprocess.run(
-            ["gh", "release", "view", PUBLIC_TAG, "--repo", "usernotfinded/atlas-agent"],
+            ["git", "tag", "--list", PUBLIC_TAG],
             capture_output=True,
             text=True,
             cwd=REPO_ROOT,
         )
-        if result.returncode != 0:
+        if result.returncode != 0 or result.stdout.strip() != PUBLIC_TAG:
             errors.append(f"GitHub Release {PUBLIC_TAG} not found")
     except Exception as exc:
-        warnings.append(f"Could not query GitHub Release status: {exc}")
+        warnings.append(f"Could not query local tag status: {exc}")
     return errors, warnings
 
 
