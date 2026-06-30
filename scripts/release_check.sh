@@ -423,7 +423,7 @@ echo "========================================"
 echo "12. product demo walkthrough with evidence bundle"
 echo "========================================"
 SECONDS=0
-PRODUCT_DEMO_EVIDENCE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/atlas-agent-release-evidence.XXXXXX")"
+PRODUCT_DEMO_EVIDENCE_DIR="$(mktemp -u "${TMPDIR:-/tmp}/atlas-agent-release-evidence.XXXXXX")"
 ./scripts/demo_product_walkthrough.sh --output-dir "$PRODUCT_DEMO_EVIDENCE_DIR" --deterministic
 TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
