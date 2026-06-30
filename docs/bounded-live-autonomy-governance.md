@@ -77,6 +77,14 @@ planning only):
   credentials, instantiate runtime trading objects, mutate state, or indicate
   live readiness. The status `readiness_envelope_recorded` is evidence-recording
   status only.
+- CAND-008 (v0.6.16): A simulated-only, evidence-only operator approval gate that
+  consumes CAND-004, CAND-005, CAND-006, and CAND-007 artifacts plus CAND-008
+  static local fixtures, evaluates a 13-gate fail-closed sequence, and records
+  `operator-approval-gate.json` plus `operator-approval-gate-report.md`. It does
+  not submit orders, call broker or provider APIs, load credentials, instantiate
+  runtime trading objects, mutate state or approval queues, or indicate live
+  readiness. The status `operator_gate_recorded` is evidence-recording status
+  only and is not authorization to submit orders.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - `v0.6.16` remains planning-only: no source/package bump, tag, GitHub Release,
@@ -92,6 +100,7 @@ planning only):
 | **L1** | Autonomous paper workflows | Run scheduled paper routines autonomously within deterministic limits. No broker contact. | Implemented; paper mode is the default runtime. |
 | **L1.5** | Read-only fixture-first comparison (CAND-005) | Compare a stateful paper run against a recorded local broker-like snapshot; produce deterministic read-only artifacts. No broker API calls, no credentials, no live submit. | Implemented as local read-only comparison only; **not** live readiness. |
 | **L1.75** | Runtime readiness envelope evaluation (CAND-007) | Evaluate CAND-004/CAND-005/CAND-006 evidence plus static local policy fixtures for internal coherence. No broker/provider calls, no credentials, no live submit. | Implemented as envelope evaluator only; **not** a live path and **not** live readiness. |
+| **L1.875** | Operator approval gate (CAND-008) | Evaluate CAND-004/CAND-005/CAND-006/CAND-007 evidence plus CAND-008 static fixtures in strict fail-closed order and record local artifacts. No broker/provider calls, no credentials, no live submit, no queue mutation. | Implemented as evidence-only evaluator only; **not** a live path, **not** live readiness, and **not** authorization to submit orders. |
 | **L2** | Live analysis and suggestions with human approval | Consume live broker snapshots for analysis and propose orders; every proposal requires explicit human approval. | Implemented as analysis-only/suggestion path; live submit remains approval-gated. |
 | **L3** | Bounded live-autonomy research tier | A tightly bounded research concept requiring per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. | **Not implemented.** Not production-ready; not unattended-safe; not enabled by default. |
 | **L4** | Broad autonomous live execution | A hypothetical future tier with broader execution authority. | **Not a current capability or milestone.** Cannot be claimed or pursued without external legal, security, risk, operational, and regulatory review. |

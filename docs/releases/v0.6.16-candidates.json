@@ -86,6 +86,23 @@
         "The status readiness_envelope_recorded is evidence-recording status only.",
         "No version bump, tag, GitHub Release, or PyPI publication."
       ]
+    },
+    {
+      "id": "CAND-008",
+      "status": "implemented",
+      "title": "Operator Approval Gate",
+      "description": "Adds a simulated-only, evidence-only operator approval gate that consumes CAND-004 quality evidence, CAND-005 shadow-live comparison evidence, CAND-006 gated submit conformance evidence, CAND-007 runtime readiness envelope evidence, and five CAND-008 static local fixtures, evaluates a 13-gate fail-closed sequence, and records operator-approval-gate.json and operator-approval-gate-report.md.",
+      "notes": [
+        "Simulated-only, evidence-only operator approval gate.",
+        "Does not submit orders or mutate broker state.",
+        "Does not call real broker or provider APIs.",
+        "Does not load credentials or secrets.",
+        "Does not instantiate runtime Order, OrderRouter, RiskManager, ApprovalManager, or kill-switch objects.",
+        "Does not mutate runtime approval queues or kill-switch state.",
+        "Does not indicate live readiness, trading safety, profitability, or permission to submit orders.",
+        "The status operator_gate_recorded is evidence-recording status only.",
+        "No version bump, tag, GitHub Release, or PyPI publication."
+      ]
     }
   ]
 }

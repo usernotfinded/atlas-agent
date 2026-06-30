@@ -188,13 +188,14 @@ Events:
 
 `atlas_agent.cli:main` remains the public entry point. Low-risk commands are routed through a small command registry and shared `CLIContext`; legacy wrappers remain in place for compatibility while command handlers move out of the entrypoint incrementally.
 
-A narrow bootstrap pre-router in `src/atlas_agent/cli_bootstrap.py` intercepts exactly two
+A narrow bootstrap pre-router in `src/atlas_agent/cli_bootstrap.py` intercepts exactly three
 configless command forms before they reach the legacy CLI:
 
 - `atlas agent submit-conformance` — configless CAND-006 gated submit conformance rehearsal.
 - `atlas agent readiness-envelope` — configless CAND-007 runtime readiness envelope evaluator.
+- `atlas agent operator-approval-gate` — configless CAND-008 operator approval gate evaluator.
 
-Both routes use dedicated stdlib-only handlers that do not load `AtlasConfig`, broker adapters,
+All three routes use dedicated stdlib-only handlers that do not load `AtlasConfig`, broker adapters,
 provider adapters, `RiskManager`, or runtime kill-switch state. `atlas --workspace X agent ...`
 and all other commands delegate unchanged to the legacy `atlas_agent.cli:main` entry point.
 

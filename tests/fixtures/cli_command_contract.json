@@ -250,6 +250,7 @@
       "autonomous-scorecard",
       "learn",
       "plan",
+      "operator-approval-gate",
       "readiness-envelope",
       "reflect",
       "run",

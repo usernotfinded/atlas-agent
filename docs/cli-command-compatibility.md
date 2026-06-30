@@ -36,8 +36,8 @@ These command families are used in public docs, demos, and release checklists. T
 - `providers` (list)
 - `broker` (list, sync, opt-in, opt-out)
 - `backtest` (run)
-- `agent` (run, status, plan, learn, reflect, autonomous-paper, autonomous-scorecard, submit-conformance, readiness-envelope)
-  - `agent submit-conformance` and `agent readiness-envelope` are bootstrap-only configless commands documented separately; they are routed by `src/atlas_agent/cli_bootstrap.py` and do not load `AtlasConfig`, broker adapters, provider adapters, `RiskManager`, or runtime kill-switch state.
+- `agent` (run, status, plan, learn, reflect, autonomous-paper, autonomous-scorecard, submit-conformance, readiness-envelope, operator-approval-gate)
+  - `agent submit-conformance`, `agent readiness-envelope`, and `agent operator-approval-gate` are bootstrap-only configless commands documented separately; they are routed by `src/atlas_agent/cli_bootstrap.py` and do not load `AtlasConfig`, broker adapters, provider adapters, `RiskManager`, or runtime kill-switch state.
   - `agent autonomous-paper` supports a stateful mode via `--state-dir`, which persists runner state and checkpoints across invocations. Additional options: `--resume`, `--initial-cash`, `--commission-bps`, `--slippage-bps`, `--fill-timing` (`same_bar` or `next_bar`).
 - `skills` (list, propose, create-from-journal, improve, approve, archive, show, diff)
 - `memory` (ingest, search, rebuild-index, summarize, nudge, doctor)
@@ -102,17 +102,18 @@ Other configless or lightweight commands include:
 
 ### Bootstrap-only configless commands
 
-Two commands are routed configlessly by the narrow bootstrap pre-router in
+Three commands are routed configlessly by the narrow bootstrap pre-router in
 `src/atlas_agent/cli_bootstrap.py` before the legacy CLI is loaded:
 
 - `atlas agent submit-conformance` (CAND-006)
 - `atlas agent readiness-envelope` (CAND-007)
+- `atlas agent operator-approval-gate` (CAND-008)
 
 These commands use dedicated stdlib-only handlers and do not load `AtlasConfig`, broker adapters,
 provider adapters, `RiskManager`, or runtime kill-switch state. They are recorded in the CLI command
 contract fixture at `tests/fixtures/cli_command_contract.json` under the `bootstrap_only_commands`
 section. The compatibility check script verifies that the legacy CLI registers minimal subparsers
-for both commands so that delegated forms such as `atlas --workspace X agent readiness-envelope --help`
+for all three commands so that delegated forms such as `atlas --workspace X agent readiness-envelope --help`
 remain consistent.
 
 ### Safety-sensitive commands

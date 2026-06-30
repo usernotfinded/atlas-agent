@@ -5,12 +5,12 @@
 **Candidate ID:** CAND-008  
 **Candidate line:** v0.6.16  
 **Current public release:** v0.6.15  
-**Status:** design-only / planning-only  
+**Status:** implemented in planning
 **Date:** 2026-06-30
 
-> **Design-only notice.** This document specifies CAND-008. No source code, tests,
-> checkers, CLI routes, or release metadata changes are authorized by this design
-> document. If implemented later, CAND-008 must remain evidence-only,
+> **Implementation note.** The CAND-008 operator approval gate has landed in the
+> planning line. The source code, tests, checker, CLI route, and release metadata
+> exist and enforce the boundaries below. CAND-008 remains evidence-only,
 > local-first, deterministic, non-submitting, non-live, non-transmitting,
 > human-in-the-loop, and fail-closed.
 

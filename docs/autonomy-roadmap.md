@@ -68,6 +68,14 @@ switch.
   It does not submit orders, call brokers or providers, load credentials,
   instantiate runtime trading objects, mutate state, or indicate live readiness.
   The status `readiness_envelope_recorded` is evidence-recording status only.
+- **CAND-008** is implemented as a simulated-only operator approval gate. It
+  consumes CAND-004, CAND-005, CAND-006, and CAND-007 evidence plus CAND-008
+  static local fixtures, evaluates a 13-gate fail-closed sequence, and records
+  `operator-approval-gate.json` and `operator-approval-gate-report.md`. It does
+  not submit orders, call brokers or providers, load credentials, instantiate
+  runtime trading objects, mutate state or approval queues, or indicate live
+  readiness. The status `operator_gate_recorded` is evidence-recording status
+  only and is not permission to submit orders.
 - No candidate in the current planning line enables unsupervised real-money
   trading or direct AI-to-broker execution.
 

@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `src/atlas_agent/agent/runtime_readiness_envelope_cli.py` CLI handler for the CAND-007 envelope evaluator.
 - `scripts/check_runtime_readiness_envelope_contract.py` static contract checker and `tests/test_runtime_readiness_envelope.py`, `tests/test_runtime_readiness_envelope_cli.py`, `tests/test_runtime_readiness_envelope_contract.py`, `tests/test_runtime_readiness_envelope_import_trace.py` test coverage.
 - `docs/runtime-readiness-envelope.md` user-facing documentation for the CAND-007 envelope evaluator.
+- CAND-008: Operator Approval Gate (Simulated Only) for deterministic, fixture-first operator evidence review that consumes CAND-004/CAND-005/CAND-006/CAND-007 artifacts plus CAND-008 static fixtures, evaluates a 13-gate fail-closed sequence, and records `operator-approval-gate.json` plus `operator-approval-gate-report.md` without submitting orders, calling brokers/providers, loading credentials, or claiming live readiness.
+- `atlas agent operator-approval-gate` command and configless `atlas agent operator-approval-gate` bootstrap route for simulated-only operator approval gate evaluation.
+- `src/atlas_agent/agent/operator_approval_gate.py` closed-schema engine, projection validators, universal rejection scanner, gate sequence, fingerprinting, and artifact writers.
+- `src/atlas_agent/agent/operator_approval_gate_cli.py` CLI handler for the CAND-008 operator approval gate.
+- `scripts/check_operator_approval_gate_contract.py` static contract checker and `tests/test_operator_approval_gate.py`, `tests/test_operator_approval_gate_cli.py`, `tests/test_operator_approval_gate_contract.py`, `tests/test_operator_approval_gate_import_trace.py` test coverage.
+- `docs/operator-approval-gate.md` user-facing documentation for the CAND-008 operator approval gate.
 - `atlas agent autonomous-paper` command for deterministic, paper-only autonomous decision loops on local sample/CSV data.
 - `atlas agent autonomous-scorecard` command for deterministic offline evaluation of autonomous-paper artifacts.
 - `atlas agent autonomous-paper-quality` command for deterministic offline trading-quality gate evaluation.
@@ -45,18 +51,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/test_autonomous_paper_scorecard.py` covering valid scorecard generation, missing/malformed artifacts, runs blocked by risk controls, no-trade runs, kill-switch blocked runs, replay mismatch, unsafe live/provider/broker references, redaction, promotion defaults, and CLI smoke.
 
 ### Changed
-- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004/CAND-005/CAND-006/CAND-007 paper-only scope, including CAND-005 as a read-only fixture-first comparison stage and CAND-007 as an envelope evaluator stage in the staged autonomy ladder.
-- `docs/shadow-live-readiness-contract.md` clarified: CAND-005 implements local fixture-first read-only comparison only; CAND-006 is a simulated-only gated submit conformance rehearsal; CAND-007 is a simulated-only runtime readiness envelope evaluator.
-- `docs/autonomy-roadmap.md` marked CAND-005, CAND-006, and CAND-007 implemented in planning.
+- `docs/bounded-live-autonomy-governance.md` updated to reflect the current v0.6.15 / v0.6.16 posture and CAND-001/CAND-002/CAND-003/CAND-004/CAND-005/CAND-006/CAND-007/CAND-008 paper-only scope, including CAND-005 as a read-only fixture-first comparison stage, CAND-007 as an envelope evaluator stage, and CAND-008 as an operator approval gate stage in the staged autonomy ladder.
+- `docs/shadow-live-readiness-contract.md` clarified: CAND-005 implements local fixture-first read-only comparison only; CAND-006 is a simulated-only gated submit conformance rehearsal; CAND-007 is a simulated-only runtime readiness envelope evaluator; CAND-008 is a simulated-only operator approval gate evaluator.
+- `docs/autonomy-roadmap.md` marked CAND-005, CAND-006, CAND-007, and CAND-008 implemented in planning.
 - `docs/runtime-readiness-envelope-design.md` updated to note that the CAND-007 implementation has landed.
-- `docs/architecture.md` documented `atlas agent readiness-envelope` as a second bootstrap-only configless route.
-- `docs/cli-command-compatibility.md` documented the second bootstrap-only command exception for CAND-007.
+- `docs/operator-approval-gate-design.md` updated to note that the CAND-008 implementation has landed.
+- `docs/architecture.md` documented `atlas agent readiness-envelope` as a second bootstrap-only configless route and `atlas agent operator-approval-gate` as a third bootstrap-only configless route.
+- `docs/cli-command-compatibility.md` documented the bootstrap-only command exceptions for CAND-007 and CAND-008.
 - `docs/gated-submit-conformance.md` added forward reference to CAND-007 as the next envelope stage.
+- `docs/runtime-readiness-envelope.md` added forward reference to CAND-008 as the next operator approval gate stage.
 - `docs/autonomous-paper-quality-gate.md` added note that `cost_impact_pct` is an approximation/proxy for directional paper-run review, not high-precision production cost analysis.
-- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, CAND-004, CAND-005, CAND-006, and CAND-007 as implemented planning candidates.
-- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, shadow-live read-only contract, autonomous paper scorecard, autonomous paper quality gate, gated submit conformance rehearsal, and runtime readiness envelope checkers and tests.
-- `pyproject.toml` console entry point updated from `atlas_agent.cli:main` to `atlas_agent.cli_bootstrap:main` to enable the configless CAND-006 route.
-- `tests/fixtures/cli_command_contract.json` updated with `agent submit-conformance`.
+- `docs/releases/v0.6.16-plan.md`, `v0.6.16-candidates.md`, `v0.6.16-candidates.json`, and `v0.6.16-candidate-selection.md` updated with CAND-001, CAND-002, CAND-003, CAND-004, CAND-005, CAND-006, CAND-007, and CAND-008 as implemented planning candidates.
+- `scripts/dev_check.sh` and `scripts/release_check.sh` wired to run the new autonomous paper loop, shadow-live contract, shadow-live read-only contract, autonomous paper scorecard, autonomous paper quality gate, gated submit conformance rehearsal, runtime readiness envelope, and operator approval gate checkers and tests.
+- `pyproject.toml` console entry point remains `atlas_agent.cli_bootstrap:main` to enable the configless CAND-006/CAND-007/CAND-008 routes.
+- `tests/fixtures/cli_command_contract.json` updated with `agent submit-conformance` and `agent operator-approval-gate`.
 - `tests/test_package_distribution_check.py` fake wheels now reflect the `atlas_agent.cli_bootstrap:main` entry point.
 
 ### Safety

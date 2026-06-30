@@ -393,6 +393,24 @@ echo "  → elapsed: ${SECONDS}s"
 
 echo ""
 echo "========================================"
+echo "10o. operator approval gate contract check"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_operator_approval_gate_contract.py || exit 1
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
+echo "10p. operator approval gate evaluation tests"
+echo "========================================"
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/test_operator_approval_gate.py tests/test_operator_approval_gate_cli.py tests/test_operator_approval_gate_contract.py tests/test_operator_approval_gate_import_trace.py -v || exit 1
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
+echo "========================================"
 echo "11. product demo and marketplace readiness check"
 echo "========================================"
 SECONDS=0

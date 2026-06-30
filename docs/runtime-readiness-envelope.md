@@ -148,6 +148,9 @@ readiness, not trading safety, not profitability evidence, and not permission to
 - CAND-007 consumes all three, plus five static local policy fixtures, to evaluate whether the
 candidate chain forms a coherent, internally consistent, fail-closed runtime readiness envelope
 for future supervised live-path design work.
+- CAND-008 is the next stage: an operator approval gate that consumes CAND-004, CAND-005,
+  CAND-006, and CAND-007 artifacts plus CAND-008 static fixtures to record an evidence-only
+  operator approval gate artifact. See [`docs/operator-approval-gate.md`](operator-approval-gate.md).
 
 ## See also
 
@@ -157,3 +160,4 @@ for future supervised live-path design work.
 - [`docs/shadow-live-readiness-contract.md`](shadow-live-readiness-contract.md)
 - [`docs/autonomous-paper-quality-gate.md`](autonomous-paper-quality-gate.md)
 - [`docs/shadow-live-readonly-comparison.md`](shadow-live-readonly-comparison.md)
+- [`docs/operator-approval-gate.md`](operator-approval-gate.md)

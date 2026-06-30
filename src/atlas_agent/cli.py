@@ -938,6 +938,9 @@ Safety First:
     from atlas_agent.agent.runtime_readiness_envelope_cli import (
         CLI_DESCRIPTION as _RE_DESCRIPTION,
     )
+    from atlas_agent.agent.operator_approval_gate_cli import (
+        CLI_DESCRIPTION as _OAG_DESCRIPTION,
+    )
 
     def _run_readiness_envelope_legacy_help(_args: argparse.Namespace) -> int:
         print("Runtime readiness envelope (CAND-007) is implemented configlessly as:")
@@ -979,6 +982,32 @@ Safety First:
     agent_readiness_envelope.add_argument("--as-of", help="ISO-8601 UTC timestamp.")
     agent_readiness_envelope.add_argument("--json", action="store_true", help="Emit JSON on stdout.")
     agent_readiness_envelope.set_defaults(func=_run_readiness_envelope_legacy_help)
+
+    def _run_operator_approval_gate_legacy_help(_args: argparse.Namespace) -> int:
+        print("Operator approval gate (CAND-008) is implemented configlessly as:")
+        print("  atlas agent operator-approval-gate ...")
+        print("Use the configless form above; this delegated form is for --workspace compatibility only.")
+        return 2
+
+    agent_operator_approval_gate = agent_sub.add_parser(
+        "operator-approval-gate",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="Operator approval gate evaluation (CAND-008) — evidence-only, simulated-only.",
+        description=_OAG_DESCRIPTION,
+    )
+    agent_operator_approval_gate.add_argument("--quality-gate", help="Path to CAND-004 trading-quality-gate.json.")
+    agent_operator_approval_gate.add_argument("--shadow-comparison", help="Path to CAND-005 shadow-live-comparison.json.")
+    agent_operator_approval_gate.add_argument("--submit-conformance", help="Path to CAND-006 gated-submit-conformance.json.")
+    agent_operator_approval_gate.add_argument("--readiness-envelope", help="Path to CAND-007 runtime-readiness-envelope.json.")
+    agent_operator_approval_gate.add_argument("--operator-identity", help="Path to the operator identity fixture.")
+    agent_operator_approval_gate.add_argument("--approval-policy", help="Path to the approval policy fixture.")
+    agent_operator_approval_gate.add_argument("--kill-switch-observation", help="Path to the kill-switch observation fixture.")
+    agent_operator_approval_gate.add_argument("--operator-acknowledgment", help="Path to the operator acknowledgment fixture.")
+    agent_operator_approval_gate.add_argument("--audit-policy", help="Path to the audit policy fixture.")
+    agent_operator_approval_gate.add_argument("--output-dir", help="Output directory for artifacts.")
+    agent_operator_approval_gate.add_argument("--as-of", help="ISO-8601 UTC timestamp.")
+    agent_operator_approval_gate.add_argument("--json", action="store_true", help="Emit JSON on stdout.")
+    agent_operator_approval_gate.set_defaults(func=_run_operator_approval_gate_legacy_help)
 
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
@@ -6237,6 +6266,8 @@ def main(argv: list[str] | None = None) -> int:
                 gsc_args.append("--json")
             return gsc_main(gsc_args)
         elif args.agent_command == "readiness-envelope":
+            return args.func(args)
+        elif args.agent_command == "operator-approval-gate":
             return args.func(args)
         elif args.agent_command == "run":
             if getattr(args, "offline", False):
