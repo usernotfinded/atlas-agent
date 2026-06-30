@@ -152,10 +152,10 @@ def _check_release_metadata(root: Path) -> list[str]:
     issues: list[str] = []
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     init_file = (root / "src/atlas_agent/__init__.py").read_text(encoding="utf-8")
-    if 'version = "0.6.15"' not in pyproject and 'version = "0.6.16"' not in pyproject:
-        issues.append("pyproject.toml source/package version must be 0.6.15 or 0.6.16")
-    if '__version__ = "0.6.15"' not in init_file and '__version__ = "0.6.16"' not in init_file:
-        issues.append("src/atlas_agent/__init__.py version must be 0.6.15 or 0.6.16")
+    if 'version = "0.6.16"' not in pyproject and 'version = "0.6.17"' not in pyproject:
+        issues.append("pyproject.toml source/package version must be 0.6.16 or 0.6.17")
+    if '__version__ = "0.6.16"' not in init_file and '__version__ = "0.6.17"' not in init_file:
+        issues.append("src/atlas_agent/__init__.py version must be 0.6.16 or 0.6.17")
     release_metadata = (root / "docs/release-status.md").read_text(encoding="utf-8") if (root / "docs/release-status.md").exists() else ""
     combined = "\n".join([
         pyproject,

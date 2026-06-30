@@ -4,15 +4,16 @@
 
 **Candidate ID:** CAND-009
 **Candidate line:** v0.6.17
-**Current public release:** v0.6.16
-**Status:** implemented / accepted into the `v0.6.17` candidate chain
+**Current public release:** v0.6.17
+**Status:** implemented / accepted / released in `v0.6.17`
 **Date:** 2026-06-30
 **Design document path:** `docs/safety-state-atomic-write-hardening-design.md`
 
 > **Acceptance disclaimer.** CAND-009 acceptance is documentation/governance
-> acceptance only. It does not authorize `v0.6.17` release cutover and does not
-> enable live trading, live submit, order placement, broker/provider execution,
-> credential loading, or approval queue mutation.
+> acceptance only. `v0.6.17` release cutover occurred after a separate
+> release-readiness review. CAND-009 does not enable live trading, live submit,
+> order placement, broker/provider execution, credential loading, or approval
+> queue mutation.
 
 ---
 
@@ -30,12 +31,13 @@ fail-closed behavior.
 
 - Branch: `main`
 - Implementation HEAD: `ab997c55781e24744fff2f992c3dd358842e15fd`
-- Current public release: `v0.6.16`
-- Package version: `0.6.16`
+- Acceptance HEAD: `792a80a6d8b2142efbd5e8b7d28358216eb4ed35`
+- Current public release: `v0.6.17`
+- Package version: `0.6.17`
 - Candidate line: `v0.6.17`
-- Next planned release: `v0.6.17`
-- Release status: planning-only / not released
-- Release authorization: not granted
+- Next planned release: `v0.6.18`
+- Release status: released as current public GitHub release on 2026-07-01
+- Release authorization: granted
 - PyPI: not published
 - Live mode: fail-closed (`atlas run --mode live` exits 2)
 

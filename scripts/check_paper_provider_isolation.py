@@ -342,19 +342,19 @@ def _check_tests_mention_flag() -> list[str]:
 
 def _check_release_metadata() -> list[str]:
     errors: list[str] = []
-    if PACKAGE_VERSION != "0.6.16":
+    if PACKAGE_VERSION != "0.6.17":
         errors.append(
-            f"Source version {PACKAGE_VERSION} != 0.6.16"
+            f"Source version {PACKAGE_VERSION} != 0.6.17"
         )
-    if CURRENT_PUBLIC_TAG != "v0.6.16":
-        errors.append(f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.16")
-    if NEXT_PLANNED_TAG not in ("v0.6.17", "0.6.17"):
-        errors.append(f"Next planned release {NEXT_PLANNED_TAG} != v0.6.17")
+    if CURRENT_PUBLIC_TAG != "v0.6.17":
+        errors.append(f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.17")
+    if NEXT_PLANNED_TAG not in ("v0.6.18", "0.6.18"):
+        errors.append(f"Next planned release {NEXT_PLANNED_TAG} != v0.6.18")
     if PYPI_PUBLISHED is True:
         errors.append("PyPI is marked as published; must remain false")
 
     result = subprocess.run(
-        ["git", "tag", "--list", "v0.6.17"],
+        ["git", "tag", "--list", "v0.6.18"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,

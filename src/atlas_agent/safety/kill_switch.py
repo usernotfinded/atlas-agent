@@ -3,15 +3,15 @@ from __future__ import annotations
 import json
 import threading
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable, Sequence, Optional, Literal
+from typing import Any, Callable, Sequence, Optional
 
 from atlas_agent.brokers.base import Broker
 from atlas_agent.execution.order import FlattenResult, OrderResult
 from atlas_agent.safety.atomic_write import atomic_write_json
-from atlas_agent.safety.models import KillSwitchMode, KillSwitchDecision, KillSwitchStatus
+from atlas_agent.safety.models import KillSwitchMode, KillSwitchDecision
 from atlas_agent.safety.state import KillSwitchState as AdvancedKillSwitchState
 from atlas_agent.safety.heartbeat import HeartbeatManager
 from atlas_agent.audit import AuditWriter

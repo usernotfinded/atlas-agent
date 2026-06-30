@@ -27,6 +27,7 @@ SOURCE_VERSION = "0.6.13"
 POST_RELEASE_SOURCE_VERSION = "0.6.14"
 POST_V0615_SOURCE_VERSION = "0.6.15"
 POST_V0616_SOURCE_VERSION = "0.6.16"
+POST_V0617_SOURCE_VERSION = "0.6.17"
 
 EVIDENCE_MD = "docs/releases/v0.6.14-paper-portfolio-evidence.md"
 EVIDENCE_JSON = "docs/releases/v0.6.14-paper-portfolio-evidence.json"
@@ -227,7 +228,7 @@ def _check_markdown(path: Path, errors: list[str]) -> None:
 def _check_repository_version(root: Path, errors: list[str]) -> None:
     pyproject = _read(root / "pyproject.toml")
     init_py = _read(root / "src" / "atlas_agent" / "__init__.py")
-    allowed = (SOURCE_VERSION, POST_RELEASE_SOURCE_VERSION, POST_V0615_SOURCE_VERSION, POST_V0616_SOURCE_VERSION)
+    allowed = (SOURCE_VERSION, POST_RELEASE_SOURCE_VERSION, POST_V0615_SOURCE_VERSION, POST_V0616_SOURCE_VERSION, POST_V0617_SOURCE_VERSION)
     if not any(f'version = "{version}"' in pyproject for version in allowed):
         errors.append("Source/package version must be an audited v0.6.14 posture in pyproject.toml")
     if not any(f'__version__ = "{version}"' in init_py for version in allowed):

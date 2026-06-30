@@ -22,9 +22,9 @@ from pathlib import Path
 from typing import Any
 
 
-CURRENT_PUBLIC = "v0.6.16"
-NEXT_PLANNED = "v0.6.17"
-SOURCE_VERSION = "0.6.16"
+CURRENT_PUBLIC = "v0.6.17"
+NEXT_PLANNED = "v0.6.18"
+SOURCE_VERSION = "0.6.17"
 
 REQUIRED_DOCS = [
     "docs/paper-strategy-walk-forward.md",

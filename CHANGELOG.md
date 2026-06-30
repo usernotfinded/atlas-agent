@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.17] - 2026-07-01
+
 ### Added
 - CAND-009: Safety State Atomic-Write Hardening. `src/atlas_agent/safety/atomic_write.py` stdlib-only helper using unique same-directory temporary files; migrated `src/atlas_agent/safety/heartbeat.py`, `src/atlas_agent/safety/deadman.py`, `src/atlas_agent/safety/kill_switch.py`, and `src/atlas_agent/safety/state.py` from fixed `<target>.tmp` writes; regression and concurrency tests under `tests/safety/`.
 - `doctor` top-level command added to `tests/fixtures/cli_command_contract.json`.
@@ -18,8 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Safety
 - No live trading, live submit, broker/provider execution, credential loading, or order placement introduced.
 - `atlas run --mode live` remains fail-closed.
-- No version bump, tag, release, or PyPI publication.
-- `v0.6.17` remains planning-only / not released.
+- This is a GitHub-only release; PyPI was not published.
 
 ## [0.6.16] - 2026-06-30
 

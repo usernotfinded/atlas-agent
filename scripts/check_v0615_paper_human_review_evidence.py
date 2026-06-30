@@ -26,6 +26,7 @@ NEXT_PLANNED = "v0.6.15"
 SOURCE_VERSION = "0.6.14"
 POST_RELEASE_SOURCE_VERSION = "0.6.15"
 POST_V0616_SOURCE_VERSION = "0.6.16"
+POST_V0617_SOURCE_VERSION = "0.6.17"
 
 EVIDENCE_MD = "docs/releases/v0.6.15-paper-human-review-evidence.md"
 EVIDENCE_JSON = "docs/releases/v0.6.15-paper-human-review-evidence.json"
@@ -305,9 +306,12 @@ def _check_repository_version(root: Path, errors: list[str]) -> None:
     ) or (
         f'version = "{POST_V0616_SOURCE_VERSION}"' in pyproject
         and f'__version__ = "{POST_V0616_SOURCE_VERSION}"' in init_py
+    ) or (
+        f'version = "{POST_V0617_SOURCE_VERSION}"' in pyproject
+        and f'__version__ = "{POST_V0617_SOURCE_VERSION}"' in init_py
     )
     if not source_ok:
-        errors.append("Source/package version must match the audited v0.6.15 state (0.6.14, 0.6.15, or 0.6.16)")
+        errors.append("Source/package version must match the audited v0.6.15 state (0.6.14, 0.6.15, 0.6.16, or 0.6.17)")
 
     release_metadata = _read(root / "docs" / "releases" / "release-metadata.json")
     metadata_ok = (
@@ -319,6 +323,9 @@ def _check_repository_version(root: Path, errors: list[str]) -> None:
     ) or (
         '"current_public_release": "v0.6.16"' in release_metadata
         and '"next_planned_release": "v0.6.17"' in release_metadata
+    ) or (
+        '"current_public_release": "v0.6.17"' in release_metadata
+        and '"next_planned_release": "v0.6.18"' in release_metadata
     )
     if not metadata_ok:
         errors.append("Release metadata must match the audited v0.6.15 state")

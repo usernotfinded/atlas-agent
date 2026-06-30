@@ -52,7 +52,7 @@ switch.
 
 ### Candidate status in the `v0.6.16` release
 
-`v0.6.16` is the current public GitHub release. It includes CAND-001 through
+`v0.6.16` is a historical public GitHub release. It includes CAND-001 through
 CAND-008 as a bounded, evidence-only, simulated-only governance release.
 
 - **CAND-001** through **CAND-004** remain paper-only, deterministic, local-first
@@ -86,9 +86,9 @@ CAND-008 as a bounded, evidence-only, simulated-only governance release.
 - No candidate in the `v0.6.16` release enables unsupervised real-money
   trading or direct AI-to-broker execution.
 
-### Candidate status in the `v0.6.17` planning line
+### Candidate status in the `v0.6.17` release
 
-`v0.6.17` is planning-only / not released. It includes CAND-009 as an accepted
+`v0.6.17` is the current public GitHub release. It includes CAND-009 as a
 safety-state persistence hardening candidate.
 
 - **CAND-009** is accepted into the `v0.6.17` candidate chain as a safety-state
@@ -97,11 +97,14 @@ safety-state persistence hardening candidate.
   stdlib-only unique same-directory atomic-write helper, preserving file
   formats, public APIs, permissions, and fail-closed behavior. It does not
   introduce live trading, live submit, order placement, broker/provider
-  execution, credential loading, or approval queue mutation. Acceptance is
-  documentation/governance acceptance only and is not `v0.6.17` release
-  authorization.
-- No candidate in the `v0.6.17` planning line enables unsupervised real-money
-  trading or direct AI-to-broker execution.
+  execution, credential loading, or approval queue mutation.
+- No candidate in the `v0.6.17` release enables unsupervised real-money trading
+  or direct AI-to-broker execution.
+
+### Candidate status in the `v0.6.18` planning line
+
+`v0.6.18` is the next planning line; no tag, GitHub Release, or PyPI
+publication exists. No candidates are currently proposed.
 
 ## Current state vs future state
 

@@ -16,14 +16,15 @@
 
 - **Candidate ID:** CAND-009
 - **Title:** Safety State Atomic-Write Hardening
-- **Target release line:** v0.6.17 planning-only
-- **Current public release:** v0.6.16
-- **Package version:** 0.6.16
-- **Status:** implemented on `main` and accepted into the `v0.6.17` candidate chain; no version bump, tag, release, or PyPI publication.
+- **Target release line:** v0.6.17
+- **Current public release:** v0.6.17
+- **Package version:** 0.6.17
+- **Status:** implemented on `main`, accepted, and released in `v0.6.17`
 - **Acceptance verdict:** PASS
 - **Acceptance source:** independent CAND-009 implementation review
 - **Implementation HEAD:** `ab997c55781e24744fff2f992c3dd358842e15fd`
-- **Release authorization:** not granted
+- **Acceptance HEAD:** `792a80a6d8b2142efbd5e8b7d28358216eb4ed35`
+- **Release authorization:** granted
 
 ---
 
@@ -34,15 +35,16 @@
 | Repository | `usernotfinded/atlas-agent` |
 | Branch | `main` |
 | Planning HEAD | `ab997c55781e24744fff2f992c3dd358842e15fd` |
+| Acceptance HEAD | `792a80a6d8b2142efbd5e8b7d28358216eb4ed35` |
 | Design document | `docs/safety-state-atomic-write-hardening-design.md` |
 | Design review verdict | `PASS_WITH_WARNINGS` |
 | Implementation review verdict | `PASS` |
-| Public release | `v0.6.16` |
-| Package version | `0.6.16` |
+| Public release | `v0.6.17` |
+| Package version | `0.6.17` |
 | Candidate line | `v0.6.17` |
-| Next planned release | `v0.6.17` |
-| Release status | planning-only / not released |
-| Release authorization | not granted |
+| Next planned release | `v0.6.18` |
+| Release status | released as current public GitHub release on 2026-07-01 |
+| Release authorization | granted |
 | PyPI published | `false` |
 | Live mode | fail-closed (`atlas run --mode live` exits 2) |
 
@@ -113,9 +115,9 @@ The implementation must preserve the following invariants. Any implementation th
 - No weakening of kill switch, deadman, or heartbeat.
 - No audit hash-chain bypass.
 - `atlas run --mode live` remains exit 2 / fail-closed.
-- Package version remains `0.6.16`.
-- Public release remains `v0.6.16`.
-- No tag, release, or PyPI publication.
+- Package version is bumped to `0.6.17`.
+- Public release is `v0.6.17`.
+- An annotated `v0.6.17` tag and GitHub Release are created; PyPI is not published.
 
 ---
 

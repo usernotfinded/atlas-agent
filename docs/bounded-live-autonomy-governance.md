@@ -32,7 +32,7 @@ it is bounded, reversible, auditable, fail-closed, and explicitly opt-in.
 
 ## Current release truth
 
-As of the current release line (`v0.6.16` public GitHub release, `v0.6.17`
+As of the current release line (`v0.6.17` public GitHub release, `v0.6.18`
 planning-only):
 
 - Autonomous live trading is **not implemented**.
@@ -97,13 +97,14 @@ planning-only):
   authorization.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
-- `v0.6.16` is released as a bounded/evidence/simulated-only governance release.
+- `v0.6.16` is a historical bounded/evidence/simulated-only governance release.
   It includes CAND-001 through CAND-008 with no live trading, no live submit, no
   broker/provider execution, no credential loading, and no order placement. PyPI
   was not published.
-- `v0.6.17` is planning-only / not released. It includes CAND-009 as an accepted
-  safety-state persistence hardening candidate. No tag, GitHub Release, or PyPI
-  publication exists for `v0.6.17`.
+- `v0.6.17` is released as a safety-state persistence hardening release. It
+  includes CAND-009 and is a GitHub-only release; PyPI was not published. No
+  live trading, live submit, broker/provider execution, credential loading,
+  order placement, or approval queue mutation is introduced.
 - No profit, risk elimination, claims that live trading is safe, or
   autonomous-trading-readiness claims are made.
 

@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.6.16)** — package/source version is `0.6.16`. `v0.6.16` is the current public GitHub release. `v0.6.15` is the historical previous public release. `v0.6.17` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
+> **Current Status (v0.6.17)** — package/source version is `0.6.17`. `v0.6.17` is the current public GitHub release. `v0.6.16` is the historical previous public release. `v0.6.18` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -106,7 +106,7 @@ The research workflow is paper-only and analysis-only. All commands operate on l
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-`v0.6.16` is the current public GitHub release. `v0.6.15` is the historical previous public release. `v0.6.17` is the next planning line. The package/source version on main is `0.6.16`. Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
+`v0.6.17` is the current public GitHub release. `v0.6.16` is the historical previous public release. `v0.6.18` is the next planning line. The package/source version on main is `0.6.17`. Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
 
 ## Broker-Neutral Model
 
