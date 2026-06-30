@@ -286,7 +286,6 @@ class OperatorApprovalGateReport:
             "gate_sequence": list(self.gate_sequence),
             "gates": [g.to_dict() for g in self.gates],
             "input_artifacts": self.input_artifacts,
-            "input_paths": {label: str(path) for label, path in self.input_paths.items()},
             "input_fingerprints": self.input_fingerprints,
             "input_digest": self.input_digest,
             "approval_gate_digest": self.approval_gate_digest,

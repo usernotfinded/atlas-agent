@@ -4,14 +4,17 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from atlas_agent.agent.operator_approval_gate import (
     GATE_SEQUENCE,
     OperatorApprovalGateInputs,
+    OperatorApprovalGateReport,
     OperatorApprovalGateValidationError,
     _CANONICAL_ACKNOWLEDGMENT_TEXT,
+    _build_report,
     _compute_acknowledgment_digest,
     build_operator_approval_gate_report,
     fingerprint_json,
@@ -623,13 +626,28 @@ def test_json_write_failure_rolls_back_status(tmp_path: Path) -> None:
     assert recorded.status == "blocked"
 
 
-def test_synthesis_failure_returns_blocked(tmp_path: Path) -> None:
-    # Synthesis only fails if building the report fails; it is hard to trigger
-    # without patching. We simulate by corrupting the gate sequence length check
-    # indirectly: build a valid report and manually break it.
+def test_synthesis_failure_returns_blocked(tmp_path: Path, monkeypatch: Any) -> None:
+    original_build_report = _build_report
+
+    def _failing_build_report(*args: Any, **kwargs: Any) -> OperatorApprovalGateReport:
+        if kwargs.get("status") == "operator_gate_synthesized":
+            raise RuntimeError("simulated synthesis failure")
+        return original_build_report(*args, **kwargs)
+
+    monkeypatch.setattr(
+        "atlas_agent.agent.operator_approval_gate._build_report", _failing_build_report
+    )
+
     inputs = _make_inputs(tmp_path)
     report = build_operator_approval_gate_report(inputs)
-    assert report.status != "blocked"
+    assert report.status == "blocked"
+    assert report.exit_code == 2
+    synthesis_gate = next(g for g in report.gates if g.gate_id == "approval_gate_synthesis")
+    assert synthesis_gate.status == "fail"
+    assert "simulated synthesis failure" in synthesis_gate.reason
+    recording_gate = next(g for g in report.gates if g.gate_id == "artifact_recording_gate")
+    assert recording_gate.status == "not_run"
+    assert report.status != "operator_gate_synthesized"
 
 
 def test_operator_gate_synthesized_is_not_final_success(tmp_path: Path) -> None:
@@ -741,3 +759,83 @@ def test_parse_as_of_utc_rejects_naive() -> None:
 def test_parse_as_of_utc_accepts_z_and_offset() -> None:
     assert parse_as_of_utc("2026-06-24T10:00:00Z") == "2026-06-24T10:00:00Z"
     assert parse_as_of_utc("2026-06-24T10:00:00+00:00") == "2026-06-24T10:00:00Z"
+
+
+def test_json_artifact_does_not_contain_input_paths_key(tmp_path: Path) -> None:
+    inputs = _make_inputs(tmp_path)
+    report = build_operator_approval_gate_report(inputs)
+    recorded = write_operator_approval_gate_artifacts(report, inputs.output_dir)
+    json_text = (inputs.output_dir / "operator-approval-gate.json").read_text(
+        encoding="utf-8"
+    )
+    assert '"input_paths"' not in json_text
+    assert recorded.status == "operator_gate_recorded"
+
+
+def test_json_artifact_does_not_leak_absolute_input_paths(tmp_path: Path) -> None:
+    inputs = _make_inputs(tmp_path)
+    report = build_operator_approval_gate_report(inputs)
+    recorded = write_operator_approval_gate_artifacts(report, inputs.output_dir)
+    json_text = (inputs.output_dir / "operator-approval-gate.json").read_text(
+        encoding="utf-8"
+    )
+    for label in [
+        "quality_gate",
+        "shadow_comparison",
+        "submit_conformance",
+        "readiness_envelope",
+        "operator_identity",
+        "approval_policy",
+        "kill_switch_observation",
+        "operator_acknowledgment",
+        "audit_policy",
+    ]:
+        path = getattr(inputs, f"{label}_path")
+        assert str(path) not in json_text, f"absolute path leaked for {label}"
+        assert str(path.parent) not in json_text, f"parent directory leaked for {label}"
+    assert recorded.status == "operator_gate_recorded"
+
+
+def test_markdown_artifact_does_not_leak_absolute_input_paths(tmp_path: Path) -> None:
+    inputs = _make_inputs(tmp_path)
+    report = build_operator_approval_gate_report(inputs)
+    recorded = write_operator_approval_gate_artifacts(report, inputs.output_dir)
+    md_text = (inputs.output_dir / "operator-approval-gate-report.md").read_text(
+        encoding="utf-8"
+    )
+    for label in [
+        "quality_gate",
+        "shadow_comparison",
+        "submit_conformance",
+        "readiness_envelope",
+        "operator_identity",
+        "approval_policy",
+        "kill_switch_observation",
+        "operator_acknowledgment",
+        "audit_policy",
+    ]:
+        path = getattr(inputs, f"{label}_path")
+        assert str(path) not in md_text, f"absolute path leaked for {label}"
+        assert str(path.parent) not in md_text, f"parent directory leaked for {label}"
+    assert recorded.status == "operator_gate_recorded"
+
+
+def test_input_artifacts_contains_only_safe_basenames(tmp_path: Path) -> None:
+    inputs = _make_inputs(tmp_path)
+    report = build_operator_approval_gate_report(inputs)
+    recorded = write_operator_approval_gate_artifacts(report, inputs.output_dir)
+    for label, name in recorded.input_artifacts.items():
+        assert name is not None
+        assert "/" not in name
+        assert "\\" not in name
+        assert name == getattr(inputs, f"{label}_path").name
+
+
+def test_input_fingerprints_remain_deterministic(tmp_path: Path) -> None:
+    inputs = _make_inputs(tmp_path)
+    report1 = build_operator_approval_gate_report(inputs)
+    report2 = build_operator_approval_gate_report(inputs)
+    assert report1.input_fingerprints == report2.input_fingerprints
+    assert report1.input_fingerprints
+    for label in report1.input_fingerprints:
+        assert report1.input_fingerprints[label].startswith("sha256:")

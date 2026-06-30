@@ -4,6 +4,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -276,3 +277,33 @@ def test_output_path_aliasing_rejected(tmp_path: Path) -> None:
     os.link(paths["quality_gate"], aliased)
     rc = main(_base_args(paths, aliased))
     assert rc == 2
+
+
+def test_json_output_does_not_contain_input_paths(tmp_path: Path) -> None:
+    paths = _make_fixture_set(tmp_path)
+    output_dir = tmp_path / "out"
+    rc = main(_base_args(paths, output_dir) + ["--json"])
+    assert rc == 0
+    json_text = (output_dir / "operator-approval-gate.json").read_text(encoding="utf-8")
+    assert '"input_paths"' not in json_text
+
+
+def test_json_output_does_not_leak_absolute_input_paths(tmp_path: Path) -> None:
+    paths = _make_fixture_set(tmp_path)
+    output_dir = tmp_path / "out"
+    rc = main(_base_args(paths, output_dir) + ["--json"])
+    assert rc == 0
+    json_text = (output_dir / "operator-approval-gate.json").read_text(encoding="utf-8")
+    for name, path in paths.items():
+        assert str(path) not in json_text, f"absolute path leaked for {name}"
+        assert str(path.parent) not in json_text, f"parent directory leaked for {name}"
+
+
+def test_cli_json_stdout_does_not_contain_input_paths(tmp_path: Path, capsys: Any) -> None:
+    paths = _make_fixture_set(tmp_path)
+    output_dir = tmp_path / "out"
+    rc = main(_base_args(paths, output_dir) + ["--json"])
+    assert rc == 0
+    captured = capsys.readouterr()
+    assert '"input_paths"' not in captured.out
+    assert '"input_paths"' not in captured.err

@@ -822,6 +822,107 @@ def _check_no_raw_upstream_leakage() -> list[str]:
     return errors
 
 
+def _get_class_method_source(text: str, class_name: str, method_name: str) -> str | None:
+    """Return the source text of a method inside a class, or None."""
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return None
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and node.name == class_name:
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name == method_name:
+                    return ast.get_source_segment(text, item) or ""
+    return None
+
+
+def _check_no_input_paths_in_serialization() -> list[str]:
+    """OperatorApprovalGateReport.to_dict() must not serialize input_paths."""
+    errors: list[str] = []
+    if not ENGINE_MODULE.exists():
+        return errors
+    text = _read(ENGINE_MODULE)
+    rel = _rel(ENGINE_MODULE)
+
+    method_source = _get_class_method_source(text, "OperatorApprovalGateReport", "to_dict")
+    if method_source is None:
+        errors.append(f"[{rel}] OperatorApprovalGateReport.to_dict() not found")
+        return errors
+
+    if '"input_paths"' in method_source or "'input_paths'" in method_source:
+        errors.append(f"[{rel}] to_dict() serializes forbidden 'input_paths' key")
+
+    # Ensure the class still declares the internal field (used by aliasing checks).
+    class_source = ""
+    try:
+        tree = ast.parse(text)
+    except SyntaxError as exc:
+        errors.append(f"[{rel}] Syntax error: {exc}")
+        return errors
+    for node in tree.body:
+        if isinstance(node, ast.ClassDef) and node.name == "OperatorApprovalGateReport":
+            class_source = ast.get_source_segment(text, node) or ""
+            break
+    if "input_paths:" not in class_source:
+        errors.append(f"[{rel}] OperatorApprovalGateReport missing internal input_paths field")
+
+    return errors
+
+
+def _check_output_uses_safe_identifiers() -> list[str]:
+    """Output serialization must use basename-only input_artifacts and fingerprints."""
+    errors: list[str] = []
+    if not ENGINE_MODULE.exists():
+        return errors
+    text = _read(ENGINE_MODULE)
+    rel = _rel(ENGINE_MODULE)
+
+    method_source = _get_class_method_source(text, "OperatorApprovalGateReport", "to_dict")
+    if method_source is None:
+        errors.append(f"[{rel}] OperatorApprovalGateReport.to_dict() not found")
+        return errors
+
+    if '"input_artifacts": self.input_artifacts' not in method_source:
+        errors.append(f"[{rel}] to_dict() must serialize input_artifacts")
+    if '"input_fingerprints": self.input_fingerprints' not in method_source:
+        errors.append(f"[{rel}] to_dict() must serialize input_fingerprints")
+
+    # Artifact identifiers must be basename-only.
+    if "_redact_path" not in text:
+        errors.append(f"[{rel}] Missing _redact_path basename helper")
+    if "path.name" not in text:
+        errors.append(f"[{rel}] input_artifacts must derive identifiers from path.name")
+
+    return errors
+
+
+def _check_no_path_string_serialization() -> list[str]:
+    """Guard against absolute/relative path serialization in output artifacts."""
+    errors: list[str] = []
+    if not ENGINE_MODULE.exists():
+        return errors
+    text = _read(ENGINE_MODULE)
+    rel = _rel(ENGINE_MODULE)
+
+    method_source = _get_class_method_source(text, "OperatorApprovalGateReport", "to_dict")
+    if method_source is None:
+        errors.append(f"[{rel}] OperatorApprovalGateReport.to_dict() not found")
+        return errors
+
+    forbidden_patterns = (
+        "str(path)",
+        "str(self.input_paths",
+        "Path(",
+    )
+    for pattern in forbidden_patterns:
+        if pattern in method_source:
+            errors.append(
+                f"[{rel}] to_dict() contains possible path serialization: {pattern!r}"
+            )
+
+    return errors
+
+
 def check_all() -> dict[str, bool | list[str]]:
     """Run all contract checks and return a structured result."""
     errors: list[str] = []
@@ -849,6 +950,9 @@ def check_all() -> dict[str, bool | list[str]]:
     errors.extend(_check_stale_cand008_doc_claims())
     errors.extend(_check_canonical_blockers_field())
     errors.extend(_check_no_raw_upstream_leakage())
+    errors.extend(_check_no_input_paths_in_serialization())
+    errors.extend(_check_output_uses_safe_identifiers())
+    errors.extend(_check_no_path_string_serialization())
 
     return {
         "passed": len(errors) == 0,
