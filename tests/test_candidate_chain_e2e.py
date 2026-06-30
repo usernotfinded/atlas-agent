@@ -518,3 +518,151 @@ def test_end_to_end_cand004_to_cand007_pipeline(tmp_path: Path) -> None:
     assert conformance["safety_assertions"]["no_live_submit"] is True
     assert conformance["safety_assertions"]["no_broker_called"] is True
     assert envelope["envelope_assertions"]["live_submit_forbidden"] is True
+
+
+_RAW_PAYLOAD_SENTINEL_KEY = "raw_payload_sentinel_should_not_leak"
+_RAW_PAYLOAD_SENTINEL_VALUE = "DO_NOT_EMBED_RAW_UPSTREAM_ARTIFACT"
+
+
+def _build_cand006_report(
+    quality_gate_path: Path,
+    shadow_comparison_path: Path,
+    tmp_path: Path,
+) -> tuple[Any, Path]:
+    """Run CAND-006 without asserting success and return the report."""
+    order_intent_path = _make_order_intent(tmp_path)
+    kill_switch_path = _make_kill_switch(tmp_path)
+    risk_envelope_path = _make_risk_envelope(tmp_path, order_intent_path)
+    approval_path = _make_approval(tmp_path, order_intent_path, risk_envelope_path)
+
+    inputs = SubmitConformanceInputs(
+        quality_gate_path=quality_gate_path,
+        shadow_comparison_path=shadow_comparison_path,
+        order_intent_path=order_intent_path,
+        kill_switch_path=kill_switch_path,
+        risk_envelope_path=risk_envelope_path,
+        approval_path=approval_path,
+        output_dir=tmp_path / "cand006" / "out",
+        as_of=_AS_OF,
+    )
+    report = build_gated_submit_conformance_report(inputs)
+    return report, inputs.output_dir
+
+
+def _copy_json_without_field(path: Path, field: str, tmp_path: Path) -> Path:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    data.pop(field, None)
+    out = tmp_path / f"{path.stem}-missing-{field}.json"
+    _write_json(out, data)
+    return out
+
+
+def test_cand004_missing_symbol_rejected_by_cand006(tmp_path: Path) -> None:
+    quality_gate_path = _make_paper_artifacts(tmp_path)
+    shadow_path = _make_shadow_live_artifact(quality_gate_path, tmp_path)
+    bad_quality_gate = _copy_json_without_field(quality_gate_path, "symbol", tmp_path)
+
+    report, _ = _build_cand006_report(bad_quality_gate, shadow_path, tmp_path)
+    assert report.status != "dry_run_recorded"
+    assert report.exit_code == 2
+    assert report.blockers
+    assert report.dry_run_request is None
+
+
+def test_cand004_missing_quality_state_rejected_by_cand006(tmp_path: Path) -> None:
+    quality_gate_path = _make_paper_artifacts(tmp_path)
+    shadow_path = _make_shadow_live_artifact(quality_gate_path, tmp_path)
+    bad_quality_gate = _copy_json_without_field(
+        quality_gate_path, "quality_state", tmp_path
+    )
+
+    report, _ = _build_cand006_report(bad_quality_gate, shadow_path, tmp_path)
+    assert report.status != "dry_run_recorded"
+    assert report.exit_code == 2
+    assert report.blockers
+    assert report.dry_run_request is None
+
+
+def test_cand005_missing_status_rejected_by_cand006(tmp_path: Path) -> None:
+    quality_gate_path = _make_paper_artifacts(tmp_path)
+    shadow_path = _make_shadow_live_artifact(quality_gate_path, tmp_path)
+    bad_shadow = _copy_json_without_field(shadow_path, "status", tmp_path)
+
+    report, _ = _build_cand006_report(quality_gate_path, bad_shadow, tmp_path)
+    assert report.status != "dry_run_recorded"
+    assert report.exit_code == 2
+    assert report.blockers
+    assert report.dry_run_request is None
+
+
+def test_cand005_missing_freshness_assessment_rejected_by_cand006(
+    tmp_path: Path,
+) -> None:
+    quality_gate_path = _make_paper_artifacts(tmp_path)
+    shadow_path = _make_shadow_live_artifact(quality_gate_path, tmp_path)
+    bad_shadow = _copy_json_without_field(
+        shadow_path, "freshness_assessment", tmp_path
+    )
+
+    report, _ = _build_cand006_report(quality_gate_path, bad_shadow, tmp_path)
+    assert report.status != "dry_run_recorded"
+    assert report.exit_code == 2
+    assert report.blockers
+    assert report.dry_run_request is None
+
+
+def test_cand006_accepts_extra_upstream_fields_if_projected_fields_present(
+    tmp_path: Path,
+) -> None:
+    quality_gate_path = _make_paper_artifacts(tmp_path)
+    quality_gate = json.loads(quality_gate_path.read_text(encoding="utf-8"))
+    quality_gate["extra_upstream_field"] = "allowed"
+    quality_gate_path_extra = tmp_path / "trading-quality-gate-extra.json"
+    _write_json(quality_gate_path_extra, quality_gate)
+
+    shadow_path = _make_shadow_live_artifact(quality_gate_path, tmp_path)
+    shadow = json.loads(shadow_path.read_text(encoding="utf-8"))
+    shadow["extra_upstream_field"] = "allowed"
+    shadow_path_extra = tmp_path / "shadow-live-comparison-extra.json"
+    _write_json(shadow_path_extra, shadow)
+
+    conformance_path = _make_gated_submit_conformance_artifact(
+        quality_gate_path_extra, shadow_path_extra, tmp_path
+    )
+    data = json.loads(conformance_path.read_text(encoding="utf-8"))
+    assert data["status"] == "dry_run_recorded"
+    assert data["exit_code"] == 0
+
+
+def test_raw_upstream_payloads_do_not_leak_into_cand006_or_cand007(
+    tmp_path: Path,
+) -> None:
+    quality_gate_path = _make_paper_artifacts(tmp_path)
+    quality_gate = json.loads(quality_gate_path.read_text(encoding="utf-8"))
+    quality_gate["metrics"][_RAW_PAYLOAD_SENTINEL_KEY] = _RAW_PAYLOAD_SENTINEL_VALUE
+    quality_gate[_RAW_PAYLOAD_SENTINEL_KEY] = _RAW_PAYLOAD_SENTINEL_VALUE
+    _write_json(quality_gate_path, quality_gate)
+
+    shadow_path = _make_shadow_live_artifact(quality_gate_path, tmp_path)
+    shadow = json.loads(shadow_path.read_text(encoding="utf-8"))
+    shadow[_RAW_PAYLOAD_SENTINEL_KEY] = _RAW_PAYLOAD_SENTINEL_VALUE
+    _write_json(shadow_path, shadow)
+
+    conformance_path = _make_gated_submit_conformance_artifact(
+        quality_gate_path, shadow_path, tmp_path
+    )
+    envelope_path = _make_runtime_readiness_envelope_artifact(
+        quality_gate_path, shadow_path, conformance_path, tmp_path
+    )
+
+    cand006_text = conformance_path.read_text(encoding="utf-8")
+    cand007_text = envelope_path.read_text(encoding="utf-8")
+    md_path = envelope_path.parent / "runtime-readiness-envelope-report.md"
+    cand007_md = md_path.read_text(encoding="utf-8")
+
+    assert _RAW_PAYLOAD_SENTINEL_KEY not in cand006_text
+    assert _RAW_PAYLOAD_SENTINEL_VALUE not in cand006_text
+    assert _RAW_PAYLOAD_SENTINEL_KEY not in cand007_text
+    assert _RAW_PAYLOAD_SENTINEL_VALUE not in cand007_text
+    assert _RAW_PAYLOAD_SENTINEL_KEY not in cand007_md
+    assert _RAW_PAYLOAD_SENTINEL_VALUE not in cand007_md

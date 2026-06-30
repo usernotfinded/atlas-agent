@@ -366,6 +366,67 @@ def test_data_source_redacted_is_not_used_as_symbol(tmp_path: Path):
     assert result["quality_state"] == "blocked"
 
 
+def test_symbol_from_single_position_fallback(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics.pop("symbol", None)
+    for fill in fills:
+        fill.pop("symbol", None)
+    state = {
+        "run_id": metrics["run_id"],
+        "cash": metrics["ending_cash"],
+        "equity": metrics["ending_equity"],
+        "positions": {
+            "AAPL": {
+                "symbol": "AAPL",
+                "quantity": 1.0,
+                "average_price": 100.0,
+                "market_price": 101.0,
+            }
+        },
+        "cursor": {"last_processed_bar_index": 9},
+    }
+    (tmp_path / "state.json").write_text(json.dumps(state), encoding="utf-8")
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+        state_path=tmp_path / "state.json",
+    )
+    assert result["symbol"] == "AAPL"
+
+
+def test_symbol_from_consistent_decisions_fallback(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics.pop("symbol", None)
+    for fill in fills:
+        fill.pop("symbol", None)
+    for decision in decisions:
+        decision["symbol"] = "NVDA"
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["symbol"] == "NVDA"
+
+
+def test_ambiguous_symbols_fail_closed(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics.pop("symbol", None)
+    fills[0]["symbol"] = "AAPL"
+    fills[1]["symbol"] = "TSLA"
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["quality_state"] == "blocked"
+    assert any("symbol" in b.lower() for b in result["blockers"])
+
+
 def test_cli_autonomous_paper_quality_smoke(tmp_path: Path):
     metrics, decisions, fills = _minimal_valid_fixtures()
     _write_artifacts(tmp_path, metrics, decisions, fills)
