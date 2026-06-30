@@ -704,7 +704,9 @@ def _unique_temp_path(target: Path) -> Path:
     return Path(temp_str)
 
 
-def _try_remove(path: Path) -> None:
+def _try_remove(path: Path | None) -> None:
+    if path is None:
+        return
     try:
         path.unlink()
     except OSError:
@@ -723,8 +725,9 @@ def atomic_write_text(
     if ensure_parent:
         target.parent.mkdir(parents=True, exist_ok=True)
 
-    temp_path = _unique_temp_path(target)
+    temp_path: Path | None = None
     try:
+        temp_path = _unique_temp_path(target)
         temp_path.write_text(content, encoding=encoding)
         temp_path.replace(target)
         if chmod is not None:
@@ -732,10 +735,10 @@ def atomic_write_text(
                 target.chmod(chmod)
             except (OSError, PermissionError):
                 pass
-    except Exception:
-        _try_remove(temp_path)
-        raise
     finally:
+        # Best-effort cleanup in both success and failure paths. A leftover temp
+        # file does not affect target safety because replace happens only after a
+        # successful write.
         _try_remove(temp_path)
 
     return target
