@@ -6,6 +6,12 @@
 > **not live readiness**, not permission to submit orders, and not a claim that
 > the system is safe to trade real money.
 >
+> CAND-008 is accepted into the `v0.6.16` candidate chain with acceptance verdict
+> `PASS_WITH_WARNINGS` on 2026-06-30. Acceptance is documentation-only; the gate
+> remains simulated-only, evidence-only, and non-executing. It does not authorize
+> live trading, live submit, order placement, broker or provider calls, credential
+> loading, or release cutover.
+>
 > The status `operator_gate_recorded is evidence-recording status only`; it does
 > not authorize live trading or order submission.
 

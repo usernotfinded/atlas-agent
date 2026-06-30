@@ -90,10 +90,14 @@
     {
       "id": "CAND-008",
       "status": "implemented",
+      "accepted": true,
+      "acceptance_date": "2026-06-30",
+      "acceptance_verdict": "PASS_WITH_WARNINGS",
       "title": "Operator Approval Gate",
       "description": "Adds a simulated-only, evidence-only operator approval gate that consumes CAND-004 quality evidence, CAND-005 shadow-live comparison evidence, CAND-006 gated submit conformance evidence, CAND-007 runtime readiness envelope evidence, and five CAND-008 static local fixtures, evaluates a 13-gate fail-closed sequence, and records operator-approval-gate.json and operator-approval-gate-report.md.",
       "notes": [
         "Simulated-only, evidence-only operator approval gate.",
+        "Accepted into the v0.6.16 candidate chain; remains planning-only.",
         "Does not submit orders or mutate broker state.",
         "Does not call real broker or provider APIs.",
         "Does not load credentials or secrets.",

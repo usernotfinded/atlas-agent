@@ -77,14 +77,15 @@ planning only):
   credentials, instantiate runtime trading objects, mutate state, or indicate
   live readiness. The status `readiness_envelope_recorded` is evidence-recording
   status only.
-- CAND-008 (v0.6.16): A simulated-only, evidence-only operator approval gate that
-  consumes CAND-004, CAND-005, CAND-006, and CAND-007 artifacts plus CAND-008
-  static local fixtures, evaluates a 13-gate fail-closed sequence, and records
-  `operator-approval-gate.json` plus `operator-approval-gate-report.md`. It does
-  not submit orders, call broker or provider APIs, load credentials, instantiate
-  runtime trading objects, mutate state or approval queues, or indicate live
-  readiness. The status `operator_gate_recorded` is evidence-recording status
-  only and is not authorization to submit orders.
+- CAND-008 (v0.6.16): Accepted into the candidate chain as a simulated-only,
+  evidence-only operator approval gate that consumes CAND-004, CAND-005, CAND-006,
+  and CAND-007 artifacts plus CAND-008 static local fixtures, evaluates a 13-gate
+  fail-closed sequence, and records `operator-approval-gate.json` plus
+  `operator-approval-gate-report.md`. It does not submit orders, call broker or
+  provider APIs, load credentials, instantiate runtime trading objects, mutate
+  state or approval queues, or indicate live readiness. The status
+  `operator_gate_recorded` is evidence-recording status only and is not
+  authorization to submit orders.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - `v0.6.16` remains planning-only: no source/package bump, tag, GitHub Release,
