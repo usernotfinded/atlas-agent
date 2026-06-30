@@ -909,6 +909,7 @@ Safety First:
     agent_autonomous_quality.add_argument("--scorecard", help="Path to autonomous-paper-scorecard.json (optional)")
     agent_autonomous_quality.add_argument("--threshold-policy", help="Path to threshold policy JSON (optional)")
     agent_autonomous_quality.add_argument("--data-path", help="Path to OHLCV CSV for benchmark comparison (optional)")
+    agent_autonomous_quality.add_argument("--symbol", help="Trading symbol evaluated by the paper runner (optional)")
     agent_autonomous_quality.add_argument("--output-dir", help="Directory for trading-quality-gate.json and trading-quality-report.md")
     agent_autonomous_quality.add_argument("--json", action="store_true", help="Emit result as JSON")
     agent_shadow_live = agent_sub.add_parser(
@@ -6192,6 +6193,7 @@ def main(argv: list[str] | None = None) -> int:
                 scorecard_path=getattr(args, "scorecard", None),
                 data_path=getattr(args, "data_path", None),
                 policy=policy,
+                symbol=getattr(args, "symbol", None),
             )
             json_path, md_path = write_trading_quality_artifacts(report, output_dir)
 

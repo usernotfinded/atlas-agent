@@ -52,11 +52,12 @@ def _minimal_valid_fixtures():
         {"bar_index": 2, "decision_state": "paper_executed", "risk_result": {"allowed": True}},
     ]
     fills = [
-        {"side": "buy", "quantity": 1.0, "price": 100.0, "notional": 100.0, "commission": 0.01, "slippage": 0.01},
-        {"side": "sell", "quantity": 1.0, "price": 101.0, "notional": 101.0, "commission": 0.01, "slippage": 0.01},
+        {"side": "buy", "quantity": 1.0, "price": 100.0, "notional": 100.0, "commission": 0.01, "slippage": 0.01, "symbol": "DEMO-SYMBOL"},
+        {"side": "sell", "quantity": 1.0, "price": 101.0, "notional": 101.0, "commission": 0.01, "slippage": 0.01, "symbol": "DEMO-SYMBOL"},
     ]
     metrics = {
         "run_id": "r1",
+        "symbol": "DEMO-SYMBOL",
         "starting_cash": 10000.0,
         "ending_cash": 10000.98,
         "ending_equity": 10000.98,
@@ -270,6 +271,99 @@ def test_artifacts_written(tmp_path: Path):
     loaded = json.loads(json_path.read_text(encoding="utf-8"))
     assert loaded["quality_state"] == report["quality_state"]
     assert "Disclaimer" in md_path.read_text(encoding="utf-8")
+
+
+def test_symbol_is_ticker_not_data_source(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics["symbol"] = "BTC/USD"
+    metrics["data_source_redacted"] = "demo.csv"
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["symbol"] == "BTC/USD"
+    assert result["metrics"]["data_source_redacted"] == "demo.csv"
+
+
+def test_symbol_from_state_when_not_in_metrics(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    state = {
+        "run_id": metrics["run_id"],
+        "symbol": "MSFT",
+        "cash": metrics["ending_cash"],
+        "equity": metrics["ending_equity"],
+        "positions": {},
+        "cursor": {"last_processed_bar_index": 9},
+    }
+    (tmp_path / "state.json").write_text(json.dumps(state), encoding="utf-8")
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+        state_path=tmp_path / "state.json",
+    )
+    assert result["symbol"] == "MSFT"
+
+
+def test_symbol_from_fills_fallback(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics.pop("symbol", None)
+    for fill in fills:
+        fill["symbol"] = "TSLA"
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["symbol"] == "TSLA"
+
+
+def test_missing_symbol_fails_closed(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics.pop("symbol", None)
+    for fill in fills:
+        fill.pop("symbol", None)
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["quality_state"] == "blocked"
+    assert any("symbol" in b.lower() for b in result["blockers"])
+
+
+def test_explicit_symbol_overrides_metrics(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics["symbol"] = "IBM"
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+        symbol="AAPL",
+    )
+    assert result["symbol"] == "AAPL"
+
+
+def test_data_source_redacted_is_not_used_as_symbol(tmp_path: Path):
+    metrics, decisions, fills = _minimal_valid_fixtures()
+    metrics.pop("symbol", None)
+    metrics["data_source_redacted"] = "ohlcv.csv"
+    for fill in fills:
+        fill.pop("symbol", None)
+    _write_artifacts(tmp_path, metrics, decisions, fills)
+    result = build_trading_quality_gate(
+        metrics_path=tmp_path / "metrics.json",
+        decisions_path=tmp_path / "decisions.jsonl",
+        fills_path=tmp_path / "fills.jsonl",
+    )
+    assert result["symbol"] != "ohlcv.csv"
+    assert result["quality_state"] == "blocked"
 
 
 def test_cli_autonomous_paper_quality_smoke(tmp_path: Path):

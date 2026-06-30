@@ -747,6 +747,68 @@ def _render_markdown(report: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def _resolve_symbol(
+    *,
+    explicit_symbol: str | None,
+    metrics: dict[str, Any] | None,
+    state: dict[str, Any] | None,
+    decisions: list[dict[str, Any]],
+    fills: list[dict[str, Any]],
+) -> tuple[str | None, list[str]]:
+    """Resolve the evaluated trading symbol from the most reliable source.
+
+    Resolution order:
+      1. Explicitly supplied symbol parameter.
+      2. ``symbol`` field in the state artifact.
+      3. ``symbol`` field in the metrics object.
+      4. A single symbol in state positions.
+      5. A single consistent symbol across fills.
+      6. A single consistent symbol across decisions.
+
+    The CSV/data-source filename is never used as a symbol.
+    """
+    if explicit_symbol and isinstance(explicit_symbol, str):
+        return explicit_symbol, []
+
+    if state is not None:
+        state_symbol = state.get("symbol")
+        if isinstance(state_symbol, str) and state_symbol.strip():
+            return state_symbol, []
+
+    if metrics is not None:
+        metrics_symbol = metrics.get("symbol")
+        if isinstance(metrics_symbol, str) and metrics_symbol.strip():
+            return metrics_symbol, []
+
+    if state is not None:
+        positions = state.get("positions")
+        if isinstance(positions, dict):
+            position_symbols = {
+                s for s in positions.keys()
+                if isinstance(s, str) and s.strip()
+            }
+            if len(position_symbols) == 1:
+                return position_symbols.pop(), []
+
+    fill_symbols = {
+        f.get("symbol")
+        for f in fills
+        if isinstance(f.get("symbol"), str) and f["symbol"].strip()
+    }
+    if len(fill_symbols) == 1:
+        return fill_symbols.pop(), []
+
+    decision_symbols = {
+        d.get("symbol")
+        for d in decisions
+        if isinstance(d.get("symbol"), str) and d["symbol"].strip()
+    }
+    if len(decision_symbols) == 1:
+        return decision_symbols.pop(), []
+
+    return None, ["symbol could not be resolved from state, metrics, fills, or decisions"]
+
+
 def build_trading_quality_gate(
     *,
     metrics_path: str | Path,
@@ -756,6 +818,7 @@ def build_trading_quality_gate(
     scorecard_path: str | Path | None = None,
     data_path: str | Path | None = None,
     policy: TradingQualityThresholdPolicy | None = None,
+    symbol: str | None = None,
 ) -> dict[str, Any]:
     policy = policy or TradingQualityThresholdPolicy()
     metrics, decisions, fills, state, scorecard, load_errors = _load_artifacts(
@@ -774,10 +837,41 @@ def build_trading_quality_gate(
             "quality_state": "not_evaluated",
             "blockers": load_errors or ["metrics.json is required."],
             "dimensions": [],
-            "metrics": None,
+            "metrics": metrics,
             "benchmark": None,
             "threshold_policy": policy.to_dict(),
-            "run_id": None,
+            "run_id": metrics.get("run_id") if metrics else None,
+            "symbol": None,
+            "disclaimer": "This is a paper-only evaluation. It does not claim profitability or live readiness.",
+        }
+
+    resolved_symbol, symbol_errors = _resolve_symbol(
+        explicit_symbol=symbol,
+        metrics=metrics,
+        state=state,
+        decisions=decisions,
+        fills=fills,
+    )
+    if symbol_errors:
+        return {
+            "artifact_type": "trading_quality_gate",
+            "schema_version": 1,
+            "mode": "paper",
+            "run_id": metrics.get("run_id"),
+            "symbol": None,
+            "quality_state": "blocked",
+            "blockers": symbol_errors,
+            "dimensions": [],
+            "metrics": metrics,
+            "benchmark": None,
+            "threshold_policy": policy.to_dict(),
+            "input_artifacts": {
+                "metrics": Path(metrics_path).name,
+                "decisions": Path(decisions_path).name,
+                "fills": Path(fills_path).name,
+                "state": Path(state_path).name if state_path else None,
+                "scorecard": Path(scorecard_path).name if scorecard_path else None,
+            },
             "disclaimer": "This is a paper-only evaluation. It does not claim profitability or live readiness.",
         }
 
@@ -840,7 +934,7 @@ def build_trading_quality_gate(
         "schema_version": 1,
         "mode": "paper",
         "run_id": metrics.get("run_id"),
-        "symbol": metrics.get("data_source_redacted"),
+        "symbol": resolved_symbol,
         "quality_state": quality_state,
         "blockers": blockers,
         "dimensions": dimensions,
