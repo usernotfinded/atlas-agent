@@ -13,6 +13,7 @@ from typing import Any, Awaitable, Callable
 from atlas_agent.brokers.base import Broker
 from atlas_agent.config import parse_bool
 from atlas_agent.market.session import MarketSessionDetector
+from atlas_agent.safety.atomic_write import atomic_write_json
 from atlas_agent.safety.kill_switch import KILL_SWITCH_MODES, KillSwitchController
 
 
@@ -106,16 +107,17 @@ def write_deadman_heartbeat(
     now: datetime | None = None,
 ) -> None:
     target = Path(path)
-    target.parent.mkdir(parents=True, exist_ok=True)
     effective_now = now or datetime.now(UTC)
     payload = {
         "timestamp": effective_now.isoformat(),
         "source": source,
         "actor": actor,
     }
-    temp_path = target.with_suffix(target.suffix + ".tmp")
-    temp_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
-    temp_path.replace(target)
+    atomic_write_json(
+        target,
+        payload,
+        sort_keys=True,
+    )
 
 
 def read_deadman_heartbeat(path: str | Path) -> HeartbeatRecord | None:

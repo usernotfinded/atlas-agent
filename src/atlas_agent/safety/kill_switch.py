@@ -10,6 +10,7 @@ from typing import Any, Callable, Sequence, Optional, Literal
 
 from atlas_agent.brokers.base import Broker
 from atlas_agent.execution.order import FlattenResult, OrderResult
+from atlas_agent.safety.atomic_write import atomic_write_json
 from atlas_agent.safety.models import KillSwitchMode, KillSwitchDecision, KillSwitchStatus
 from atlas_agent.safety.state import KillSwitchState as AdvancedKillSwitchState
 from atlas_agent.safety.heartbeat import HeartbeatManager
@@ -449,9 +450,12 @@ class KillSwitchController:
             "activated_at": state.activated_at,
             "deactivated_at": state.deactivated_at,
         }
-        tmp_path = self.state_path.with_suffix(self.state_path.suffix + ".tmp")
-        tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
-        tmp_path.replace(self.state_path)
+        atomic_write_json(
+            self.state_path,
+            payload,
+            indent=2,
+            sort_keys=True,
+        )
 
     def _sync_enabled_flag(self, enabled: bool) -> None:
         if enabled:

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from datetime import UTC, datetime
+
+from atlas_agent.safety.atomic_write import atomic_write_json
 
 logger = logging.getLogger(__name__)
 
@@ -14,19 +15,15 @@ class HeartbeatManager:
         self.timeout_seconds = timeout_seconds
 
     def record(self, source: str = "agent"):
-        self.heartbeat_path.parent.mkdir(parents=True, exist_ok=True)
         payload = {
             "timestamp": datetime.now(UTC).isoformat(),
-            "source": source
+            "source": source,
         }
-        tmp_path = self.heartbeat_path.with_suffix(self.heartbeat_path.suffix + ".tmp")
-        tmp_path.write_text(json.dumps(payload), encoding="utf-8")
-        tmp_path.replace(self.heartbeat_path)
-
-        try:
-            self.heartbeat_path.chmod(0o600)
-        except (OSError, PermissionError):
-            pass
+        atomic_write_json(
+            self.heartbeat_path,
+            payload,
+            chmod=0o600,
+        )
 
     def is_expired(self) -> bool:
         if not self.heartbeat_path.exists():

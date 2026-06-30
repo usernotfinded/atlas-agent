@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import json
 import logging
-import os
 from pathlib import Path
 from datetime import UTC, datetime
 
+from atlas_agent.safety.atomic_write import atomic_write_json
 from atlas_agent.safety.models import KillSwitchStatus, KillSwitchMode
 
 logger = logging.getLogger(__name__)
@@ -36,22 +35,18 @@ class KillSwitchState:
             )
 
     def save(self, mode: KillSwitchMode, reason: str, actor: str = "system"):
-        self.state_path.parent.mkdir(parents=True, exist_ok=True)
-
         status = KillSwitchStatus(
             mode=mode,
             reason=reason,
             actor=actor,
-            updated_at=datetime.now(UTC).isoformat()
+            updated_at=datetime.now(UTC).isoformat(),
         )
 
-        tmp_path = self.state_path.with_suffix(self.state_path.suffix + ".tmp")
-        tmp_path.write_text(status.model_dump_json(indent=2), encoding="utf-8")
-        tmp_path.replace(self.state_path)
-
-        try:
-            self.state_path.chmod(0o600)
-        except (OSError, PermissionError):
-            pass
+        atomic_write_json(
+            self.state_path,
+            status.model_dump(),
+            indent=2,
+            chmod=0o600,
+        )
 
         return status
