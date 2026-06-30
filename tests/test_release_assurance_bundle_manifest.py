@@ -16,7 +16,7 @@ CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_bundle_manifest.
 RELEASE_ASSURANCE_SCRIPT = REPO_ROOT / "scripts" / "release_assurance.py"
 DEMO_SCRIPT = REPO_ROOT / "scripts" / "demo_release_assurance_snapshot_bundle.sh"
 
-RELEASE = "v0.6.15"
+RELEASE = "v0.6.16"
 
 
 def _release_fully_published() -> bool:

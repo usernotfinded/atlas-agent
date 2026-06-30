@@ -66,7 +66,7 @@ def _copy_v0614_repo(tmp_path: Path) -> Path:
         tag = release.get("tag")
         if tag == "v0.6.14":
             release["status"] = "current_public"
-        elif tag in ("v0.6.13", "v0.6.15"):
+        elif tag in ("v0.6.13", "v0.6.15", "v0.6.16"):
             release["status"] = "historical"
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 

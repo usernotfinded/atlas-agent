@@ -7,6 +7,10 @@ CAND-006 gated submit conformance evidence, and five static local policy fixture
 them in strict fail-closed order and records a runtime readiness envelope artifact if every
 gate passes.
 
+> **Release note.** CAND-007 is included in the `v0.6.16` release as a
+> no-live-submit, simulated-only envelope evaluator. It remains an evidence-recording
+> tool only and is not a live path or live-readiness claim.
+
 > **Evidence-only disclaimer.** `readiness_envelope_recorded` is evidence-recording status only.
 > It is not live readiness, not trading safety, not profitability evidence, and not permission to
 > submit orders.

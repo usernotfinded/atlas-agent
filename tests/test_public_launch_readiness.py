@@ -110,7 +110,7 @@ class TestReadmePublicLaunch:
         assert "changelog" in lower or "release notes" in lower
 
     def test_readme_contains_current_status(self, readme_text: str) -> None:
-        assert "v0.6.15" in readme_text, "README must reference v0.6.15 as current source status"
+        assert "v0.6.16" in readme_text, "README must reference v0.6.16 as current source status"
 
     def test_readme_does_not_claim_live_trading_readiness(self, readme_text: str) -> None:
         lower = readme_text.lower()
@@ -238,12 +238,12 @@ class TestStaleRCReferencesBlocked:
             f"Expected pass for historical RC changelog entry:\n{result.stdout}"
         )
 
-    def test_current_source_version_0615_accepted(self) -> None:
+    def test_current_source_version_0616_accepted(self) -> None:
         text = (
             "# README\n\n```bash\natlas --help\n```\n\n"
             "Sandbox-only, paper-first, offline-safe.\n"
             "Live trading disabled by default. Not financial advice.\n"
-            "Current Status (v0.6.15)\n"
+            "Current Status (v0.6.16)\n"
         )
         result = _run_public_docs_script_on_text(text)
         assert result.returncode == 0, (
@@ -268,10 +268,10 @@ class TestStaleRCReferencesBlocked:
 
 
 class TestReleaseDocConsistency:
-    def test_public_launch_readiness_doc_has_v0615_as_current_release(self) -> None:
+    def test_public_launch_readiness_doc_has_v0616_as_current_release(self) -> None:
         text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
-        assert "latest stable public GitHub release is `v0.6.15`" in text, (
-            "public-launch-readiness.md must describe v0.6.15 as the current stable release"
+        assert "latest stable public GitHub release is `v0.6.16`" in text, (
+            "public-launch-readiness.md must describe v0.6.16 as the current stable release"
         )
 
     def test_public_launch_readiness_doc_does_not_claim_v062_as_latest(self) -> None:
@@ -280,10 +280,10 @@ class TestReleaseDocConsistency:
             "public-launch-readiness.md must not describe v0.6.3 as the latest stable release"
         )
 
-    def test_public_launch_readiness_doc_lists_v0614_as_historical(self) -> None:
+    def test_public_launch_readiness_doc_lists_v0615_as_historical(self) -> None:
         text = (ROOT / "docs" / "public-launch-readiness.md").read_text(encoding="utf-8")
-        assert "v0.6.14" in text and "historical" in text.lower(), (
-            "public-launch-readiness.md must list v0.6.14 as historical"
+        assert "v0.6.15" in text and "historical" in text.lower(), (
+            "public-launch-readiness.md must list v0.6.15 as historical"
         )
 
     def test_release_checklist_does_not_reference_v062_as_public_tag(self) -> None:
@@ -292,19 +292,19 @@ class TestReleaseDocConsistency:
             "release-checklist.md must not reference v0.6.2 as the current public tag"
         )
 
-    def test_readme_release_assurance_example_uses_v0615(self) -> None:
+    def test_readme_release_assurance_example_uses_v0616(self) -> None:
         text = (ROOT / "README.md").read_text(encoding="utf-8")
-        assert "--version v0.6.15" in text, (
-            "README release assurance example must use v0.6.15"
+        assert "--version v0.6.16" in text, (
+            "README release assurance example must use v0.6.16"
         )
         assert "v0.6.1-local-check" not in text, (
             "README must not use stale v0.6.1 release assurance example"
         )
 
-    def test_checks_reference_release_assurance_uses_v0615(self) -> None:
+    def test_checks_reference_release_assurance_uses_v0616(self) -> None:
         text = (ROOT / "docs" / "development" / "checks-reference.md").read_text(encoding="utf-8")
-        assert "--version v0.6.15" in text, (
-            "checks-reference.md release assurance example must use v0.6.15"
+        assert "--version v0.6.16" in text, (
+            "checks-reference.md release assurance example must use v0.6.16"
         )
         assert "v0.6.0-local-check" not in text, (
             "checks-reference.md must not use stale v0.6.0 release assurance example"

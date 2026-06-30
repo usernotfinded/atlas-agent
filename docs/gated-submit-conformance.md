@@ -5,6 +5,10 @@ It consumes CAND-004 quality-gate evidence, CAND-005 shadow-live comparison
 evidence, a hypothetical order-intent fixture, and simulated kill-switch,
 risk-envelope, and approval fixtures.
 
+> **Release note.** CAND-006 is included in the `v0.6.16` release as a
+> simulated-only conformance rehearsal. It records a non-transmittable dry-run
+> submit request and is not a live path or permission to submit orders.
+
 The command evaluates the fixtures in strict fail-closed order and records a
 non-transmittable dry-run submit request only if every gate passes.
 

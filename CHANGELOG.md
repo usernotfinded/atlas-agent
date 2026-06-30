@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.16] - 2026-06-30
+
 ### Added
 - CAND-001: Paper Autonomous Decision Loop and Shadow-Live Readiness Contract.
 - CAND-002: Autonomous Paper Decision Quality Scorecard and Promotion Gate.

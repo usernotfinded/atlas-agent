@@ -154,7 +154,7 @@ section_header() {
 
 printf '================================================================================\n'
 printf 'Atlas Agent — broker-neutral supervised trading workspace\n'
-printf 'Package/source version: 0.6.11  (v0.6.12 is the planning line)\n'
+printf 'Package/source version: 0.6.16  (v0.6.17 is the planning line)\n'
 printf 'License: MIT  |  Built by Natan Mucelli\n'
 printf '================================================================================\n'
 printf 'A local-first research and paper-trading workbench with\n'

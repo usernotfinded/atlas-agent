@@ -314,6 +314,7 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
         ("0.6.13", "v0.6.13", "v0.6.14"),
         ("0.6.14", "v0.6.14", "v0.6.15"),
         ("0.6.15", "v0.6.15", "v0.6.16"),
+        ("0.6.16", "v0.6.16", "v0.6.17"),
     }
     if posture not in allowed:
         errors.append(f"release-metadata.json has an unsupported historical posture: {posture!r}")

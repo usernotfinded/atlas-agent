@@ -1,9 +1,10 @@
 {
   "release_line": "v0.6.16",
-  "status": "planning-only",
-  "source_version": "0.6.15",
-  "current_public_release": "v0.6.15",
-  "next_planned_release": "v0.6.16",
+  "status": "released",
+  "source_version": "0.6.16",
+  "current_public_release": "v0.6.16",
+  "next_planned_release": "v0.6.17",
+  "release_date": "2026-06-30",
   "pypi_published": false,
   "candidates": [
     {
@@ -11,14 +12,14 @@
       "status": "implemented",
       "title": "Paper Autonomous Decision Loop and Shadow-Live Readiness Contract",
       "description": "Deterministic, paper-only autonomous decision loop with local sample data, RiskManager gating, audit artifacts, and a planning-only shadow-live/read-only contract.",
-      "notes": "No live trading, live submit, broker order submission, or real provider calls. No version bump, tag, release, or PyPI publication."
+      "notes": "No live trading, live submit, broker order submission, or real provider calls. No live trading, live submit, broker/provider execution, or credential loading introduced. PyPI was not published."
     },
     {
       "id": "CAND-002",
       "status": "implemented",
       "title": "Autonomous Paper Decision Quality Scorecard and Promotion Gate",
       "description": "Deterministic offline scorecard that evaluates autonomous-paper artifacts for future shadow-live/read-only review eligibility.",
-      "notes": "No live trading, live submit, broker order submission, or real provider calls. No version bump, tag, release, or PyPI publication."
+      "notes": "No live trading, live submit, broker order submission, or real provider calls. No live trading, live submit, broker/provider execution, or credential loading introduced. PyPI was not published."
     },
     {
       "id": "CAND-003",

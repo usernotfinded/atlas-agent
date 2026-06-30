@@ -298,28 +298,28 @@ def _check_public_autonomy_claims() -> list[str]:
 
 def _check_version_planning_only() -> list[str]:
     errors: list[str] = []
-    if PACKAGE_VERSION != "0.6.15":
+    if PACKAGE_VERSION != "0.6.16":
         errors.append(
-            f"Source version {PACKAGE_VERSION} != 0.6.15"
+            f"Source version {PACKAGE_VERSION} != 0.6.16"
         )
-    if CURRENT_PUBLIC_TAG != "v0.6.15":
+    if CURRENT_PUBLIC_TAG != "v0.6.16":
         errors.append(
-            f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.15"
+            f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.16"
         )
-    if NEXT_PLANNED_TAG not in ("v0.6.16", "0.6.16"):
+    if NEXT_PLANNED_TAG not in ("v0.6.17", "0.6.17"):
         errors.append(
-            f"Next planned release {NEXT_PLANNED_TAG} != v0.6.16"
+            f"Next planned release {NEXT_PLANNED_TAG} != v0.6.17"
         )
 
     # Ensure the next planning line has not been tagged locally.
     result = subprocess.run(
-        ["git", "tag", "--list", "v0.6.16"],
+        ["git", "tag", "--list", "v0.6.17"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
     )
     if result.stdout.strip():
-        errors.append("Local git tag v0.6.16 already exists")
+        errors.append("Local git tag v0.6.17 already exists")
 
     return errors
 

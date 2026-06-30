@@ -5,19 +5,20 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.15` (tagged)
-- Previous public release: `v0.6.14`
-- Source package version on `main`: `0.6.15`
-- GitHub release: `v0.6.15` (current public)
-- Next planning line: `v0.6.16`
-- Public v0.6.15: current public — [v0.6.15 Trust and Release Status](v0.6.15-status.md)
+- Current public release: `v0.6.16` (tagged)
+- Previous public release: `v0.6.15`
+- Source package version on `main`: `0.6.16`
+- GitHub release: `v0.6.16` (current public)
+- Next planning line: `v0.6.17`
+- Public v0.6.16: current public — [v0.6.16 Trust and Release Status](v0.6.16-status.md)
+- Public v0.6.15: historical — [v0.6.15 Trust and Release Status](v0.6.15-status.md)
 - Public v0.6.14: historical — [v0.6.14 Trust and Release Status](v0.6.14-status.md)
 - Public v0.6.13: historical — [v0.6.13 Trust and Release Status](v0.6.13-status.md)
 - Public v0.6.12: historical — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - PyPI was not published
-- Current public release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (current public)
-- Previous release status: [v0.6.14 Trust and Release Status](v0.6.14-status.md) (historical)
+- Current public release status: [v0.6.16 Trust and Release Status](v0.6.16-status.md) (current public)
+- Previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
 - Previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - Previous previous previous release status: [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
 - Previous previous previous previous release status: [v0.6.9 Trust and Release Status](v0.6.9-status.md) (historical)
