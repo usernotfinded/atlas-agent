@@ -8,7 +8,11 @@ from typing import Any
 
 import pytest
 
-from atlas_agent.agent.gated_submit_conformance_cli import build_parser, main
+from atlas_agent.agent.gated_submit_conformance_cli import (
+    _UNSAFE_FLAGS,
+    build_parser,
+    main,
+)
 
 
 _AS_OF = "2026-06-24T10:00:00Z"
@@ -199,6 +203,60 @@ def test_help_text_contains_simulated_only_disclaimer() -> None:
     assert "does not call brokers" in combined.lower() or "broker" in combined.lower()
     assert "does not load credentials" in combined.lower()
     assert "not live readiness" in combined.lower() or "live readiness" in combined.lower()
+
+
+def _run_and_capture_code(func: Any, *args: Any, **kwargs: Any) -> int:
+    try:
+        return func(*args, **kwargs)
+    except SystemExit as exc:
+        return exc.code if isinstance(exc.code, int) else 1
+
+
+@pytest.mark.parametrize("flag", sorted(_UNSAFE_FLAGS))
+def test_unsafe_flag_rejected(flag: str) -> None:
+    code = _run_and_capture_code(main, [flag])
+    assert code == 2
+
+
+@pytest.mark.parametrize(
+    "flag",
+    ["--mode=live", "--live=true", "--broker=alpaca", "--api-key=sk-xxx"],
+)
+def test_unsafe_flag_equals_syntax_rejected(flag: str) -> None:
+    code = _run_and_capture_code(main, [flag])
+    assert code == 2
+    # Error message should indicate the flag is unsupported for simulated-only conformance.
+    import io
+    from unittest.mock import patch
+
+    with patch("sys.stderr", new=io.StringIO()) as fake_stderr:
+        _run_and_capture_code(main, [flag])
+    err = fake_stderr.getvalue().lower()
+    assert "unsupported" in err or "unsafe" in err or "simulated" in err
+
+
+def test_safe_flag_equals_syntax_allowed(tmp_path: Path) -> None:
+    """A safe required flag using ``=`` syntax must not be confused with unsafe flags."""
+    paths = _make_fixtures(tmp_path)
+    output_dir = tmp_path / "out"
+    args = _cli_args(paths, output_dir)
+    idx = args.index("--as-of")
+    args[idx] = "--as-of=2026-06-24T10:00:00Z"
+    args.pop(idx + 1)
+    ret = main(args)
+    assert ret == 0
+
+
+def test_unsafe_flag_message_mentions_simulated_only() -> None:
+    import io
+    from unittest.mock import patch
+
+    with patch("sys.stderr", new=io.StringIO()) as fake_stderr:
+        code = _run_and_capture_code(main, ["--live"])
+    assert code == 2
+    err = fake_stderr.getvalue().lower()
+    assert "unsupported" in err or "unsafe" in err
+    assert "simulated" in err
 
 
 def test_policy_flag_rejected() -> None:

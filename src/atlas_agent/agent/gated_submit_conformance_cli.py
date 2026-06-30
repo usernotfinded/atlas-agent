@@ -29,6 +29,24 @@ providers, does not load credentials, does not create real or pending orders,
 and does not claim live readiness. It is a simulated-only rehearsal.\
 """
 
+_UNSAFE_FLAGS = {
+    "--live",
+    "--submit",
+    "--broker",
+    "--provider",
+    "--api-key",
+    "--credentials",
+    "--endpoint",
+    "--account",
+    "--account-id",
+    "--client-order-id",
+    "--place-order",
+    "--order-router",
+    "--risk-manager",
+    "--mode",
+    "--kill-switch-override",
+}
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -103,7 +121,23 @@ def _print_text_report(report: Any) -> None:
         print("artifacts recorded.")
 
 
+def _reject_unsafe_flags(argv: list[str] | None) -> int:
+    args = argv if argv is not None else []
+    for raw_arg in args:
+        name = raw_arg.split("=", 1)[0]
+        if name in _UNSAFE_FLAGS:
+            print(
+                f"error: unsupported flag for simulated-only conformance: {name}",
+                file=sys.stderr,
+            )
+            return 2
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
+    reject_code = _reject_unsafe_flags(argv)
+    if reject_code != 0:
+        return reject_code
     parser = build_parser()
     args = parser.parse_args(argv)
 
