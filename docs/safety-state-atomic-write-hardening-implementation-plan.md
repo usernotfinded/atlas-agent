@@ -19,7 +19,7 @@
 - **Target release line:** v0.6.17 planning-only
 - **Current public release:** v0.6.16
 - **Package version:** 0.6.16
-- **Status:** implementation planning only (no code changes in this document)
+- **Status:** implemented on `main`; no version bump, tag, release, or PyPI publication.
 
 ---
 

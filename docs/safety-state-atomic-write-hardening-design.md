@@ -28,7 +28,7 @@ fail-closed behavior.
 ## 2. Current baseline
 
 - Branch: `main`
-- HEAD: `28ed17aae895fb65ff917e549d2e50b4a18bf514`
+- HEAD: `4032d122bc2970e1138c54d0353801bc9de2166c`
 - Current public release: `v0.6.16`
 - Package version: `0.6.16`
 - Next planned release: `v0.6.17`

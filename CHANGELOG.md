@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- CAND-009: Safety State Atomic-Write Hardening. `src/atlas_agent/safety/atomic_write.py` stdlib-only helper using unique same-directory temporary files; migrated `src/atlas_agent/safety/heartbeat.py`, `src/atlas_agent/safety/deadman.py`, `src/atlas_agent/safety/kill_switch.py`, and `src/atlas_agent/safety/state.py` from fixed `<target>.tmp` writes; regression and concurrency tests under `tests/safety/`.
+- `doctor` top-level command added to `tests/fixtures/cli_command_contract.json`.
+
+### Changed
+- Safety-state persistence now uses unique temporary filenames via `tempfile.mkstemp` while preserving atomic `replace` semantics, file formats, public APIs, and best-effort `chmod(0o600)` behavior.
+
+### Safety
+- No live trading, live submit, broker/provider execution, credential loading, or order placement introduced.
+- `atlas run --mode live` remains fail-closed.
+- No version bump, tag, release, or PyPI publication.
+
 ## [0.6.16] - 2026-06-30
 
 ### Added
