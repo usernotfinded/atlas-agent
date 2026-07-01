@@ -54,7 +54,7 @@ These three sources (release metadata, candidate-chain Markdown, candidate-chain
 - A future `v0.6.20` candidate-chain doc could accidentally claim `released` status before the release cutover.
 - A doc could claim `pypi_published: true` while release metadata says `pypi_published: false`.
 - A candidate-chain file could reference a stale `current_public_release` or `next_planned_release`.
-- A candidate doc could make forbidden live-trading, profit, or order-submission claims that escape the existing forbidden-claims scan because the scan targets do not include `docs/releases/*-candidates.md` by default.
+- A candidate doc could make candidate-chain-specific premature-release, PyPI, tag, or GitHub Release claims that are not validated against the authoritative release metadata.
 
 A deterministic, local, read-only checker is needed to catch these inconsistencies before they are accepted into the candidate chain or released.
 
@@ -64,7 +64,7 @@ The existing checkers cover related but distinct concerns:
 
 - `scripts/check_release_metadata.py` validates the shape and referential integrity of `docs/releases/release-metadata.json`.
 - `scripts/check_version_consistency.py` validates that `pyproject.toml`, `src/atlas_agent/__init__.py`, README, CHANGELOG, release notes, and release checklist agree on the current public release.
-- `scripts/check_forbidden_claims.py` scans `README.md`, `CHANGELOG.md`, `docs/`, and `.github/pull_request_template.md` for prohibited safety/profit wording, but does not explicitly include `docs/releases/*-candidates.md`.
+- `scripts/check_forbidden_claims.py` scans `README.md`, `CHANGELOG.md`, `docs/` recursively, and `.github/pull_request_template.md` for prohibited safety/profit wording, so candidate-chain Markdown files are already covered by the general forbidden-claims scan.
 - `scripts/check_bounded_autonomy_governance.py` checks for forbidden autonomous-live-trading claims and version/tag consistency.
 - `scripts/check_trust_center.py` validates trust-center docs against release metadata.
 
@@ -76,9 +76,9 @@ None of these checkers validate that:
 4. Candidate statuses and acceptance verdicts use allowed values.
 5. Released candidates only appear in current or historical releases.
 6. Next-planned-release docs do not claim released/tag-created/GitHub-release-created status.
-7. Candidate-chain docs do not contain forbidden live-trading, profit, order-submission, or PyPI-publication claims.
+7. Candidate-chain docs do not contain candidate-chain-specific premature-release, PyPI, tag, or GitHub Release claims that contradict metadata.
 
-This gap is the target of CAND-012.
+`check_forbidden_claims.py` already covers general safety/profit wording in candidate-chain Markdown; CAND-012 adds deterministic consistency validation between metadata, candidate-chain JSON, and candidate-chain Markdown status fields. This gap is the target of CAND-012.
 
 ## 5. Proposed checker
 
@@ -221,6 +221,8 @@ Allowed status values are intentionally conservative. If a future candidate need
 
 ### 6.5 Release-status lifecycle rules
 
+Historical release lines are derived from `docs/releases/release-metadata.json` release entries whose `status` is `"historical"`. The current public release line is `metadata.current_public_release`; the planning line is `metadata.next_planned_release`. Released status is allowed only for the current public release line and historical release lines.
+
 | Check | Failure detail |
 |---|---|
 | If release line is `metadata.next_planned_release`, JSON `status` must not be `released`. | `next planned release vX.Y.Z claims status 'released' before cutover` |
@@ -256,16 +258,16 @@ These checks are advisory warnings by default for historical docs that predate t
 
 ### 7.1 Reuse policy
 
-The checker must not duplicate the existing forbidden-claims scan logic. It should either:
+The checker must avoid importing underscore-prefixed private members from `scripts/check_forbidden_claims.py` (e.g., `_FORBIDDEN_PHRASES`, `_collect_paths`). It should:
 
-1. **Preferred:** import and call `scripts/check_forbidden_claims.py` as a module, reusing `_FORBIDDEN_PHRASES` and `_collect_paths` restricted to candidate-chain Markdown files, or
-2. **Acceptable:** import the phrase list via a shared constant if one is extracted during implementation.
+1. **Preferred:** define a small, stable, candidate-chain-specific forbidden phrase/pattern list inside `scripts/check_candidate_chain.py` and accept limited duplication with `check_forbidden_claims.py`.
+2. **Alternative (only if justified):** refactor `scripts/check_forbidden_claims.py` to expose public helpers, with tests proving no behavior change.
 
-The design prefers option 1 to avoid drift between the two scanners.
+The preferred approach keeps the candidate-chain checker self-contained and avoids coupling to private implementation details.
 
 ### 7.2 Candidate-chain-specific forbidden phrases
 
-In addition to the shared list, the checker scans candidate-chain Markdown files for:
+`check_forbidden_claims.py` already scans candidate-chain Markdown files for general safety/profit wording. The candidate-chain checker adds a small, local phrase list focused on candidate-chain-specific risks:
 
 | Phrase category | Example phrases |
 |---|---|
@@ -308,7 +310,8 @@ The checker is intentionally strict about contradictions but permissive about mi
 - `tag_created: true` or `github_release_created: true` for the next planned release.
 - Duplicate candidate IDs within a release line.
 - Unknown candidate status or acceptance verdict.
-- Forbidden live-trading, profit, broker-endorsement, order-submission, or PyPI-publication claims in candidate-chain Markdown.
+- Candidate-chain-specific premature-release, PyPI, tag, or GitHub Release claims that contradict metadata.
+- Forbidden live-trading, profit, broker-endorsement, order-submission, or PyPI-publication claims in candidate-chain Markdown that are not already caught by `check_forbidden_claims.py`.
 
 ### 8.3 Unknown-schema handling
 
