@@ -5,13 +5,22 @@
 **Candidate ID:** CAND-010
 **Candidate line:** v0.6.18
 **Current public release:** v0.6.17
-**Status:** implemented
+**Status:** implemented / accepted
+**Acceptance date:** 2026-07-01
+**Acceptance verdict:** PASS
 **Date:** 2026-06-30
 **Design document path:** `docs/safety-state-persistence-regression-guard-design.md`
 
 > **Design-only disclaimer.** This document specifies CAND-010. It does not
 > implement, authorize, or enable any runtime behavior change. Implementation
 > is a separate step and must pass its own review.
+>
+> **Acceptance note.** CAND-010 is accepted into the `v0.6.18` candidate chain
+> on 2026-07-01 with acceptance verdict `PASS`. This acceptance is
+> documentation/governance acceptance only. It does not authorize `v0.6.18`
+> release cutover and does not enable live trading, live submit, order
+> placement, broker/provider execution, credential loading, network access, or
+> approval queue mutation.
 
 ---
 

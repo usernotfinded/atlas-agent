@@ -104,7 +104,19 @@ safety-state persistence hardening candidate.
 ### Candidate status in the `v0.6.18` planning line
 
 `v0.6.18` is the next planning line; no tag, GitHub Release, or PyPI
-publication exists. No candidates are currently proposed.
+publication exists.
+
+- **CAND-010** is accepted into the `v0.6.18` candidate chain as a static
+  regression guard for CAND-009 safety-state persistence behavior. It adds
+  `scripts/check_safety_atomic_write.py` and companion tests that scan the four
+  migrated safety persistence modules for fixed `<target>.tmp` write patterns,
+  allow `atomic_write.py` as the unique `mkstemp`-based helper, and integrate
+  into dev/CI/quick release gates. It does not enable live trading, live
+  submit, order placement, broker/provider execution, credential loading,
+  network access, or approval queue mutation. Acceptance is
+  documentation/governance acceptance only and is not `v0.6.18` release
+  authorization.
+- No additional candidates are currently proposed for `v0.6.18`.
 
 ## Current state vs future state
 

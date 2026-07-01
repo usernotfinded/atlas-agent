@@ -105,6 +105,16 @@ planning-only):
   includes CAND-009 and is a GitHub-only release; PyPI was not published. No
   live trading, live submit, broker/provider execution, credential loading,
   order placement, or approval queue mutation is introduced.
+- **CAND-010** (`v0.6.18` planning-only): Accepted into the `v0.6.18` candidate
+  chain as a static regression guard for CAND-009 safety-state persistence
+  behavior. It adds `scripts/check_safety_atomic_write.py` and companion tests
+  that scan the four migrated safety persistence modules for fixed
+  `<target>.tmp` write patterns, allow `atomic_write.py` as the unique
+  `mkstemp`-based helper, and integrate into dev/CI/quick release gates. It
+  does not enable live trading, live submit, order placement, broker/provider
+  execution, credential loading, network access, or approval queue mutation.
+  Acceptance is documentation/governance acceptance only and is not `v0.6.18`
+  release authorization.
 - No profit, risk elimination, claims that live trading is safe, or
   autonomous-trading-readiness claims are made.
 

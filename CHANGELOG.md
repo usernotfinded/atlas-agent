@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - CAND-010: Safety-State Persistence Regression Guard. Committed `scripts/check_safety_atomic_write.py` static checker and `tests/test_check_safety_atomic_write.py` coverage to prevent reintroduction of fixed `<target>.tmp` writes in `src/atlas_agent/safety/heartbeat.py`, `src/atlas_agent/safety/deadman.py`, `src/atlas_agent/safety/kill_switch.py`, and `src/atlas_agent/safety/state.py`; integrated into `scripts/dev_check.sh` and `scripts/ci_check.sh`.
+- CAND-010 accepted into the `v0.6.18` candidate chain. Acceptance is documentation/governance acceptance only and does not authorize `v0.6.18` release cutover.
 
 ### Changed
 - Optional non-behavioral lint hygiene in CAND-009 touched test files: removed unused assignments in `tests/safety/test_atomic_write.py` and added missing `Path` imports in `tests/safety/test_deadman.py` and `tests/safety/test_kill_switch_core.py`.

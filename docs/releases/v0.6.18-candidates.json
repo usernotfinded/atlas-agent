@@ -1,0 +1,27 @@
+{
+  "release_line": "v0.6.18",
+  "status": "planning",
+  "source_version": "0.6.17",
+  "current_public_release": "v0.6.17",
+  "next_planned_release": "v0.6.18",
+  "release_date": null,
+  "pypi_published": false,
+  "candidates": [
+    {
+      "id": "CAND-010",
+      "status": "implemented",
+      "accepted": true,
+      "acceptance_date": "2026-07-01",
+      "acceptance_verdict": "PASS",
+      "title": "Safety-State Persistence Regression Guard",
+      "description": "Committed static checker and companion tests that prevent reintroduction of fixed <target>.tmp writes in the four CAND-009 safety persistence modules. Allows atomic_write.py as the unique mkstemp-based temp helper. Integrated into dev/CI/quick release gates.",
+      "notes": [
+        "Accepted into the v0.6.18 candidate chain on 2026-07-01.",
+        "Acceptance is documentation/governance acceptance only; it does not authorize v0.6.18 release cutover.",
+        "Does not enable live trading, live submit, order placement, broker/provider execution, credential loading, network access, or approval queue mutation.",
+        "Preserves CAND-009 atomic-write runtime behavior.",
+        "No v0.6.18 tag, GitHub Release, or PyPI publication exists."
+      ]
+    }
+  ]
+}

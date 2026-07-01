@@ -5,6 +5,13 @@
 
 **Goal:** Implement a committed static regression guard (`scripts/check_safety_atomic_write.py`) plus a companion pytest test (`tests/test_check_safety_atomic_write.py`) that fails verification if any of the four CAND-009 safety persistence modules reintroduce fixed `<target>.tmp` write patterns.
 
+**Acceptance note.** CAND-010 is accepted into the `v0.6.18` candidate chain on
+2026-07-01 with acceptance verdict `PASS`. This acceptance is
+documentation/governance acceptance only. It does not authorize `v0.6.18`
+release cutover and does not enable live trading, live submit, order placement,
+broker/provider execution, credential loading, network access, or approval queue
+mutation.
+
 **Architecture:** A stdlib-only checker script scans a deterministic list of guarded source files for forbidden fixed-temp construction patterns. It accepts an optional repository root argument, emits file/line/pattern violations, and exits `2` on regression, `1` on internal error, and `0` when clean. A pytest wrapper verifies the checker against the real repo and against temporary injected regressions. The checker is wired into `scripts/dev_check.sh` (and therefore `scripts/release_check.sh --quick`) and optionally into `scripts/ci_check.sh`.
 
 **Tech Stack:** Python 3.11+, `pathlib`, `re`, `sys`, `argparse`, `subprocess` (stdlib only). No broker/provider/config imports, no credential loading, no network access.
@@ -20,7 +27,9 @@
 - **Target release line:** v0.6.18
 - **Current public release:** v0.6.17
 - **Package version:** 0.6.17
-- **Status:** implemented
+- **Status:** implemented / accepted
+- **Acceptance date:** 2026-07-01
+- **Acceptance verdict:** PASS
 - **Design document:** `docs/safety-state-persistence-regression-guard-design.md`
 - **Design review verdict:** `PASS_WITH_WARNINGS`
 - **Design review recommendation:** Accept the design and proceed to implementation planning. Do not proceed to implementation without this plan and a separate implementation review.
