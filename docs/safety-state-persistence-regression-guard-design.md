@@ -5,7 +5,7 @@
 **Candidate ID:** CAND-010
 **Candidate line:** v0.6.18
 **Current public release:** v0.6.17
-**Status:** design-only
+**Status:** implemented
 **Date:** 2026-06-30
 **Design document path:** `docs/safety-state-persistence-regression-guard-design.md`
 
@@ -33,7 +33,9 @@ filename construction patterns.
 ## 2. Current baseline
 
 - Branch: `main`
-- Design HEAD: `3cffef98f0fdab0cf248193de19d4295321eba4a`
+- Design HEAD: `e3915b8180cdb643b95e1a697f6896e918a70dc3`
+  (prepared during planning at `3cffef98f0fdab0cf248193de19d4295321eba4a`,
+  corrected to the actual design commit)
 - Current public release: `v0.6.17`
 - Package version: `0.6.17`
 - Candidate line: `v0.6.18`

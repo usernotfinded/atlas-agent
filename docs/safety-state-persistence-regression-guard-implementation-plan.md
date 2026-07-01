@@ -20,7 +20,7 @@
 - **Target release line:** v0.6.18
 - **Current public release:** v0.6.17
 - **Package version:** 0.6.17
-- **Status:** implementation planning only
+- **Status:** implemented
 - **Design document:** `docs/safety-state-persistence-regression-guard-design.md`
 - **Design review verdict:** `PASS_WITH_WARNINGS`
 - **Design review recommendation:** Accept the design and proceed to implementation planning. Do not proceed to implementation without this plan and a separate implementation review.
@@ -33,7 +33,7 @@
 |---|---|
 | Repository | `usernotfinded/atlas-agent` |
 | Branch | `main` |
-| Planning HEAD | `e3915b8180cdb643b95e1a697f6896e918a70dc3` |
+| Planning HEAD | `e3915b8180cdb643b95e1a697f6896e918a70dc3` (pre-plan design HEAD); implementation commit `6929f33c8e996ef2cc7611776b0216c67609ef4d` |
 | Design document | `docs/safety-state-persistence-regression-guard-design.md` |
 | Design review verdict | `PASS_WITH_WARNINGS` |
 | Public release | `v0.6.17` |
@@ -70,7 +70,8 @@ git diff --check
 Observed results during planning:
 
 - Tree is clean (`git status --short` empty).
-- HEAD is `e3915b8180cdb643b95e1a697f6896e918a70dc3`.
+- HEAD is `e3915b8180cdb643b95e1a697f6896e918a70dc3` (pre-plan design HEAD).
+- The implementation plan itself was committed at `6929f33c8e996ef2cc7611776b0216c67609ef4d`.
 - `v0.6.17` tag points at HEAD.
 - No local or remote `v0.6.18*` tag.
 - Package version is `0.6.17`.
