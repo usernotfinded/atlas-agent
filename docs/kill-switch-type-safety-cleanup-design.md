@@ -5,13 +5,15 @@
 **Candidate ID:** CAND-011
 **Candidate line:** v0.6.19
 **Current public release:** v0.6.18
-**Status:** design-only / proposed
+**Status:** accepted into the `v0.6.19` candidate chain; implementation complete and reviewed
 **Date:** 2026-07-01
 **Design document path:** `docs/kill-switch-type-safety-cleanup-design.md`
 
-> **Design-only disclaimer.** This document specifies CAND-011. It does not
-> implement, authorize, or enable any runtime behavior change. Implementation
-> is a separate step and must pass its own protected-boundary review.
+> **Design-only disclaimer.** This document originally specified CAND-011. The
+> design was approved, implemented, independently reviewed, and accepted into
+> the `v0.6.19` candidate chain with no release cutover. Implementation commit:
+> `57e1ac85fa5530fa9b78a626dfdc7993cbea4b63`. This document remains a record of
+> the approved design; it does not authorize any new runtime behavior change.
 >
 > CAND-011 does not enable live trading, live submit, order placement,
 > broker/provider execution, credential loading, network access, or approval

@@ -116,6 +116,26 @@ static regression guard for CAND-009 safety-state persistence behavior.
   network access, or approval queue mutation.
 - No additional candidates are currently proposed for `v0.6.18`.
 
+### Candidate status in the `v0.6.19` planning line
+
+`v0.6.19` is the next planned release line. `v0.6.18` is the current public
+GitHub release. CAND-011 is accepted into the `v0.6.19` candidate chain as a
+bounded safety/type-safety cleanup.
+
+- **CAND-011** is accepted into the `v0.6.19` candidate chain as a kill-switch
+  type-safety cleanup. It narrows the audit payload construction in
+  `src/atlas_agent/safety/kill_switch.py` to eliminate the pre-existing mypy
+  `union-attr` warning on `last_heartbeat().isoformat()`, preserves the
+  `last_heartbeat` audit payload key and `str | None` value shape, and adds
+  mandatory `heartbeat_expired` audit-payload regression tests. It does not
+  change kill-switch decision logic, fail-closed behavior, heartbeat/deadman
+  behavior, `RiskManager`, or audit hash-chain; it does not enable live trading,
+  live submit, order placement, broker/provider execution, credential loading,
+  network access, or approval queue mutation. Acceptance is
+  documentation/governance acceptance only; no `v0.6.19` release cutover has
+  occurred.
+- No additional candidates are currently proposed for `v0.6.19`.
+
 ## Current state vs future state
 
 Atlas Agent is designed as a **supervised, human-in-the-loop workspace**, not an unattended trading system. The autonomy roadmap moves from strict manual oversight toward limited, gated automation, while keeping live execution disabled by default and real-money autonomy off the table.

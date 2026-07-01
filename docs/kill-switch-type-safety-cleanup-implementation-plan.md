@@ -21,9 +21,13 @@
 - **Target release line:** v0.6.19
 - **Current public release:** v0.6.18
 - **Package version:** 0.6.18
-- **Status:** planned / ready for implementation
+- **Status:** accepted into the `v0.6.19` candidate chain; implementation complete and reviewed
 - **Design document:** `docs/kill-switch-type-safety-cleanup-design.md`
 - **Design review verdict:** `PASS`
+- **Implementation-plan review verdict:** `PASS`
+- **Implementation review verdict:** `PASS`
+- **Implementation commit:** `57e1ac85fa5530fa9b78a626dfdc7993cbea4b63`
+- **Acceptance date:** 2026-07-01
 - **Independent design review recommendation:** Proceed to a separate implementation-plan prompt. The implementation must include or require a minimal regression test for the `heartbeat_expired` audit payload shape, because existing tests cover the decision path but not the audit payload branch.
 
 ---

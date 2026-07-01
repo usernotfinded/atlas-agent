@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Narrowed kill-switch heartbeat audit payload construction to eliminate a pre-existing mypy union-attr warning while preserving fail-closed behavior and the existing `last_heartbeat` payload shape.
+- CAND-011: Kill-Switch `last_heartbeat()` Type-Safety Cleanup. Narrowed audit payload construction in `src/atlas_agent/safety/kill_switch.py` to eliminate a pre-existing mypy `union-attr` warning; preserved fail-closed behavior and the existing `last_heartbeat` payload shape; added mandatory `heartbeat_expired` audit-payload regression tests. Accepted into the `v0.6.19` candidate chain; not released.
 
 ### Safety
 
