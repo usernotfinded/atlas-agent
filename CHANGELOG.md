@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Narrowed kill-switch heartbeat audit payload construction to eliminate a pre-existing mypy union-attr warning while preserving fail-closed behavior and the existing `last_heartbeat` payload shape.
+
 ### Safety
 
 ## [0.6.18] - 2026-07-01

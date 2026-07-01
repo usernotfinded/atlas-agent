@@ -11,6 +11,22 @@ from atlas_agent.safety.kill_switch import AdvancedKillSwitch
 from atlas_agent.safety.models import KillSwitchStatus, KillSwitchDecision
 
 
+class _CapturingAuditWriter:
+    def __init__(self) -> None:
+        self.events: list[tuple[str, dict[str, object]]] = []
+
+    def write_event(
+        self,
+        event_type: str,
+        *,
+        run_id: str,
+        iteration: int | None = None,
+        payload: dict[str, object] | None = None,
+        **kwargs: object,
+    ) -> None:
+        self.events.append((event_type, payload or {}))
+
+
 @pytest.fixture
 def safety_paths(tmp_path):
     return tmp_path / "kill_switch.json", tmp_path / "heartbeat.json"
@@ -118,3 +134,55 @@ def test_heartbeat_corrupt_emits_warning(safety_paths, caplog):
         ks.evaluate()
 
     assert any("corrupt" in r.message.lower() for r in caplog.records)
+
+
+def test_heartbeat_expired_audit_payload_contains_iso_string(safety_paths):
+    state_path, hb_path = safety_paths
+    writer = _CapturingAuditWriter()
+    ks = AdvancedKillSwitch(
+        state_path=state_path,
+        heartbeat_path=hb_path,
+        audit_writer=writer,
+    )
+
+    old_ts = (datetime.now(UTC) - timedelta(seconds=600)).isoformat()
+    hb_path.write_text(json.dumps({"timestamp": old_ts, "source": "test"}))
+    ks.heartbeat_manager.timeout_seconds = 300
+
+    decision = ks.evaluate()
+    assert decision.allowed is False
+    assert "heartbeat expired" in decision.reason.lower()
+
+    heartbeat_events = [
+        payload for event_type, payload in writer.events if event_type == "heartbeat_expired"
+    ]
+    assert len(heartbeat_events) == 1
+    payload = heartbeat_events[0]
+    assert "last_heartbeat" in payload
+    assert isinstance(payload["last_heartbeat"], str)
+    datetime.fromisoformat(payload["last_heartbeat"])
+
+
+def test_corrupt_heartbeat_expired_audit_payload_last_heartbeat_is_none(safety_paths):
+    state_path, hb_path = safety_paths
+    hb_path.write_text("not-json", encoding="utf-8")
+
+    writer = _CapturingAuditWriter()
+    ks = AdvancedKillSwitch(
+        state_path=state_path,
+        heartbeat_path=hb_path,
+        audit_writer=writer,
+    )
+    ks.heartbeat_manager.timeout_seconds = 1
+
+    decision = ks.evaluate()
+    assert decision.allowed is False
+    assert "heartbeat expired" in decision.reason.lower()
+
+    heartbeat_events = [
+        payload for event_type, payload in writer.events if event_type == "heartbeat_expired"
+    ]
+    assert len(heartbeat_events) == 1
+    payload = heartbeat_events[0]
+    assert "last_heartbeat" in payload
+    assert payload["last_heartbeat"] is None

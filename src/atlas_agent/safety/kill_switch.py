@@ -38,12 +38,18 @@ class AdvancedKillSwitch:
         
         # Check heartbeat
         if mode != "locked_down" and self.heartbeat_manager.is_expired():
+            last_heartbeat = self.heartbeat_manager.last_heartbeat()
+            last_heartbeat_iso = (
+                last_heartbeat.isoformat()
+                if last_heartbeat is not None
+                else None
+            )
             if self.audit_writer:
                 self.audit_writer.write_event(
                     "heartbeat_expired",
                     run_id=self.run_id,
                     iteration=self.iteration,
-                    payload={"last_heartbeat": self.heartbeat_manager.last_heartbeat().isoformat() if self.heartbeat_manager.last_heartbeat() else None}
+                    payload={"last_heartbeat": last_heartbeat_iso},
                 )
             return KillSwitchDecision(
                 allowed=False,
