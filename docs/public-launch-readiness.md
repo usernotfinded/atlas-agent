@@ -4,9 +4,9 @@
 
 ## Public launch status
 
-Atlas Agent is a **v0.6.16 public release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The current tagged public GitHub release is `v0.6.16`; `v0.6.15` and earlier releases are historical.
+Atlas Agent is a **v0.6.17 public release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The current tagged public GitHub release is `v0.6.17`; `v0.6.16` and earlier releases are historical.
 
-The source package version on `main` is `0.6.16`. `v0.6.16` is tagged and released on GitHub only; PyPI was not published.
+The source package version on `main` is `0.6.17`. `v0.6.17` is tagged and released on GitHub only; PyPI was not published.
 
 This document explains what is verified, what remains disabled, and what reviewers should check.
 
@@ -151,7 +151,9 @@ No broker, no network, no credentials, no live trading.
 - `docs/releases/v0.6.13-post-release-evidence.json` present — historical machine-readable v0.6.13 evidence
 - `docs/releases/v0.6.14-plan.md` present — historical v0.6.14 planning seed
 - `docs/releases/v0.6.15-plan.md` present — historical v0.6.15 planning seed
-- `docs/releases/v0.6.16-plan.md` present — v0.6.16 planning seed
+- `docs/releases/v0.6.16-plan.md` present — historical v0.6.16 planning seed
+- `docs/releases/v0.6.17.md` present — current public release notes
+- `docs/trust/v0.6.17-status.md` present — current public trust status
 - `docs/releases/v0.6.15-final-readiness-audit.md` present — historical v0.6.15 CAND-006 planning-only Go/No-Go dossier
 - `docs/releases/v0.6.15-final-readiness-audit.json` present — machine-readable v0.6.15 final readiness audit
 - `docs/releases/v0.6.13-candidate-selection.md` present — v0.6.13 candidate-selection gate (planning only)
@@ -161,8 +163,8 @@ No broker, no network, no credentials, no live trading.
 - `docs/releases/v0.6.14-final-readiness-audit.md` present — historical pre-cutover CAND-008 readiness audit
 - `docs/releases/v0.6.14-post-release-evidence.md` present — canonical GitHub-only cutover evidence
 - `docs/autonomous-paper-workflow.md` present — L1 paper-only autonomy demo doc
-- `docs/releases/v0.6.15.md` present — v0.6.15 release notes (current public)
-- `docs/trust/v0.6.15-status.md` present — v0.6.15 trust status (current public)
+- `docs/releases/v0.6.15.md` present — v0.6.15 release notes (historical)
+- `docs/trust/v0.6.15-status.md` present — v0.6.15 trust status (historical)
 - `docs/releases/v0.6.12-candidate-readiness.md` present — historical v0.6.12 candidate readiness record
 
 ## Release artifacts status
@@ -171,10 +173,10 @@ No broker, no network, no credentials, no live trading.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
 - Artifact retention visibility is provided by the manual `release-assurance-artifact-retention-audit` workflow; it is read-only and does not download, delete, or clean up artifacts.
-- Version on `main` is `0.6.16`; latest stable public GitHub release is `v0.6.16`. `v0.6.15` and earlier releases are historical.
-- `v0.6.16` is the current public GitHub-only release; `v0.6.17` is the next planning line.
+- Version on `main` is `0.6.17`; latest stable public GitHub release is `v0.6.17`. `v0.6.16` and earlier releases are historical.
+- `v0.6.17` is the current public GitHub-only release; `v0.6.18` is the next planning line.
 - [v0.6.15 Post-Release Evidence](./releases/v0.6.15-post-release-evidence.md) records the historical v0.6.15 deterministic cutover evidence.
-- [v0.6.16 Planning Seed](./releases/v0.6.16-plan.md) seeds the next planning line and does not authorize a release.
+- [v0.6.17 Planning Seed](./releases/v0.6.17-plan.md) seeds the next planning line and does not authorize a release.
 - [v0.6.14 Final Paper Portfolio Readiness Audit](./releases/v0.6.14-final-readiness-audit.md) preserves the historical pre-cutover Go/No-Go dossier.
 
 ## Known limitations

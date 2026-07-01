@@ -245,7 +245,7 @@ New to the repo? Start with the [External Reviewer Walkthrough](docs/external-re
 Maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.16 --output artifacts/release_assurance/v0.6.16-local-check
+python scripts/release_assurance.py --version v0.6.17 --output artifacts/release_assurance/v0.6.17-local-check
 ```
 
 Or run `.github/workflows/release-assurance.yml` via `workflow_dispatch` in GitHub Actions. Both are read-only and non-publishing — they do not create tags, publish packages, call providers, or enable trading.

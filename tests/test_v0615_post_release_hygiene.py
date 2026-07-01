@@ -66,7 +66,7 @@ def _copy_v0615_repo(tmp_path: Path) -> Path:
         tag = release.get("tag")
         if tag == "v0.6.15":
             release["status"] = "current_public"
-        elif tag in ("v0.6.14", "v0.6.16"):
+        elif tag in ("v0.6.14", "v0.6.16", "v0.6.17"):
             release["status"] = "historical"
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
@@ -132,7 +132,7 @@ def test_script_exists() -> None:
 
 
 def test_checker_fails_on_current_repo() -> None:
-    """The historical checker correctly fails on the post-v0.6.16 repo."""
+    """The historical checker correctly fails on the post-v0.6.17 repo."""
     result = _run_script()
     assert result.returncode == 1, result.stdout + result.stderr
     assert "FAIL" in result.stdout

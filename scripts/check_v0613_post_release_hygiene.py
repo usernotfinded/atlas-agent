@@ -144,10 +144,11 @@ def _read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
-def _is_negated(text: str, idx: int, phrase_len: int, window: int = 500) -> bool:
+def _is_negated(text: str, idx: int, phrase_len: int, window: int = 700) -> bool:
     window_start = max(0, idx - window)
     window_end = min(len(text), idx + phrase_len + window)
-    window_text = text[window_start:window_end]
+    # Strip common markdown formatting so negation hints survive bold/italic.
+    window_text = text[window_start:window_end].replace("**", "").replace("__", "")
     return any(hint in window_text for hint in NEGATION_HINTS)
 
 
