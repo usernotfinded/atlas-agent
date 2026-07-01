@@ -7,6 +7,12 @@ docs, safety messaging, release readiness, and local evidence generation.
 
 - `scripts/check_version_consistency.py` verifies package version metadata in
   `pyproject.toml` and `src/atlas_agent/__init__.py`.
+- `scripts/check_candidate_chain.py` validates that release metadata, candidate-chain
+  Markdown, and candidate-chain JSON agree on release identity, candidate status,
+  acceptance verdicts, PyPI status, tag-created status, and GitHub-release-created
+  status. It also scans candidate-chain docs for candidate-chain-specific premature
+  release, live-trading, profit, broker-endorsement, order-submission, and PyPI
+  claims. Runs in dev/CI after version consistency; no network or credentials.
 - `scripts/check_forbidden_claims.py` scans public docs for prohibited safety or
   profit wording.
 - `scripts/check_public_docs_consistency.py` scans public docs for unsafe claims,

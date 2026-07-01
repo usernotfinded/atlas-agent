@@ -43,6 +43,13 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "1b. candidate-chain consistency"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_candidate_chain.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "2. CLI command compatibility"
 SECONDS=0
 "$PYTHON_BIN" scripts/check_cli_command_compatibility.py
