@@ -4,20 +4,23 @@
 
 **Candidate ID:** CAND-011
 **Candidate line:** v0.6.19
-**Current public release:** v0.6.18
-**Status:** accepted into the `v0.6.19` candidate chain; implementation complete and reviewed
+**Current public release:** v0.6.19
+**Status:** released in `v0.6.19`; design was accepted into the `v0.6.19`
+candidate chain, implemented, independently reviewed, and released
 **Date:** 2026-07-01
 **Design document path:** `docs/kill-switch-type-safety-cleanup-design.md`
 
 > **Design-only disclaimer.** This document originally specified CAND-011. The
-> design was approved, implemented, independently reviewed, and accepted into
-> the `v0.6.19` candidate chain with no release cutover. Implementation commit:
-> `57e1ac85fa5530fa9b78a626dfdc7993cbea4b63`. This document remains a record of
-> the approved design; it does not authorize any new runtime behavior change.
+> design was approved, implemented, independently reviewed, accepted into
+> the `v0.6.19` candidate chain, and released in `v0.6.19`. Implementation commit:
+> `57e1ac85fa5530fa9b78a626dfdc7993cbea4b63`. Release cutover commit: see the
+> `v0.6.19` release commit. This document remains a record of the approved
+> design; it does not authorize any new runtime behavior change.
 >
 > CAND-011 does not enable live trading, live submit, order placement,
 > broker/provider execution, credential loading, network access, or approval
-> queue mutation.
+> queue mutation. It is released in `v0.6.19` as a GitHub-only release with no
+> PyPI publication.
 
 ---
 
@@ -36,21 +39,19 @@ safety decision logic, audit payload shape, or fail-closed semantics change.
 ## 2. Baseline state
 
 - Branch: `main`
-- Design HEAD: `f079a8fe05218ce1a8f3d3b64fa270071733782c`
-- Current public release: `v0.6.18`
-- Package version: `0.6.18`
+- Current public release: `v0.6.19`
+- Package version: `0.6.19`
 - Candidate line: `v0.6.19`
-- Next planned release: `v0.6.19`
-- Release status: no v0.6.19 tag, release, or PyPI publication exists
+- Next planned release: `v0.6.20`
+- Release status: `v0.6.19` is released as a GitHub-only release
 - PyPI: not published
 - Live mode: fail-closed (`atlas run --mode live` exits 2)
-- Annotated tag `v0.6.18` points at HEAD
-- GitHub Release `v0.6.18` exists as a GitHub-only release
+- Annotated tag `v0.6.19` points at HEAD
+- GitHub Release `v0.6.19` exists as a GitHub-only release
 
 The warning was explicitly acknowledged as a known non-blocking item in the
-`v0.6.18` release notes and trust status. It is being addressed now as a
-separate protected-boundary-approved candidate rather than being folded into a
-release cutover.
+`v0.6.18` release notes and trust status. It was addressed as CAND-011 and
+released in `v0.6.19`.
 
 ---
 
@@ -304,8 +305,8 @@ The following invariants must remain true after implementation:
 6. `HeartbeatManager.last_heartbeat()` is not modified.
 7. The atomic-write regression guard (`scripts/check_safety_atomic_write.py`)
    continues to pass.
-8. Package version remains `0.6.18`; current public release remains `v0.6.18`;
-   next planned release remains `v0.6.19`; PyPI remains unpublished.
+8. Package version is `0.6.19`; current public release is `v0.6.19`; next
+   planned release is `v0.6.20`; PyPI remains unpublished.
 
 ---
 
@@ -526,9 +527,8 @@ If CAND-011 causes regressions after implementation:
 - [ ] `scripts/check_safety_atomic_write.py` still passes.
 - [ ] No live trading, live submit, broker/provider execution, credential
       loading, or order placement is introduced.
-- [ ] Package version remains `0.6.18`; current public release remains
-      `v0.6.18`; next planned release remains `v0.6.19`; PyPI remains
-      unpublished.
+- [ ] Package version is `0.6.19`; current public release is `v0.6.19`; next
+      planned release is `v0.6.20`; PyPI remains unpublished.
 
 ---
 

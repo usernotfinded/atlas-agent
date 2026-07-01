@@ -19,14 +19,17 @@
 - **Candidate ID:** CAND-011
 - **Title:** Kill-Switch `last_heartbeat()` Type-Safety Cleanup
 - **Target release line:** v0.6.19
-- **Current public release:** v0.6.18
-- **Package version:** 0.6.18
-- **Status:** accepted into the `v0.6.19` candidate chain; implementation complete and reviewed
+- **Current public release:** v0.6.19
+- **Package version:** 0.6.19
+- **Status:** released in `v0.6.19`; plan was accepted into the `v0.6.19`
+  candidate chain, implemented, independently reviewed, and released
 - **Design document:** `docs/kill-switch-type-safety-cleanup-design.md`
 - **Design review verdict:** `PASS`
 - **Implementation-plan review verdict:** `PASS`
 - **Implementation review verdict:** `PASS`
 - **Implementation commit:** `57e1ac85fa5530fa9b78a626dfdc7993cbea4b63`
+- **Acceptance commit:** `1131eebc6f795720a6466a388d7459ff05f5fa58`
+- **Release date:** 2026-07-01
 - **Acceptance date:** 2026-07-01
 - **Independent design review recommendation:** Proceed to a separate implementation-plan prompt. The implementation must include or require a minimal regression test for the `heartbeat_expired` audit payload shape, because existing tests cover the decision path but not the audit payload branch.
 
@@ -41,11 +44,11 @@
 | Planning HEAD | `dacf8ec4aae7b03863cc96ac1cabf47f00c44b1c` |
 | Design document | `docs/kill-switch-type-safety-cleanup-design.md` |
 | Design review verdict | `PASS` |
-| Public release | `v0.6.18` |
-| Package version | `0.6.18` |
+| Public release | `v0.6.19` |
+| Package version | `0.6.19` |
 | Candidate line | `v0.6.19` |
-| Next planned release | `v0.6.19` |
-| Release status | no v0.6.19 tag, release, or PyPI publication exists |
+| Next planned release | `v0.6.20` |
+| Release status | `v0.6.19` is released as a GitHub-only release |
 | PyPI published | `false` |
 | Live mode | fail-closed (`atlas run --mode live` exits 2) |
 
@@ -379,9 +382,9 @@ The implementation must preserve the following invariants. Any implementation th
 10. No weakening of kill switch, deadman, heartbeat, or audit hash-chain.
 11. No audit hash-chain bypass.
 12. `atlas run --mode live` remains exit 2 / fail-closed.
-13. Package version remains `0.6.18`.
-14. Public release remains `v0.6.18`.
-15. No v0.6.19 tag, GitHub Release, or PyPI publication is created.
+13. Package version is `0.6.19`.
+14. Public release is `v0.6.19`.
+15. No v0.6.20 tag, GitHub Release, or PyPI publication is created.
 16. The `heartbeat_expired` audit payload retains key `last_heartbeat` with value shape `str | None`.
 17. `AdvancedKillSwitch.evaluate` returns the same `KillSwitchDecision` for the same inputs.
 18. `HeartbeatManager.last_heartbeat()` is not modified.
@@ -526,7 +529,7 @@ If CAND-011 causes regressions after implementation:
 - [ ] `atlas run --mode live` still exits 2.
 - [ ] `scripts/check_safety_atomic_write.py` still passes.
 - [ ] No live trading, live submit, broker/provider execution, credential loading, or order placement is introduced.
-- [ ] Package version remains `0.6.18`; current public release remains `v0.6.18`; next planned release remains `v0.6.19`; PyPI remains unpublished.
+- [ ] Package version is `0.6.19`; current public release is `v0.6.19`; next planned release is `v0.6.20`; PyPI remains unpublished.
 
 ---
 

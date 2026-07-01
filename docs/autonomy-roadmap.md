@@ -103,7 +103,7 @@ safety-state persistence hardening candidate.
 
 ### Candidate status in the `v0.6.18` release
 
-`v0.6.18` is the current public GitHub release. It includes CAND-010 as a
+`v0.6.18` is a historical public GitHub release. It includes CAND-010 as a
 static regression guard for CAND-009 safety-state persistence behavior.
 
 - **CAND-010** is accepted into the `v0.6.18` candidate chain as a static
@@ -114,13 +114,12 @@ static regression guard for CAND-009 safety-state persistence behavior.
   into dev/CI/quick release gates. It does not enable live trading, live
   submit, order placement, broker/provider execution, credential loading,
   network access, or approval queue mutation.
-- No additional candidates are currently proposed for `v0.6.18`.
+- No additional candidates were proposed for `v0.6.18`.
 
-### Candidate status in the `v0.6.19` planning line
+### Candidate status in the `v0.6.19` release
 
-`v0.6.19` is the next planned release line. `v0.6.18` is the current public
-GitHub release. CAND-011 is accepted into the `v0.6.19` candidate chain as a
-bounded safety/type-safety cleanup.
+`v0.6.19` is the current public GitHub release. It includes CAND-011 as a
+kill-switch type-safety cleanup.
 
 - **CAND-011** is accepted into the `v0.6.19` candidate chain as a kill-switch
   type-safety cleanup. It narrows the audit payload construction in
@@ -131,10 +130,13 @@ bounded safety/type-safety cleanup.
   change kill-switch decision logic, fail-closed behavior, heartbeat/deadman
   behavior, `RiskManager`, or audit hash-chain; it does not enable live trading,
   live submit, order placement, broker/provider execution, credential loading,
-  network access, or approval queue mutation. Acceptance is
-  documentation/governance acceptance only; no `v0.6.19` release cutover has
-  occurred.
+  network access, or approval queue mutation.
 - No additional candidates are currently proposed for `v0.6.19`.
+
+### Candidate status in the `v0.6.20` planning line
+
+`v0.6.20` is the next planned release line. `v0.6.19` is the current public
+GitHub release. No candidates are currently proposed for `v0.6.20`.
 
 ## Current state vs future state
 

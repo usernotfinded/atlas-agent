@@ -5,12 +5,14 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.17` (tagged)
-- Previous public release: `v0.6.16`
-- Source package version on `main`: `0.6.17`
-- GitHub release: `v0.6.17` (current public)
-- Next planning line: `v0.6.18`
-- Public v0.6.17: current public — [v0.6.17 Trust and Release Status](v0.6.17-status.md)
+- Current public release: `v0.6.19` (tagged)
+- Previous public release: `v0.6.18`
+- Source package version on `main`: `0.6.19`
+- GitHub release: `v0.6.19` (current public)
+- Next planning line: `v0.6.20`
+- Public v0.6.19: current public — [v0.6.19 Trust and Release Status](v0.6.19-status.md)
+- Public v0.6.18: historical — [v0.6.18 Trust and Release Status](v0.6.18-status.md)
+- Public v0.6.17: historical — [v0.6.17 Trust and Release Status](v0.6.17-status.md)
 - Public v0.6.16: historical — [v0.6.16 Trust and Release Status](v0.6.16-status.md)
 - Public v0.6.15: historical — [v0.6.15 Trust and Release Status](v0.6.15-status.md)
 - Public v0.6.14: historical — [v0.6.14 Trust and Release Status](v0.6.14-status.md)
@@ -18,13 +20,14 @@ users, contributors, auditors, and potential adopters.
 - Public v0.6.12: historical — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - PyPI was not published
-- Current public release status: [v0.6.17 Trust and Release Status](v0.6.17-status.md) (current public)
-- Previous release status: [v0.6.16 Trust and Release Status](v0.6.16-status.md) (historical)
-- Previous previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
-- Previous previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
-- Previous previous previous previous release status: [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
-- Current public release notes: [docs/releases/v0.6.17.md](../releases/v0.6.17.md) (current public)
-- Previous release notes: [docs/releases/v0.6.16.md](../releases/v0.6.16.md) (historical)
+- Current public release status: [v0.6.19 Trust and Release Status](v0.6.19-status.md) (current public)
+- Previous release status: [v0.6.18 Trust and Release Status](v0.6.18-status.md) (historical)
+- Previous previous release status: [v0.6.17 Trust and Release Status](v0.6.17-status.md) (historical)
+- Previous previous previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
+- Previous previous previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
+- Previous previous previous previous previous release status: [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
+- Current public release notes: [docs/releases/v0.6.19.md](../releases/v0.6.19.md) (current public)
+- Previous release notes: [docs/releases/v0.6.18.md](../releases/v0.6.18.md) (historical)
 - v0.6.11 release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (historical)
 - Previous previous previous release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (historical)
@@ -66,16 +69,16 @@ provider execution, broker execution, live trading, or order approval.
 ## v0.6.15 Post-Release Evidence
 
 The `v0.6.15` GitHub-only release cutover evidence is captured in deterministic,
-reviewer-verifiable records. The `v0.6.16` release is historical and the next
-planning line is seeded in `v0.6.17-plan.md`. PyPI remains unpublished, live
+reviewer-verifiable records. The `v0.6.18` release is historical and the next
+planning line is seeded in `v0.6.19-plan.md`. PyPI remains unpublished, live
 trading remains disabled by default, and provider/broker execution remains locked
 behind the existing safety gates.
 
 - [v0.6.15 Post-Release Evidence](../releases/v0.6.15-post-release-evidence.md) — deterministic GitHub-only cutover record (historical)
 - [v0.6.15 Paper Human Review Evidence](../releases/v0.6.15-paper-human-review-evidence.md) — historical pre-cutover CAND-001 through CAND-005 evidence
 - [v0.6.15 Final Human Review Release-Readiness Audit](../releases/v0.6.15-final-readiness-audit.md) — historical pre-cutover CAND-006 decision dossier
-- [v0.6.16 Planning Seed](../releases/v0.6.16-plan.md) — historical planning notes
-- [v0.6.17 Planning Seed](../releases/v0.6.17-plan.md) — next-line planning notes
+- [v0.6.18 Planning Seed](../releases/v0.6.18-plan.md) — historical planning notes
+- [v0.6.19 Planning Seed](../releases/v0.6.19-plan.md) — next-line planning notes
 
 ## v0.6.14 Post-Release Evidence
 
@@ -126,33 +129,38 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.17` is verified against the GitHub release/tag.
-Auto-updater delivery for `v0.6.16` and earlier remains verified.
+Auto-updater delivery for `v0.6.19` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.18` and earlier remains verified.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.17` (current public)
+- GitHub release: `v0.6.19` (current public)
+- GitHub release: `v0.6.18` (historical)
+- GitHub release: `v0.6.17` (historical)
 - GitHub release: `v0.6.16` (historical)
 - GitHub release: `v0.6.15` (historical)
 - GitHub release: `v0.6.14` (historical)
 - GitHub release: `v0.6.13` (historical)
 - GitHub release: `v0.6.11` (historical)
-- Tag: `v0.6.17` (created and pushed)
+- Tag: `v0.6.19` (created and pushed)
+- Tag: `v0.6.18` (historical)
+- Tag: `v0.6.17` (historical)
 - Tag: `v0.6.16` (historical)
 - Tag: `v0.6.15` (historical)
 - Tag: `v0.6.14` (historical)
 - Tag: `v0.6.13` (historical)
 - Tag: `v0.6.11` (historical)
 - PyPI was not published
-- Package version in source metadata: `0.6.17`
-- Auto-updater delivery: verified for `v0.6.17`; verified for `v0.6.16`; verified for `v0.6.15`; verified for `v0.6.14`; verified for `v0.6.13`
+- Package version in source metadata: `0.6.19`
+- Auto-updater delivery: verified for `v0.6.19`; verified for `v0.6.18`; verified for `v0.6.17`; verified for `v0.6.16`; verified for `v0.6.15`; verified for `v0.6.14`; verified for `v0.6.13`
 
 ## What Is Ready
 
-- Public v0.6.17 release notes and release status documentation (current public).
-- Public v0.6.16 release notes and release status documentation (historical).
+- Public v0.6.19 release notes and release status documentation (current public).
+- Public v0.6.18 release notes and release status documentation (historical).
+- Public v0.6.17 release notes and release status documentation (historical).
 - Public v0.6.15 release notes and release status documentation (historical).
 - Public v0.6.14 release notes and release status documentation (historical).
 - Public v0.6.13 release notes and release status documentation (historical).
@@ -189,8 +197,8 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1` through `v0.6.17`.
-- `v0.6.18` is the next planning line; no candidates are selected.
+- PyPI was not published for `v0.6.1` through `v0.6.19`.
+- `v0.6.20` is the next planning line; no candidates are selected.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.

@@ -13,9 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- CAND-011: Kill-Switch `last_heartbeat()` Type-Safety Cleanup. Narrowed audit payload construction in `src/atlas_agent/safety/kill_switch.py` to eliminate a pre-existing mypy `union-attr` warning; preserved fail-closed behavior and the existing `last_heartbeat` payload shape; added mandatory `heartbeat_expired` audit-payload regression tests. Accepted into the `v0.6.19` candidate chain; not released.
+### Safety
+
+## [0.6.19] - 2026-07-01
+
+### Fixed
+
+- CAND-011: Kill-Switch `last_heartbeat()` Type-Safety Cleanup. Narrowed audit payload construction in `src/atlas_agent/safety/kill_switch.py` to eliminate a pre-existing mypy `union-attr` warning; preserved fail-closed behavior and the existing `last_heartbeat` payload shape; added mandatory `heartbeat_expired` audit-payload regression tests.
 
 ### Safety
+
+- No live trading, live submit, broker/provider execution, credential loading, or order placement introduced.
+- `atlas run --mode live` remains fail-closed.
+- GitHub-only release; no PyPI publication.
 
 ## [0.6.18] - 2026-07-01
 

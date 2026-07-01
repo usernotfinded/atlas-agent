@@ -2,7 +2,7 @@
 
 ## Security hardening release readiness
 
-The v0.6.17 public GitHub release is the current stable version. v0.6.16 and earlier releases are historical.
+The v0.6.19 public GitHub release is the current stable version. v0.6.18 and earlier releases are historical.
 
 Release was performed after:
 - all security hardening PRs were merged;
@@ -19,7 +19,7 @@ Release was performed after:
 
 After a security release, maintainers must verify that the auto-updater can detect the new GitHub release/tag.
 
-For v0.6.17, the public GitHub release is `v0.6.17`. v0.6.16 is historical.
+For v0.6.19, the public GitHub release is `v0.6.19`. v0.6.18 is historical.
 
 PyPI was not published. A separate approval process is required for any future PyPI publish.
 
@@ -30,7 +30,7 @@ The updater verification must not install packages, modify files, enable live tr
 After publishing a security release, maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.17 --output artifacts/release_assurance/v0.6.17-local-check
+python scripts/release_assurance.py --version v0.6.19 --output artifacts/release_assurance/v0.6.19-local-check
 ```
 
 The pack verifies release identity, public metadata, updater delivery, provider audit evidence, and safety non-claims.
