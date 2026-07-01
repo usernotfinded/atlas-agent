@@ -32,7 +32,7 @@ it is bounded, reversible, auditable, fail-closed, and explicitly opt-in.
 
 ## Current release truth
 
-As of the current release line (`v0.6.17` public GitHub release, `v0.6.18`
+As of the current release line (`v0.6.18` public GitHub release, `v0.6.19`
 planning-only):
 
 - Autonomous live trading is **not implemented**.
@@ -86,35 +86,30 @@ planning-only):
   state or approval queues, or indicate live readiness. The status
   `operator_gate_recorded` is evidence-recording status only and is not
   authorization to submit orders.
-- CAND-009 (v0.6.17 planning-only): Accepted into the `v0.6.17` candidate chain
-  as a safety-state atomic-write hardening change. It replaces fixed
-  `<target>.tmp` writes in `heartbeat.py`, `deadman.py`, `kill_switch.py`, and
-  `state.py` with a stdlib-only unique same-directory atomic-write helper,
-  preserving file formats, public APIs, permissions, and fail-closed behavior.
-  It does not enable live trading, live submit, order placement, broker/provider
-  execution, credential loading, or approval queue mutation. Acceptance is
-  documentation/governance acceptance only and is not `v0.6.17` release
-  authorization.
+- CAND-009 (v0.6.17): Released as a safety-state atomic-write hardening change.
+  It replaces fixed `<target>.tmp` writes in `heartbeat.py`, `deadman.py`,
+  `kill_switch.py`, and `state.py` with a stdlib-only unique same-directory
+  atomic-write helper, preserving file formats, public APIs, permissions, and
+  fail-closed behavior. It does not enable live trading, live submit, order
+  placement, broker/provider execution, credential loading, or approval queue
+  mutation.
 - The **shadow-live readiness contract** introduced in CAND-001 is
   **planning-only** and does not implement, authorize, or enable live trading.
 - `v0.6.16` is a historical bounded/evidence/simulated-only governance release.
   It includes CAND-001 through CAND-008 with no live trading, no live submit, no
   broker/provider execution, no credential loading, and no order placement. PyPI
   was not published.
-- `v0.6.17` is released as a safety-state persistence hardening release. It
+- `v0.6.17` is a historical safety-state persistence hardening release. It
   includes CAND-009 and is a GitHub-only release; PyPI was not published. No
   live trading, live submit, broker/provider execution, credential loading,
   order placement, or approval queue mutation is introduced.
-- **CAND-010** (`v0.6.18` planning-only): Accepted into the `v0.6.18` candidate
-  chain as a static regression guard for CAND-009 safety-state persistence
-  behavior. It adds `scripts/check_safety_atomic_write.py` and companion tests
-  that scan the four migrated safety persistence modules for fixed
-  `<target>.tmp` write patterns, allow `atomic_write.py` as the unique
+- **CAND-010** (v0.6.18): Released as a static regression guard for CAND-009
+  safety-state persistence behavior. It adds `scripts/check_safety_atomic_write.py`
+  and companion tests that scan the four migrated safety persistence modules for
+  fixed `<target>.tmp` write patterns, allow `atomic_write.py` as the unique
   `mkstemp`-based helper, and integrate into dev/CI/quick release gates. It
   does not enable live trading, live submit, order placement, broker/provider
   execution, credential loading, network access, or approval queue mutation.
-  Acceptance is documentation/governance acceptance only and is not `v0.6.18`
-  release authorization.
 - No profit, risk elimination, claims that live trading is safe, or
   autonomous-trading-readiness claims are made.
 

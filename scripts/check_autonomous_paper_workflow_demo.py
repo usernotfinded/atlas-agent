@@ -305,23 +305,23 @@ def _check_cross_references() -> list[str]:
 
 def _check_release_metadata() -> list[str]:
     errors: list[str] = []
-    if PACKAGE_VERSION != "0.6.17":
+    if PACKAGE_VERSION != "0.6.18":
         errors.append(
-            f"Source version {PACKAGE_VERSION} != 0.6.17"
+            f"Source version {PACKAGE_VERSION} != 0.6.18"
         )
-    if CURRENT_PUBLIC_TAG != "v0.6.17":
-        errors.append(f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.17")
-    if NEXT_PLANNED_TAG not in ("v0.6.18", "0.6.18"):
-        errors.append(f"Next planned release {NEXT_PLANNED_TAG} != v0.6.18")
+    if CURRENT_PUBLIC_TAG != "v0.6.18":
+        errors.append(f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.18")
+    if NEXT_PLANNED_TAG not in ("v0.6.19", "0.6.19"):
+        errors.append(f"Next planned release {NEXT_PLANNED_TAG} != v0.6.19")
 
     result = subprocess.run(
-        ["git", "tag", "--list", "v0.6.18"],
+        ["git", "tag", "--list", "v0.6.19"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
     )
     if result.stdout.strip():
-        errors.append("Local git tag v0.6.18 already exists")
+        errors.append("Local git tag v0.6.19 already exists")
 
     return errors
 

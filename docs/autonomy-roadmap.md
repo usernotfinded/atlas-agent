@@ -28,7 +28,7 @@ Out of scope:
 - Auto-approval of live orders, kill-switch overrides, or risk-limit changes.
 - Any claim of production readiness, guaranteed performance, or safe live operation.
 
-This roadmap applies to the current release planning line. All milestones remain
+This roadmap applies to the current release line. All milestones remain
 subordinate to the [Bounded Live Autonomy Governance](bounded-live-autonomy-governance.md),
 the live-submit safety contract, the `RiskManager`, approval gates, and the kill
 switch.
@@ -88,7 +88,7 @@ CAND-008 as a bounded, evidence-only, simulated-only governance release.
 
 ### Candidate status in the `v0.6.17` release
 
-`v0.6.17` is the current public GitHub release. It includes CAND-009 as a
+`v0.6.17` is a historical public GitHub release. It includes CAND-009 as a
 safety-state persistence hardening candidate.
 
 - **CAND-009** is accepted into the `v0.6.17` candidate chain as a safety-state
@@ -101,10 +101,10 @@ safety-state persistence hardening candidate.
 - No candidate in the `v0.6.17` release enables unsupervised real-money trading
   or direct AI-to-broker execution.
 
-### Candidate status in the `v0.6.18` planning line
+### Candidate status in the `v0.6.18` release
 
-`v0.6.18` is the next planning line; no tag, GitHub Release, or PyPI
-publication exists.
+`v0.6.18` is the current public GitHub release. It includes CAND-010 as a
+static regression guard for CAND-009 safety-state persistence behavior.
 
 - **CAND-010** is accepted into the `v0.6.18` candidate chain as a static
   regression guard for CAND-009 safety-state persistence behavior. It adds
@@ -113,9 +113,7 @@ publication exists.
   allow `atomic_write.py` as the unique `mkstemp`-based helper, and integrate
   into dev/CI/quick release gates. It does not enable live trading, live
   submit, order placement, broker/provider execution, credential loading,
-  network access, or approval queue mutation. Acceptance is
-  documentation/governance acceptance only and is not `v0.6.18` release
-  authorization.
+  network access, or approval queue mutation.
 - No additional candidates are currently proposed for `v0.6.18`.
 
 ## Current state vs future state
@@ -268,7 +266,7 @@ L2 is the highest autonomy level Atlas Agent supports for live-market workflows.
 
 ## L3 — Bounded Live Autonomy under Strict Risk Limits
 
-L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.17` public release, `v0.6.18` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
+L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.18` public release, `v0.6.19` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
 
 ### Required preconditions
 
