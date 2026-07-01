@@ -70,7 +70,7 @@ _REMEDIATIONS = {
     "provider_audit_pack_commands_present": "Ensure provider audit-pack CLI commands are registered.",
     "provider_audit_pack_workflow_present": "Ensure .github/workflows/provider-audit-pack.yml exists.",
     "non_claims_preserved": "Add required safety non-claims to docs/releases/{version}.md.",
-    "protected_boundaries_clean": "Revert changes in src/atlas_agent/{config,brokers,execution,safety,risk} or exclude from release.",
+    "protected_boundaries_clean": "Revert changes in src/atlas_agent/{{config,brokers,execution,safety,risk}} or exclude from release.",
     "reviewer_trust_snapshot_valid": "Run scripts/check_reviewer_trust_snapshot.py on the snapshot directory.",
 }
 
@@ -534,7 +534,7 @@ def main():
     _record_diagnostic(
         diagnostics,
         "protected_boundaries_clean",
-        "git diff HEAD --name-only -- src/atlas_agent/{config,brokers,execution,safety,risk}",
+        "git diff HEAD --name-only -- src/atlas_agent/{{config,brokers,execution,safety,risk}}",
         checks["protected_boundaries_clean"],
         out,
         err,

@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Optional non-behavioral lint hygiene in CAND-009 touched test files: removed unused assignments in `tests/safety/test_atomic_write.py` and added missing `Path` imports in `tests/safety/test_deadman.py` and `tests/safety/test_kill_switch_core.py`.
 
+### Fixed
+- Escaped literal protected-boundary brace paths in release-assurance remediation text so diagnostic rendering remains reliable when protected-boundary checks fail.
+
 ### Safety
 - No live trading, live submit, broker/provider execution, credential loading, or order placement introduced.
 - `atlas run --mode live` remains fail-closed.
