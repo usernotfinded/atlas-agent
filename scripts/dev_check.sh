@@ -78,6 +78,13 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "4a1. safety atomic-write regression guard"
+SECONDS=0
+"$PYTHON_BIN" scripts/check_safety_atomic_write.py
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "4b. bounded autonomy governance tests"
 SECONDS=0
 "$PYTHON_BIN" -m pytest tests/test_bounded_autonomy_governance.py -q "${PYTEST_EXTRA_ARGS[@]}"
