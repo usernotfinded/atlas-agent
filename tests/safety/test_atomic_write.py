@@ -50,8 +50,6 @@ def test_old_file_preserved_on_write_failure(tmp_path: Path, monkeypatch: Any) -
     target = tmp_path / "target.json"
     target.write_text("old", encoding="utf-8")
 
-    original_write_text = Path.write_text
-
     def failing_write_text(self: Path, data: str, **kwargs: Any) -> int:
         raise RuntimeError("write failed")
 
@@ -66,8 +64,6 @@ def test_old_file_preserved_on_write_failure(tmp_path: Path, monkeypatch: Any) -
 def test_old_file_preserved_on_replace_failure(tmp_path: Path, monkeypatch: Any) -> None:
     target = tmp_path / "target.json"
     target.write_text("old", encoding="utf-8")
-
-    original_replace = Path.replace
 
     def failing_replace(self: Path, target: Path) -> Path:
         raise OSError("replace failed")
@@ -90,8 +86,6 @@ def test_temp_file_cleaned_up_on_success(tmp_path: Path) -> None:
 def test_temp_file_cleaned_up_on_failure(tmp_path: Path, monkeypatch: Any) -> None:
     target = tmp_path / "target.json"
     target.write_text("old", encoding="utf-8")
-
-    original_replace = Path.replace
 
     def failing_replace(self: Path, target: Path) -> Path:
         raise OSError("replace failed")
