@@ -294,14 +294,14 @@ def _minimal_checker_repo(tmp_path: Path) -> Path:
     for fixture in FIXTURES:
         shutil.copy2(fixture, repo / "data" / "sample" / "regimes" / fixture.name)
 
-    (repo / "pyproject.toml").write_text('version = "0.6.19"\n', encoding="utf-8")
-    (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.19"\n', encoding="utf-8")
+    (repo / "pyproject.toml").write_text('version = "0.6.20"\n', encoding="utf-8")
+    (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.20"\n', encoding="utf-8")
     (repo / "docs" / "releases" / "release-metadata.json").write_text(
         json.dumps(
             {
-                "source_version": "0.6.19",
-                "current_public_release": "v0.6.19",
-                "next_planned_release": "v0.6.20",
+                "source_version": "0.6.20",
+                "current_public_release": "v0.6.20",
+                "next_planned_release": "v0.6.21",
                 "pypi_published": False,
             }
         )

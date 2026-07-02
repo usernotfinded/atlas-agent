@@ -38,9 +38,9 @@ except ImportError:
     from scripts.release_metadata import load_metadata, ReleaseMetadata
 
 
-EXPECTED_SOURCE_VERSION = "0.6.19"
-EXPECTED_CURRENT_PUBLIC_TAG = "v0.6.19"
-EXPECTED_NEXT_PLANNED_TAG = "v0.6.20"
+EXPECTED_SOURCE_VERSION = "0.6.20"
+EXPECTED_CURRENT_PUBLIC_TAG = "v0.6.20"
+EXPECTED_NEXT_PLANNED_TAG = "v0.6.21"
 
 REQUIRED_FILES = [
     "docs/paper-strategy-evaluation.md",
@@ -360,7 +360,7 @@ def _check_release_metadata(repo_root: Path, checks: list[CheckResult], findings
         findings,
         name="release_metadata",
         ok=not errors,
-        pass_detail="Release metadata is v0.6.19 public / v0.6.20 planning.",
+        pass_detail="Release metadata is v0.6.20 public / v0.6.21 planning.",
         fail_detail="; ".join(errors),
     )
     return {

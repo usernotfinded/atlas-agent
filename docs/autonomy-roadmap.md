@@ -118,7 +118,7 @@ static regression guard for CAND-009 safety-state persistence behavior.
 
 ### Candidate status in the `v0.6.19` release
 
-`v0.6.19` is the current public GitHub release. It includes CAND-011 as a
+`v0.6.19` is a historical public GitHub release. It includes CAND-011 as a
 kill-switch type-safety cleanup.
 
 - **CAND-011** is accepted into the `v0.6.19` candidate chain as a kill-switch
@@ -133,10 +133,19 @@ kill-switch type-safety cleanup.
   network access, or approval queue mutation.
 - No additional candidates are currently proposed for `v0.6.19`.
 
-### Candidate status in the `v0.6.20` planning line
+### Candidate status in the `v0.6.20` release
 
-`v0.6.20` is the next planned release line. `v0.6.19` is the current public
-GitHub release. No candidates are currently proposed for `v0.6.20`.
+`v0.6.20` is the current public GitHub release. It includes **CAND-012** as a
+candidate-chain consistency guard.
+
+- **CAND-012** is released in `v0.6.20`. It adds `scripts/check_candidate_chain.py`,
+  `tests/test_candidate_chain.py`, dev/CI integration, and checks-reference
+  documentation. It validates release metadata, candidate-chain JSON, and
+  candidate-chain Markdown consistency and scans for forbidden candidate-chain
+  claims. It does not enable live trading, live submit, order placement,
+  broker/provider execution, credential loading, network access, or approval
+  queue mutation.
+- No additional candidates were proposed for `v0.6.20`.
 
 ## Current state vs future state
 

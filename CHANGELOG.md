@@ -9,13 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- CAND-012: Candidate-Chain Consistency Guard. Added `scripts/check_candidate_chain.py` static checker and `tests/test_candidate_chain.py` coverage to validate release-metadata, candidate-chain JSON, and candidate-chain Markdown consistency; integrated into `scripts/dev_check.sh` and `scripts/ci_check.sh`; documented in `docs/development/checks-reference.md`. CAND-012 is accepted into the `v0.6.20` candidate chain. No release cutover performed; package version remains `0.6.19`; current public release remains `v0.6.19`; next planned release remains `v0.6.20`; PyPI remains unpublished.
-
 ### Changed
 
 ### Fixed
 
 ### Safety
+
+## [0.6.20] - 2026-07-02
+
+### Added
+
+- CAND-012: Candidate-Chain Consistency Guard. Added `scripts/check_candidate_chain.py` static checker and `tests/test_candidate_chain.py` coverage to validate release-metadata, candidate-chain JSON, and candidate-chain Markdown consistency; integrated into `scripts/dev_check.sh` and `scripts/ci_check.sh`; documented in `docs/development/checks-reference.md`.
+
+### Changed
+
+- Cut over current public release from `v0.6.19` to `v0.6.20`. Package/source version is now `0.6.20`. `v0.6.19` is the historical previous public release. `v0.6.21` is the next planned release line.
+
+### Fixed
+
+- Stale public-release docs drift: corrected remaining public docs that still labeled `v0.6.17`/`v0.6.18` as current/latest.
+- Stale test expectations: updated tests that still expected `v0.6.17`-era current/latest release values.
+
+### Safety
+
+- No live trading, live submit, broker/provider execution, credential loading, or order placement introduced.
+- `atlas run --mode live` remains fail-closed.
+- GitHub-only release; PyPI remains unpublished.
 
 ## [0.6.19] - 2026-07-01
 

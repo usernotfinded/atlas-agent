@@ -5,12 +5,13 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.19` (tagged)
-- Previous public release: `v0.6.18`
-- Source package version on `main`: `0.6.19`
-- GitHub release: `v0.6.19` (current public)
-- Next planning line: `v0.6.20`
-- Public v0.6.19: current public — [v0.6.19 Trust and Release Status](v0.6.19-status.md)
+- Current public release: `v0.6.20` (tagged)
+- Previous public release: `v0.6.19`
+- Source package version on `main`: `0.6.20`
+- GitHub release: `v0.6.20` (current public)
+- Next planning line: `v0.6.21`
+- Public v0.6.20: current public — [v0.6.20 Trust and Release Status](v0.6.20-status.md)
+- Public v0.6.19: historical — [v0.6.19 Trust and Release Status](v0.6.19-status.md)
 - Public v0.6.18: historical — [v0.6.18 Trust and Release Status](v0.6.18-status.md)
 - Public v0.6.17: historical — [v0.6.17 Trust and Release Status](v0.6.17-status.md)
 - Public v0.6.16: historical — [v0.6.16 Trust and Release Status](v0.6.16-status.md)
@@ -20,14 +21,14 @@ users, contributors, auditors, and potential adopters.
 - Public v0.6.12: historical — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - PyPI was not published
-- Current public release status: [v0.6.19 Trust and Release Status](v0.6.19-status.md) (current public)
-- Previous release status: [v0.6.18 Trust and Release Status](v0.6.18-status.md) (historical)
-- Previous previous release status: [v0.6.17 Trust and Release Status](v0.6.17-status.md) (historical)
-- Previous previous previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
-- Previous previous previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
-- Previous previous previous previous previous release status: [v0.6.10 Trust and Release Status](v0.6.10-status.md) (historical)
-- Current public release notes: [docs/releases/v0.6.19.md](../releases/v0.6.19.md) (current public)
-- Previous release notes: [docs/releases/v0.6.18.md](../releases/v0.6.18.md) (historical)
+- Current public release status: [v0.6.20 Trust and Release Status](v0.6.20-status.md) (current public)
+- Previous release status: [v0.6.19 Trust and Release Status](v0.6.19-status.md) (historical)
+- Previous previous release status: [v0.6.18 Trust and Release Status](v0.6.18-status.md) (historical)
+- Previous previous previous release status: [v0.6.17 Trust and Release Status](v0.6.17-status.md) (historical)
+- Previous previous previous previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
+- Previous previous previous previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
+- Current public release notes: [docs/releases/v0.6.20.md](../releases/v0.6.20.md) (current public)
+- Previous release notes: [docs/releases/v0.6.19.md](../releases/v0.6.19.md) (historical)
 - v0.6.11 release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (historical)
 - Previous previous previous release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (historical)
@@ -129,14 +130,15 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.19` is verified against the GitHub release/tag.
-Auto-updater delivery for `v0.6.18` and earlier remains verified.
+Auto-updater delivery for `v0.6.20` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.19` and earlier remains verified.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.19` (current public)
+- GitHub release: `v0.6.20` (current public)
+- GitHub release: `v0.6.19` (historical)
 - GitHub release: `v0.6.18` (historical)
 - GitHub release: `v0.6.17` (historical)
 - GitHub release: `v0.6.16` (historical)
@@ -144,7 +146,8 @@ brokers, enable trading, or require credentials.
 - GitHub release: `v0.6.14` (historical)
 - GitHub release: `v0.6.13` (historical)
 - GitHub release: `v0.6.11` (historical)
-- Tag: `v0.6.19` (created and pushed)
+- Tag: `v0.6.20` (created and pushed)
+- Tag: `v0.6.19` (historical)
 - Tag: `v0.6.18` (historical)
 - Tag: `v0.6.17` (historical)
 - Tag: `v0.6.16` (historical)
@@ -153,12 +156,13 @@ brokers, enable trading, or require credentials.
 - Tag: `v0.6.13` (historical)
 - Tag: `v0.6.11` (historical)
 - PyPI was not published
-- Package version in source metadata: `0.6.19`
-- Auto-updater delivery: verified for `v0.6.19`; verified for `v0.6.18`; verified for `v0.6.17`; verified for `v0.6.16`; verified for `v0.6.15`; verified for `v0.6.14`; verified for `v0.6.13`
+- Package version in source metadata: `0.6.20`
+- Auto-updater delivery: verified for `v0.6.20`; verified for `v0.6.19`; verified for `v0.6.18`; verified for `v0.6.17`; verified for `v0.6.16`; verified for `v0.6.15`; verified for `v0.6.14`; verified for `v0.6.13`
 
 ## What Is Ready
 
-- Public v0.6.19 release notes and release status documentation (current public).
+- Public v0.6.20 release notes and release status documentation (current public).
+- Public v0.6.19 release notes and release status documentation (historical).
 - Public v0.6.18 release notes and release status documentation (historical).
 - Public v0.6.17 release notes and release status documentation (historical).
 - Public v0.6.15 release notes and release status documentation (historical).
@@ -197,8 +201,8 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1` through `v0.6.19`.
-- `v0.6.20` is the next planning line; no candidates are selected.
+- PyPI was not published for `v0.6.1` through `v0.6.20`.
+- `v0.6.21` is the next planning line; no candidates are selected.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -214,8 +218,12 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.17 Release Notes](../releases/v0.6.17.md) (current public)
-- [v0.6.17 Trust and Release Status](v0.6.17-status.md) (current public)
+- [v0.6.20 Release Notes](../releases/v0.6.20.md) (current public)
+- [v0.6.20 Trust and Release Status](v0.6.20-status.md) (current public)
+- [v0.6.19 Release Notes](../releases/v0.6.19.md) (historical)
+- [v0.6.19 Trust and Release Status](v0.6.19-status.md) (historical)
+- [v0.6.17 Release Notes](../releases/v0.6.17.md) (historical)
+- [v0.6.17 Trust and Release Status](v0.6.17-status.md) (historical)
 - [v0.6.16 Release Notes](../releases/v0.6.16.md) (historical)
 - [v0.6.16 Trust and Release Status](v0.6.16-status.md) (historical)
 - [v0.6.15 Release Notes](../releases/v0.6.15.md) (historical)

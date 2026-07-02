@@ -32,7 +32,7 @@ it is bounded, reversible, auditable, fail-closed, and explicitly opt-in.
 
 ## Current release truth
 
-As of the current release line (`v0.6.19` public GitHub release, `v0.6.20`
+As of the current release line (`v0.6.20` public GitHub release, `v0.6.21`
 planning-only):
 
 - Autonomous live trading is **not implemented**.
