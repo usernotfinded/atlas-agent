@@ -1,16 +1,16 @@
 # CAND-013: Public/Trust Docs Drift Coverage Guard — Design
 
-> **Candidate ID:** CAND-013  
-> **Proposed title:** Public/Trust Docs Drift Coverage Guard  
-> **Proposed subtitle:** Strengthen automated public/trust documentation drift detection so stale current/latest release and candidate-state claims are caught before future release cutovers.  
-> **Design status:** design-only  
-> **Target implementation phase:** after independent design review  
-> **Repository:** `usernotfinded/atlas-agent`  
-> **Branch:** `main`  
-> **Baseline HEAD:** `4d908aa8007cf60c3c7d1b410fb59afaa5cf765b`  
-> **Baseline public release:** `v0.6.20`  
-> **Baseline package version:** `0.6.20`  
-> **Baseline next planned release:** `v0.6.21`  
+> **Candidate ID:** CAND-013
+> **Proposed title:** Public/Trust Docs Drift Coverage Guard
+> **Proposed subtitle:** Strengthen automated public/trust documentation drift detection so stale current/latest release and candidate-state claims are caught before future release cutovers.
+> **Design status:** design-only
+> **Target implementation phase:** after independent design review
+> **Repository:** `usernotfinded/atlas-agent`
+> **Branch:** `main`
+> **Baseline HEAD:** `4d908aa8007cf60c3c7d1b410fb59afaa5cf765b`
+> **Baseline public release:** `v0.6.20`
+> **Baseline package version:** `0.6.20`
+> **Baseline next planned release:** `v0.6.21`
 
 ## 1. Title and candidate ID
 
@@ -61,7 +61,7 @@ These drifts are public-docs/trust problems, not runtime safety problems, but th
 
 ### 4.1 Autonomy roadmap stale candidate-state claim
 
-**File:** `docs/autonomy-roadmap.md`  
+**File:** `docs/autonomy-roadmap.md`
 **Observed stale text (paraphrased from pre-cutover state):**
 
 ```markdown
@@ -83,12 +83,12 @@ These drifts are public-docs/trust problems, not runtime safety problems, but th
 
 ### 4.2 Trust README stale `(current public)` label on an old release
 
-**File:** `docs/trust/README.md`  
+**File:** `docs/trust/README.md`
 **Observed stale text (pre-cutover state):**
 
-```markdown
-- [v0.6.17 Release Notes](../releases/v0.6.17.md) (current public)
-- [v0.6.17 Trust and Release Status](v0.6.17-status.md) (current public)
+```text
+- `v0.6.17 Release Notes` (`../releases/v0.6.17.md`) (current public)
+- `v0.6.17 Trust and Release Status` (`v0.6.17-status.md`) (current public)
 ```
 
 **What was wrong:** `v0.6.17` was historical; only `v0.6.20` should have been labeled `(current public)`.
@@ -194,7 +194,7 @@ In `docs/trust/README.md`:
 
 Also detect stale labels outside explicit parentheses:
 
-- Markdown link text that pairs an old release tag with `current public` (e.g., `[v0.6.17 Trust and Release Status (current public)](...)`).
+- Markdown link text that pairs an old release tag with `current public` (e.g., a link titled `v0.6.17 Trust and Release Status (current public)`).
 - List items that call an old release the `current public release` or `latest release`.
 
 ## 10. Autonomy roadmap candidate-state rules
@@ -504,11 +504,11 @@ CAND-013 is accepted when:
 
 ## 21. Open questions
 
-1. Should the trust README label check also enforce that the current public release row is explicitly labeled `(current public)` (i.e., make the label mandatory), or only forbid old releases from carrying it?  
+1. Should the trust README label check also enforce that the current public release row is explicitly labeled `(current public)` (i.e., make the label mandatory), or only forbid old releases from carrying it?
    *Recommendation:* For the first implementation, only forbid old releases from carrying `(current public)`. Making the label mandatory could be added later if project convention requires it.
-2. Should the roadmap check apply only to `metadata.next_planned_release`, or to all release lines with candidate-chain JSONs?  
+2. Should the roadmap check apply only to `metadata.next_planned_release`, or to all release lines with candidate-chain JSONs?
    *Recommendation:* Apply to `metadata.next_planned_release` first; historical release lines already have fixed candidate-state prose and should not be edited retroactively.
-3. Should CAND-013 also detect stale "current public" claims in `docs/public-launch-readiness.md` and `docs/public-repo-hygiene.md` that are not already caught by existing sentence-based checks?  
+3. Should CAND-013 also detect stale "current public" claims in `docs/public-launch-readiness.md` and `docs/public-repo-hygiene.md` that are not already caught by existing sentence-based checks?
    *Recommendation:* Yes, as a secondary coverage extension, but only if the new check does not duplicate the existing `_check_stale_release_status_lines` logic.
 
 ## 22. Implementation-readiness verdict
