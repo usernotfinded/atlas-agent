@@ -1,0 +1,40 @@
+{
+  "release_line": "v0.6.20",
+  "status": "planning",
+  "source_version": "0.6.19",
+  "current_public_release": "v0.6.19",
+  "next_planned_release": "v0.6.20",
+  "release_date": null,
+  "pypi_published": false,
+  "tag_created": false,
+  "github_release_created": false,
+  "candidates": [
+    {
+      "id": "CAND-012",
+      "status": "accepted",
+      "accepted": true,
+      "acceptance_date": "2026-07-01",
+      "release_date": null,
+      "acceptance_verdict": "PASS_WITH_WARNINGS",
+      "title": "Candidate-Chain Consistency Guard",
+      "description": "Deterministic local read-only checker that validates release-metadata, candidate-chain JSON, and candidate-chain Markdown consistency. Includes candidate-chain-specific forbidden-claim scanning, dev/CI integration, and fixture-based tests. No runtime changes.",
+      "design_doc": "docs/candidate-chain-consistency-guard-design.md",
+      "implementation_plan": "docs/candidate-chain-consistency-guard-implementation-plan.md",
+      "design_commit": "027cc36eda401c9714630beaf29a2dc9b66c11ef",
+      "implementation_plan_commit": "484690ca88d55e2ef70da9ed90545122d088a199",
+      "implementation_commit": "bce521efc1ddbb88ea5ca308d2b17ad867c6c536",
+      "acceptance_commit": null,
+      "design_review_verdict": "PASS_WITH_WARNINGS",
+      "implementation_plan_review_verdict": "PASS_WITH_WARNINGS",
+      "implementation_review_verdict": "PASS_WITH_WARNINGS",
+      "notes": [
+        "Accepted into the v0.6.20 candidate chain on 2026-07-01.",
+        "Not yet released; v0.6.20 is the next planned release line.",
+        "Does not enable live trading, live submit, order placement, broker/provider execution, credential loading, network access, or approval queue mutation.",
+        "Does not change RiskManager, kill-switch, deadman, heartbeat, or audit hash-chain behavior.",
+        "No PyPI publication.",
+        "Public-docs drift in docs/public-repo-hygiene.md, docs/public-launch-messaging.md, docs/public-faq.md, and docs/autonomy-roadmap.md is pre-existing, non-blocking for CAND-012 acceptance, and must be remediated before v0.6.20 release cutover."
+      ]
+    }
+  ]
+}
