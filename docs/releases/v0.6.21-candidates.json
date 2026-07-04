@@ -1,0 +1,49 @@
+{
+  "release_line": "v0.6.21",
+  "status": "planning",
+  "source_version": "0.6.20",
+  "current_public_release": "v0.6.20",
+  "next_planned_release": "v0.6.21",
+  "release_date": null,
+  "pypi_published": false,
+  "tag_created": false,
+  "github_release_created": false,
+  "candidates": [
+    {
+      "id": "CAND-013",
+      "status": "accepted",
+      "accepted": true,
+      "acceptance_date": "2026-07-04",
+      "release_date": null,
+      "acceptance_verdict": "PASS_WITH_WARNINGS",
+      "title": "Public/Trust Docs Drift Coverage Guard",
+      "description": "Extends scripts/check_public_docs_consistency.py to use release-metadata as the current/next-planned authority and to catch stale trust README current-public labels on non-current releases, autonomy-roadmap candidate-state contradictions against next-planned candidate-chain JSON, and related public-docs drift. Adds tests/test_public_docs_consistency.py coverage (52 passing), documents the new coverage in docs/development/checks-reference.md, and corrects one autonomy-roadmap current/historical/planning line. No runtime, safety, CLI, broker, provider, version, or release-metadata changes.",
+      "design_doc": "docs/public-trust-docs-drift-coverage-guard-design.md",
+      "implementation_plan": "docs/public-trust-docs-drift-coverage-guard-implementation-plan.md",
+      "design_commit": "9b59147f7ef9c73fb12645e7e20152f02810bf38",
+      "design_fixup_commit": "a5c973c22caeb0df1dcfc88e2da80c56fb0c31cc",
+      "implementation_plan_commit": "0975c817efa5fcbeaec12a179a9256d03a093ebb",
+      "implementation_commit": "a43975df430a3ad0f053601da044e384566a0b59",
+      "acceptance_commit": null,
+      "design_status": "complete",
+      "implementation_plan_status": "complete",
+      "implementation_status": "complete",
+      "release_status": "not_released",
+      "design_review_verdict": "PASS",
+      "implementation_plan_review_verdict": "PASS",
+      "implementation_review_verdict": "PASS_WITH_WARNINGS",
+      "warnings": [
+        "Low-severity false-positive-mitigation asymmetry: the inline current-public block in _check_stale_release_status_lines does not honor historical_context while an adjacent labeled/inline public-claim block does. This has no impact on the current repository and may be acceptable intended strictness, but it is a future hardening candidate.",
+        "Methodological live-mode verification note: atlas run --mode live was verified via a safe isolated paper/null-provider workspace rather than against the local live config with credentials. This preserved review boundaries and is acceptable because CAND-013 changed no runtime, safety, CLI, broker, provider, or credential-loading code."
+      ],
+      "notes": [
+        "Accepted into the v0.6.21 candidate chain on 2026-07-04 with acceptance verdict PASS_WITH_WARNINGS.",
+        "Independent implementation-review verdict: PASS_WITH_WARNINGS (two non-blocking warnings recorded above).",
+        "v0.6.21 is planning-only and not released. No v0.6.21 tag, GitHub Release, or PyPI publication exists.",
+        "Does not enable live trading, live submit, order placement, broker/provider execution, credential loading, network access, or approval queue mutation.",
+        "Does not change RiskManager, kill-switch, deadman, heartbeat, or audit hash-chain behavior.",
+        "No PyPI publication."
+      ]
+    }
+  ]
+}
