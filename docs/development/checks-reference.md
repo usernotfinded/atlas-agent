@@ -18,8 +18,12 @@ docs, safety messaging, release readiness, and local evidence generation.
 - `scripts/check_public_docs_consistency.py` scans public docs for unsafe claims,
   stale version references, stale RC status claims, missing safety wording,
   forbidden commands in bash blocks, secret-like patterns, and release-note
-  reference consistency (README status line matches current public release;
-  warns on orphaned release notes not referenced in CHANGELOG).
+  reference consistency. It uses release metadata as the current/next-planned
+  authority, verifies the README status line matches the current public release,
+  catches stale trust README `(current public)` labels on non-current releases,
+  catches autonomy-roadmap candidate-state contradictions against next-planned
+  candidate-chain JSON, and warns on orphaned release notes not referenced in
+  CHANGELOG.
 - `scripts/check_trust_center.py` keeps the trust center aligned with release,
   security, provider evidence, updater, and non-claim messaging.
 - `scripts/check_onboarding_docs.py` keeps contributor onboarding docs aligned

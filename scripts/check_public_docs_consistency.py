@@ -9,6 +9,7 @@ Deterministic and local. Does not:
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -159,8 +160,8 @@ except ImportError:
     load_metadata = None
     ReleaseMetadata = None
 
-def _get_current_version(repo_root: Path) -> str:
-    """Read the current version from release-metadata.json dynamically."""
+
+def _load_release_metadata(repo_root: Path) -> ReleaseMetadata:
     if load_metadata is None or ReleaseMetadata is None:
         raise RuntimeError("Failed to import release_metadata module")
 
@@ -169,31 +170,69 @@ def _get_current_version(repo_root: Path) -> str:
         raise FileNotFoundError(f"Release metadata not found at {metadata_path}")
 
     try:
-        meta = ReleaseMetadata(load_metadata(metadata_path))
-        if not meta.source_version:
-            raise ValueError("source_version is empty in metadata")
-        return "v" + meta.source_version
+        return ReleaseMetadata(load_metadata(metadata_path))
     except Exception as e:
         raise RuntimeError(f"Invalid release metadata: {e}")
+
+
+def _get_current_version(repo_root: Path) -> str:
+    """Read the current version from release-metadata.json dynamically."""
+    meta = _load_release_metadata(repo_root)
+    if not meta.source_version:
+        raise ValueError("source_version is empty in metadata")
+    return "v" + meta.source_version
 
 
 def _get_current_public_release(repo_root: Path) -> str:
     """Read the current public release tag from release-metadata.json dynamically."""
-    if load_metadata is None or ReleaseMetadata is None:
-        raise RuntimeError("Failed to import release_metadata module")
+    meta = _load_release_metadata(repo_root)
+    current = meta.current_public_release
+    if not current:
+        raise ValueError("current_public_release is empty in metadata")
+    return current
 
-    metadata_path = repo_root / "docs" / "releases" / "release-metadata.json"
-    if not metadata_path.exists():
-        raise FileNotFoundError(f"Release metadata not found at {metadata_path}")
 
-    try:
-        meta = ReleaseMetadata(load_metadata(metadata_path))
-        current = meta.current_public_release
-        if not current:
-            raise ValueError("current_public_release is empty in metadata")
-        return current
-    except Exception as e:
-        raise RuntimeError(f"Invalid release metadata: {e}")
+def _get_next_planned_release(repo_root: Path) -> str:
+    """Read the next planned release tag from release-metadata.json."""
+    meta = _load_release_metadata(repo_root)
+    next_planned = meta.next_planned_release
+    if not next_planned:
+        raise ValueError("next_planned_release is empty in metadata")
+    return next_planned
+
+
+def _historical_release_tags(repo_root: Path) -> set[str]:
+    """Return release tags marked historical in release-metadata.json."""
+    meta = _load_release_metadata(repo_root)
+    return {
+        str(release.get("tag"))
+        for release in meta.releases
+        if release.get("status") == "historical" and release.get("tag")
+    }
+
+
+def _next_planned_has_accepted_candidates(
+    repo_root: Path, next_planned_release: str
+) -> bool:
+    """Return whether next planned candidate JSON has accepted/released candidates."""
+    candidates_path = (
+        repo_root / "docs" / "releases" / f"{next_planned_release}-candidates.json"
+    )
+    if not candidates_path.exists():
+        return False
+
+    data = json.loads(candidates_path.read_text(encoding="utf-8"))
+    candidates = data.get("candidates", [])
+    if not isinstance(candidates, list):
+        return False
+
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        status = str(candidate.get("status", "")).lower()
+        if candidate.get("accepted") is True or status in {"accepted", "released"}:
+            return True
+    return False
 
 
 # Release notes directory.
@@ -453,17 +492,41 @@ def _check_stale_release_status_lines(
         rf"\b(?:current public(?: github)? release|latest public tag)\s*:\s*(?P<tag>{tag})",
         re.IGNORECASE,
     )
+    inline_current_public_claim = re.compile(
+        rf"(?P<tag>{tag})\s+(?:is\s+)?(?:the\s+)?current\s+public"
+        rf"(?:\s+(?:github\s+)?(?:release|tag|status))?\b",
+        re.IGNORECASE,
+    )
     inline_public_claim = re.compile(
         rf"(?P<tag>{tag})\s+public(?:\s+(?:github\s+)?release|\s+status)?\b",
         re.IGNORECASE,
     )
     stale_state_pattern = re.compile(r"\b(?:prepared|not yet tagged|not tagged)\b", re.IGNORECASE)
     tag_pattern = re.compile(tag, re.IGNORECASE)
+    negative_current_public_context = (
+        "no active doc claims",
+        "must not claim",
+        "does not claim",
+        "do not claim",
+        "not claim",
+    )
 
     seen: set[tuple[int, str]] = set()
     for line_number, line in enumerate(normalized.splitlines(), start=1):
         lower_line = line.lower()
         historical_context = "historical" in lower_line or "previous public" in lower_line
+
+        if not any(marker in lower_line for marker in negative_current_public_context):
+            for match in inline_current_public_claim.finditer(line):
+                claimed_tag = match.group("tag")
+                key = (line_number, claimed_tag)
+                if claimed_tag == current_public_release or key in seen:
+                    continue
+                seen.add(key)
+                violations.append(
+                    f"[{rel_path}] Stale public-release status on line {line_number}: "
+                    f"'{claimed_tag}' (expected {current_public_release})"
+                )
 
         for pattern in (labeled_claim, inline_public_claim):
             for match in pattern.finditer(line):
@@ -491,6 +554,84 @@ def _check_stale_release_status_lines(
                     f"prepared or untagged on line {line_number}"
                 )
                 break
+
+    return violations
+
+
+def _check_trust_readme_current_public_labels(
+    text: str,
+    rel_path: str,
+    current_public_release: str,
+    next_planned_release: str,
+    historical_tags: set[str],
+) -> list[str]:
+    """Flag non-current releases labeled current public in the trust README."""
+    violations: list[str] = []
+    if rel_path != "docs/trust/README.md":
+        return violations
+
+    normalized = re.sub(r"[`*_]", "", text)
+    current_public_label = re.compile(r"\bcurrent\s+public(?:\s+release)?\b", re.IGNORECASE)
+    tag_pattern = re.compile(r"v\d+\.\d+\.\d+(?:[.-]\d+)?", re.IGNORECASE)
+
+    for line_number, line in enumerate(normalized.splitlines(), start=1):
+        if current_public_label.search(line) is None:
+            continue
+
+        seen_tags: set[str] = set()
+        for tag_match in tag_pattern.finditer(line):
+            claimed_tag = tag_match.group(0)
+            if claimed_tag in seen_tags:
+                continue
+            seen_tags.add(claimed_tag)
+
+            if claimed_tag == current_public_release:
+                continue
+            if (
+                claimed_tag in historical_tags
+                or claimed_tag == next_planned_release
+                or claimed_tag.startswith("v")
+            ):
+                violations.append(
+                    f"[{rel_path}] Stale (current public) label on line {line_number}: "
+                    f"'{claimed_tag}' (expected {current_public_release})"
+                )
+
+    return violations
+
+
+def _check_autonomy_roadmap_candidate_state(
+    text: str,
+    rel_path: str,
+    next_planned_release: str,
+    has_accepted_candidates: bool,
+) -> list[str]:
+    """Flag roadmap claims that contradict accepted/released candidate-chain state."""
+    violations: list[str] = []
+    if rel_path != "docs/autonomy-roadmap.md" or not has_accepted_candidates:
+        return violations
+
+    normalized = re.sub(r"[`*_]", "", text)
+    release = re.escape(next_planned_release)
+    stale_patterns = [
+        re.compile(rf"\bno\s+candidates\s+are\s+currently\s+proposed\s+for\s+{release}\b", re.IGNORECASE),
+        re.compile(rf"\bno\s+candidates\s+proposed\s+for\s+{release}\b", re.IGNORECASE),
+        re.compile(rf"\bno\s+candidates\s+are\s+proposed\s+for\s+{release}\b", re.IGNORECASE),
+        re.compile(rf"\bno\s+active\s+candidates\s+for\s+{release}\b", re.IGNORECASE),
+        re.compile(rf"\bno\s+accepted\s+candidates\s+for\s+{release}\b", re.IGNORECASE),
+    ]
+    historical_markers = ("was", "were", "initially", "before", "historical")
+
+    for line_number, line in enumerate(normalized.splitlines(), start=1):
+        lower_line = line.lower()
+        if any(marker in lower_line for marker in historical_markers):
+            continue
+        if any(pattern.search(line) for pattern in stale_patterns):
+            violations.append(
+                f"[{rel_path}] Roadmap contradicts candidate-chain state on line {line_number}: "
+                f"claims no candidates for {next_planned_release} but accepted/released "
+                "candidates are recorded"
+            )
 
     return violations
 
@@ -565,6 +706,11 @@ def main() -> int:
     try:
         current_version = _get_current_version(REPO_ROOT)
         current_public_release = _get_current_public_release(REPO_ROOT)
+        next_planned_release = _get_next_planned_release(REPO_ROOT)
+        historical_tags = _historical_release_tags(REPO_ROOT)
+        has_accepted_candidates = _next_planned_has_accepted_candidates(
+            REPO_ROOT, next_planned_release
+        )
     except Exception as e:
         print("Public docs consistency check FAILED")
         print(f"  - Metadata Error: {e}")
@@ -591,6 +737,20 @@ def main() -> int:
         all_violations.extend(_check_stale_rc_status_claims(text, str(rel)))
         all_violations.extend(_check_readme_current_version(text, str(rel), current_version))
         all_violations.extend(_check_stale_current_status_in_readme(text, str(rel), current_version))
+        all_violations.extend(
+            _check_trust_readme_current_public_labels(
+                text,
+                str(rel),
+                current_public_release,
+                next_planned_release,
+                historical_tags,
+            )
+        )
+        all_violations.extend(
+            _check_autonomy_roadmap_candidate_state(
+                text, str(rel), next_planned_release, has_accepted_candidates
+            )
+        )
 
     for path in RELEASE_STATUS_DOC_PATHS:
         if not path.exists():
