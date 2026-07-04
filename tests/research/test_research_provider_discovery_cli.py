@@ -156,13 +156,23 @@ class TestProviderDiscoveryNoNetworkImports:
     def test_providers_source_no_network_imports(self) -> None:
         self._check_no_banned_imports(self.PROVIDERS_PATH)
 
+    RESEARCH_PROVIDERS_HANDLER_PATH = (
+        Path(__file__).resolve().parents[2]
+        / "src"
+        / "atlas_agent"
+        / "cli_commands"
+        / "research"
+        / "provider_misc.py"
+    )
+
     def test_cli_providers_handler_no_network_imports(self) -> None:
-        src = self._source(self.CLI_PATH)
+        src = self._source(self.RESEARCH_PROVIDERS_HANDLER_PATH)
         # Find the providers handler block
-        start = src.find('if args.command == "research" and args.research_command == "providers":')
+        start = src.find("def handle_providers(")
         assert start != -1
-        end = src.find('if args.command == "notify"', start)
-        block = src[start:end]
+        end = src.find("\ndef ", start + 1)
+        block = src[start : end if end != -1 else len(src)]
+        assert 'if args.command == "research" and args.research_command == "providers":' in block
         banned = [
             "import openai",
             "import anthropic",
