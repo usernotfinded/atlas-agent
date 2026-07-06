@@ -44,6 +44,53 @@
         "Does not change RiskManager, kill-switch, deadman, heartbeat, or audit hash-chain behavior.",
         "No PyPI publication."
       ]
+    },
+    {
+      "id": "CAND-014",
+      "status": "accepted",
+      "accepted": true,
+      "acceptance_date": "2026-07-06",
+      "release_date": null,
+      "acceptance_verdict": "PASS_WITH_WARNINGS",
+      "title": "Provider Artifact Engine Deduplication",
+      "description": "Phase 1 only: adds provider artifact inventory documentation and golden characterization tests for src/atlas_agent/research/provider_mock_response_final_safety_seal.py. The accepted Phase 1 scope records current provider artifact duplication, checked-in fixtures, and 13 golden contract tests. Artifact-engine extraction remains not authorized and not started.",
+      "phase": "Phase 1 - Provider Artifact Inventory + Golden Characterization Tests",
+      "phase_1_scope": "Provider artifact inventory documentation plus golden characterization tests for the pilot module only.",
+      "pilot_module": "src/atlas_agent/research/provider_mock_response_final_safety_seal.py",
+      "design_doc": "docs/provider-artifact-engine-deduplication-design.md",
+      "implementation_plan": "docs/provider-artifact-engine-deduplication-implementation-plan.md",
+      "inventory_doc": "docs/provider-artifact-engine-deduplication-inventory.md",
+      "golden_test": "tests/test_provider_artifact_golden_contracts.py",
+      "fixture_dir": "tests/fixtures/provider_artifacts/final_safety_seal",
+      "design_commit": "d610dfcdd98bae31916d9914450543607b7e69ac",
+      "implementation_plan_commit": "bc07ac1758215ca41075a0eac6dada95e5a1390d",
+      "implementation_commit": "49092649c718081d282b0d5d02983a0e286fbc39",
+      "acceptance_commit": null,
+      "design_status": "complete",
+      "implementation_plan_status": "complete",
+      "implementation_status": "phase_1_complete_only",
+      "phase_1_implementation_status": "complete",
+      "artifact_engine_extraction_status": "not_authorized_not_started",
+      "release_status": "not_released",
+      "implementation_review_verdict": "PASS_WITH_WARNINGS",
+      "new_test_result": "tests/test_provider_artifact_golden_contracts.py: 13 passed",
+      "existing_pilot_test_result": "final safety seal and upstream mock-response chain tests: 299 passed",
+      "warnings": [
+        "Inventory-count warning: docs/provider-artifact-engine-deduplication-inventory.md records that the broad provider-related test-file command returned 87 files, while a later live filesystem command returned 120 because it included ignored __pycache__ entries plus current Phase 1 files. The Phase 1 source inventory remains correct: 22 provider_*.py modules and 28,908 source lines.",
+        "Heavy-gate review warning: independent review did not run dev_check.sh, ci_check.sh, or release_check.sh --quick. This is non-blocking because targeted Phase 1 checks passed, the new golden test file passed with 13 tests, and existing pilot/upstream mock-response tests passed with 299 tests.",
+        "CAND-ID classification: PASS with a non-blocking legacy reuse warning. CAND-014 is the correct current-epoch next ID for v0.6.21 after CAND-013; the older v0.6.12 CAND-014 belongs to the legacy release-local epoch and the candidate-chain checker enforces uniqueness within each JSON file, not globally."
+      ],
+      "notes": [
+        "Accepted CAND-014 Phase 1 into the v0.6.21 candidate chain on 2026-07-06 with acceptance verdict PASS_WITH_WARNINGS.",
+        "Independent implementation-review verdict: PASS_WITH_WARNINGS.",
+        "Design and implementation-plan docs are complete; Phase 1 implementation is complete.",
+        "This acceptance covers only provider artifact inventory documentation and golden characterization tests for provider_mock_response_final_safety_seal.py.",
+        "Artifact-engine extraction, ArtifactSpec introduction, provider refactoring, validator unification, CLI behavior changes, schema changes, artifact hash changes, and error-string changes remain not authorized.",
+        "v0.6.21 remains planning-only and not released. No v0.6.21 tag, GitHub Release, or PyPI publication exists.",
+        "Package/source version remains 0.6.20; current public release remains v0.6.20; next planned release remains v0.6.21.",
+        "Does not enable live trading, live submit, order placement, broker/provider execution, credential loading, network access, pending-order creation, position flattening, order cancellation, or approval queue mutation.",
+        "Does not change RiskManager, kill-switch, deadman, heartbeat, or audit hash-chain behavior."
+      ]
     }
   ]
 }

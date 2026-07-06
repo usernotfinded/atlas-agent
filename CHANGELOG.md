@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - CAND-013: Public/Trust Docs Drift Coverage Guard. Accepted into the `v0.6.21` candidate chain (planning-only; not released). `scripts/check_public_docs_consistency.py` now uses release metadata as the current/next-planned authority and additionally catches stale trust README `(current public)` labels on non-current releases, autonomy-roadmap candidate-state contradictions against next-planned candidate-chain JSON, and related public-docs drift; `tests/test_public_docs_consistency.py` coverage extended (`52 passed`) and documented in `docs/development/checks-reference.md`. Implementation and independent implementation review both `PASS_WITH_WARNINGS` (two non-blocking warnings recorded in the v0.6.21 candidate-chain docs). Exit codes `0`/`1` preserved.
+- CAND-014 Phase 1: Provider Artifact Engine Deduplication. Accepted into the `v0.6.21` candidate chain with verdict `PASS_WITH_WARNINGS` (planning-only; not released). Phase 1 delivered provider artifact inventory documentation and golden characterization tests for `src/atlas_agent/research/provider_mock_response_final_safety_seal.py`; the new golden test file passed with 13 tests, and existing final-safety-seal/upstream mock-response tests passed with 299 tests. Artifact-engine extraction remains not authorized.
 
 ### Changed
 
@@ -18,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Safety
 
 - CAND-013 introduces no live trading, live submit, broker/provider execution, credential loading, network access, or order placement, and changes no `RiskManager`, kill-switch, deadman, heartbeat, or audit hash-chain behavior. `atlas run --mode live` remains fail-closed. `v0.6.21` remains planning-only; no `v0.6.21` tag, GitHub Release, or PyPI publication exists.
+- CAND-014 Phase 1 changes no provider, CLI, checker, runtime trading, safety, version, or release-metadata behavior; introduces no live trading, live submit, broker/provider calls, credential loading, network access, order placement, order cancellation, position flattening, pending-order creation, or approval queue mutation; and does not authorize artifact-engine extraction. `v0.6.21` remains planning-only; no `v0.6.21` tag, GitHub Release, or PyPI publication exists.
 
 ## [0.6.20] - 2026-07-02
 
