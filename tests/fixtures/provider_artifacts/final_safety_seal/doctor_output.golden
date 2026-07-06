@@ -1,0 +1,15 @@
+Provider mock response final safety seal doctor for run <RUN_ID>:
+  Health: seal_valid
+  Final safety seal created: True
+  Mock pipeline complete: True
+  Seal valid: True
+  Seal non-authorizing: True
+  Trust decision granted: False
+  Trust decision present: False
+  Trust upgrade performed: False
+  Provider response trusted: False
+  Mock response trusted: False
+  Provider call allowed: False
+  Broker touched: False
+  Missing prerequisites: real_trust_decision_not_implemented, manual_review_not_completed, trust_upgrade_not_implemented, real_provider_response_not_available
+  Blocking reasons: trust_decision_explicitly_blocked, trust_upgrade_not_implemented, manual_review_required_before_future_trust, mock_response_not_trusted, provider_response_not_trusted, provider_execution_disabled

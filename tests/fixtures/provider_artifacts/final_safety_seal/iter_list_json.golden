@@ -1,0 +1,11 @@
+{
+  "artifact_path": ".atlas/research/AAPL/provider_mock_response_final_safety_seals/<SEAL_ID>.json",
+  "final_safety_seal_state": "mock_pipeline_sealed",
+  "final_safety_seal_status": "final_safety_seal_recorded",
+  "model_id": "gpt-4o",
+  "provider_id": "mock",
+  "provider_mock_response_final_safety_seal_id": "<SEAL_ID>",
+  "source_run_id": "<RUN_ID>",
+  "source_trust_decision_blocker_id": "<BLOCKER_ID>",
+  "symbol": "AAPL"
+}

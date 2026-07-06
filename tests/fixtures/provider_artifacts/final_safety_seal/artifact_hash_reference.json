@@ -1,0 +1,13 @@
+{
+  "artifact_hash": "9bcc626839a4616ed7be19ceb376e849b26736042a65da86eec8f05efb97ea0a",
+  "canonical_payload_sha256": "9bcc626839a4616ed7be19ceb376e849b26736042a65da86eec8f05efb97ea0a",
+  "contract_version": "research_provider_mock_response_final_safety_seal_v1",
+  "final_safety_seal_state": "mock_pipeline_sealed",
+  "final_safety_seal_status": "final_safety_seal_recorded",
+  "hash_after_artifact_hash_and_created_at_change": "9bcc626839a4616ed7be19ceb376e849b26736042a65da86eec8f05efb97ea0a",
+  "hash_after_broker_touched_change": "eb9a3267f3459365af156d8f203721ad23dfe2b0d8d958cf190c2936fd50c4aa",
+  "hash_excluded_fields": [
+    "artifact_hash",
+    "created_at"
+  ]
+}

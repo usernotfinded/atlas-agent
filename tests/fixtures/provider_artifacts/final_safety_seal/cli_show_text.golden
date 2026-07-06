@@ -1,0 +1,6 @@
+Provider mock response final safety seal <SEAL_ID>:
+  Symbol: AAPL
+  Provider ID: mock
+  Status: final_safety_seal_recorded
+  State: mock_pipeline_sealed
+  Artifact: .atlas/research/AAPL/provider_mock_response_final_safety_seals/<SEAL_ID>.json

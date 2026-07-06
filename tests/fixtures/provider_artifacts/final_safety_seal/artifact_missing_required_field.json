@@ -1,0 +1,7 @@
+{
+  "base_fixture": "artifact_valid.json",
+  "expected_error": "invalid_provider_mock_response_final_safety_seal_lineage",
+  "remove_fields": [
+    "source_trust_decision_blocker_id"
+  ]
+}
