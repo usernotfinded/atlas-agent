@@ -18,19 +18,24 @@ seal applied, while maintaining all trust-blocking and non-authorizing guarantee
 
 from __future__ import annotations
 
-import hashlib
-import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from atlas_agent.events.log import generate_run_id
+from atlas_agent.research.artifact_engine import (
+    ArtifactSpec,
+    artifact_sha256,
+    build_artifact_path,
+    list_artifact_json_paths,
+    load_json_object,
+    save_json_object,
+)
 from atlas_agent.research.sandbox_contracts import (
     FORBIDDEN_FRAGMENTS,
     MAX_CONTRACT_TEXT_CHARS,
     _has_forbidden_fragments,
-    canonical_json_dumps,
     sanitize_contract_text,
     validate_contract_lineage_id,
     validate_contract_symbol,
@@ -52,6 +57,12 @@ from atlas_agent.research.provider_mock_response_trust_decision_blocker import (
 PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_VERSION = "research_provider_mock_response_final_safety_seal_v1"
 
 _PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
+
+_PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_SPEC = ArtifactSpec(
+    artifact_type="provider_mock_response_final_safety_seal",
+    artifact_directory="provider_mock_response_final_safety_seals",
+    hash_excluded_fields=frozenset(_PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_HASH_EXCLUDED_FIELDS),
+)
 
 _MAX_MODEL_ID_CHARS = 120
 _MAX_STATUS_CHARS = 120
@@ -244,9 +255,7 @@ def validate_final_safety_seal_state(value: str) -> str:
 
 
 def provider_mock_response_final_safety_seal_sha256(data: dict[str, Any]) -> str:
-    copy = {k: v for k, v in data.items() if k not in _PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_HASH_EXCLUDED_FIELDS}
-    canonical = canonical_json_dumps(copy)
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return artifact_sha256(data, _PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_SPEC)
 
 
 def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
@@ -429,13 +438,12 @@ def build_provider_mock_response_final_safety_seal_dict(
 
     now = datetime.now(UTC).isoformat()
 
-    symbol_safe = safe_symbol.replace("/", "_")
-    artifact_path = (
-        workspace_path
-        / RESEARCH_DIR
-        / symbol_safe
-        / "provider_mock_response_final_safety_seals"
-        / f"{seal_id}.json"
+    artifact_path = build_artifact_path(
+        workspace_path,
+        RESEARCH_DIR,
+        safe_symbol,
+        _PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_SPEC,
+        seal_id,
     )
 
     final_safety_seal_status = "final_safety_seal_recorded"
@@ -567,8 +575,7 @@ def create_provider_mock_response_final_safety_seal(workspace_path: Path, blocke
     )
 
     artifact_path = workspace_path / artifact["artifact_path"]
-    artifact_path.parent.mkdir(parents=True, exist_ok=True)
-    artifact_path.write_text(json.dumps(artifact, indent=2, sort_keys=True), encoding="utf-8")
+    save_json_object(artifact_path, artifact)
 
     return {
         "ok": True,
@@ -634,8 +641,7 @@ def create_provider_mock_response_final_safety_seal(workspace_path: Path, blocke
 
 
 def load_provider_mock_response_final_safety_seal(path: Path, workspace_path: Path | None = None) -> dict[str, Any]:
-    text = path.read_text(encoding="utf-8")
-    data = json.loads(text)
+    data = load_json_object(path)
     cleaned, err = safe_validate_provider_mock_response_final_safety_seal_data(data, workspace_path=workspace_path)
     if err:
         raise ResearchSessionError(err)
@@ -1034,14 +1040,12 @@ def doctor_provider_mock_response_final_safety_seal(workspace_path: Path, run_id
 def iter_provider_mock_response_final_safety_seal_artifacts(
     workspace_path: Path, symbol: str | None = None
 ) -> list[dict[str, Any]]:
-    search_dir = workspace_path / RESEARCH_DIR
-    if symbol:
-        result_dir = search_dir / symbol / "provider_mock_response_final_safety_seals"
-        if not result_dir.exists():
-            return []
-        paths = list(result_dir.glob("*.json"))
-    else:
-        paths = list(search_dir.rglob("provider_mock_response_final_safety_seals/*.json"))
+    paths = list_artifact_json_paths(
+        workspace_path,
+        RESEARCH_DIR,
+        _PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_SPEC,
+        symbol=symbol,
+    )
 
     items: list[dict[str, Any]] = []
     invalid_items: list[dict[str, Any]] = []
@@ -1051,7 +1055,7 @@ def iter_provider_mock_response_final_safety_seal_artifacts(
             if not _is_inside_workspace(resolved, workspace_path):
                 continue
         try:
-            raw = json.loads(path.read_text(encoding="utf-8"))
+            raw = load_json_object(path)
         except Exception:
             invalid_items.append({
                 "provider_mock_response_final_safety_seal_id": path.stem,
