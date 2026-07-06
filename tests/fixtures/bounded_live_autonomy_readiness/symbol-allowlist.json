@@ -1,0 +1,9 @@
+{
+  "artifact_type": "symbol_allowlist_fixture",
+  "schema_version": "symbol-allowlist-fixture.v1",
+  "allowlist_mode": "explicit_allowlist",
+  "allowed_symbols": ["AAPL"],
+  "blocked_symbols": [],
+  "allow_empty_blocklist": true,
+  "expires_at": "2026-06-24T14:00:00Z"
+}

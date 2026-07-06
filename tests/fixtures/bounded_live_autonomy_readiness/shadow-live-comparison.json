@@ -1,0 +1,10 @@
+{
+  "artifact_type": "shadow_live_comparison",
+  "schema_version": "shadow-live-comparison.v1",
+  "run_id": "run-cand015-001",
+  "symbol": "AAPL",
+  "quality_state": "eligible_for_shadow_live_quality_review",
+  "status": "matched",
+  "freshness_assessment": {"snapshot_age_seconds": 0},
+  "blockers": []
+}

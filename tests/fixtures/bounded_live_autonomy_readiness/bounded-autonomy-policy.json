@@ -1,0 +1,16 @@
+{
+  "artifact_type": "bounded_autonomy_policy_fixture",
+  "schema_version": "bounded-autonomy-policy-fixture.v1",
+  "policy_scope": "l2_l3_readiness_evaluation",
+  "l3_autonomy_enabled": false,
+  "live_submit_enabled_by_default": false,
+  "provider_output_authoritative": false,
+  "manual_approval_required": true,
+  "unattended_operation_allowed": false,
+  "auto_approval_allowed": false,
+  "requires_explicit_opt_in": true,
+  "requires_active_operator_oversight": true,
+  "requires_paper_validation": true,
+  "min_paper_validation_runs": 3,
+  "expires_at": "2026-06-24T14:00:00Z"
+}

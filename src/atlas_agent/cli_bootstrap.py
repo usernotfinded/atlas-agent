@@ -1,11 +1,12 @@
 """Narrow CLI bootstrap pre-router.
 
 This module is the public console entry point for the ``atlas`` command. It
-routes exactly three configless commands through dedicated stdlib-only paths:
+routes exactly four configless commands through dedicated stdlib-only paths:
 
     atlas agent submit-conformance
     atlas agent readiness-envelope
     atlas agent operator-approval-gate
+    atlas agent bounded-live-readiness
 
 All other commands, including ``atlas --workspace X agent submit-conformance``
 and ``atlas --workspace X agent readiness-envelope``, delegate unchanged to the
@@ -30,6 +31,10 @@ def main(argv: list[str] | None = None) -> int:
             return route_main(args[2:])
         if args[1] == "operator-approval-gate":
             from atlas_agent.agent.operator_approval_gate_cli import main as route_main
+
+            return route_main(args[2:])
+        if args[1] == "bounded-live-readiness":
+            from atlas_agent.agent.bounded_live_autonomy_readiness_cli import main as route_main
 
             return route_main(args[2:])
     from atlas_agent.cli import main as legacy_main

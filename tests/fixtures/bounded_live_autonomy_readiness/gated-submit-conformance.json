@@ -1,0 +1,29 @@
+{
+  "artifact_type": "gated_submit_conformance",
+  "schema_version": "gated-submit-conformance.v1",
+  "candidate": "CAND-006",
+  "mode": "simulated_only",
+  "run_id": "run-cand015-001",
+  "symbol": "AAPL",
+  "status": "dry_run_recorded",
+  "as_of": "2026-06-24T09:00:00Z",
+  "safety_assertions": {
+    "simulated_only": true,
+    "no_live_submit": true,
+    "no_broker_called": true,
+    "no_provider_called": true,
+    "no_credentials_loaded": true,
+    "no_runtime_state_mutation": true,
+    "no_order_instantiated": true,
+    "transmission_blocked": true,
+    "json_authoritative": true
+  },
+  "dry_run_request": {
+    "transmission": {
+      "allowed": false,
+      "broker_adapter": null,
+      "provider": null
+    }
+  },
+  "blockers": []
+}

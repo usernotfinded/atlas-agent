@@ -1,0 +1,27 @@
+{
+  "artifact_type": "operator_approval_gate",
+  "schema_version": "operator-approval-gate.v1",
+  "candidate": "CAND-008",
+  "mode": "evidence_only",
+  "status": "operator_gate_recorded",
+  "exit_code": 0,
+  "as_of": "2026-06-24T10:30:00Z",
+  "run_id": "run-cand015-001",
+  "symbol": "AAPL",
+  "blockers": [],
+  "approval_gate_assertions": {
+    "cand007_status_accepted": true,
+    "cand007_mode_simulated_only": true,
+    "cand007_blockers_empty": true,
+    "cand007_safety_assertions_accepted": true,
+    "operator_identity_valid": true,
+    "approval_policy_fail_closed": true,
+    "kill_switch_observed_blocked": true,
+    "operator_acknowledgments_all_true": true,
+    "audit_policy_fail_closed": true,
+    "no_credentials_in_fixtures": true,
+    "no_endpoints_in_fixtures": true,
+    "no_account_ids_in_fixtures": true,
+    "no_raw_upstream_leakage": true
+  }
+}

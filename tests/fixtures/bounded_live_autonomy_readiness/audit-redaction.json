@@ -1,0 +1,14 @@
+{
+  "artifact_type": "audit_redaction_fixture",
+  "schema_version": "audit-redaction-fixture.v1",
+  "redacts_secrets": true,
+  "redacts_api_keys": true,
+  "redacts_account_ids": true,
+  "redacts_raw_broker_payloads": true,
+  "redacts_raw_provider_output": true,
+  "redacts_paths": true,
+  "redacts_exception_text": true,
+  "audit_hash_chain_required": true,
+  "manifest_required": true,
+  "expires_at": "2026-06-24T14:00:00Z"
+}

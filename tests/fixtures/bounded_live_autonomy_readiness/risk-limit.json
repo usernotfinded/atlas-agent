@@ -1,0 +1,16 @@
+{
+  "artifact_type": "risk_limit_fixture",
+  "schema_version": "risk-limit-fixture.v1",
+  "max_single_order_notional": "1000.00",
+  "max_position_notional_per_symbol": "5000.00",
+  "max_total_net_exposure_pct": "5.0",
+  "max_daily_loss_notional": "500.00",
+  "max_orders_per_interval": 10,
+  "quote_freshness_required_seconds": 5,
+  "allowed_sides": ["buy"],
+  "allowed_order_types": ["limit"],
+  "leverage_allowed": false,
+  "shorting_allowed": false,
+  "options_allowed": false,
+  "expires_at": "2026-06-24T14:00:00Z"
+}

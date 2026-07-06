@@ -1,0 +1,26 @@
+{
+  "artifact_type": "runtime_readiness_envelope",
+  "schema_version": "runtime-readiness-envelope.v1",
+  "candidate": "CAND-007",
+  "mode": "simulated_only",
+  "status": "readiness_envelope_recorded",
+  "exit_code": 0,
+  "as_of": "2026-06-24T10:00:00Z",
+  "run_id": "run-cand015-001",
+  "symbol": "AAPL",
+  "blockers": [],
+  "envelope_assertions": {
+    "live_submit_forbidden": true,
+    "human_approval_required": true,
+    "kill_switch_required": true,
+    "risk_gate_required": true,
+    "audit_recording_required": true,
+    "broker_manifest_required": true,
+    "operator_policy_fail_closed": true,
+    "all_upstream_statuses_accepted": true,
+    "no_credentials_in_fixtures": true,
+    "no_endpoints_in_fixtures": true,
+    "no_account_ids_in_fixtures": true,
+    "cand006_transmission_blocked": true
+  }
+}

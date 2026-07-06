@@ -1,0 +1,9 @@
+{
+  "artifact_type": "trading_quality_gate",
+  "schema_version": "trading-quality-gate.v1",
+  "mode": "paper",
+  "run_id": "run-cand015-001",
+  "symbol": "AAPL",
+  "quality_state": "eligible_for_shadow_live_quality_review",
+  "blockers": []
+}

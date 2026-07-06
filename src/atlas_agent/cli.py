@@ -910,6 +910,9 @@ Safety First:
     from atlas_agent.agent.operator_approval_gate_cli import (
         CLI_DESCRIPTION as _OAG_DESCRIPTION,
     )
+    from atlas_agent.agent.bounded_live_autonomy_readiness_cli import (
+        CLI_DESCRIPTION as _BLAR_DESCRIPTION,
+    )
 
     def _run_readiness_envelope_legacy_help(_args: argparse.Namespace) -> int:
         print("Runtime readiness envelope (CAND-007) is implemented configlessly as:")
@@ -977,6 +980,33 @@ Safety First:
     agent_operator_approval_gate.add_argument("--as-of", help="ISO-8601 UTC timestamp.")
     agent_operator_approval_gate.add_argument("--json", action="store_true", help="Emit JSON on stdout.")
     agent_operator_approval_gate.set_defaults(func=_run_operator_approval_gate_legacy_help)
+
+    def _run_bounded_live_readiness_legacy_help(_args: argparse.Namespace) -> int:
+        print("Bounded live autonomy readiness (CAND-015) is implemented configlessly as:")
+        print("  atlas agent bounded-live-readiness ...")
+        print("Use the configless form above; this delegated form is for --workspace compatibility only.")
+        return 2
+
+    agent_bounded_live_readiness = agent_sub.add_parser(
+        "bounded-live-readiness",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        help="Bounded live autonomy readiness evaluation (CAND-015) — evidence-only, simulated-only.",
+        description=_BLAR_DESCRIPTION,
+    )
+    agent_bounded_live_readiness.add_argument("--quality-gate", help="Path to CAND-004 trading-quality-gate.json.")
+    agent_bounded_live_readiness.add_argument("--shadow-comparison", help="Path to CAND-005 shadow-live-comparison.json.")
+    agent_bounded_live_readiness.add_argument("--submit-conformance", help="Path to CAND-006 gated-submit-conformance.json.")
+    agent_bounded_live_readiness.add_argument("--readiness-envelope", help="Path to CAND-007 runtime-readiness-envelope.json.")
+    agent_bounded_live_readiness.add_argument("--operator-approval-gate", help="Path to CAND-008 operator-approval-gate.json.")
+    agent_bounded_live_readiness.add_argument("--bounded-autonomy-policy", help="Path to the bounded autonomy policy fixture.")
+    agent_bounded_live_readiness.add_argument("--risk-limit", help="Path to the risk limit fixture.")
+    agent_bounded_live_readiness.add_argument("--symbol-allowlist", help="Path to the symbol allowlist fixture.")
+    agent_bounded_live_readiness.add_argument("--heartbeat-deadman", help="Path to the heartbeat/deadman fixture.")
+    agent_bounded_live_readiness.add_argument("--audit-redaction", help="Path to the audit redaction fixture.")
+    agent_bounded_live_readiness.add_argument("--output-dir", help="Output directory for artifacts.")
+    agent_bounded_live_readiness.add_argument("--as-of", help="ISO-8601 UTC timestamp.")
+    agent_bounded_live_readiness.add_argument("--json", action="store_true", help="Emit JSON on stdout.")
+    agent_bounded_live_readiness.set_defaults(func=_run_bounded_live_readiness_legacy_help)
 
     agent_sub.add_parser("learn")
     agent_sub.add_parser("reflect")
@@ -5448,6 +5478,8 @@ def main(argv: list[str] | None = None) -> int:
         elif args.agent_command == "readiness-envelope":
             return args.func(args)
         elif args.agent_command == "operator-approval-gate":
+            return args.func(args)
+        elif args.agent_command == "bounded-live-readiness":
             return args.func(args)
         elif args.agent_command == "run":
             if getattr(args, "offline", False):

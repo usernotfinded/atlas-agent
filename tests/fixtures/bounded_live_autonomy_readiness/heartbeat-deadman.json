@@ -1,0 +1,11 @@
+{
+  "artifact_type": "heartbeat_deadman_fixture",
+  "schema_version": "heartbeat-deadman-fixture.v1",
+  "heartbeat_required": true,
+  "heartbeat_interval_seconds": 30,
+  "deadman_required": true,
+  "deadman_ttl_seconds": 120,
+  "missing_heartbeat_fails_closed": true,
+  "stale_heartbeat_fails_closed": true,
+  "expires_at": "2026-06-24T14:00:00Z"
+}

@@ -107,6 +107,46 @@
         "Does not enable live trading, live submit, order placement, broker/provider execution, credential loading, network access, pending-order creation, position flattening, order cancellation, or approval queue mutation.",
         "Does not change RiskManager, kill-switch, deadman, heartbeat, or audit hash-chain behavior."
       ]
+    },
+    {
+      "id": "CAND-015",
+      "status": "accepted",
+      "accepted": true,
+      "acceptance_date": "2026-07-06",
+      "release_date": null,
+      "acceptance_verdict": "PASS",
+      "title": "Bounded Live Autonomy Readiness Gate",
+      "description": "Adds an evidence-only, simulated-only L2/L3 autonomy readiness gate. Introduces src/atlas_agent/agent/bounded_live_autonomy_readiness.py engine and src/atlas_agent/agent/bounded_live_autonomy_readiness_cli.py configless CLI, registers atlas agent bounded-live-readiness, adds tests and fixtures, and adds scripts/check_bounded_live_autonomy_readiness_contract.py. The gate consumes CAND-004/CAND-005/CAND-006/CAND-007/CAND-008 artifacts plus CAND-015-owned local policy fixtures, evaluates a 15-gate fail-closed sequence, and records bounded-live-readiness.json and bounded-live-readiness-report.md. Does not submit orders, call brokers/providers, load credentials, mutate runtime state, or claim live readiness. Extraction beyond the CAND-014 pilot remains not authorized.",
+      "design_doc": "docs/bounded-live-autonomy-readiness-design.md",
+      "doc": "docs/bounded-live-autonomy-readiness.md",
+      "engine_module": "src/atlas_agent/agent/bounded_live_autonomy_readiness.py",
+      "cli_module": "src/atlas_agent/agent/bounded_live_autonomy_readiness_cli.py",
+      "contract_checker": "scripts/check_bounded_live_autonomy_readiness_contract.py",
+      "test_module": "tests/test_bounded_live_autonomy_readiness.py",
+      "cli_test_module": "tests/test_bounded_live_autonomy_readiness_cli.py",
+      "contract_test_module": "tests/test_bounded_live_autonomy_readiness_contract.py",
+      "import_trace_test_module": "tests/test_bounded_live_autonomy_readiness_import_trace.py",
+      "fixture_dir": "tests/fixtures/bounded_live_autonomy_readiness",
+      "design_commit": null,
+      "implementation_commit": null,
+      "acceptance_commit": null,
+      "design_status": "complete",
+      "implementation_plan_status": "complete",
+      "implementation_status": "complete",
+      "release_status": "not_released",
+      "implementation_review_verdict": "PASS",
+      "acceptance_verdict": "PASS",
+      "warnings": [
+        "L3 bounded live autonomy remains a future research concept; bounded_live_readiness_recorded is evidence-recording status only and not permission to trade or authorization to submit orders."
+      ],
+      "notes": [
+        "Accepted CAND-015 into the v0.6.21 candidate chain on 2026-07-06 with acceptance verdict PASS.",
+        "Implementation introduces no live trading, live submit, broker/provider execution, credential loading, network access, order placement, pending-order creation, position flattening, order cancellation, or approval queue mutation.",
+        "Does not change RiskManager, kill-switch, deadman, heartbeat, or audit hash-chain behavior.",
+        "Does not authorize extraction beyond provider_mock_response_final_safety_seal.py.",
+        "v0.6.21 remains planning-only and not released. No v0.6.21 tag, GitHub Release, or PyPI publication exists.",
+        "Package/source version remains 0.6.20; current public release remains v0.6.20; next planned release remains v0.6.21."
+      ]
     }
   ]
 }
