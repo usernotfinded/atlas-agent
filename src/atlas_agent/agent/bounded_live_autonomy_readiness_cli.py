@@ -171,7 +171,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.json:
             print(
                 json.dumps(
-                    {"status": "not_evaluated", "error": str(exc), "exit_code": 2},
+                    {"status": "not_evaluated", "error": "evaluation failed", "exit_code": 2},
                     indent=2,
                     sort_keys=True,
                 )

@@ -256,7 +256,7 @@ class BoundedLiveAutonomyReadinessInputs:
     symbol_allowlist_path: Path
     heartbeat_deadman_path: Path
     audit_redaction_path: Path
-    output_dir: Path | None
+    output_dir: Path
     as_of: str
 
 
@@ -1025,28 +1025,36 @@ def _validate_risk_limit(data: dict[str, Any], as_of: str) -> dict[str, Any]:
             raise BoundedLiveAutonomyReadinessValidationError(
                 f"risk_limit {field_name} must be a non-negative decimal string"
             )
+        if float(value) == 0.0:
+            raise BoundedLiveAutonomyReadinessValidationError(
+                f"risk_limit {field_name} must be positive (empty limit rejected)"
+            )
 
     for field_name in (
         "max_orders_per_interval",
         "quote_freshness_required_seconds",
     ):
-        value = data.get(field_name)
-        if not isinstance(value, int) or isinstance(value, bool):
+        int_value = data.get(field_name)
+        if not isinstance(int_value, int) or isinstance(int_value, bool):
             raise BoundedLiveAutonomyReadinessValidationError(
                 f"risk_limit {field_name} must be an integer"
             )
-        if value <= 0:
+        if int_value <= 0:
             raise BoundedLiveAutonomyReadinessValidationError(
                 f"risk_limit {field_name} must be positive"
             )
 
     for field_name in ("allowed_sides", "allowed_order_types"):
-        value = data.get(field_name)
-        if not isinstance(value, list):
+        list_value = data.get(field_name)
+        if not isinstance(list_value, list):
             raise BoundedLiveAutonomyReadinessValidationError(
                 f"risk_limit {field_name} must be a list"
             )
-        if not all(isinstance(v, str) for v in value):
+        if not list_value:
+            raise BoundedLiveAutonomyReadinessValidationError(
+                f"risk_limit {field_name} must not be empty"
+            )
+        if not all(isinstance(v, str) for v in list_value):
             raise BoundedLiveAutonomyReadinessValidationError(
                 f"risk_limit {field_name} must be strings"
             )
@@ -1965,9 +1973,9 @@ def build_bounded_live_autonomy_readiness_report(
 
         status = "readiness_synthesized" if not blockers else "blocked"
         exit_code = 0 if not blockers else 2
-    except BoundedLiveAutonomyReadinessValidationError as exc:
-        gates.append(_gate_fail("schema_preflight", str(exc)))
-        blockers.append(f"schema_preflight: {exc}")
+    except BoundedLiveAutonomyReadinessValidationError:
+        gates.append(_gate_fail("schema_preflight", "schema validation failed"))
+        blockers.append("schema_preflight: schema validation failed")
         for gate_id in GATE_SEQUENCE[1:]:
             gates.append(_gate_not_run(gate_id))
         status = "blocked"
@@ -2072,12 +2080,14 @@ def write_bounded_live_autonomy_readiness_artifacts(
     output_dir = Path(output_dir)
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
-    except Exception as exc:
+    except Exception:
         return replace(
             recorded,
             status="blocked",
             exit_code=2,
-            blockers=recorded.blockers + [f"artifact_recording_gate: {exc}"],
+            blockers=recorded.blockers + [
+                "artifact_recording_gate: I/O error while creating output directory"
+            ],
         )
 
     json_path = output_dir / _JSON_ARTIFACT_NAME
@@ -2089,12 +2099,14 @@ def write_bounded_live_autonomy_readiness_artifacts(
             encoding="utf-8",
         )
         md_path.write_text(_render_markdown_report(recorded), encoding="utf-8")
-    except Exception as exc:
+    except Exception:
         return replace(
             recorded,
             status="blocked",
             exit_code=2,
-            blockers=recorded.blockers + [f"artifact_recording_gate: {exc}"],
+            blockers=recorded.blockers + [
+                "artifact_recording_gate: I/O error while writing artifacts"
+            ],
         )
 
     recording = dict(recorded.recording)

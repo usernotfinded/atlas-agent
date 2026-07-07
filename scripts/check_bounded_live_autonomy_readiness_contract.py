@@ -21,6 +21,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import cast
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -1036,11 +1037,11 @@ def main() -> int:
 
     try:
         result = check_all()
-    except Exception as exc:
+    except Exception:
         if args.json:
-            print(json.dumps({"error": str(exc), "passed": False}))
+            print(json.dumps({"error": "operational error", "passed": False}))
         else:
-            print(f"Operational error: {exc}")
+            print("Operational error: contract check failed")
         return 2
 
     if args.json:
@@ -1050,7 +1051,7 @@ def main() -> int:
             print("PASSED: CAND-015 contract checks passed.")
         else:
             print("FAILED: CAND-015 contract checks found issues:")
-            for error in result["errors"]:
+            for error in cast(list[str], result["errors"]):
                 print(f"  - {_redact(error)}")
 
     return 0 if result["passed"] else 2

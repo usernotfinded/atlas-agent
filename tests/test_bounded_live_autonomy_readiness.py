@@ -375,6 +375,34 @@ def test_leverage_allowed_blocks(tmp_path: Path) -> None:
     assert report.gates[8].status == "fail"
 
 
+def test_empty_notional_limit_blocks(tmp_path: Path) -> None:
+    bad = _make_risk_limit()
+    bad["max_single_order_notional"] = "0.00"
+    inputs = _make_inputs(tmp_path, risk_limit=bad)
+    report = build_bounded_live_autonomy_readiness_report(inputs)
+    assert report.status == "blocked"
+    assert report.gates[0].gate_id == "schema_preflight"
+    assert report.gates[0].status == "fail"
+
+
+def test_empty_allowed_sides_blocks(tmp_path: Path) -> None:
+    bad = _make_risk_limit()
+    bad["allowed_sides"] = []
+    inputs = _make_inputs(tmp_path, risk_limit=bad)
+    report = build_bounded_live_autonomy_readiness_report(inputs)
+    assert report.status == "blocked"
+    assert report.gates[0].status == "fail"
+
+
+def test_empty_allowed_order_types_blocks(tmp_path: Path) -> None:
+    bad = _make_risk_limit()
+    bad["allowed_order_types"] = []
+    inputs = _make_inputs(tmp_path, risk_limit=bad)
+    report = build_bounded_live_autonomy_readiness_report(inputs)
+    assert report.status == "blocked"
+    assert report.gates[0].status == "fail"
+
+
 def test_symbol_not_in_allowlist_blocks(tmp_path: Path) -> None:
     allowlist = _make_symbol_allowlist()
     allowlist["allowed_symbols"] = ["AAPL"]
