@@ -120,6 +120,23 @@ planning-only):
   audit hash-chain; it does not enable live trading, live submit, order
   placement, broker/provider execution, credential loading, network access, or
   approval queue mutation.
+- `v0.6.21` is a planning-only release line. The following candidates are
+  accepted into its candidate chain but do not change runtime behavior, enable
+  live trading, or claim autonomous live-trading readiness:
+  - **CAND-013**: Public/trust docs drift coverage guard (checker/test/docs only).
+  - **CAND-014 Phase 2**: One-module pilot extraction that moves shared artifact
+    mechanics for `src/atlas_agent/research/provider_mock_response_final_safety_seal.py`
+    behind a minimal `src/atlas_agent/research/artifact_engine.py`. Extraction
+    beyond this single pilot module remains not authorized.
+  - **CAND-015**: Bounded live autonomy readiness gate. An evidence-only,
+    simulated-only L2/L3 boundary evaluator that consumes upstream
+    CAND-004/CAND-005/CAND-006/CAND-007/CAND-008 artifacts plus CAND-015-owned
+    local policy fixtures, evaluates a 15-gate fail-closed sequence, and records
+    `bounded-live-readiness.json` plus `bounded-live-readiness-report.md`. It
+    does not submit orders, call brokers or providers, load credentials,
+    instantiate runtime trading objects, mutate state, or indicate live
+    readiness. The status `bounded_live_readiness_recorded` is evidence-recording
+    status only and is not permission to trade or authorization to submit orders.
 - No profit, risk elimination, claims that live trading is safe, or
   autonomous-trading-readiness claims are made.
 

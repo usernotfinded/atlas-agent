@@ -365,6 +365,18 @@ def test_live_submit_enabled_by_default_blocks(tmp_path: Path) -> None:
     assert report.status == "blocked"
 
 
+def test_provider_output_authoritative_blocks(tmp_path: Path) -> None:
+    bad = _make_bounded_autonomy_policy()
+    bad["provider_output_authoritative"] = True
+    inputs = _make_inputs(tmp_path, bounded_autonomy_policy=bad)
+    report = build_bounded_live_autonomy_readiness_report(inputs)
+    assert report.status == "blocked"
+    assert report.gates[7].gate_id == "bounded_autonomy_policy_gate"
+    assert report.gates[7].status == "fail"
+    failures = report.gates[7].details.get("failures", [])
+    assert any("provider_output_authoritative" in f for f in failures)
+
+
 def test_leverage_allowed_blocks(tmp_path: Path) -> None:
     bad = _make_risk_limit()
     bad["leverage_allowed"] = True

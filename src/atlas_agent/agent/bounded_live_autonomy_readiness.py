@@ -1879,6 +1879,18 @@ def _artifact_recording_gate(
     """Promote a synthesized report to recorded; otherwise return it unchanged."""
     if report.status != "readiness_synthesized":
         return report
+    new_gates: list[GateResult] = []
+    for gate in report.gates:
+        if gate.gate_id == "artifact_recording_gate":
+            new_gates.append(
+                GateResult(
+                    gate_id="artifact_recording_gate",
+                    status="pass",
+                    reason="local artifacts recorded",
+                )
+            )
+        else:
+            new_gates.append(gate)
     recording = {
         "json_artifact": _JSON_ARTIFACT_NAME,
         "markdown_artifact": _MARKDOWN_ARTIFACT_NAME,
@@ -1888,6 +1900,7 @@ def _artifact_recording_gate(
         report,
         status="bounded_live_readiness_recorded",
         exit_code=0,
+        gates=tuple(new_gates),
         recording=recording,
     )
 
@@ -1964,6 +1977,9 @@ def build_bounded_live_autonomy_readiness_report(
                 break
         else:
             gates.append(_evaluate_readiness_synthesis_gate(tuple(gates)))
+            gates.append(
+                _gate_not_run("artifact_recording_gate")
+            )
 
         readiness_assertions = _build_readiness_assertions(normalized)
         readiness_digest = _compute_readiness_digest(

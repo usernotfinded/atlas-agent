@@ -59,7 +59,8 @@ gate sequence. The output is a local artifact pair:
 12. `audit_redaction_gate` — secrets, API keys, account IDs, raw broker payloads, raw provider output, paths, and exception text are redacted; hash chain and manifest required.
 13. `l2_l3_boundary_gate` — hard invariant check of the L2/L3 boundary.
 14. `readiness_synthesis_gate` — all prior gates passed.
-15. `artifact_recording_gate` — local JSON/Markdown artifacts recorded.
+15. `artifact_recording_gate` — local JSON/Markdown artifacts recorded (explicit
+    in the recorded report; shown as `not_run` before artifacts are written).
 
 ## Exit codes
 
