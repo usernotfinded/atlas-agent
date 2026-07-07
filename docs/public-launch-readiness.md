@@ -176,7 +176,8 @@ No broker, no network, no credentials, no live trading.
 - Version on `main` is `0.6.21`; latest stable public GitHub release is `v0.6.21`. `v0.6.20` and earlier releases are historical.
 - `v0.6.21` is the current public GitHub-only release; `v0.6.22` is the next planning line.
 - [v0.6.15 Post-Release Evidence](./releases/v0.6.15-post-release-evidence.md) records the historical v0.6.15 deterministic cutover evidence.
-- [v0.6.21 Planning Seed](./releases/v0.6.21-plan.md) seeds the next planning line and does not authorize a release.
+- [v0.6.21 Planning Seed](./releases/v0.6.21-plan.md) records the historical planning seed for the now-released `v0.6.21`.
+- [v0.6.22 Planning Seed](./releases/v0.6.22-plan.md) seeds the next planning line and does not authorize a release.
 - [v0.6.14 Final Paper Portfolio Readiness Audit](./releases/v0.6.14-final-readiness-audit.md) preserves the historical pre-cutover Go/No-Go dossier.
 
 ## Known limitations

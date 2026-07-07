@@ -133,40 +133,39 @@ kill-switch type-safety cleanup.
   network access, or approval queue mutation.
 - No additional candidates are currently proposed for `v0.6.19`.
 
-### Candidate status in the `v0.6.21` release
+### Candidate status in the `v0.6.20` release
 
-`v0.6.21` is the current public GitHub release. It includes **CAND-012** as a
+`v0.6.20` is a historical public GitHub release. It includes **CAND-012** as a
 candidate-chain consistency guard.
 
-- **CAND-012** is released in `v0.6.21`. It adds `scripts/check_candidate_chain.py`,
+- **CAND-012** is released in `v0.6.20`. It adds `scripts/check_candidate_chain.py`,
   `tests/test_candidate_chain.py`, dev/CI integration, and checks-reference
   documentation. It validates release metadata, candidate-chain JSON, and
   candidate-chain Markdown consistency and scans for forbidden candidate-chain
   claims. It does not enable live trading, live submit, order placement,
   broker/provider execution, credential loading, network access, or approval
   queue mutation.
-- No additional candidates were proposed for `v0.6.21`.
+- No additional candidates were proposed for `v0.6.20`.
 
-### Candidate status in the `v0.6.22` planning line
+### Candidate status in the `v0.6.21` release
 
-`v0.6.22` is the next planned release line and is not released. The following
-candidates are accepted into the `v0.6.22` candidate chain as
-planning/finalization-only work. Live trading, live submit, broker/provider
-execution, credential loading, network access, order placement, and approval
-queue mutation are not enabled by any of them.
+`v0.6.21` is the current public GitHub release. It includes **CAND-013**,
+**CAND-014 Phase 2**, and **CAND-015**. Live trading, live submit,
+broker/provider execution, credential loading, network access, order placement,
+and approval queue mutation are not enabled by any of them.
 
-- **CAND-013** is accepted as a public/trust docs drift coverage guard. It
-  extends `scripts/check_public_docs_consistency.py` and adds tests and
-  documentation; it changes no runtime, safety, CLI, broker, provider, or
+- **CAND-013** is released in `v0.6.21` as a public/trust docs drift coverage
+  guard. It extends `scripts/check_public_docs_consistency.py` and adds tests
+  and documentation; it changes no runtime, safety, CLI, broker, provider, or
   credential-loading code.
-- **CAND-014 Phase 2** is accepted as a one-module pilot extraction. It moves
-  shared artifact mechanics for
+- **CAND-014 Phase 2** is released in `v0.6.21` as a one-module pilot
+  extraction. It moves shared artifact mechanics for
   `src/atlas_agent/research/provider_mock_response_final_safety_seal.py`
   behind a minimal `src/atlas_agent/research/artifact_engine.py` while
   preserving Phase 1 golden compatibility. Extraction beyond this single pilot
   module remains not authorized.
-- **CAND-015** is accepted as a bounded live autonomy readiness gate. It adds
-  `src/atlas_agent/agent/bounded_live_autonomy_readiness.py` and
+- **CAND-015** is released in `v0.6.21` as a bounded live autonomy readiness
+  gate. It adds `src/atlas_agent/agent/bounded_live_autonomy_readiness.py` and
   `src/atlas_agent/agent/bounded_live_autonomy_readiness_cli.py`, registers
   `atlas agent bounded-live-readiness`, and evaluates upstream
   CAND-004/CAND-005/CAND-006/CAND-007/CAND-008 artifacts plus CAND-015-owned
@@ -174,8 +173,17 @@ queue mutation are not enabled by any of them.
   `bounded-live-readiness.json` and `bounded-live-readiness-report.md` only when
   all gates pass. The status `bounded_live_readiness_recorded` is
   evidence-recording status only and is not live readiness, not permission to
-  trade, and not authorization to submit orders. L3 bounded live autonomy
-  remains a future research concept.
+  trade, and not authorization to submit orders. CAND-015 implementation and
+  implementation-review were performed by the same agent system, so a clean-room
+  independent review remains outstanding. L3 bounded live autonomy remains a
+  future research concept.
+
+### Candidate status in the `v0.6.22` planning line
+
+`v0.6.22` is the next planned release line and is not released. No candidates
+are accepted or proposed for `v0.6.22` yet. Live trading, live submit,
+broker/provider execution, credential loading, network access, order placement,
+and approval queue mutation are not enabled.
 
 ## Current state vs future state
 

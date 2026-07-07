@@ -9,11 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Opened the `v0.6.22` planning line with an empty candidate chain: `docs/releases/v0.6.22-plan.md`, `docs/releases/v0.6.22-candidates.json`, `docs/releases/v0.6.22-candidates.md`, and `docs/releases/v0.6.22-candidate-selection.md`. Planning-only; no candidates accepted; no tag, GitHub Release, or PyPI publication.
+- Added `docs/releases/v0.6.21-post-release-assurance.md` and `.json` recording the `v0.6.21` release state, tag/GitHub Release verification, GitHub Actions/CI status, re-run local checks, and remaining caveats. GitHub-only record; not a live-trading or production-readiness claim.
+- Added `tests/test_next_planned_tag_guard.py` regression coverage proving the next-planned tag guard in `check_bounded_autonomy_governance.py`, `check_autonomous_paper_workflow_demo.py`, and `check_paper_provider_isolation.py` tracks `next_planned_release` from release metadata (offline, `subprocess.run` mocked; no real git tags).
+
 ### Changed
+
+- Made the next-planned tag guard metadata-driven in `scripts/check_bounded_autonomy_governance.py`, `scripts/check_autonomous_paper_workflow_demo.py`, and `scripts/check_paper_provider_isolation.py`: the `git tag --list` guard now queries `NEXT_PLANNED_TAG` (from release metadata) instead of a hardcoded tag literal, so it can no longer drift from the metadata next-planned line.
 
 ### Fixed
 
+- Corrected post-release documentation drift in `docs/autonomy-roadmap.md`: restored the `v0.6.20` release section (CAND-012), moved CAND-013/CAND-014 Phase 2/CAND-015 under the `v0.6.21` release section (released, not planning), and reset the `v0.6.22` planning line to no accepted candidates. The cutover's blind version increment had mislabeled which candidates belonged to which release.
+- Corrected a stale planning-seed reference in `docs/public-launch-readiness.md` that still described `v0.6.21` as seeding the next planning line; `v0.6.22` is now the next planning-seed link and `v0.6.21` is historical.
+
 ### Safety
+
+- Post-release stabilization changes are docs/tests/checker-only. No live trading, live submit, broker/provider execution, credential loading, network access, order placement, or approval queue mutation is introduced. `RiskManager`, kill-switch, deadman, heartbeat, audit hash-chain, live-submit opt-in, and `can_submit` are unchanged. `atlas run --mode live` remains fail-closed. The CAND-014 extraction boundary is unchanged. PyPI remains unpublished; no new tag or GitHub Release was created.
 
 ## [0.6.21] - 2026-07-07
 

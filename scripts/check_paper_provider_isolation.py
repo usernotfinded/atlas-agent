@@ -354,13 +354,13 @@ def _check_release_metadata() -> list[str]:
         errors.append("PyPI is marked as published; must remain false")
 
     result = subprocess.run(
-        ["git", "tag", "--list", "v0.6.22"],
+        ["git", "tag", "--list", NEXT_PLANNED_TAG],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
     )
     if result.stdout.strip():
-        errors.append("Local git tag v0.6.22 already exists")
+        errors.append(f"Local git tag {NEXT_PLANNED_TAG} already exists")
 
     return errors
 
