@@ -1,0 +1,137 @@
+{
+  "artifact_type": "v0621_final_readiness_audit",
+  "schema_version": 1,
+  "release": "v0.6.21",
+  "release_state": "planning_only",
+  "current_public_release": "v0.6.20",
+  "source_version": "0.6.20",
+  "next_planned_release": "v0.6.21",
+  "pypi_published": false,
+  "tag_created": false,
+  "github_release_created": false,
+  "mode": "planning_only",
+  "paper_only": false,
+  "non_executable": true,
+  "provider_required": false,
+  "broker_required": false,
+  "network_required": false,
+  "live_submit_enabled": false,
+  "orders_generated": false,
+  "notifications_sent": false,
+  "real_human_approval": false,
+  "not_financial_advice": true,
+  "not_live_ready": true,
+  "owner_authorization_required": true,
+  "release_authorized": false,
+  "cutover_allowed": false,
+  "decision": "go_for_owner_authorized_cutover",
+  "candidates": [
+    {
+      "id": "CAND-013",
+      "title": "Public/Trust Docs Drift Coverage Guard",
+      "status": "accepted",
+      "mode": "planning_only",
+      "paper_only": false,
+      "gate_integrated": true,
+      "docs": [
+        "docs/public-trust-docs-drift-coverage-guard-design.md",
+        "docs/public-trust-docs-drift-coverage-guard-implementation-plan.md"
+      ],
+      "checkers": [
+        "scripts/check_public_docs_consistency.py"
+      ],
+      "tests": [
+        "tests/test_public_docs_consistency.py"
+      ],
+      "acceptance_verdict": "PASS_WITH_WARNINGS",
+      "implementation_review_verdict": "PASS_WITH_WARNINGS"
+    },
+    {
+      "id": "CAND-014",
+      "title": "Provider Artifact Engine Deduplication",
+      "status": "accepted",
+      "mode": "planning_only",
+      "paper_only": false,
+      "gate_integrated": true,
+      "phase": "Phase 2 - One-Module Pilot Extraction",
+      "pilot_module": "src/atlas_agent/research/provider_mock_response_final_safety_seal.py",
+      "new_engine_module": "src/atlas_agent/research/artifact_engine.py",
+      "docs": [
+        "docs/provider-artifact-engine-deduplication-design.md",
+        "docs/provider-artifact-engine-deduplication-implementation-plan.md",
+        "docs/provider-artifact-engine-deduplication-phase-2-plan.md",
+        "docs/provider-artifact-engine-deduplication-inventory.md"
+      ],
+      "checkers": [],
+      "tests": [
+        "tests/test_provider_artifact_golden_contracts.py"
+      ],
+      "acceptance_verdict": "PASS",
+      "implementation_review_verdict": "PASS",
+      "extraction_beyond_pilot": "not_authorized"
+    },
+    {
+      "id": "CAND-015",
+      "title": "Bounded Live Autonomy Readiness Gate",
+      "status": "accepted",
+      "mode": "planning_only",
+      "paper_only": false,
+      "gate_integrated": true,
+      "docs": [
+        "docs/bounded-live-autonomy-readiness.md",
+        "docs/bounded-live-autonomy-readiness-design.md"
+      ],
+      "checkers": [
+        "scripts/check_bounded_live_autonomy_readiness_contract.py"
+      ],
+      "tests": [
+        "tests/test_bounded_live_autonomy_readiness.py",
+        "tests/test_bounded_live_autonomy_readiness_cli.py",
+        "tests/test_bounded_live_autonomy_readiness_contract.py",
+        "tests/test_bounded_live_autonomy_readiness_import_trace.py"
+      ],
+      "acceptance_verdict": "PASS",
+      "implementation_review_verdict": "PASS",
+      "independence_caveat": "implementation and implementation review were performed by the same agent system; clean-room independent review recommended before final acceptance closure"
+    }
+  ],
+  "required_checks": [
+    "python3.11 scripts/check_public_docs_consistency.py",
+    "python3.11 scripts/check_candidate_chain.py",
+    "python3.11 scripts/check_release_metadata.py",
+    "python3.11 scripts/check_version_consistency.py",
+    "python3.11 scripts/check_forbidden_claims.py",
+    "python3.11 scripts/check_bounded_autonomy_governance.py",
+    "python3.11 scripts/check_trust_center.py",
+    "python3.11 scripts/check_onboarding_docs.py",
+    "python3.11 scripts/check_public_launch_readiness.py",
+    "python3.11 scripts/check_bounded_live_autonomy_readiness_contract.py",
+    "python3.11 -m pytest tests/test_provider_artifact_golden_contracts.py -q",
+    "python3.11 -m pytest tests/test_bounded_live_autonomy_readiness.py tests/test_bounded_live_autonomy_readiness_cli.py tests/test_bounded_live_autonomy_readiness_contract.py tests/test_bounded_live_autonomy_readiness_import_trace.py -q",
+    "python3.11 -m pytest tests/test_public_docs_consistency.py -q",
+    "python3.11 -m pytest tests/test_candidate_chain.py -q",
+    "mypy src/atlas_agent/agent/bounded_live_autonomy_readiness.py src/atlas_agent/agent/bounded_live_autonomy_readiness_cli.py src/atlas_agent/safety/kill_switch.py",
+    "atlas validate",
+    "atlas run --mode live",
+    "./scripts/dev_check.sh",
+    "./scripts/ci_check.sh",
+    "./scripts/release_check.sh --quick"
+  ],
+  "safety": {
+    "no_live_trading": true,
+    "no_live_submit": true,
+    "no_broker_calls": true,
+    "no_provider_calls": true,
+    "no_notifications_sent": true,
+    "no_orders_generated": true,
+    "no_real_human_approval": true,
+    "no_credentials_or_secrets": true,
+    "no_profit_claim": true,
+    "no_absolute_safety_claim": true,
+    "no_no_risk_claim": true,
+    "no_live_readiness_claim": true,
+    "no_autonomous_live_readiness_claim": true,
+    "extraction_beyond_pilot_not_authorized": true,
+    "bounded_live_readiness_not_permission_to_trade": true
+  }
+}

@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - CAND-015 finalization: added conservative cross-references to `docs/bounded-live-autonomy-governance.md` and `docs/autonomy-roadmap.md`; made `artifact_recording_gate` explicit in the recorded report gate list; added a dedicated regression test proving `provider_output_authoritative=true` blocks readiness. No runtime, safety, CLI, broker, provider, version, or release-metadata changes.
+- Added v0.6.21 release-readiness planning dossier (`docs/releases/v0.6.21-final-readiness-audit.md` and `.json`) and updated `docs/releases/v0.6.21-readiness-plan.md`, `docs/releases/v0.6.21-plan.md`, and `docs/releases/v0.6.21-candidate-selection.md` to reference it. The dossier records the current planning-only posture, candidate coverage, required checks, safety invariants, known warnings, and a `go_for_owner_authorized_cutover` decision. It does not release, tag, publish, enable live trading, or enable live submit.
 
 ### Fixed
 
