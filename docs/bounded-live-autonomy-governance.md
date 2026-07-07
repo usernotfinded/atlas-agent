@@ -32,7 +32,7 @@ it is bounded, reversible, auditable, fail-closed, and explicitly opt-in.
 
 ## Current release truth
 
-As of the current release line (`v0.6.20` public GitHub release, `v0.6.21`
+As of the current release line (`v0.6.21` public GitHub release, `v0.6.22`
 planning-only):
 
 - Autonomous live trading is **not implemented**.
@@ -120,7 +120,7 @@ planning-only):
   audit hash-chain; it does not enable live trading, live submit, order
   placement, broker/provider execution, credential loading, network access, or
   approval queue mutation.
-- `v0.6.21` is a planning-only release line. The following candidates are
+- `v0.6.22` is a planning-only release line. The following candidates are
   accepted into its candidate chain but do not change runtime behavior, enable
   live trading, or claim autonomous live-trading readiness:
   - **CAND-013**: Public/trust docs drift coverage guard (checker/test/docs only).

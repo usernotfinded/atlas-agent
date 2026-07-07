@@ -31,7 +31,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-CURRENT_DEV_VERSION = "0.6.17"
+_metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
+try:
+    _metadata = json.loads(_metadata_path.read_text(encoding="utf-8"))
+    CURRENT_DEV_VERSION = _metadata.get("source_version", "0.6.21")
+except Exception:
+    CURRENT_DEV_VERSION = "0.6.21"
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
 

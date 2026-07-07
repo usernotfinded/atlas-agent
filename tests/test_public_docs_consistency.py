@@ -375,14 +375,14 @@ class TestStaleReleaseStatusLines:
         mod = _load_script_module()
         text = (
             "L3 is not implemented in the current release line "
-            "(`v0.6.19` current public release; `v0.6.20` planning-only)."
+            "(`v0.6.20` current public release; `v0.6.21` planning-only)."
         )
         violations = mod._check_stale_release_status_lines(
-            text, "docs/autonomy-roadmap.md", "v0.6.20"
+            text, "docs/autonomy-roadmap.md", "v0.6.21"
         )
         assert len(violations) == 1
-        assert "v0.6.19" in violations[0]
-        assert "expected v0.6.20" in violations[0]
+        assert "v0.6.20" in violations[0]
+        assert "expected v0.6.21" in violations[0]
 
 
 class TestTrustReadmeCurrentPublicLabels:
@@ -391,75 +391,75 @@ class TestTrustReadmeCurrentPublicLabels:
         return mod._check_trust_readme_current_public_labels(
             text,
             "docs/trust/README.md",
-            "v0.6.20",
             "v0.6.21",
-            {"v0.6.17", "v0.6.18", "v0.6.19"},
+            "v0.6.22",
+            {"v0.6.18", "v0.6.19", "v0.6.20"},
         )
 
     def test_trust_readme_current_public_label_passes(self) -> None:
         text = (
-            "- Public v0.6.20: current public - status\n"
-            "- [v0.6.20 Trust and Release Status](v0.6.20-status.md) "
+            "- Public v0.6.21: current public - status\n"
+            "- [v0.6.21 Trust and Release Status](v0.6.21-status.md) "
             "(current public)\n"
         )
         assert self._check(text) == []
 
     def test_trust_readme_old_release_current_public_fails(self) -> None:
-        text = "- [v0.6.19 Trust and Release Status](v0.6.19-status.md) (current public)\n"
+        text = "- [v0.6.20 Trust and Release Status](v0.6.20-status.md) (current public)\n"
         violations = self._check(text)
         assert len(violations) == 1
         assert "docs/trust/README.md" in violations[0]
-        assert "v0.6.19" in violations[0]
         assert "v0.6.20" in violations[0]
+        assert "v0.6.21" in violations[0]
 
     def test_trust_readme_historical_label_passes(self) -> None:
-        text = "- [v0.6.19 Trust and Release Status](v0.6.19-status.md) (historical)\n"
+        text = "- [v0.6.20 Trust and Release Status](v0.6.20-status.md) (historical)\n"
         assert self._check(text) == []
 
     def test_trust_readme_next_planned_label_passes(self) -> None:
-        text = "- [v0.6.21 Planning Status](v0.6.21-status.md) (next planned)\n"
+        text = "- [v0.6.22 Planning Status](v0.6.22-status.md) (next planned)\n"
         assert self._check(text) == []
 
     def test_trust_readme_next_planned_current_public_fails(self) -> None:
-        text = "- [v0.6.21 Planning Status](v0.6.21-status.md) (current public)\n"
+        text = "- [v0.6.22 Planning Status](v0.6.22-status.md) (current public)\n"
         violations = self._check(text)
         assert len(violations) == 1
+        assert "v0.6.22" in violations[0]
         assert "v0.6.21" in violations[0]
-        assert "v0.6.20" in violations[0]
 
     def test_trust_readme_inline_current_public_old_release_fails(self) -> None:
-        text = "- Public v0.6.19: current public - release status\n"
+        text = "- Public v0.6.20: current public - release status\n"
         violations = self._check(text)
         assert len(violations) == 1
-        assert "v0.6.19" in violations[0]
         assert "v0.6.20" in violations[0]
+        assert "v0.6.21" in violations[0]
 
 
 class TestAutonomyRoadmapCandidateState:
     def test_roadmap_no_candidates_contradiction_fails(self) -> None:
         mod = _load_script_module()
-        text = "No candidates are currently proposed for `v0.6.21`."
+        text = "No candidates are currently proposed for `v0.6.22`."
         violations = mod._check_autonomy_roadmap_candidate_state(
-            text, "docs/autonomy-roadmap.md", "v0.6.21", True
+            text, "docs/autonomy-roadmap.md", "v0.6.22", True
         )
         assert len(violations) == 1
         assert "docs/autonomy-roadmap.md" in violations[0]
-        assert "v0.6.21" in violations[0]
+        assert "v0.6.22" in violations[0]
         assert "accepted/released candidates are recorded" in violations[0]
 
     def test_roadmap_no_candidates_when_none_accepted_passes(self) -> None:
         mod = _load_script_module()
-        text = "No candidates are currently proposed for `v0.6.21`."
+        text = "No candidates are currently proposed for `v0.6.22`."
         violations = mod._check_autonomy_roadmap_candidate_state(
-            text, "docs/autonomy-roadmap.md", "v0.6.21", False
+            text, "docs/autonomy-roadmap.md", "v0.6.22", False
         )
         assert violations == []
 
     def test_roadmap_historical_no_candidates_paragraph_passes(self) -> None:
         mod = _load_script_module()
-        text = "Historical note: no candidates are currently proposed for `v0.6.21` before selection."
+        text = "Historical note: no candidates are currently proposed for `v0.6.22` before selection."
         violations = mod._check_autonomy_roadmap_candidate_state(
-            text, "docs/autonomy-roadmap.md", "v0.6.21", True
+            text, "docs/autonomy-roadmap.md", "v0.6.22", True
         )
         assert violations == []
 
@@ -469,7 +469,7 @@ class TestNextPlannedAcceptedCandidates:
         repo = tmp_path / "repo"
         releases = repo / "docs" / "releases"
         releases.mkdir(parents=True)
-        (releases / "v0.6.21-candidates.json").write_text(
+        (releases / "v0.6.22-candidates.json").write_text(
             json.dumps({"candidates": candidates}),
             encoding="utf-8",
         )
@@ -480,21 +480,21 @@ class TestNextPlannedAcceptedCandidates:
     ) -> None:
         mod = _load_script_module()
         repo = self._write_candidates(tmp_path, [{"id": "CAND-X", "accepted": True}])
-        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.21") is True
+        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.22") is True
 
     def test_next_planned_has_accepted_candidates_true_for_status_accepted(
         self, tmp_path: Path
     ) -> None:
         mod = _load_script_module()
         repo = self._write_candidates(tmp_path, [{"id": "CAND-X", "status": "accepted"}])
-        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.21") is True
+        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.22") is True
 
     def test_next_planned_has_accepted_candidates_true_for_status_released(
         self, tmp_path: Path
     ) -> None:
         mod = _load_script_module()
         repo = self._write_candidates(tmp_path, [{"id": "CAND-X", "status": "released"}])
-        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.21") is True
+        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.22") is True
 
     def test_next_planned_has_accepted_candidates_false_for_no_accepted(
         self, tmp_path: Path
@@ -503,7 +503,7 @@ class TestNextPlannedAcceptedCandidates:
         repo = self._write_candidates(
             tmp_path, [{"id": "CAND-X", "status": "proposed", "accepted": False}]
         )
-        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.21") is False
+        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.22") is False
 
     def test_next_planned_has_accepted_candidates_false_for_missing_file(
         self, tmp_path: Path
@@ -511,7 +511,7 @@ class TestNextPlannedAcceptedCandidates:
         mod = _load_script_module()
         repo = tmp_path / "repo"
         repo.mkdir()
-        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.21") is False
+        assert mod._next_planned_has_accepted_candidates(repo, "v0.6.22") is False
 
 
 class TestDynamicMetadata:

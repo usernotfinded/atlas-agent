@@ -54,7 +54,7 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Do not reference a demo GIF as present unless `assets/atlas-demo.gif` actually exists.
 - Confirm no private values or credential-like strings are committed in docs or scripts.
 - Verify `pyproject.toml` `project.version` matches `src/atlas_agent/__init__.py` `__version__`.
-- Verify release checklist references current source version `0.6.20` and public tag `v0.6.20` where applicable.
+- Verify release checklist references current source version `0.6.21` and public tag `v0.6.21` where applicable.
 - Verify `git status` does not include runtime files like `memory/`.
 - Stage files explicitly. Do not use `git add .`.
 - Do not stage `.atlas/`, `.env`, `.env.atlas`, `memory/`, `build/`, `dist/`, `*.egg-info/`, generated reports, credentials, local logs, scratch files.
@@ -305,7 +305,7 @@ Optional flags:
 After pushing a tag, verify it from a clean clone:
 
 ```bash
-./scripts/smoke_release_tag.sh v0.6.20
+./scripts/smoke_release_tag.sh v0.6.21
 ```
 
 Optional full mode (also runs `release_check.sh` inside the clean clone):

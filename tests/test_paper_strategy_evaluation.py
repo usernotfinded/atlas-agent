@@ -282,9 +282,9 @@ class TestDemoAndChecker:
         assert result.returncode == 0, result.stdout + result.stderr
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.6.20"
-        assert data["current_public_tag"] == "v0.6.20"
-        assert data["next_planned_tag"] == "v0.6.21"
+        assert data["package_version"] == "0.6.21"
+        assert data["current_public_tag"] == "v0.6.21"
+        assert data["next_planned_tag"] == "v0.6.22"
         assert data["pypi_published"] is False
         assert data["errors"] == []
 
@@ -362,10 +362,10 @@ class TestCheckerFailures:
         assert "v0.6.13" in result.stdout.lower()
         assert "released" in result.stdout.lower()
 
-    def test_checker_fails_if_release_metadata_moves_to_v0621(self, tmp_path: Path) -> None:
+    def test_checker_fails_if_release_metadata_moves_to_v0622(self, tmp_path: Path) -> None:
         tmp = _make_isolated_repo(
             tmp_path,
-            metadata_patch={'"current_public_release": "v0.6.20"': '"current_public_release": "v0.6.21"'},
+            metadata_patch={'"current_public_release": "v0.6.21"': '"current_public_release": "v0.6.22"'},
         )
         result = _run_isolated_checker(tmp)
         assert result.returncode == 1

@@ -137,7 +137,7 @@ approve orders.
 `scripts/release_assurance.py` generates a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.20 --output artifacts/release_assurance/v0.6.20-local-check
+python scripts/release_assurance.py --version v0.6.21 --output artifacts/release_assurance/v0.6.21-local-check
 ```
 
 The release assurance pack includes identity, updater delivery, local evidence,

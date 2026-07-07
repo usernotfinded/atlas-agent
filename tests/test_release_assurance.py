@@ -442,6 +442,6 @@ def test_release_assurance_outputs_all_expected_files(mock_env, tmp_path, monkey
 def test_protected_boundaries_remediation_renders_brace_path_without_key_error() -> None:
     """Regression: literal brace paths in remediation text must not crash .format()."""
     remediation = release_assurance._remediation(
-        "protected_boundaries_clean", version="v0.6.20", clean_version="0.6.20"
+        "protected_boundaries_clean", version="v0.6.21", clean_version="0.6.21"
     )
     assert "src/atlas_agent/{config,brokers,execution,safety,risk}" in remediation

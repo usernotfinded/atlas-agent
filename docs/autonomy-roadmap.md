@@ -133,24 +133,24 @@ kill-switch type-safety cleanup.
   network access, or approval queue mutation.
 - No additional candidates are currently proposed for `v0.6.19`.
 
-### Candidate status in the `v0.6.20` release
+### Candidate status in the `v0.6.21` release
 
-`v0.6.20` is the current public GitHub release. It includes **CAND-012** as a
+`v0.6.21` is the current public GitHub release. It includes **CAND-012** as a
 candidate-chain consistency guard.
 
-- **CAND-012** is released in `v0.6.20`. It adds `scripts/check_candidate_chain.py`,
+- **CAND-012** is released in `v0.6.21`. It adds `scripts/check_candidate_chain.py`,
   `tests/test_candidate_chain.py`, dev/CI integration, and checks-reference
   documentation. It validates release metadata, candidate-chain JSON, and
   candidate-chain Markdown consistency and scans for forbidden candidate-chain
   claims. It does not enable live trading, live submit, order placement,
   broker/provider execution, credential loading, network access, or approval
   queue mutation.
-- No additional candidates were proposed for `v0.6.20`.
+- No additional candidates were proposed for `v0.6.21`.
 
-### Candidate status in the `v0.6.21` planning line
+### Candidate status in the `v0.6.22` planning line
 
-`v0.6.21` is the next planned release line and is not released. The following
-candidates are accepted into the `v0.6.21` candidate chain as
+`v0.6.22` is the next planned release line and is not released. The following
+candidates are accepted into the `v0.6.22` candidate chain as
 planning/finalization-only work. Live trading, live submit, broker/provider
 execution, credential loading, network access, order placement, and approval
 queue mutation are not enabled by any of them.
@@ -327,7 +327,7 @@ L2 is the highest autonomy level Atlas Agent supports for live-market workflows.
 
 ## L3 — Bounded Live Autonomy under Strict Risk Limits
 
-L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.20` current public release; `v0.6.19` and earlier are historical, `v0.6.21` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
+L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.21` current public release; `v0.6.20` and earlier are historical, `v0.6.22` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
 
 ### Required preconditions
 

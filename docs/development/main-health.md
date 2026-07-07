@@ -85,9 +85,9 @@ with `git status --short`, then stage or remove only intentional files.
 ## Version and Release Identity
 
 The main source version can differ from public release during maintenance
-updates. After the v0.6.20 release, the source package version on `main` is `0.6.20`, the
-current public release is `v0.6.20`, and the public GitHub release is `v0.6.20`. The
-previous public release is `v0.6.19`. The next planning line is `v0.6.21`.
+updates. After the v0.6.21 release, the source package version on `main` is `0.6.21`, the
+current public release is `v0.6.21`, and the public GitHub release is `v0.6.21`. The
+previous public release is `v0.6.20`. The next planning line is `v0.6.22`.
 
 Do not create future tags, GitHub releases, or PyPI publishes unless the task
 explicitly requests that release action. A maintenance source version is not a
