@@ -130,7 +130,7 @@
       "design_commit": null,
       "implementation_commit": "df943fdc428f2f6171a6a2184d70f971b07b589e",
       "implementation_fixup_commit": "183c5fd94fcc201e78c105bdcea9ec9c52988653",
-      "acceptance_commit": null,
+      "acceptance_commit": "9c03a5215b5449f884460e6d8ebd13307ced55a6",
       "design_status": "complete",
       "implementation_plan_status": "complete",
       "implementation_status": "complete",
