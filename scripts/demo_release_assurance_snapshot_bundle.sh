@@ -13,7 +13,13 @@ source "$SCRIPT_DIR/python_env.sh"
 PYTHON_BIN="$(resolve_python_bin)"
 require_python_311 "$PYTHON_BIN"
 
-DEFAULT_RELEASE="v0.6.15"
+# Assure the current public release by default, read from release metadata so the
+# default never drifts as releases advance. Falls back to a pinned tag if the
+# metadata cannot be read.
+DEFAULT_RELEASE="$(
+  "$PYTHON_BIN" -c 'import json,sys,pathlib; print(json.loads((pathlib.Path(sys.argv[1])/"docs"/"releases"/"release-metadata.json").read_text(encoding="utf-8"))["current_public_release"])' "$REPO_ROOT" 2>/dev/null \
+    || printf 'v0.6.21'
+)"
 RELEASE="$DEFAULT_RELEASE"
 OUTPUT_DIR=""
 DETERMINISTIC=0
