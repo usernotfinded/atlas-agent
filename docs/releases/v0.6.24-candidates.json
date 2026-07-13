@@ -1,12 +1,22 @@
 {
   "release_line": "v0.6.24",
-  "status": "planning",
-  "source_version": "0.6.23",
-  "current_public_release": "v0.6.23",
-  "next_planned_release": "v0.6.24",
-  "release_date": null,
+  "status": "released",
+  "source_version": "0.6.24",
+  "current_public_release": "v0.6.24",
+  "next_planned_release": "v0.6.25",
+  "release_date": "2026-07-13",
   "pypi_published": false,
-  "tag_created": false,
-  "github_release_created": false,
-  "candidates": []
+  "tag_created": true,
+  "github_release_created": true,
+  "candidates": [
+    {
+      "id": "CAND-018",
+      "title": "Hardcoded Release-Literal Sweep",
+      "status": "released",
+      "accepted": true,
+      "acceptance_verdict": "PASS",
+      "release_date": "2026-07-13",
+      "safety_notes": "Static checker/test-only; scans scripts for hardcoded release literals; no runtime, safety, broker, provider, credential, or trading changes."
+    }
+  ]
 }

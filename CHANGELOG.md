@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.24] - 2026-07-13
+
+### Added
+
+- Opened the `v0.6.25` planning line: `docs/releases/v0.6.25-plan.md`, `docs/releases/v0.6.25-candidates.json`, `docs/releases/v0.6.25-candidates.md`, and `docs/releases/v0.6.25-candidate-selection.md`.
+- Released `CAND-018: Hardcoded Release-Literal Sweep` as part of `v0.6.24`. Adds `scripts/check_hardcoded_release_literals.py` and `tests/test_check_hardcoded_release_literals.py`; scans active scripts for hardcoded release-identity literals from `release-metadata.json`; excludes intentionally pinned historical checkers; fixes the same class of drift in `scripts/check_autonomous_paper_workflow_demo.py` and `scripts/check_paper_provider_isolation.py`. Checker/test-only; no runtime, safety, broker, provider, credential, version, or release-metadata behavior changes; the CAND-014 extraction boundary is unchanged.
+- Added `docs/releases/v0.6.24.md` release notes, `docs/trust/v0.6.24-status.md` trust status, `docs/releases/v0.6.24-plan.md` released plan, `docs/releases/v0.6.24-candidates.md` released candidates, and `docs/releases/v0.6.24-candidate-selection.md` selection gate.
+
+### Changed
+
+- Cut over current public release from `v0.6.23` to `v0.6.24`. Package/source version is now `0.6.24`. `v0.6.23` is the historical previous public release. `v0.6.25` is the next planned release line.
+- Updated `docs/autonomy-roadmap.md` to mark CAND-018 as released in the `v0.6.24` section and to open the empty `v0.6.25` planning-line section.
+- Updated `docs/trust/README.md` and `README.md` current-public release identity from `v0.6.23` to `v0.6.24`.
+
+### Safety
+
+- The `v0.6.24` release is checker/tests/docs-only. No live trading, live submit, broker/provider execution, credential loading, network access, order placement, pending-order creation, or approval queue mutation is introduced. `RiskManager`, kill-switch, deadman, heartbeat, audit hash-chain, live-submit opt-in, and `can_submit` are unchanged. `atlas run --mode live` remains fail-closed. The CAND-014 extraction boundary is unchanged. PyPI remains unpublished.
+
 ## [0.6.23] - 2026-07-13
 
 ### Added
