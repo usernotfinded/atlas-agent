@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "release": "v0.6.24",
+  "source_version": "0.6.24",
+  "previous_public_release": "v0.6.23",
+  "next_planned_release": "v0.6.25",
+  "release_type": "github_only",
+  "pypi_published": false,
+  "release_commit": "b71e4357b1676d158a4778fb6f43b9c80d85064b",
+  "annotated_tag": {
+    "name": "v0.6.24",
+    "local": true,
+    "remote": true,
+    "dereferences_to": "b71e4357b1676d158a4778fb6f43b9c80d85064b"
+  },
+  "github_release": {
+    "created": true,
+    "draft": false,
+    "prerelease": false,
+    "assets": 0,
+    "url": "https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.24"
+  },
+  "ci_status": {
+    "status": "placeholder",
+    "note": "Tag-triggered workflows are still running; update with scripts/update_release_assurance_ci.py once complete"
+  },
+  "local_checks": {
+    "all_passed": true,
+    "scripts": [
+      "check_version_consistency",
+      "check_release_metadata",
+      "check_public_docs_consistency",
+      "check_candidate_chain",
+      "check_hardcoded_release_literals",
+      "check_forbidden_claims",
+      "check_bounded_autonomy_governance",
+      "check_cli_command_compatibility",
+      "check_safety_atomic_write",
+      "check_bounded_live_autonomy_readiness_contract"
+    ],
+    "test_modules": [
+      "tests/test_candidate_chain.py",
+      "tests/test_public_docs_consistency.py",
+      "tests/test_check_hardcoded_release_literals.py",
+      "tests/test_provider_artifact_golden_contracts.py",
+      "tests/test_bounded_live_autonomy_readiness.py",
+      "tests/test_bounded_live_autonomy_readiness_cli.py",
+      "tests/test_bounded_live_autonomy_readiness_contract.py",
+      "tests/test_bounded_live_autonomy_readiness_import_trace.py"
+    ],
+    "live_mode_fail_closed": {
+      "command": "atlas run --mode live",
+      "expected_exit_code": 2,
+      "observed_exit_code": 2
+    }
+  },
+  "safety_reaffirmation": {
+    "live_trading_enabled": false,
+    "live_submit_enabled": false,
+    "broker_or_provider_execution": false,
+    "credential_loading": false,
+    "risk_manager_bypassed": false,
+    "kill_switch_bypassed": false,
+    "audit_hash_chain_bypassed": false,
+    "production_readiness_claimed": false,
+    "profitability_claimed": false
+  },
+  "known_warnings": [
+    "Full pytest or full release_check.sh may exceed local interactive timeouts; targeted checks pass.",
+    "Historical candidate-chain docs emit expected non-blocking warnings.",
+    "CAND-015 retains a clean-room independence caveat pending external review."
+  ],
+  "statement": "v0.6.24 is a GitHub-only governance/documentation/safety-check release. This assurance record confirms release identity and process integrity only. It makes no profitability, trading-safety, live-readiness, production-readiness, or unattended-safe-operation claim."
+}
