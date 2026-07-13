@@ -8,5 +8,14 @@
   "pypi_published": false,
   "tag_created": false,
   "github_release_created": false,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "CAND-019",
+      "title": "Docs/config hardcoded release-literal sweep",
+      "status": "accepted",
+      "accepted": true,
+      "acceptance_verdict": "PASS",
+      "safety_notes": "Static checker/test-only; extends release-literal scanning to docs/config examples; no runtime, safety, broker, provider, credential, or trading changes."
+    }
+  ]
 }
