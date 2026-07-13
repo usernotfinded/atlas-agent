@@ -196,10 +196,22 @@ and approval queue mutation are not enabled by it.
 
 ### Candidate status in the `v0.6.23` planning line
 
-`v0.6.23` is the next planned release line and is not released. No candidates
-are proposed or accepted for `v0.6.23` yet. Live trading, live submit,
+`v0.6.23` is the next planned release line and is not released. One candidate,
+**CAND-017**, is accepted for `v0.6.23`. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
 and approval queue mutation are not enabled.
+
+- **CAND-017** is accepted into the `v0.6.23` candidate chain as a
+  release-maintenance tooling candidate. It adds
+  `scripts/update_release_assurance_ci.py` and tests to update post-release
+  assurance dossiers with GitHub Actions run IDs. It is dry-run by default and
+  requires `--write` to mutate files. It uses the authenticated `gh` CLI and
+  Python standard library only. It does not enable live trading, live submit,
+  broker/provider execution, credential loading, network access, order
+  placement, pending-order creation, or approval queue mutation, and it does not
+  change `RiskManager`, kill switch, deadman, heartbeat, or audit hash-chain
+  behavior. It does not broaden the CAND-014 provider-artifact extraction
+  boundary.
 
 ## Current state vs future state
 
