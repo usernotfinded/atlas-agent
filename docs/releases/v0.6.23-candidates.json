@@ -1,12 +1,42 @@
 {
   "release_line": "v0.6.23",
-  "status": "planning",
-  "source_version": "0.6.22",
-  "current_public_release": "v0.6.22",
-  "next_planned_release": "v0.6.23",
-  "release_date": null,
+  "status": "released",
+  "source_version": "0.6.23",
+  "current_public_release": "v0.6.23",
+  "next_planned_release": "v0.6.24",
+  "release_date": "2026-07-13",
   "pypi_published": false,
-  "tag_created": false,
-  "github_release_created": false,
-  "candidates": []
+  "tag_created": true,
+  "github_release_created": true,
+  "candidates": [
+    {
+      "id": "CAND-017",
+      "status": "released",
+      "accepted": true,
+      "acceptance_date": "2026-07-13",
+      "release_date": "2026-07-13",
+      "acceptance_verdict": "PASS",
+      "title": "Post-Release CI Run-ID Recorder",
+      "description": "Adds scripts/update_release_assurance_ci.py, a deterministic helper that queries GitHub Actions for core workflow runs associated with a release tag and injects run IDs and URLs into the post-release assurance dossier (docs/releases/v0.6.X-post-release-assurance.md) and its optional JSON mirror. Dry-run by default; requires --write to mutate files. Uses the authenticated gh CLI and Python standard library only. Includes tests with mocked gh output. Does not enable live trading, live submit, broker/provider execution, credential loading, network access, order placement, pending-order creation, or approval queue mutation.",
+      "design_doc": "docs/superpowers/specs/2026-07-13-cand-017-post-release-ci-recorder-design.md",
+      "implementation_plan": "docs/superpowers/plans/2026-07-13-cand-017-post-release-ci-recorder.md",
+      "design_status": "complete",
+      "implementation_plan_status": "complete",
+      "implementation_status": "complete",
+      "release_status": "released",
+      "acceptance_commit": null,
+      "design_review_verdict": "PASS",
+      "implementation_review_verdict": "PASS",
+      "warnings": [],
+      "notes": [
+        "Accepted into the v0.6.23 candidate chain on 2026-07-13 with acceptance verdict PASS.",
+        "Released as part of v0.6.23 on 2026-07-13. GitHub-only release; no PyPI publication.",
+        "The script and tests have landed on main as unreleased supporting work and are now released in v0.6.23.",
+        "Core workflows filtered: CI, Release Gate, Atlas Agent Paper Routines. Most recent run per workflow is retained.",
+        "Markdown and JSON updates are bounded to the GitHub Actions / CI Status section and the ci_status object, respectively.",
+        "Does not enable live trading, live submit, order placement, broker/provider execution, credential loading, network access, or approval queue mutation.",
+        "Does not change RiskManager, kill-switch, deadman, heartbeat, or audit hash-chain behavior, and does not broaden the CAND-014 extraction boundary."
+      ]
+    }
+  ]
 }

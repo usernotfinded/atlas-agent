@@ -180,12 +180,12 @@ and approval queue mutation are not enabled by any of them.
 
 ### Candidate status in the `v0.6.22` release
 
-`v0.6.22` is the current public GitHub release. One candidate, **CAND-016**, is
+`v0.6.22` is a historical public GitHub release. One candidate, **CAND-016**, was
 **released** as part of `v0.6.22` on 2026-07-13. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
-and approval queue mutation are not enabled by it.
+and approval queue mutation were not enabled by it.
 
-- **CAND-016** is released as release-maintenance drift hardening. It is a
+- **CAND-016** was released as release-maintenance drift hardening. It is a
   docs/checker/test-only candidate that makes release-identity state
   metadata-driven: it adds a reverse-drift roadmap guard (an already-released
   candidate must not be listed under the next-planned planning line) with
@@ -194,15 +194,14 @@ and approval queue mutation are not enabled by it.
   version, or release-metadata behavior, does not broaden the CAND-014 extraction
   boundary, and preserves the deliberate per-release version-pin tripwires.
 
-### Candidate status in the `v0.6.23` planning line
+### Candidate status in the `v0.6.23` release
 
-`v0.6.23` is the next planned release line and is not released. One candidate,
-**CAND-017**, is accepted for `v0.6.23`. Live trading, live submit,
+`v0.6.23` is the current public GitHub release. One candidate, **CAND-017**, is
+**released** as part of `v0.6.23` on 2026-07-13. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
-and approval queue mutation are not enabled.
+and approval queue mutation are not enabled by it.
 
-- **CAND-017** is accepted into the `v0.6.23` candidate chain as a
-  release-maintenance tooling candidate. It adds
+- **CAND-017** is released as a release-maintenance tooling candidate. It adds
   `scripts/update_release_assurance_ci.py` and tests to update post-release
   assurance dossiers with GitHub Actions run IDs. It is dry-run by default and
   requires `--write` to mutate files. It uses the authenticated `gh` CLI and
@@ -212,6 +211,13 @@ and approval queue mutation are not enabled.
   change `RiskManager`, kill switch, deadman, heartbeat, or audit hash-chain
   behavior. It does not broaden the CAND-014 provider-artifact extraction
   boundary.
+
+### Candidate status in the `v0.6.24` planning line
+
+`v0.6.24` is the next planned release line and is not released. No candidates
+are accepted or proposed for `v0.6.24`. Live trading, live submit,
+broker/provider execution, credential loading, network access, order placement,
+and approval queue mutation are not enabled.
 
 ## Current state vs future state
 
@@ -363,7 +369,7 @@ L2 is the highest autonomy level Atlas Agent supports for live-market workflows.
 
 ## L3 — Bounded Live Autonomy under Strict Risk Limits
 
-L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.22` current public release; `v0.6.21` and earlier are historical, `v0.6.23` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
+L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.23` current public release; `v0.6.22` and earlier are historical, `v0.6.24` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
 
 ### Required preconditions
 

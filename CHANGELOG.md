@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.23] - 2026-07-13
+
+### Added
+
+- Opened the `v0.6.24` planning line: `docs/releases/v0.6.24-plan.md`, `docs/releases/v0.6.24-candidates.json`, `docs/releases/v0.6.24-candidates.md`, and `docs/releases/v0.6.24-candidate-selection.md`.
+- Released `CAND-017: Post-Release CI Run-ID Recorder` as part of `v0.6.23`. Adds `scripts/update_release_assurance_ci.py` and `tests/test_update_release_assurance_ci.py`; dry-run by default, requires `--write` to mutate files; uses authenticated `gh` CLI and Python standard library only. Docs/checker/test-only; no runtime, safety, broker, provider, credential, version, or release-metadata behavior changes; the CAND-014 extraction boundary is unchanged.
+- Added `docs/releases/v0.6.23.md` release notes, `docs/trust/v0.6.23-status.md` trust status, `docs/releases/v0.6.23-plan.md` released plan, `docs/releases/v0.6.23-candidates.md` released candidates, and `docs/releases/v0.6.23-candidate-selection.md` selection gate.
+
+### Changed
+
+- Cut over current public release from `v0.6.22` to `v0.6.23`. Package/source version is now `0.6.23`. `v0.6.22` is the historical previous public release. `v0.6.24` is the next planned release line.
+- Updated `docs/autonomy-roadmap.md` to mark CAND-017 as released in the `v0.6.23` section and to open the empty `v0.6.24` planning-line section.
+- Updated `docs/trust/README.md` and `README.md` current-public release identity from `v0.6.22` to `v0.6.23`.
+
+### Safety
+
+- The `v0.6.23` release is docs/tests/checker-only. No live trading, live submit, broker/provider execution, credential loading, network access, order placement, pending-order creation, or approval queue mutation is introduced. `RiskManager`, kill-switch, deadman, heartbeat, audit hash-chain, live-submit opt-in, and `can_submit` are unchanged. `atlas run --mode live` remains fail-closed. The CAND-014 extraction boundary is unchanged. PyPI remains unpublished.
+
 ## [0.6.22] - 2026-07-13
 
 ### Added

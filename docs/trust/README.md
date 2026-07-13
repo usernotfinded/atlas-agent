@@ -5,12 +5,13 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.22` (tagged)
-- Previous public release: `v0.6.21`
-- Source package version on `main`: `0.6.22`
-- GitHub release: `v0.6.22` (current public)
-- Next planning line: `v0.6.23`
-- Public v0.6.22: current public — [v0.6.22 Trust and Release Status](v0.6.22-status.md)
+- Current public release: `v0.6.23` (tagged)
+- Previous public release: `v0.6.22`
+- Source package version on `main`: `0.6.23`
+- GitHub release: `v0.6.23` (current public)
+- Next planning line: `v0.6.24`
+- Public v0.6.23: current public — [v0.6.23 Trust and Release Status](v0.6.23-status.md)
+- Public v0.6.22: historical — [v0.6.22 Trust and Release Status](v0.6.22-status.md)
 - Public v0.6.21: historical — [v0.6.21 Trust and Release Status](v0.6.21-status.md)
 - Public v0.6.20: historical — [v0.6.20 Trust and Release Status](v0.6.20-status.md)
 - Public v0.6.19: historical — [v0.6.19 Trust and Release Status](v0.6.19-status.md)
@@ -23,14 +24,14 @@ users, contributors, auditors, and potential adopters.
 - Public v0.6.12: historical — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - PyPI was not published
-- Current public release status: [v0.6.22 Trust and Release Status](v0.6.22-status.md) (current public)
-- Previous release status: [v0.6.21 Trust and Release Status](v0.6.21-status.md) (historical)
+- Current public release status: [v0.6.23 Trust and Release Status](v0.6.23-status.md) (current public)
+- Previous release status: [v0.6.22 Trust and Release Status](v0.6.22-status.md) (historical)
 - Previous previous release status: [v0.6.18 Trust and Release Status](v0.6.18-status.md) (historical)
 - Previous previous previous release status: [v0.6.17 Trust and Release Status](v0.6.17-status.md) (historical)
 - Previous previous previous previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
 - Previous previous previous previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
-- Current public release notes: [docs/releases/v0.6.22.md](../releases/v0.6.22.md) (current public)
-- Previous release notes: [docs/releases/v0.6.21.md](../releases/v0.6.21.md) (historical)
+- Current public release notes: [docs/releases/v0.6.23.md](../releases/v0.6.23.md) (current public)
+- Previous release notes: [docs/releases/v0.6.22.md](../releases/v0.6.22.md) (historical)
 - v0.6.11 release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (historical)
 - Previous previous previous release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (historical)
@@ -101,11 +102,11 @@ public GitHub release cutover.
 
 Paper-mode provider isolation is documented in [docs/paper-provider-isolation.md](../paper-provider-isolation.md).
 Paper strategy evaluation is documented in [docs/paper-strategy-evaluation.md](../paper-strategy-evaluation.md)
-Paper strategy sensitivity is documented in [docs/paper-strategy-sensitivity.md](../paper-strategy-sensitivity.md).
-Paper strategy robustness is documented in [docs/paper-strategy-robustness.md](../paper-strategy-robustness.md).
-Paper strategy walk-forward stability is documented in [docs/paper-strategy-walk-forward.md](../paper-strategy-walk-forward.md).
-Paper strategy scorecard evidence is documented in [docs/paper-strategy-scorecard.md](../paper-strategy-scorecard.md).
-Paper portfolio stress constraints are documented in [docs/paper-portfolio-stress.md](../paper-portfolio-stress.md).
+Paper strategy sensitivity is documented in [docs/paper-strategy-sensitivity.md](../paper-strategy-sensitivity.md)
+Paper strategy robustness is documented in [docs/paper-strategy-robustness.md](../paper-strategy-robustness.md)
+Paper strategy walk-forward stability is documented in [docs/paper-strategy-walk-forward.md](../paper-strategy-walk-forward.md)
+Paper strategy scorecard evidence is documented in [docs/paper-strategy-scorecard.md](../paper-strategy-scorecard.md)
+Paper portfolio stress constraints are documented in [docs/paper-portfolio-stress.md](../paper-portfolio-stress.md)
 The v0.6.13 paper-autonomy closure evidence is documented in
 [docs/releases/v0.6.13-paper-autonomy-evidence.md](../releases/v0.6.13-paper-autonomy-evidence.md).
 
@@ -132,14 +133,15 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.22` is verified against the GitHub release/tag.
-Auto-updater delivery for `v0.6.21` and earlier remains verified.
+Auto-updater delivery for `v0.6.23` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.22` and earlier remains verified.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.22` (current public)
+- GitHub release: `v0.6.23` (current public)
+- GitHub release: `v0.6.22` (historical)
 - GitHub release: `v0.6.21` (historical)
 - GitHub release: `v0.6.20` (historical)
 - GitHub release: `v0.6.18` (historical)
@@ -149,7 +151,8 @@ brokers, enable trading, or require credentials.
 - GitHub release: `v0.6.14` (historical)
 - GitHub release: `v0.6.13` (historical)
 - GitHub release: `v0.6.11` (historical)
-- Tag: `v0.6.22` (current public)
+- Tag: `v0.6.23` (current public)
+- Tag: `v0.6.22` (historical)
 - Tag: `v0.6.21` (historical)
 - Tag: `v0.6.20` (historical)
 - Tag: `v0.6.18` (historical)
@@ -160,12 +163,13 @@ brokers, enable trading, or require credentials.
 - Tag: `v0.6.13` (historical)
 - Tag: `v0.6.11` (historical)
 - PyPI was not published
-- Package version in source metadata: `0.6.22`
-- Auto-updater delivery: verified for `v0.6.22`; verified for `v0.6.21`; verified for `v0.6.20`; verified for `v0.6.19`; verified for `v0.6.18`; verified for `v0.6.17`; verified for `v0.6.16`; verified for `v0.6.15`; verified for `v0.6.14`; verified for `v0.6.13`
+- Package version in source metadata: `0.6.23`
+- Auto-updater delivery: verified for `v0.6.23`; verified for `v0.6.22`; verified for `v0.6.21`; verified for `v0.6.20`; verified for `v0.6.19`; verified for `v0.6.18`; verified for `v0.6.17`; verified for `v0.6.16`; verified for `v0.6.15`; verified for `v0.6.14`; verified for `v0.6.13`
 
 ## What Is Ready
 
-- Public v0.6.22 release notes and release status documentation (current public).
+- Public v0.6.23 release notes and release status documentation (current public).
+- Public v0.6.22 release notes and release status documentation (historical).
 - Public v0.6.21 release notes and release status documentation (historical).
 - Public v0.6.20 release notes and release status documentation (historical).
 - Public v0.6.18 release notes and release status documentation (historical).
@@ -206,8 +210,8 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1` through `v0.6.22`.
-- `v0.6.23` is the next planning line; no candidates are selected.
+- PyPI was not published for `v0.6.1` through `v0.6.23`.
+- `v0.6.24` is the next planning line; no candidates are selected.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -223,8 +227,10 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.22 Release Notes](../releases/v0.6.22.md) (current public)
-- [v0.6.22 Trust and Release Status](v0.6.22-status.md) (current public)
+- [v0.6.23 Release Notes](../releases/v0.6.23.md) (current public)
+- [v0.6.23 Trust and Release Status](v0.6.23-status.md) (current public)
+- [v0.6.22 Release Notes](../releases/v0.6.22.md) (historical)
+- [v0.6.22 Trust and Release Status](v0.6.22-status.md) (historical)
 - [v0.6.21 Release Notes](../releases/v0.6.21.md) (historical)
 - [v0.6.21 Trust and Release Status](v0.6.21-status.md) (historical)
 - [v0.6.20 Release Notes](../releases/v0.6.20.md) (historical)
