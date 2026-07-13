@@ -10,19 +10,19 @@
   "annotated_tag": {
     "name": "v0.6.22",
     "local": true,
-    "remote": false,
+    "remote": true,
     "dereferences_to": "25570fa824e3695ff9ecc14ed6b2c1c8fa690438"
   },
   "github_release": {
-    "created": false,
+    "created": true,
     "draft": false,
     "prerelease": false,
     "assets": 0,
-    "url": null
+    "url": "https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.22"
   },
   "ci_status": {
     "status": "placeholder",
-    "note": "Update after tag push from https://github.com/usernotfinded/atlas-agent/actions"
+    "note": "Tag-triggered workflow run IDs available at https://github.com/usernotfinded/atlas-agent/actions after tag push"
   },
   "local_checks": {
     "all_passed": true,
@@ -64,8 +64,6 @@
     "profitability_claimed": false
   },
   "known_warnings": [
-    "Local annotated tag v0.6.22 exists, but remote tag and GitHub Release are pending push/creation.",
-    "Release metadata currently asserts github_release_created: true; consistency requires pushing the tag and creating the GitHub Release.",
     "Full pytest or full release_check.sh may exceed local interactive timeouts; targeted checks pass.",
     "Historical candidate-chain docs emit expected non-blocking warnings.",
     "CAND-015 retains a clean-room independence caveat pending external review."
