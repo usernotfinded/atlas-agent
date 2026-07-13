@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "release": "v0.6.23",
+  "source_version": "0.6.23",
+  "previous_public_release": "v0.6.22",
+  "next_planned_release": "v0.6.24",
+  "release_type": "github_only",
+  "pypi_published": false,
+  "release_commit": "46a686bbf4a843a638bc846482a86fe61e0d3854",
+  "annotated_tag": {
+    "name": "v0.6.23",
+    "local": true,
+    "remote": true,
+    "dereferences_to": "46a686bbf4a843a638bc846482a86fe61e0d3854"
+  },
+  "github_release": {
+    "created": true,
+    "draft": false,
+    "prerelease": false,
+    "assets": 0,
+    "url": "https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.23"
+  },
+  "ci_status": {
+    "status": "recorded",
+    "note": "Runs captured by scripts/update_release_assurance_ci.py (tag) and supplemented with main-branch runs for the release commit",
+    "runs": [
+      {
+        "name": "CI (main on release commit)",
+        "run_id": 29258726980,
+        "url": "https://github.com/usernotfinded/atlas-agent/actions/runs/29258726980",
+        "conclusion": "failure",
+        "created_at": "2026-07-13T14:37:10Z"
+      },
+      {
+        "name": "Release Gate (tag v0.6.23)",
+        "run_id": 29258637006,
+        "url": "https://github.com/usernotfinded/atlas-agent/actions/runs/29258637006",
+        "conclusion": "failure",
+        "created_at": "2026-07-13T14:35:56Z"
+      },
+      {
+        "name": "Atlas Agent Paper Routines (main on release commit)",
+        "run_id": 29264798918,
+        "url": "https://github.com/usernotfinded/atlas-agent/actions/runs/29264798918",
+        "conclusion": "success",
+        "created_at": "2026-07-13T16:03:02Z"
+      }
+    ]
+  },
+  "local_checks": {
+    "all_passed": true,
+    "scripts": [
+      "check_version_consistency",
+      "check_release_metadata",
+      "check_public_docs_consistency",
+      "check_candidate_chain",
+      "check_forbidden_claims",
+      "check_bounded_autonomy_governance",
+      "check_cli_command_compatibility",
+      "check_safety_atomic_write",
+      "check_bounded_live_autonomy_readiness_contract"
+    ],
+    "test_modules": [
+      "tests/test_candidate_chain.py",
+      "tests/test_public_docs_consistency.py",
+      "tests/test_update_release_assurance_ci.py",
+      "tests/test_provider_artifact_golden_contracts.py",
+      "tests/test_bounded_live_autonomy_readiness.py",
+      "tests/test_bounded_live_autonomy_readiness_cli.py",
+      "tests/test_bounded_live_autonomy_readiness_contract.py",
+      "tests/test_bounded_live_autonomy_readiness_import_trace.py"
+    ],
+    "live_mode_fail_closed": {
+      "command": "atlas run --mode live",
+      "expected_exit_code": 2,
+      "observed_exit_code": 2
+    }
+  },
+  "safety_reaffirmation": {
+    "live_trading_enabled": false,
+    "live_submit_enabled": false,
+    "broker_or_provider_execution": false,
+    "credential_loading": false,
+    "risk_manager_bypassed": false,
+    "kill_switch_bypassed": false,
+    "audit_hash_chain_bypassed": false,
+    "production_readiness_claimed": false,
+    "profitability_claimed": false
+  },
+  "known_warnings": [
+    "Release commit CI and Release Gate failed due to hardcoded version literals in check_bounded_autonomy_governance.py; fixed in follow-up commit d7c35d8 on main.",
+    "Full pytest or full release_check.sh may exceed local interactive timeouts; targeted checks pass.",
+    "Historical candidate-chain docs emit expected non-blocking warnings.",
+    "CAND-015 retains a clean-room independence caveat pending external review."
+  ],
+  "statement": "v0.6.23 is a GitHub-only governance/documentation/safety-check release. This assurance record confirms release identity and process integrity only. It makes no profitability, trading-safety, live-readiness, production-readiness, or unattended-safe-operation claim."
+}
