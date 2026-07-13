@@ -214,10 +214,27 @@ and approval queue mutation are not enabled by it.
 
 ### Candidate status in the `v0.6.24` planning line
 
-`v0.6.24` is the next planned release line and is not released. No candidates
-are accepted or proposed for `v0.6.24`. Live trading, live submit,
+`v0.6.24` is the next planned release line and is not released. One candidate,
+**CAND-018**, is accepted for `v0.6.24`. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
 and approval queue mutation are not enabled.
+
+- **CAND-018** is accepted into the `v0.6.24` candidate chain as a
+  release-maintenance drift-hardening candidate. It adds
+  `scripts/check_hardcoded_release_literals.py` and tests to scan active scripts
+  for string literals matching the current source version, current public tag, or
+  next planned tag from `docs/releases/release-metadata.json`. It flags literals
+  used in comparisons, assignments, and collections so release-maintenance drift
+  is caught before cutover. It excludes intentionally pinned historical
+  release-specific checkers. It also fixes the same class of hardcoded
+  version-literal drift in `scripts/check_autonomous_paper_workflow_demo.py` and
+  `scripts/check_paper_provider_isolation.py`. It uses only the Python standard
+  library, performs no network access, loads no credentials, and does not mutate
+  repository files. It does not enable live trading, live submit, broker/provider
+  execution, credential loading, network access, order placement, pending-order
+  creation, or approval queue mutation, and it does not change `RiskManager`,
+  kill switch, deadman, heartbeat, or audit hash-chain behavior. It does not
+  broaden the CAND-014 provider-artifact extraction boundary.
 
 ## Current state vs future state
 

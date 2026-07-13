@@ -305,15 +305,9 @@ def _check_cross_references() -> list[str]:
 
 def _check_release_metadata() -> list[str]:
     errors: list[str] = []
-    if PACKAGE_VERSION != "0.6.22":
-        errors.append(
-            f"Source version {PACKAGE_VERSION} != 0.6.22"
-        )
-    if CURRENT_PUBLIC_TAG != "v0.6.22":
-        errors.append(f"Current public release {CURRENT_PUBLIC_TAG} != v0.6.22")
-    if NEXT_PLANNED_TAG not in ("v0.6.23", "0.6.23"):
-        errors.append(f"Next planned release {NEXT_PLANNED_TAG} != v0.6.23")
-
+    # Version identity is metadata-driven (see CAND-016/CAND-018). The meaningful
+    # governance check here is that the next planned release line has not been
+    # tagged locally yet.
     result = subprocess.run(
         ["git", "tag", "--list", NEXT_PLANNED_TAG],
         cwd=REPO_ROOT,
