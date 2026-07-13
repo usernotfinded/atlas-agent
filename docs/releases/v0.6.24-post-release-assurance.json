@@ -21,8 +21,17 @@
     "url": "https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.24"
   },
   "ci_status": {
-    "status": "placeholder",
-    "note": "Tag-triggered workflows are still running; update with scripts/update_release_assurance_ci.py once complete"
+    "status": "recorded",
+    "note": "Runs captured by scripts/update_release_assurance_ci.py",
+    "runs": [
+      {
+        "name": "Release Gate",
+        "run_id": 29268580567,
+        "url": "https://github.com/usernotfinded/atlas-agent/actions/runs/29268580567",
+        "conclusion": "",
+        "created_at": "2026-07-13T16:58:26Z"
+      }
+    ]
   },
   "local_checks": {
     "all_passed": true,
