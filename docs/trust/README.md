@@ -5,12 +5,13 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.24` (tagged)
-- Previous public release: `v0.6.23`
-- Source package version on `main`: `0.6.24`
-- GitHub release: `v0.6.24` (current public)
-- Next planning line: `v0.6.25`
-- Public v0.6.24: current public — [v0.6.24 Trust and Release Status](v0.6.24-status.md)
+- Current public release: `v0.6.25` (tagged)
+- Previous public release: `v0.6.24`
+- Source package version on `main`: `0.6.25`
+- GitHub release: `v0.6.25` (current public)
+- Next planning line: `v0.6.26`
+- Public v0.6.25: current public — [v0.6.25 Trust and Release Status](v0.6.25-status.md)
+- Public v0.6.24: historical — [v0.6.24 Trust and Release Status](v0.6.24-status.md)
 - Public v0.6.23: historical — [v0.6.23 Trust and Release Status](v0.6.23-status.md)
 - Public v0.6.22: historical — [v0.6.22 Trust and Release Status](v0.6.22-status.md)
 - Public v0.6.21: historical — [v0.6.21 Trust and Release Status](v0.6.21-status.md)
@@ -25,15 +26,16 @@ users, contributors, auditors, and potential adopters.
 - Public v0.6.12: historical — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - PyPI was not published
-- Current public release status: [v0.6.24 Trust and Release Status](v0.6.24-status.md) (current public)
-- Previous release status: [v0.6.23 Trust and Release Status](v0.6.23-status.md) (historical)
-- Previous previous release status: [v0.6.22 Trust and Release Status](v0.6.22-status.md) (historical)
-- Previous previous previous release status: [v0.6.18 Trust and Release Status](v0.6.18-status.md) (historical)
-- Previous previous previous previous release status: [v0.6.17 Trust and Release Status](v0.6.17-status.md) (historical)
-- Previous previous previous previous previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
-- Previous previous previous previous previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
-- Current public release notes: [docs/releases/v0.6.24.md](../releases/v0.6.24.md) (current public)
-- Previous release notes: [docs/releases/v0.6.23.md](../releases/v0.6.23.md) (historical)
+- Current public release status: [v0.6.25 Trust and Release Status](v0.6.25-status.md) (current public)
+- Previous release status: [v0.6.24 Trust and Release Status](v0.6.24-status.md) (historical)
+- Previous previous release status: [v0.6.23 Trust and Release Status](v0.6.23-status.md) (historical)
+- Previous previous previous release status: [v0.6.22 Trust and Release Status](v0.6.22-status.md) (historical)
+- Previous previous previous previous release status: [v0.6.18 Trust and Release Status](v0.6.18-status.md) (historical)
+- Previous previous previous previous previous release status: [v0.6.17 Trust and Release Status](v0.6.17-status.md) (historical)
+- Previous previous previous previous previous previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
+- Previous previous previous previous previous previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
+- Current public release notes: [docs/releases/v0.6.25.md](../releases/v0.6.25.md) (current public)
+- Previous release notes: [docs/releases/v0.6.24.md](../releases/v0.6.24.md) (historical)
 - v0.6.11 release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (historical)
 - Previous previous previous release notes: [docs/releases/v0.6.9.md](../releases/v0.6.9.md) (historical)
@@ -135,14 +137,15 @@ requires a versioned evidence pack.
 
 ## Auto-Updater Delivery
 
-Auto-updater delivery for `v0.6.24` is verified against the GitHub release/tag.
-Auto-updater delivery for `v0.6.23` and earlier remains verified.
+Auto-updater delivery for `v0.6.25` is verified against the GitHub release/tag.
+Auto-updater delivery for `v0.6.24` and earlier remains verified.
 The updater verification does not install packages, call providers, touch
 brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.24` (current public)
+- GitHub release: `v0.6.25` (current public)
+- GitHub release: `v0.6.24` (historical)
 - GitHub release: `v0.6.23` (historical)
 - GitHub release: `v0.6.22` (historical)
 - GitHub release: `v0.6.21` (historical)
@@ -154,7 +157,8 @@ brokers, enable trading, or require credentials.
 - GitHub release: `v0.6.14` (historical)
 - GitHub release: `v0.6.13` (historical)
 - GitHub release: `v0.6.11` (historical)
-- Tag: `v0.6.24` (current public)
+- Tag: `v0.6.25` (current public)
+- Tag: `v0.6.24` (historical)
 - Tag: `v0.6.23` (historical)
 - Tag: `v0.6.22` (historical)
 - Tag: `v0.6.21` (historical)
@@ -167,12 +171,13 @@ brokers, enable trading, or require credentials.
 - Tag: `v0.6.13` (historical)
 - Tag: `v0.6.11` (historical)
 - PyPI was not published
-- Package version in source metadata: `0.6.24`
-- Auto-updater delivery: verified for `v0.6.24`; verified for `v0.6.23`; verified for `v0.6.22`; verified for `v0.6.21`; verified for `v0.6.20`; verified for `v0.6.19`; verified for `v0.6.18`; verified for `v0.6.17`; verified for `v0.6.16`; verified for `v0.6.15`; verified for `v0.6.14`; verified for `v0.6.13`
+- Package version in source metadata: `0.6.25`
+- Auto-updater delivery: verified for `v0.6.25`; verified for `v0.6.24`; verified for `v0.6.23`; verified for `v0.6.22`; verified for `v0.6.21`; verified for `v0.6.20`; verified for `v0.6.19`; verified for `v0.6.18`; verified for `v0.6.17`; verified for `v0.6.16`; verified for `v0.6.15`; verified for `v0.6.14`; verified for `v0.6.13`
 
 ## What Is Ready
 
-- Public v0.6.24 release notes and release status documentation (current public).
+- Public v0.6.25 release notes and release status documentation (current public).
+- Public v0.6.24 release notes and release status documentation (historical).
 - Public v0.6.23 release notes and release status documentation (historical).
 - Public v0.6.22 release notes and release status documentation (historical).
 - Public v0.6.21 release notes and release status documentation (historical).
@@ -215,8 +220,8 @@ brokers, enable trading, or require credentials.
 
 ## What Is Not Ready
 
-- PyPI was not published for `v0.6.1` through `v0.6.24`.
-- `v0.6.25` is the next planning line; no candidates are selected.
+- PyPI was not published for `v0.6.1` through `v0.6.25`.
+- `v0.6.26` is the next planning line; no candidates are selected.
 - Live trading is not enabled by default and requires explicit local operator
   configuration.
 - Live submit is not enabled by default.
@@ -232,8 +237,10 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.24 Release Notes](../releases/v0.6.24.md) (current public)
-- [v0.6.24 Trust and Release Status](v0.6.24-status.md) (current public)
+- [v0.6.25 Release Notes](../releases/v0.6.25.md) (current public)
+- [v0.6.25 Trust and Release Status](v0.6.25-status.md) (current public)
+- [v0.6.24 Release Notes](../releases/v0.6.24.md) (historical)
+- [v0.6.24 Trust and Release Status](v0.6.24-status.md) (historical)
 - [v0.6.23 Release Notes](../releases/v0.6.23.md) (historical)
 - [v0.6.23 Trust and Release Status](v0.6.23-status.md) (historical)
 - [v0.6.22 Release Notes](../releases/v0.6.22.md) (historical)

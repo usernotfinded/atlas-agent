@@ -207,9 +207,10 @@ class TestCheckerOnCurrentRepo:
         assert result.returncode == 0, result.stdout + result.stderr
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["package_version"] == "0.6.24"
-        assert data["current_public_tag"] == "v0.6.24"
-        assert data["next_planned_tag"] == "v0.6.25"
+        meta = json.loads((ROOT / "docs" / "releases" / "release-metadata.json").read_text())
+        assert data["package_version"] == meta["source_version"]
+        assert data["current_public_tag"] == meta["current_public_release"]
+        assert data["next_planned_tag"] == meta["next_planned_release"]
         assert data["pypi_published"] is False
         assert data["errors"] == []
 

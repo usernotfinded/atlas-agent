@@ -214,10 +214,10 @@ and approval queue mutation were not enabled by it.
 
 ### Candidate status in the `v0.6.24` release
 
-`v0.6.24` is the current public GitHub release. One candidate, **CAND-018**, is
+`v0.6.24` is a historical public GitHub release. One candidate, **CAND-018**, was
 **released** as part of `v0.6.24` on 2026-07-13. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
-and approval queue mutation are not enabled by it.
+and approval queue mutation were not enabled by it.
 
 - **CAND-018** is released as a release-maintenance drift-hardening candidate.
   It adds `scripts/check_hardcoded_release_literals.py` and tests to scan active
@@ -236,10 +236,33 @@ and approval queue mutation are not enabled by it.
   kill switch, deadman, heartbeat, or audit hash-chain behavior. It does not
   broaden the CAND-014 provider-artifact extraction boundary.
 
-### Candidate status in the `v0.6.25` planning line
+### Candidate status in the `v0.6.25` release
 
-`v0.6.25` is the next planned release line and is not released. No candidates
-are accepted for `v0.6.25`. Live trading, live submit, broker/provider execution,
+`v0.6.25` is the current public GitHub release. Two candidates, **CAND-019**
+and **CAND-020**, are **released** as part of `v0.6.25` on 2026-07-13. Live
+trading, live submit, broker/provider execution, credential loading, network
+access, order placement, and approval queue mutation are not enabled.
+
+- **CAND-019** is released in `v0.6.25` as a docs/config hardcoded release-
+  literal sweep. It extends `scripts/check_hardcoded_release_literals.py` to
+  scan `configs/`, `examples/`, and `docs/examples/` for monitored release-
+  identity literals and adds regression tests. It uses only the Python standard
+  library, performs no network access, loads no credentials, and does not mutate
+  repository files. It does not enable live trading, live submit, broker/provider
+  execution, credential loading, network access, order placement, pending-order
+  creation, or approval queue mutation, and it does not change `RiskManager`,
+  kill switch, deadman, heartbeat, or audit hash-chain behavior. It does not
+  broaden the CAND-014 provider-artifact extraction boundary.
+- **CAND-020** is released in `v0.6.25` as a post-v0.6.24 test drift sweep. It
+  updates stale post-`v0.6.24` test fixtures and assertions to the current
+  release identity, adds `0.6.24` to the `SECURITY.md` supported-versions table,
+  and records this candidate. Test-only drift fixes; no runtime, safety, broker,
+  provider, credential, network, or trading changes.
+
+### Candidate status in the `v0.6.26` planning line
+
+`v0.6.26` is the next planned release line and is not released. No candidates
+are accepted for `v0.6.26`. Live trading, live submit, broker/provider execution,
 credential loading, network access, order placement, and approval queue mutation
 are not enabled.
 
@@ -393,7 +416,7 @@ L2 is the highest autonomy level Atlas Agent supports for live-market workflows.
 
 ## L3 — Bounded Live Autonomy under Strict Risk Limits
 
-L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.24` current public release; `v0.6.23` and earlier are historical, `v0.6.25` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
+L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.25` current public release; `v0.6.24` and earlier are historical, `v0.6.26` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
 
 ### Required preconditions
 

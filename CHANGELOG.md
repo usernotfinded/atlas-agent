@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.25] - 2026-07-13
+
+### Added
+
+- Opened the `v0.6.26` planning line: `docs/releases/v0.6.26-plan.md`, `docs/releases/v0.6.26-candidates.json`, `docs/releases/v0.6.26-candidates.md`, and `docs/releases/v0.6.26-candidate-selection.md`.
+- Released `CAND-019: Docs/config hardcoded release-literal sweep` as part of `v0.6.25`. Extends `scripts/check_hardcoded_release_literals.py` to scan `configs/`, `examples/`, and `docs/examples/` for monitored release-identity literals matching `release-metadata.json`; adds regression tests. Static checker/test-only; no runtime, safety, broker, provider, credential, version, or release-metadata behavior changes; the CAND-014 extraction boundary is unchanged.
+- Released `CAND-020: Post-v0.6.24 test drift sweep` as part of `v0.6.25`. Updates stale post-`v0.6.24` test fixtures and assertions to the current release identity; adds `0.6.24` to the `SECURITY.md` supported-versions table; records this candidate. Test-only drift fixes; no runtime, safety, broker, provider, credential, version, or release-metadata behavior changes.
+- Added `docs/releases/v0.6.25.md` release notes, `docs/trust/v0.6.25-status.md` trust status, `docs/releases/v0.6.25-plan.md` released plan, `docs/releases/v0.6.25-candidates.md` released candidates, and `docs/releases/v0.6.25-candidate-selection.md` selection gate.
+
+### Changed
+
+- Cut over current public release from `v0.6.24` to `v0.6.25`. Package/source version is now `0.6.25`. `v0.6.24` is the historical previous public release. `v0.6.26` is the next planned release line.
+- Updated `docs/autonomy-roadmap.md` to mark CAND-019 and CAND-020 as released in the `v0.6.25` section and to open the empty `v0.6.26` planning-line section.
+- Updated `docs/trust/README.md`, `README.md`, `docs/public-faq.md`, `docs/public-launch-messaging.md`, `docs/public-launch-readiness.md`, `docs/public-repo-hygiene.md`, `docs/release-checklist.md`, and `docs/security/release-readiness.md` current-public release identity from `v0.6.24` to `v0.6.25`.
+
+### Safety
+
+- The `v0.6.25` release is checker/tests/docs-only. No live trading, live submit, broker/provider execution, credential loading, network access, order placement, pending-order creation, or approval queue mutation is introduced. `RiskManager`, kill-switch, deadman, heartbeat, audit hash-chain, live-submit opt-in, and `can_submit` are unchanged. `atlas run --mode live` remains fail-closed. The CAND-014 extraction boundary is unchanged. PyPI remains unpublished.
+
 ## [0.6.24] - 2026-07-13
 
 ### Added

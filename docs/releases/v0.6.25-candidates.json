@@ -1,28 +1,30 @@
 {
   "release_line": "v0.6.25",
-  "status": "planning",
-  "source_version": "0.6.24",
-  "current_public_release": "v0.6.24",
-  "next_planned_release": "v0.6.25",
-  "release_date": null,
+  "status": "released",
+  "source_version": "0.6.25",
+  "current_public_release": "v0.6.25",
+  "next_planned_release": "v0.6.26",
+  "release_date": "2026-07-13",
   "pypi_published": false,
-  "tag_created": false,
-  "github_release_created": false,
+  "tag_created": true,
+  "github_release_created": true,
   "candidates": [
     {
       "id": "CAND-019",
       "title": "Docs/config hardcoded release-literal sweep",
-      "status": "accepted",
+      "status": "released",
       "accepted": true,
       "acceptance_verdict": "PASS",
+      "release_date": "2026-07-13",
       "safety_notes": "Static checker/test-only; extends release-literal scanning to docs/config examples; no runtime, safety, broker, provider, credential, or trading changes."
     },
     {
       "id": "CAND-020",
       "title": "Post-v0.6.24 test drift sweep",
-      "status": "accepted",
+      "status": "released",
       "accepted": true,
       "acceptance_verdict": "PASS",
+      "release_date": "2026-07-13",
       "safety_notes": "Test-only drift fixes: updates stale post-v0.6.24 test fixtures and assertions to the current release identity, adds 0.6.24 to SECURITY.md, and records this candidate. No runtime, safety, broker, provider, credential, or trading changes."
     }
   ]

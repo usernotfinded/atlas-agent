@@ -12,7 +12,7 @@
 
 **Atlas Agent turns your preferred LLM and broker/API provider into a supervised trading workspace, with market research, paper workflows, trading memory, audit logs, approval queues, and deterministic risk gates.**
 
-> **Current Status (v0.6.24)** — package/source version is `0.6.24`. `v0.6.24` is the current public GitHub release. `v0.6.23` is the historical previous public release. `v0.6.25` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
+> **Current Status (v0.6.25)** — package/source version is `0.6.25`. `v0.6.25` is the current public GitHub release. `v0.6.24` is the historical previous public release. `v0.6.26` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
 > **DISCLAIMER:** Not financial advice. Live trading is disabled by default. Atlas is broker-neutral: users choose their own model, broker/API provider, credentials, and risk limits. Trading involves significant risk of loss.
 
@@ -106,7 +106,7 @@ The research workflow is paper-only and analysis-only. All commands operate on l
 | **Self-Improvement** | Early-Stage | Skill refinement and Markdown-based memory persistence. |
 | **Dashboard** | Basic | Read-only local HTML snapshot for system visibility. |
 
-`v0.6.24` is the current public GitHub release. `v0.6.23` is the historical previous public release. `v0.6.25` is the next planning line. The package/source version on main is `0.6.24`. Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
+`v0.6.25` is the current public GitHub release. `v0.6.24` is the historical previous public release. `v0.6.26` is the next planning line. The package/source version on main is `0.6.25`. Provider execution remains locked. Trust remains blocked. Live submit remains disabled by default. No profitability or trading correctness claims.
 
 ## Broker-Neutral Model
 
@@ -245,7 +245,7 @@ New to the repo? Start with the [External Reviewer Walkthrough](docs/external-re
 Maintainers can generate a local release assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.24 --output artifacts/release_assurance/v0.6.24-local-check
+python scripts/release_assurance.py --version v0.6.25 --output artifacts/release_assurance/v0.6.25-local-check
 ```
 
 Or run `.github/workflows/release-assurance.yml` via `workflow_dispatch` in GitHub Actions. Both are read-only and non-publishing — they do not create tags, publish packages, call providers, or enable trading.
