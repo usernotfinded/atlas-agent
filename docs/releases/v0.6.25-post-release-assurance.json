@@ -6,19 +6,19 @@
   "next_planned_release": "v0.6.26",
   "release_type": "github_only",
   "pypi_published": false,
-  "release_commit": "TBD",
+  "release_commit": "3c8e534f4e3611dc1e30f840a44573984ed0756b",
   "annotated_tag": {
     "name": "v0.6.25",
     "local": true,
     "remote": true,
-    "dereferences_to": "TBD"
+    "dereferences_to": "3c8e534f4e3611dc1e30f840a44573984ed0756b"
   },
   "github_release": {
     "created": true,
     "draft": false,
     "prerelease": false,
     "assets": 0,
-    "url": "TBD"
+    "url": "https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.25"
   },
   "ci_status": {
     "status": "placeholder",
