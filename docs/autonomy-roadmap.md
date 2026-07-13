@@ -149,7 +149,7 @@ candidate-chain consistency guard.
 
 ### Candidate status in the `v0.6.21` release
 
-`v0.6.21` is the current public GitHub release. It includes **CAND-013**,
+`v0.6.21` is a historical public GitHub release. It included **CAND-013**,
 **CAND-014 Phase 2**, and **CAND-015**. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
 and approval queue mutation are not enabled by any of them.
@@ -178,15 +178,14 @@ and approval queue mutation are not enabled by any of them.
   independent review remains outstanding. L3 bounded live autonomy remains a
   future research concept.
 
-### Candidate status in the `v0.6.22` planning line
+### Candidate status in the `v0.6.22` release
 
-`v0.6.22` is the next planned release line and is not released. One candidate,
-**CAND-016**, is **accepted** into the `v0.6.22` candidate chain on 2026-07-13
-with verdict **PASS**; no candidate is released. Live trading, live submit,
+`v0.6.22` is the current public GitHub release. One candidate, **CAND-016**, is
+**released** as part of `v0.6.22` on 2026-07-13. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
 and approval queue mutation are not enabled by it.
 
-- **CAND-016** is accepted as release-maintenance drift hardening. It is a
+- **CAND-016** is released as release-maintenance drift hardening. It is a
   docs/checker/test-only candidate that makes release-identity state
   metadata-driven: it adds a reverse-drift roadmap guard (an already-released
   candidate must not be listed under the next-planned planning line) with
@@ -194,6 +193,13 @@ and approval queue mutation are not enabled by it.
   default. It changes no runtime, safety, CLI, broker, provider, credential,
   version, or release-metadata behavior, does not broaden the CAND-014 extraction
   boundary, and preserves the deliberate per-release version-pin tripwires.
+
+### Candidate status in the `v0.6.23` planning line
+
+`v0.6.23` is the next planned release line and is not released. No candidates
+are proposed or accepted for `v0.6.23` yet. Live trading, live submit,
+broker/provider execution, credential loading, network access, order placement,
+and approval queue mutation are not enabled.
 
 ## Current state vs future state
 
@@ -345,7 +351,7 @@ L2 is the highest autonomy level Atlas Agent supports for live-market workflows.
 
 ## L3 — Bounded Live Autonomy under Strict Risk Limits
 
-L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.21` current public release; `v0.6.20` and earlier are historical, `v0.6.22` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
+L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.22` current public release; `v0.6.21` and earlier are historical, `v0.6.23` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
 
 ### Required preconditions
 

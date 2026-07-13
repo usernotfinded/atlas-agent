@@ -18,7 +18,7 @@ Atlas Agent is a broker-neutral supervised workspace for paper and sandbox tradi
 
 ## Short Reddit/Discord feedback request
 
-Hi — I’m working on Atlas Agent, a local-first Python CLI workbench for paper/sandbox trading research with deterministic safety gates and audit logs. The latest stable public GitHub release is v0.6.21; v0.6.20 and earlier releases are historical. It is not a live trading product.
+Hi — I’m working on Atlas Agent, a local-first Python CLI workbench for paper/sandbox trading research with deterministic safety gates and audit logs. The latest stable public GitHub release is v0.6.22; v0.6.21 and earlier releases are historical. It is not a live trading product.
 
 I’m looking for feedback on:
 - The safety model and what is disabled by default
@@ -32,7 +32,7 @@ If you have time to skim the README and run `./scripts/release_check.sh --quick`
 
 ## Longer technical feedback request
 
-Atlas Agent (v0.6.21 public; v0.6.20 historical) is a local-first, sandbox/paper/preflight research workbench for trading-agent safety, deterministic gates, auditability, and release-engineering checks. I’m looking for technical feedback before any broader public visibility.
+Atlas Agent (v0.6.22 public; v0.6.21 historical) is a local-first, sandbox/paper/preflight research workbench for trading-agent safety, deterministic gates, auditability, and release-engineering checks. I’m looking for technical feedback before any broader public visibility.
 
 Specific areas where feedback would help:
 - README clarity: does the "What this is" / "What this is not" framing make sense?
@@ -64,7 +64,7 @@ I’m looking for feedback on the safety model, CLI design, docs clarity, and wh
 
 Hi,
 
-I’d appreciate a technical review of Atlas Agent (v0.6.21 public; v0.6.20 historical), a local-first sandbox/paper research workbench for trading-agent safety and deterministic gates.
+I’d appreciate a technical review of Atlas Agent (v0.6.22 public; v0.6.21 historical), a local-first sandbox/paper research workbench for trading-agent safety and deterministic gates.
 
 Safe review path (10–15 minutes):
 1. Skim README.md — check "What this is" and "What this is not"
@@ -113,4 +113,4 @@ Do not claim or imply:
 
 ## Current stable status
 
-v0.6.21 is the latest stable public GitHub release and v0.6.20 and earlier releases are historical. It is ready for public review and technical feedback, but it is not a live-trading-ready product. See [Public Launch Readiness](public-launch-readiness.md) for the full verified-checks list.
+v0.6.22 is the latest stable public GitHub release and v0.6.21 and earlier releases are historical. It is ready for public review and technical feedback, but it is not a live-trading-ready product. See [Public Launch Readiness](public-launch-readiness.md) for the full verified-checks list.

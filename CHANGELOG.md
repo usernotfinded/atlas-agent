@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.22] - 2026-07-13
+
 ### Added
 
-- Opened the `v0.6.22` planning line: `docs/releases/v0.6.22-plan.md`, `docs/releases/v0.6.22-candidates.json`, `docs/releases/v0.6.22-candidates.md`, and `docs/releases/v0.6.22-candidate-selection.md`. Planning-only; no candidates accepted; no tag, GitHub Release, or PyPI publication.
+- Opened the `v0.6.22` planning line: `docs/releases/v0.6.22-plan.md`, `docs/releases/v0.6.22-candidates.json`, `docs/releases/v0.6.22-candidates.md`, and `docs/releases/v0.6.22-candidate-selection.md`.
+- Released `CAND-016: Release-Maintenance Drift Hardening` as part of `v0.6.22`. It is documented in `docs/cand-016-release-maintenance-drift-hardening.md` and recorded in the `v0.6.22` candidate chain. Docs/checker/test-only; no runtime, safety, broker, provider, credential, version, or release-metadata behavior changes; the CAND-014 extraction boundary is unchanged.
 - Accepted `CAND-016: Release-Maintenance Drift Hardening` into the `v0.6.22` candidate chain on 2026-07-13 with verdict `PASS` (not released). It is documented in `docs/cand-016-release-maintenance-drift-hardening.md` and recorded in the `v0.6.22` candidate chain. Docs/checker/test-only; no runtime, safety, broker, provider, credential, version, or release-metadata behavior changes; the CAND-014 extraction boundary is unchanged.
 - Added `docs/releases/v0.6.21-post-release-assurance.md` and `.json` recording the `v0.6.21` release state, tag/GitHub Release verification, GitHub Actions/CI status, re-run local checks, and remaining caveats. GitHub-only record; not a live-trading or production-readiness claim.
 - Added `tests/test_next_planned_tag_guard.py` regression coverage proving the next-planned tag guard in `check_bounded_autonomy_governance.py`, `check_autonomous_paper_workflow_demo.py`, and `check_paper_provider_isolation.py` tracks `next_planned_release` from release metadata (offline, `subprocess.run` mocked; no real git tags).
@@ -29,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Safety
 
-- Post-release stabilization changes are docs/tests/checker-only. No live trading, live submit, broker/provider execution, credential loading, network access, order placement, or approval queue mutation is introduced. `RiskManager`, kill-switch, deadman, heartbeat, audit hash-chain, live-submit opt-in, and `can_submit` are unchanged. `atlas run --mode live` remains fail-closed. The CAND-014 extraction boundary is unchanged. PyPI remains unpublished; no new tag or GitHub Release was created.
+- The `v0.6.22` release is docs/tests/checker-only. No live trading, live submit, broker/provider execution, credential loading, network access, order placement, or approval queue mutation is introduced. `RiskManager`, kill-switch, deadman, heartbeat, audit hash-chain, live-submit opt-in, and `can_submit` are unchanged. `atlas run --mode live` remains fail-closed. The CAND-014 extraction boundary is unchanged. PyPI remains unpublished.
 
 ## [0.6.21] - 2026-07-07
 

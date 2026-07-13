@@ -84,4 +84,4 @@ No. Atlas Agent is software, not a financial advisor. Not financial advice. Trad
 
 ## Is this production ready?
 
-No. v0.6.21 is the latest stable public GitHub release and v0.6.20 and earlier releases are historical. It is ready for public review and technical feedback, but it is not a live-trading-ready or production-ready product. Live trading disabled by default. Provider execution remains locked. Trust remains blocked.
+No. v0.6.22 is the latest stable public GitHub release and v0.6.21 and earlier releases are historical. It is ready for public review and technical feedback, but it is not a live-trading-ready or production-ready product. Live trading disabled by default. Provider execution remains locked. Trust remains blocked.

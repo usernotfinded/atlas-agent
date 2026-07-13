@@ -1,9 +1,9 @@
 # CAND-016 — Release-Maintenance Drift Hardening
 
-> **Status:** accepted into the `v0.6.22` candidate chain on 2026-07-13 with verdict **PASS** (not released)
-> **Release line:** `v0.6.22` (planning-only)
-> **Current public release:** `v0.6.21` · **Previous:** `v0.6.20` · **Next planned:** `v0.6.22`
-> **PyPI:** not published · **Tag created:** no · **GitHub Release:** not created
+> **Status:** released as part of `v0.6.22` on 2026-07-13
+> **Release line:** `v0.6.22` (released)
+> **Current public release:** `v0.6.22` · **Previous:** `v0.6.21` · **Next planned:** `v0.6.23`
+> **PyPI:** not published · **Tag created:** yes · **GitHub Release:** created
 > **Not financial advice.** Atlas Agent is a software tool, not a financial advisor. Trading involves significant risk of loss.
 
 ## Summary
