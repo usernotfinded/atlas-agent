@@ -235,6 +235,41 @@ def _next_planned_has_accepted_candidates(
     return False
 
 
+def _released_candidate_ids(repo_root: Path) -> set[str]:
+    """Return candidate IDs recorded as accepted/released in any released line.
+
+    A released line is the current public release or any release marked
+    ``historical`` in release metadata. Their candidate-chain JSONs are the
+    authority for which candidate IDs have already shipped, so this stays
+    metadata-driven rather than pinned to a specific release number.
+    """
+    meta = _load_release_metadata(repo_root)
+    released_lines: set[str] = {meta.current_public_release}
+    released_lines |= {
+        str(release.get("tag"))
+        for release in meta.releases
+        if release.get("status") in ("historical", "current_public") and release.get("tag")
+    }
+
+    ids: set[str] = set()
+    for tag in released_lines:
+        candidates_path = repo_root / "docs" / "releases" / f"{tag}-candidates.json"
+        if not candidates_path.exists():
+            continue
+        try:
+            data = json.loads(candidates_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        for candidate in data.get("candidates", []):
+            if not isinstance(candidate, dict):
+                continue
+            cid = candidate.get("id")
+            status = str(candidate.get("status", "")).lower()
+            if cid and (candidate.get("accepted") is True or status in {"accepted", "released"}):
+                ids.add(str(cid))
+    return ids
+
+
 # Release notes directory.
 RELEASES_DIR = REPO_ROOT / "docs" / "releases"
 CHANGELOG_PATH = REPO_ROOT / "CHANGELOG.md"
@@ -636,6 +671,61 @@ def _check_autonomy_roadmap_candidate_state(
     return violations
 
 
+def _check_autonomy_roadmap_released_candidates_not_next_planned(
+    text: str,
+    rel_path: str,
+    next_planned_release: str,
+    released_candidate_ids: set[str],
+) -> list[str]:
+    """Flag the reverse drift: an already-released candidate still listed under
+    the next-planned planning-line section of the roadmap.
+
+    This is the mirror of ``_check_autonomy_roadmap_candidate_state``. A blind
+    version bump during a cutover can relabel the just-released candidates'
+    section as the new planning line, leaving released candidates (e.g. the ones
+    that shipped in the current public release) listed as if they were still
+    planned. Only candidate-entry bullets (``- CAND-XXX ...``) are inspected so
+    prose cross-references to a released candidate do not false-positive.
+    """
+    violations: list[str] = []
+    if rel_path != "docs/autonomy-roadmap.md" or not released_candidate_ids:
+        return violations
+
+    normalized = re.sub(r"[`*_]", "", text)
+    lines = normalized.splitlines()
+
+    header_re = re.compile(
+        rf"^#{{2,4}}\s+Candidate status in the\s+{re.escape(next_planned_release)}\b.*planning line",
+        re.IGNORECASE,
+    )
+    section_header_re = re.compile(r"^#{2,4}\s+")
+
+    start: int | None = None
+    for index, line in enumerate(lines):
+        if header_re.search(line):
+            start = index + 1
+            break
+    if start is None:
+        return violations
+
+    end = len(lines)
+    for index in range(start, len(lines)):
+        if section_header_re.match(lines[index]):
+            end = index
+            break
+
+    section = "\n".join(lines[start:end])
+    entry_ids = set(re.findall(r"(?m)^\s*-\s*(CAND-\d+)\b", section))
+    for cid in sorted(entry_ids & released_candidate_ids):
+        violations.append(
+            f"[{rel_path}] Roadmap lists already-released candidate {cid} under the "
+            f"{next_planned_release} planning line; released candidates belong to their "
+            "release section, not the next planned line"
+        )
+
+    return violations
+
+
 def _check_stale_rc_status_claims(text: str, rel_path: str) -> list[str]:
     violations: list[str] = []
     lower = text.lower()
@@ -711,6 +801,7 @@ def main() -> int:
         has_accepted_candidates = _next_planned_has_accepted_candidates(
             REPO_ROOT, next_planned_release
         )
+        released_candidate_ids = _released_candidate_ids(REPO_ROOT)
     except Exception as e:
         print("Public docs consistency check FAILED")
         print(f"  - Metadata Error: {e}")
@@ -749,6 +840,11 @@ def main() -> int:
         all_violations.extend(
             _check_autonomy_roadmap_candidate_state(
                 text, str(rel), next_planned_release, has_accepted_candidates
+            )
+        )
+        all_violations.extend(
+            _check_autonomy_roadmap_released_candidates_not_next_planned(
+                text, str(rel), next_planned_release, released_candidate_ids
             )
         )
 

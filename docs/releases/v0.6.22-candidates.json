@@ -8,5 +8,36 @@
   "pypi_published": false,
   "tag_created": false,
   "github_release_created": false,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "CAND-016",
+      "status": "accepted",
+      "accepted": true,
+      "acceptance_date": "2026-07-13",
+      "release_date": null,
+      "acceptance_verdict": "PASS",
+      "title": "Release-Maintenance Drift Hardening",
+      "description": "Hardens the release-maintenance path so release-identity state stays metadata-driven. Adds a reverse-drift roadmap guard to scripts/check_public_docs_consistency.py (_released_candidate_ids and _check_autonomy_roadmap_released_candidates_not_next_planned) that flags an already-released candidate listed as a candidate-entry bullet under the next-planned planning line, plus deterministic tests. Retains the metadata-driven release-assurance demo default. Docs/checker/test-only: no runtime, safety, CLI, broker, provider, credential, version, or release-metadata behavior changes.",
+      "design_doc": "docs/cand-016-release-maintenance-drift-hardening.md",
+      "implementation_plan": "docs/cand-016-release-maintenance-drift-hardening.md",
+      "design_status": "complete",
+      "implementation_plan_status": "complete",
+      "implementation_status": "complete",
+      "release_status": "not_released",
+      "acceptance_commit": null,
+      "design_review_verdict": "PASS",
+      "implementation_review_verdict": "PASS",
+      "warnings": [],
+      "notes": [
+        "Accepted into the v0.6.22 candidate chain on 2026-07-13 with acceptance verdict PASS.",
+        "The reverse-drift roadmap guard and its tests, plus the metadata-driven demo default, have landed on main as unreleased supporting work.",
+        "Metadata-driven: released candidate IDs and the next-planned tag are read from docs/releases/release-metadata.json, not pinned to a release number.",
+        "Directly addresses the release-maintenance drift observed after the v0.6.21 cutover (stale next-planned tag guard, stale demo default, roadmap candidate mislabeling).",
+        "Deliberate per-release version-pin tripwire assertions are intentionally left unchanged so they still fail at cutover to force review.",
+        "Does not enable live trading, live submit, order placement, broker/provider execution, credential loading, network access, or approval queue mutation.",
+        "Does not change RiskManager, kill-switch, deadman, heartbeat, or audit hash-chain behavior, and does not broaden the CAND-014 extraction boundary.",
+        "No PyPI publication; no tag or GitHub Release. v0.6.22 remains the next planned release line and is not released."
+      ]
+    }
+  ]
 }

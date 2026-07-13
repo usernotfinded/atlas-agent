@@ -9,15 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Opened the `v0.6.22` planning line with an empty candidate chain: `docs/releases/v0.6.22-plan.md`, `docs/releases/v0.6.22-candidates.json`, `docs/releases/v0.6.22-candidates.md`, and `docs/releases/v0.6.22-candidate-selection.md`. Planning-only; no candidates accepted; no tag, GitHub Release, or PyPI publication.
+- Opened the `v0.6.22` planning line: `docs/releases/v0.6.22-plan.md`, `docs/releases/v0.6.22-candidates.json`, `docs/releases/v0.6.22-candidates.md`, and `docs/releases/v0.6.22-candidate-selection.md`. Planning-only; no candidates accepted; no tag, GitHub Release, or PyPI publication.
+- Accepted `CAND-016: Release-Maintenance Drift Hardening` into the `v0.6.22` candidate chain on 2026-07-13 with verdict `PASS` (not released). It is documented in `docs/cand-016-release-maintenance-drift-hardening.md` and recorded in the `v0.6.22` candidate chain. Docs/checker/test-only; no runtime, safety, broker, provider, credential, version, or release-metadata behavior changes; the CAND-014 extraction boundary is unchanged.
 - Added `docs/releases/v0.6.21-post-release-assurance.md` and `.json` recording the `v0.6.21` release state, tag/GitHub Release verification, GitHub Actions/CI status, re-run local checks, and remaining caveats. GitHub-only record; not a live-trading or production-readiness claim.
 - Added `tests/test_next_planned_tag_guard.py` regression coverage proving the next-planned tag guard in `check_bounded_autonomy_governance.py`, `check_autonomous_paper_workflow_demo.py`, and `check_paper_provider_isolation.py` tracks `next_planned_release` from release metadata (offline, `subprocess.run` mocked; no real git tags).
+- Added reverse-drift coverage in `tests/test_public_docs_consistency.py` for the new roadmap guard.
 
 ### Changed
 
 - Made the next-planned tag guard metadata-driven in `scripts/check_bounded_autonomy_governance.py`, `scripts/check_autonomous_paper_workflow_demo.py`, and `scripts/check_paper_provider_isolation.py`: the `git tag --list` guard now queries `NEXT_PLANNED_TAG` (from release metadata) instead of a hardcoded tag literal, so it can no longer drift from the metadata next-planned line.
+- Extended `scripts/check_public_docs_consistency.py` with a metadata-driven reverse-drift roadmap guard (`_released_candidate_ids` and `_check_autonomy_roadmap_released_candidates_not_next_planned`): it flags an already-released candidate listed as a candidate-entry bullet under the next-planned planning-line section of `docs/autonomy-roadmap.md`, mirroring the existing forward-drift check. Prose cross-references are ignored to avoid false positives; exit codes `0`/`1` preserved. (CAND-016)
 
 ### Fixed
+
+- Made the release-assurance snapshot demo default (`scripts/demo_release_assurance_snapshot_bundle.sh`) metadata-driven: it derives the assured release from `current_public_release` (with a pinned fallback) instead of a stale hardcoded `v0.6.15`, resolving the post-`v0.6.21` full-suite CI failure in `tests/test_release_assurance_bundle_manifest.py::test_demo_runs_end_to_end`. (CAND-016)
 
 - Corrected post-release documentation drift in `docs/autonomy-roadmap.md`: restored the `v0.6.20` release section (CAND-012), moved CAND-013/CAND-014 Phase 2/CAND-015 under the `v0.6.21` release section (released, not planning), and reset the `v0.6.22` planning line to no accepted candidates. The cutover's blind version increment had mislabeled which candidates belonged to which release.
 - Corrected a stale planning-seed reference in `docs/public-launch-readiness.md` that still described `v0.6.21` as seeding the next planning line; `v0.6.22` is now the next planning-seed link and `v0.6.21` is historical.

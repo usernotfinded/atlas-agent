@@ -180,10 +180,20 @@ and approval queue mutation are not enabled by any of them.
 
 ### Candidate status in the `v0.6.22` planning line
 
-`v0.6.22` is the next planned release line and is not released. No candidates
-are accepted or proposed for `v0.6.22` yet. Live trading, live submit,
+`v0.6.22` is the next planned release line and is not released. One candidate,
+**CAND-016**, is **accepted** into the `v0.6.22` candidate chain on 2026-07-13
+with verdict **PASS**; no candidate is released. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
-and approval queue mutation are not enabled.
+and approval queue mutation are not enabled by it.
+
+- **CAND-016** is accepted as release-maintenance drift hardening. It is a
+  docs/checker/test-only candidate that makes release-identity state
+  metadata-driven: it adds a reverse-drift roadmap guard (an already-released
+  candidate must not be listed under the next-planned planning line) with
+  deterministic tests, and retains the metadata-driven release-assurance demo
+  default. It changes no runtime, safety, CLI, broker, provider, credential,
+  version, or release-metadata behavior, does not broaden the CAND-014 extraction
+  boundary, and preserves the deliberate per-release version-pin tripwires.
 
 ## Current state vs future state
 

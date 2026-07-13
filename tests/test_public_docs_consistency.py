@@ -559,3 +559,136 @@ class TestDynamicMetadata:
 
         with pytest.raises(Exception, match="source_version is empty in metadata"):
             mod._get_current_version(fake_repo)
+
+
+class TestAutonomyRoadmapReleasedCandidateDrift:
+    """Reverse drift: a released candidate must not be listed under the
+    next-planned planning line (CAND-016 coverage)."""
+
+    _NEXT = "v0.6.22"
+    _RELEASED = {"CAND-013", "CAND-014", "CAND-015"}
+
+    def _section(self, body: str) -> str:
+        return (
+            "## Autonomy roadmap\n\n"
+            f"### Candidate status in the `{self._NEXT}` planning line\n\n"
+            f"`{self._NEXT}` is the next planned release line and is not released.\n\n"
+            f"{body}\n\n"
+            "## Current state vs future state\n"
+        )
+
+    def test_released_candidate_bullet_under_next_planned_fails(self) -> None:
+        mod = _load_script_module()
+        text = self._section("- **CAND-013** is accepted into the `v0.6.22` candidate chain.")
+        violations = mod._check_autonomy_roadmap_released_candidates_not_next_planned(
+            text, "docs/autonomy-roadmap.md", self._NEXT, self._RELEASED
+        )
+        assert len(violations) == 1
+        assert "CAND-013" in violations[0]
+        assert self._NEXT in violations[0]
+        assert "already-released" in violations[0]
+
+    def test_multiple_released_candidates_each_flagged(self) -> None:
+        mod = _load_script_module()
+        text = self._section(
+            "- **CAND-013** is accepted.\n- **CAND-015** is accepted."
+        )
+        violations = mod._check_autonomy_roadmap_released_candidates_not_next_planned(
+            text, "docs/autonomy-roadmap.md", self._NEXT, self._RELEASED
+        )
+        assert len(violations) == 2
+        assert any("CAND-013" in v for v in violations)
+        assert any("CAND-015" in v for v in violations)
+
+    def test_proposed_candidate_under_next_planned_passes(self) -> None:
+        mod = _load_script_module()
+        text = self._section("- **CAND-016** is proposed for `v0.6.22`.")
+        violations = mod._check_autonomy_roadmap_released_candidates_not_next_planned(
+            text, "docs/autonomy-roadmap.md", self._NEXT, self._RELEASED
+        )
+        assert violations == []
+
+    def test_prose_mention_of_released_candidate_passes(self) -> None:
+        mod = _load_script_module()
+        text = self._section(
+            "- **CAND-016** extends the drift guard first shipped as CAND-013."
+        )
+        violations = mod._check_autonomy_roadmap_released_candidates_not_next_planned(
+            text, "docs/autonomy-roadmap.md", self._NEXT, self._RELEASED
+        )
+        assert violations == []
+
+    def test_released_candidate_in_release_section_passes(self) -> None:
+        mod = _load_script_module()
+        # A released candidate under its own release section (not the planning
+        # line) must not be flagged.
+        text = (
+            "### Candidate status in the `v0.6.21` release\n\n"
+            "- **CAND-013** is released in `v0.6.21`.\n\n"
+            f"### Candidate status in the `{self._NEXT}` planning line\n\n"
+            "- **CAND-016** is proposed.\n\n"
+            "## Current state\n"
+        )
+        violations = mod._check_autonomy_roadmap_released_candidates_not_next_planned(
+            text, "docs/autonomy-roadmap.md", self._NEXT, self._RELEASED
+        )
+        assert violations == []
+
+    def test_no_released_ids_is_noop(self) -> None:
+        mod = _load_script_module()
+        text = self._section("- **CAND-013** is accepted.")
+        violations = mod._check_autonomy_roadmap_released_candidates_not_next_planned(
+            text, "docs/autonomy-roadmap.md", self._NEXT, set()
+        )
+        assert violations == []
+
+    def test_non_roadmap_path_is_noop(self) -> None:
+        mod = _load_script_module()
+        text = self._section("- **CAND-013** is accepted.")
+        violations = mod._check_autonomy_roadmap_released_candidates_not_next_planned(
+            text, "docs/public-faq.md", self._NEXT, self._RELEASED
+        )
+        assert violations == []
+
+    def test_released_candidate_ids_reads_released_lines(self, tmp_path: Path) -> None:
+        mod = _load_script_module()
+        repo = tmp_path / "repo"
+        releases = repo / "docs" / "releases"
+        releases.mkdir(parents=True)
+        (releases / "release-metadata.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "source_version": "0.6.21",
+                    "current_public_release": "v0.6.21",
+                    "next_planned_release": "v0.6.22",
+                    "pypi_published": False,
+                    "releases": [
+                        {"tag": "v0.6.21", "version": "0.6.21", "status": "current_public"},
+                        {"tag": "v0.6.20", "version": "0.6.20", "status": "historical"},
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        (releases / "v0.6.21-candidates.json").write_text(
+            json.dumps(
+                {"candidates": [{"id": "CAND-013", "status": "released", "accepted": True}]}
+            ),
+            encoding="utf-8",
+        )
+        (releases / "v0.6.20-candidates.json").write_text(
+            json.dumps(
+                {"candidates": [{"id": "CAND-012", "accepted": True}]}
+            ),
+            encoding="utf-8",
+        )
+        # A pending candidate in the next-planned line must NOT be treated as released.
+        (releases / "v0.6.22-candidates.json").write_text(
+            json.dumps({"candidates": [{"id": "CAND-016", "status": "proposed"}]}),
+            encoding="utf-8",
+        )
+        ids = mod._released_candidate_ids(repo)
+        assert "CAND-013" in ids
+        assert "CAND-012" in ids
+        assert "CAND-016" not in ids
