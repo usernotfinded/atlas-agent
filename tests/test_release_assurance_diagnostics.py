@@ -83,7 +83,7 @@ def test_subprocess_failure_includes_exit_code_and_sanitized_stderr(
         [
             "release_assurance.py",
             "--version",
-            "v0.6.21",
+            "v0.6.24",
             "--output",
             str(tmp_path),
             "--diagnostics-json",
@@ -184,7 +184,7 @@ def test_diagnostics_json_does_not_contain_secret_values(tmp_path: Path) -> None
     data = {
         "schema_version": "atlas-release-assurance-diagnostics/1.0",
         "passed": False,
-        "release": "v0.6.21",
+        "release": "v0.6.24",
         "failed_check": "github_release_present",
         "stdout_excerpt": "token=ghp_12345",
         "stderr_excerpt": "Authorization: Bearer abcdef",
@@ -204,11 +204,11 @@ def test_success_path_summary_keys_unchanged(
     def mock_run_cmd(cmd, check=True, cwd=None, env=None):
         text = " ".join(str(p) for p in cmd)
         if "git tag -l" in text:
-            return "v0.6.21\n", 0, ""
+            return "v0.6.24\n", 0, ""
         if "git ls-remote" in text:
-            return "refs/tags/v0.6.21\n", 0, ""
+            return "refs/tags/v0.6.24\n", 0, ""
         if "gh release view" in text:
-            return '{"url":"https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.21"}', 0, ""
+            return '{"url":"https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.24"}', 0, ""
         if "update check --dry-run" in text:
             return "Current version: 0.6.18", 0, ""
         if "from atlas_agent.update.sources" in text:
@@ -222,7 +222,7 @@ def test_success_path_summary_keys_unchanged(
     monkeypatch.setattr("release_assurance.run_cmd", mock_run_cmd)
     monkeypatch.setattr(
         "sys.argv",
-        ["release_assurance.py", "--version", "v0.6.21", "--output", str(tmp_path)],
+        ["release_assurance.py", "--version", "v0.6.24", "--output", str(tmp_path)],
     )
 
     with pytest.raises(SystemExit) as exc_info:
@@ -252,11 +252,11 @@ def test_success_path_does_not_emit_failure_block_to_stderr(
     def mock_run_cmd(cmd, check=True, cwd=None, env=None):
         text = " ".join(str(p) for p in cmd)
         if "git tag -l" in text:
-            return "v0.6.21\n", 0, ""
+            return "v0.6.24\n", 0, ""
         if "git ls-remote" in text:
-            return "refs/tags/v0.6.21\n", 0, ""
+            return "refs/tags/v0.6.24\n", 0, ""
         if "gh release view" in text:
-            return '{"url":"https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.21"}', 0, ""
+            return '{"url":"https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.24"}', 0, ""
         if "update check --dry-run" in text:
             return "Current version: 0.6.18", 0, ""
         if "from atlas_agent.update.sources" in text:
@@ -270,7 +270,7 @@ def test_success_path_does_not_emit_failure_block_to_stderr(
     monkeypatch.setattr("release_assurance.run_cmd", mock_run_cmd)
     monkeypatch.setattr(
         "sys.argv",
-        ["release_assurance.py", "--version", "v0.6.21", "--output", str(tmp_path)],
+        ["release_assurance.py", "--version", "v0.6.24", "--output", str(tmp_path)],
     )
 
     with pytest.raises(SystemExit) as exc_info:

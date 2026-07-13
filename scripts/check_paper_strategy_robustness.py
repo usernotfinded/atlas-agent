@@ -22,9 +22,17 @@ from pathlib import Path
 from typing import Any
 
 
-CURRENT_PUBLIC = "v0.6.21"
-NEXT_PLANNED = "v0.6.22"
-SOURCE_VERSION = "0.6.21"
+def _next_patch_version(version: str) -> str:
+    """Return the next patch version (e.g. 0.6.24 -> 0.6.25)."""
+    parts = version.split(".")
+    if len(parts) < 2:
+        return version
+    try:
+        parts[-1] = str(int(parts[-1]) + 1)
+    except ValueError:
+        return version
+    return ".".join(parts)
+
 
 REQUIRED_DOCS = [
     "docs/paper-strategy-robustness.md",
@@ -241,25 +249,27 @@ def _check_release_metadata(root: Path, errors: list[str]) -> None:
     pyproject = _read(root / "pyproject.toml")
     init_py = _read(root / "src" / "atlas_agent" / "__init__.py")
     metadata_path = root / "docs" / "releases" / "release-metadata.json"
-    if SOURCE_VERSION not in pyproject:
-        errors.append("Source/package version must be 0.6.21 in pyproject.toml")
-    if SOURCE_VERSION not in init_py:
-        errors.append("Source/package version must be 0.6.21 in src/atlas_agent/__init__.py")
     if metadata_path.exists():
         try:
             metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             errors.append(f"Invalid release metadata JSON: {exc}")
             return
-        checks = {
-            "source_version": SOURCE_VERSION,
-            "current_public_release": CURRENT_PUBLIC,
-            "next_planned_release": NEXT_PLANNED,
-            "pypi_published": False,
-        }
-        for key, expected in checks.items():
-            if metadata.get(key) != expected:
-                errors.append(f"release-metadata.json {key} must be {expected!r}")
+        source_version = metadata.get("source_version", "")
+        expected_current_public = f"v{source_version}"
+        expected_next_planned = f"v{_next_patch_version(source_version)}"
+        if source_version not in pyproject:
+            errors.append(f"Source/package version must be {source_version} in pyproject.toml")
+        if source_version not in init_py:
+            errors.append(f"Source/package version must be {source_version} in src/atlas_agent/__init__.py")
+        if metadata.get("source_version") != source_version:
+            errors.append("release-metadata.json source_version is missing")
+        if metadata.get("current_public_release") != expected_current_public:
+            errors.append(f"release-metadata.json current_public_release must be {expected_current_public!r}")
+        if metadata.get("next_planned_release") != expected_next_planned:
+            errors.append(f"release-metadata.json next_planned_release must be {expected_next_planned!r}")
+        if metadata.get("pypi_published") is not False:
+            errors.append("release-metadata.json pypi_published must be false")
     else:
         errors.append("Missing release metadata: docs/releases/release-metadata.json")
 

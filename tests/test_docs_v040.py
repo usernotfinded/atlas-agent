@@ -87,7 +87,7 @@ def test_readme_contains_v030_essentials():
     # The README shows the latest public release tag as current status,
     # which may differ from the source package version during release prep.
     essentials = [
-        "Current Status (v0.6.21)",
+        "Current Status (v0.6.24)",
         "atlas backtest run",
         "atlas broker sync",
         "read-only",

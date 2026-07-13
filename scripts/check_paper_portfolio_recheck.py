@@ -152,10 +152,10 @@ def _check_release_metadata(root: Path) -> list[str]:
     issues: list[str] = []
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
     init_file = (root / "src/atlas_agent/__init__.py").read_text(encoding="utf-8")
-    if 'version = "0.6.16"' not in pyproject and 'version = "0.6.17"' not in pyproject and 'version = "0.6.18"' not in pyproject and 'version = "0.6.19"' not in pyproject and 'version = "0.6.20"' not in pyproject and 'version = "0.6.21"' not in pyproject:
-        issues.append("pyproject.toml source/package version must be 0.6.16, 0.6.17, 0.6.18, 0.6.19, 0.6.20, or 0.6.21")
-    if '__version__ = "0.6.16"' not in init_file and '__version__ = "0.6.17"' not in init_file and '__version__ = "0.6.18"' not in init_file and '__version__ = "0.6.19"' not in init_file and '__version__ = "0.6.20"' not in init_file and '__version__ = "0.6.21"' not in init_file:
-        issues.append("src/atlas_agent/__init__.py version must be 0.6.16, 0.6.17, 0.6.18, 0.6.19, 0.6.20, or 0.6.21")
+    if 'version = "0.6.16"' not in pyproject and 'version = "0.6.17"' not in pyproject and 'version = "0.6.18"' not in pyproject and 'version = "0.6.19"' not in pyproject and 'version = "0.6.20"' not in pyproject and 'version = "0.6.21"' not in pyproject and 'version = "0.6.24"' not in pyproject:
+        issues.append("pyproject.toml source/package version must be 0.6.16, 0.6.17, 0.6.18, 0.6.19, 0.6.20, 0.6.21, or 0.6.24")
+    if '__version__ = "0.6.16"' not in init_file and '__version__ = "0.6.17"' not in init_file and '__version__ = "0.6.18"' not in init_file and '__version__ = "0.6.19"' not in init_file and '__version__ = "0.6.20"' not in init_file and '__version__ = "0.6.21"' not in init_file and '__version__ = "0.6.24"' not in init_file:
+        issues.append("src/atlas_agent/__init__.py version must be 0.6.16, 0.6.17, 0.6.18, 0.6.19, 0.6.20, 0.6.21, or 0.6.24")
     release_metadata = (root / "docs/release-status.md").read_text(encoding="utf-8") if (root / "docs/release-status.md").exists() else ""
     combined = "\n".join([
         pyproject,

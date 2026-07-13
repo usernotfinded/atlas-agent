@@ -85,8 +85,8 @@ class TestReadmeLinks:
             or "stable release checklist" in lower
         )
 
-    def test_readme_current_status_is_v0621(self, readme_text: str) -> None:
-        assert "v0.6.21" in readme_text
+    def test_readme_current_status_is_v0624(self, readme_text: str) -> None:
+        assert "v0.6.24" in readme_text
 
 
 class TestDecisionDocSafety:
@@ -262,7 +262,7 @@ class TestVersionConsistency:
         pyproject = ROOT / "pyproject.toml"
         with open(pyproject, "rb") as f:
             data = tomllib.load(f)
-        assert data.get("project", {}).get("version") == "0.6.21"
+        assert data.get("project", {}).get("version") == "0.6.24"
 
     def test_init_version_is_dev(self) -> None:
         init = ROOT / "src" / "atlas_agent" / "__init__.py"
@@ -270,7 +270,7 @@ class TestVersionConsistency:
         import re
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
         assert m is not None
-        assert m.group(1) == "0.6.21"
+        assert m.group(1) == "0.6.24"
 
     def test_release_note_exists(self) -> None:
         assert (ROOT / "docs" / "releases" / "v0.6.10.md").exists()

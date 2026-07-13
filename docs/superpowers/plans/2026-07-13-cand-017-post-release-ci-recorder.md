@@ -140,7 +140,7 @@ def format_md_table(runs: list[dict]) -> str:
         url = run.get("url", "")
         conclusion = run.get("conclusion", run.get("status", ""))
         if url:
-            link = f"[{run_id}]({url})"
+            link = f"{run_id} ({url})"
         else:
             link = str(run_id)
         lines.append(f"| {name} | {link} | {conclusion} |")
@@ -345,11 +345,11 @@ def test_update_md_file(tmp_path):
         "# Assurance\n\n## GitHub Actions / CI Status\n\nplaceholder\n\n## Safety\n\nsafe.\n",
         encoding="utf-8",
     )
-    update_md_file(md, "| Workflow | Run |\n|---|---|\n| CI | [123](url) |")
+    update_md_file(md, "| Workflow | Run |\n|---|---|\n| CI | 123 (url) |")
     content = md.read_text(encoding="utf-8")
     assert "## GitHub Actions / CI Status" in content
     assert "placeholder" not in content
-    assert "| CI | [123](url) |" in content
+    assert "| CI | 123 (url) |" in content
     assert "## Safety" in content
 ```
 

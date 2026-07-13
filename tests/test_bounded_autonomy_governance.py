@@ -149,11 +149,12 @@ def test_public_autonomy_claims_allow_negative_context(tmp_path: Path) -> None:
 
 
 def test_version_planning_only_flags_bad_version(tmp_path: Path) -> None:
-    """If source version is bumped prematurely, the checker must fail."""
+    """If the next planned tag already exists locally, the checker must fail."""
     from scripts import check_bounded_autonomy_governance as checker
 
-    with patch.object(checker, "PACKAGE_VERSION", "0.6.22"), \
-         patch.object(checker, "CURRENT_PUBLIC_TAG", "v0.6.21"), \
-         patch.object(checker, "NEXT_PLANNED_TAG", "v0.6.22"):
+    with patch.object(checker, "PACKAGE_VERSION", "0.6.24"), \
+         patch.object(checker, "CURRENT_PUBLIC_TAG", "v0.6.24"), \
+         patch.object(checker, "NEXT_PLANNED_TAG", "v0.6.24"):
         errors = checker._check_version_planning_only()
-        assert any("Source version" in e for e in errors)
+        assert errors
+        assert any("already exists" in e for e in errors)

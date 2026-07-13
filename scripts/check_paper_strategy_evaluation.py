@@ -38,9 +38,17 @@ except ImportError:
     from scripts.release_metadata import load_metadata, ReleaseMetadata
 
 
-EXPECTED_SOURCE_VERSION = "0.6.21"
-EXPECTED_CURRENT_PUBLIC_TAG = "v0.6.21"
-EXPECTED_NEXT_PLANNED_TAG = "v0.6.22"
+def _next_patch_version(version: str) -> str:
+    """Return the next patch version (e.g. 0.6.24 -> 0.6.25)."""
+    parts = version.split(".")
+    if len(parts) < 2:
+        return version
+    try:
+        parts[-1] = str(int(parts[-1]) + 1)
+    except ValueError:
+        return version
+    return ".".join(parts)
+
 
 REQUIRED_FILES = [
     "docs/paper-strategy-evaluation.md",
@@ -339,18 +347,21 @@ def _check_release_metadata(repo_root: Path, checks: list[CheckResult], findings
         pyproject = tomllib.load(handle)
     pyproject_version = pyproject.get("project", {}).get("version")
 
+    expected_current_public = f"v{meta.source_version}"
+    expected_next_planned = f"v{_next_patch_version(meta.source_version)}"
+
     errors: list[str] = []
-    if meta.source_version != EXPECTED_SOURCE_VERSION:
-        errors.append(f"source_version expected {EXPECTED_SOURCE_VERSION}, got {meta.source_version}")
-    if pyproject_version != EXPECTED_SOURCE_VERSION:
-        errors.append(f"pyproject version expected {EXPECTED_SOURCE_VERSION}, got {pyproject_version}")
-    if meta.current_public_release != EXPECTED_CURRENT_PUBLIC_TAG:
+    if not meta.source_version:
+        errors.append("source_version is missing")
+    if pyproject_version != meta.source_version:
+        errors.append(f"pyproject version expected {meta.source_version}, got {pyproject_version}")
+    if meta.current_public_release != expected_current_public:
         errors.append(
-            f"current_public_release expected {EXPECTED_CURRENT_PUBLIC_TAG}, got {meta.current_public_release}"
+            f"current_public_release expected {expected_current_public}, got {meta.current_public_release}"
         )
-    if meta.next_planned_release != EXPECTED_NEXT_PLANNED_TAG:
+    if meta.next_planned_release != expected_next_planned:
         errors.append(
-            f"next_planned_release expected {EXPECTED_NEXT_PLANNED_TAG}, got {meta.next_planned_release}"
+            f"next_planned_release expected {expected_next_planned}, got {meta.next_planned_release}"
         )
     if meta.pypi_published is not False:
         errors.append("PyPI must remain unpublished")
@@ -360,7 +371,7 @@ def _check_release_metadata(repo_root: Path, checks: list[CheckResult], findings
         findings,
         name="release_metadata",
         ok=not errors,
-        pass_detail="Release metadata is v0.6.21 public / v0.6.22 planning.",
+        pass_detail=f"Release metadata is {meta.current_public_release} public / {meta.next_planned_release} planning.",
         fail_detail="; ".join(errors),
     )
     return {
