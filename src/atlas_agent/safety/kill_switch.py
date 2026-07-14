@@ -535,20 +535,30 @@ class KillSwitchController:
     # --- State I/O ---
 
     def _read_state(self) -> KillSwitchState:
-        # The marker file is the backstop for the JSON. When the JSON is missing or
-        # unparseable, its presence still proves the switch was armed, so we recover an
-        # enabled state from it rather than assuming the brake is off.
+        """Read the persisted switch state, failing CLOSED on corruption.
+
+        Returns:
+            The recovered state. An UNREADABLE state file always yields an armed
+            switch — never a disabled one.
+        """
+        # The two cases below look similar and are not:
         #
-        # CAUTION — the recovered mode is hardcoded "soft", the WEAKEST setting. A switch
-        # armed at "flatten" whose JSON is later corrupted therefore comes back as "soft":
-        # still braking, but less hard than the operator asked for.
+        #   NO FILE          → the switch was never armed in this workspace. Reporting
+        #                      disabled() is correct: there is no evidence of a brake,
+        #                      and refusing to trade on a fresh install would be absurd.
         #
-        # CAUTION — note the failure policy when BOTH the JSON is unreadable and the marker
-        # is absent: this returns disabled(), i.e. not braking. That is the opposite of
-        # KillSwitchState.load() in safety/state.py, which escalates a corrupt file to
-        # locked_down. The two kill switches disagree on what an unreadable safety file
-        # means. Preserved here as-is; changing it is a behaviour change, not a comment.
+        #   FILE, UNREADABLE → SOMEONE WROTE THIS FILE and we cannot tell what it said.
+        #                      It may have said "flatten". Treating "I cannot read the
+        #                      kill switch" as "the kill switch is off" is exactly the
+        #                      fail-open this method must not have, so it arms instead.
         if not self.state_path.exists():
+            # The marker file is the backstop for a missing JSON: its presence alone
+            # proves the switch was armed, even with no state file to read.
+            #
+            # CAUTION: the recovered mode is hardcoded "soft", the WEAKEST setting,
+            # because the marker file carries no mode. A switch armed at "flatten" whose
+            # JSON is lost therefore comes back as "soft" — still braking, but less hard
+            # than the operator asked for.
             if self.enabled_flag_path.exists():
                 return KillSwitchState(
                     enabled=True,
@@ -563,17 +573,30 @@ class KillSwitchController:
         try:
             raw = json.loads(self.state_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError, ValueError):
-            if self.enabled_flag_path.exists():
-                return KillSwitchState(
-                    enabled=True,
-                    mode="soft",
-                    reason="state file unreadable; legacy enabled flag used",
-                    actor="system",
-                    updated_at=_utc_now_iso(),
-                    activated_at=_utc_now_iso(),
-                    deactivated_at=None,
-                )
-            return KillSwitchState.disabled()
+            # FAIL CLOSED. Arm the switch whether or not the marker file is there — the
+            # marker only refines the *reason*, never the decision.
+            #
+            # "soft" and not "flatten": we brake, but we do not LIQUIDATE. Escalating to
+            # flatten here would send real sell orders on the strength of a file we just
+            # admitted we cannot read, which would be a destructive act taken on no
+            # evidence. Stopping the agent is always safe; trading is not.
+            #
+            # This mirrors KillSwitchState.load() in safety/state.py, which likewise
+            # escalates a corrupt state file rather than trusting it.
+            reason = (
+                "state file unreadable; legacy enabled flag used"
+                if self.enabled_flag_path.exists()
+                else "state file unreadable; failing closed to soft pause"
+            )
+            return KillSwitchState(
+                enabled=True,
+                mode="soft",
+                reason=reason,
+                actor="system",
+                updated_at=_utc_now_iso(),
+                activated_at=_utc_now_iso(),
+                deactivated_at=None,
+            )
         mode = _normalize_mode(str(raw.get("mode", "soft")))
         return KillSwitchState(
             enabled=bool(raw.get("enabled", False)),
