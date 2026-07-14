@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    update/sources.py
+# PURPOSE: Discovers what versions are available to update to. A supply-chain edge:
+#          whatever this module names is what update/manager.py will install and run.
+# DEPS:    urllib (stdlib HTTP), subprocess (git)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

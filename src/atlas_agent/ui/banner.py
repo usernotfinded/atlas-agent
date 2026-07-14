@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    ui/banner.py
+# PURPOSE: The ASCII banner and tagline shown at startup and in the setup wizard.
+# DEPS:    none
+# ==============================================================================
+
+# --- CONFIGURATIONS & CONSTANTS ---
+
 ATLAS_ASCII_BANNER = r"""
       ___ _____ _      _   ___      _   ___ ___ _  _ _____ 
      / _ \_   _| |    /_\ / __|    /_\ / __| __| \| |_   _|

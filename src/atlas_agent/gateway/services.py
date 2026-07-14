@@ -1,8 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    gateway/services.py
+# PURPOSE: The service contract the remote gateway (Telegram) is allowed to call.
+#          Deliberately narrow: it defines the ceiling on what a chat message can
+#          make the agent do.
+# DEPS:    stdlib only (Protocol)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+
+# ==============================================================================
+# SERVICE RESULT
+# ==============================================================================
 
 @dataclass(frozen=True)
 class ServiceResult:
@@ -10,6 +24,10 @@ class ServiceResult:
     message: str
     data: dict[str, Any] = field(default_factory=dict)
 
+
+# ==============================================================================
+# SERVICE CONTRACT
+# ==============================================================================
 
 class AgentService(Protocol):
     async def status(self, actor: str) -> ServiceResult:

@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    gateway/telegram/__init__.py
+# PURPOSE: Public surface of the Telegram control plane.
+# DEPS:    gateway.telegram.auth, .bot, .ratelimit, .sanitize, .config, .server
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.gateway.telegram.auth import (

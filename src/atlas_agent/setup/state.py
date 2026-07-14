@@ -1,7 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    setup/state.py
+# PURPOSE: What the setup wizard has collected so far. Every default below is the
+#          SAFE one — a user who accepts every default ends up in paper mode with no
+#          broker, which is exactly where a new user should land.
+# DEPS:    providers.catalog (model validation, imported lazily)
+# ==============================================================================
+
+# --- IMPORTS ---
 from dataclasses import dataclass, asdict
 from typing import Optional
 import json
 from pathlib import Path
+
+
+# ==============================================================================
+# WIZARD STATE
+# ==============================================================================
 
 @dataclass
 class WizardState:
@@ -14,6 +29,8 @@ class WizardState:
     research_provider: str = "skip"
     messaging: str = "cli"
     workspace_path: str = "."
+    # Both default to paper, and the wizard cannot be click-through'd into live: the
+    # dangerous option always requires an explicit choice.
     trust_mode: str = "paper"
     broker_mode: str = "paper"
     update_channel: str = "stable"

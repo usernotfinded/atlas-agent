@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    routines/git_sync.py
+# PURPOSE: Lets the agent commit and push its own memory and reports. This is the
+#          only code in the project that can publish workspace content to a remote,
+#          which makes it the highest-consequence leak surface here: a pushed secret
+#          is a secret in someone else's clone.
+# DEPS:    safety.secrets (the pre-commit scan), subprocess (git)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os
@@ -12,14 +23,28 @@ class GitSyncError(RuntimeError):
     pass
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# An ALLOWLIST of what may be committed. Only these two directories, ever. A blocklist
+# would silently start publishing any new directory someone adds to the workspace.
 SYNC_PATHS = ("memory", "reports")
+
+# Belt and braces on top of the allowlist: even within memory/ and reports/, anything
+# with these names or suffixes is refused.
 SENSITIVE_FILENAMES = {".env"}
 SENSITIVE_SUFFIXES = (".secret", ".key")
 
 
+# ==============================================================================
+# GIT SYNC
+# ==============================================================================
+
 @dataclass(frozen=True)
 class GitSync:
     repo_dir: Path = Path(".")
+    # Both default to False, and they are SEPARATE. Committing is local and reversible;
+    # pushing is neither. An agent may be trusted to keep a local history without being
+    # trusted to publish it.
     allow_commit: bool = False
     allow_push: bool = False
     author_name: str = "Atlas Agent"

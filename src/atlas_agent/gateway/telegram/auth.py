@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    gateway/telegram/auth.py
+# PURPOSE: Authorisation for the Telegram control plane. This is a REMOTE surface
+#          reachable by anyone who can message the bot, so it is the most exposed
+#          entry point in the project — hence the allowlist plus the TOTP second
+#          factor on the sensitive commands.
+# DEPS:    keyring backend (Protocol — injected, never imported directly)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,9 +18,17 @@ import threading
 from typing import Any, Protocol
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
 TOTP_CONFIRMATION_MESSAGE = "Conferma con codice TOTP"
 
 
+# ==============================================================================
+# KEYRING CONTRACT
+# ==============================================================================
+
+# Injected, so the bot token can live in the OS keychain rather than in a config file
+# — and so tests never need a real one.
 class KeyringBackend(Protocol):
     def get_password(self, service_name: str, username: str) -> str | None:
         ...

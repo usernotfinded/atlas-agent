@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    routines/routine_result.py
+# PURPOSE: What a routine reports back. Structured because nobody is watching an
+#          unattended run — the result IS the only record anyone will read.
+# DEPS:    stdlib only
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass

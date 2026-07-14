@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    routines/lock.py
+# PURPOSE: Stops two routines running at once. Without it, a cron-triggered run and
+#          a manual one could evaluate the same signal and each place an order for
+#          it — two positions where the user intended one.
+# DEPS:    stdlib only (os, errno, contextlib)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import errno
@@ -10,6 +20,8 @@ from pathlib import Path
 from typing import Iterator
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
 DEFAULT_STALE_AFTER = timedelta(hours=6)
 LOCK_RELATIVE_PATH = Path(".atlas") / "locks" / "routine.lock"
 
@@ -17,6 +29,10 @@ LOCK_RELATIVE_PATH = Path(".atlas") / "locks" / "routine.lock"
 class RoutineLockError(RuntimeError):
     pass
 
+
+# ==============================================================================
+# LOCK STATE
+# ==============================================================================
 
 @dataclass(frozen=True)
 class RoutineLockInfo:
@@ -30,6 +46,13 @@ class RoutineLockInfo:
         return datetime.now(UTC) - self.timestamp
 
     def is_stale(self, *, stale_after: timedelta = DEFAULT_STALE_AFTER) -> bool:
+        """Is this lock abandoned, and therefore safe to break?"""
+        # Two independent staleness tests, because each one alone has a failure mode:
+        #   - AGE alone would break the lock of a legitimately long-running routine;
+        #   - PID alone would never break the lock of a crashed process whose pid has
+        #     since been recycled by an unrelated program.
+        # Requiring EITHER means a crashed routine unblocks quickly (dead pid), while a
+        # slow-but-alive one keeps its lock until the age ceiling.
         if self.age > stale_after:
             return True
         return self.pid is not None and not _pid_is_running(self.pid)

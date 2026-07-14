@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tools/spec.py
+# PURPOSE: The contract for a tool the LLM may call. The three gating flags below
+#          are the important part: a tool DECLARES what protections it needs, and
+#          the registry enforces them — so the safety of a tool is a property of its
+#          definition, not of whoever remembers to check.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
+# --- IMPORTS ---
 import copy
 import inspect
 from datetime import date
@@ -5,22 +16,45 @@ from pathlib import Path
 from typing import Any, Callable, Literal, Protocol, Optional, Union, get_type_hints, get_origin, get_args
 from pydantic import BaseModel, Field, ConfigDict
 
+
+# ==============================================================================
+# TOOL SPECIFICATION
+# ==============================================================================
+
 class RateLimit(BaseModel):
     calls_per_minute: int
 
 class ToolSpec(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    
+
     name: str
+    # Two descriptions, full and compact. Which one the model sees depends on its
+    # context window — see CONTEXT_WINDOW_FULL_DESC_THRESHOLD in the registry.
     description_full: str
     description_compact: str
     input_schema: dict
     execute: Callable[..., Any]
+
+    # --- Gating flags (the safety contract) ---
+    # Both default to FALSE, so a new tool is un-gated by default. That is a deliberate
+    # trade-off: most tools are read-only and harmless, and anything that can move money
+    # must set these explicitly. Adding a trade-capable tool without them is the failure
+    # mode to watch for in review.
     risk_gated: bool = False
     approval_gated: bool = False
+
+    # Defaults to TRUE, unlike the two above. Auditing is the one protection you get
+    # without asking, because a tool call nobody recorded is a tool call nobody can
+    # explain afterwards.
     audit_logged: bool = True
+
     rate_limit: Optional[RateLimit] = None
     default_enabled: bool = True
+
+
+# ==============================================================================
+# TOOL RESULTS
+# ==============================================================================
 
 class ToolResult(BaseModel):
     data: Any

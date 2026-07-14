@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    update/state.py
+# PURPOSE: Remembers when we last checked for an update, so the check does not run
+#          on every single command.
+# DEPS:    stdlib only
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -7,6 +16,10 @@ from pathlib import Path
 from typing import Any
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Note what is absent: there is no "auto-apply" value here. Checking is automatic;
+# INSTALLING never is. Self-updating code without being asked is not a feature.
 AUTO_CHECK_VALUES = frozenset({"off", "daily", "weekly"})
 
 

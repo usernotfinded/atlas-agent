@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    dashboard/render.py
+# PURPOSE: Renders a dashboard snapshot to HTML.
+# DEPS:    dashboard.models, html.escape
+#
+# NOTE:    Everything rendered here originates from files the AGENT wrote — journal
+#          entries, reflections, model reasoning. That is untrusted, model-generated
+#          content going into a page, which is why `escape` is not optional.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from html import escape
@@ -7,6 +19,10 @@ from typing import Any
 
 from atlas_agent.dashboard.models import DashboardSnapshot
 
+
+# ==============================================================================
+# RENDERING HELPERS
+# ==============================================================================
 
 def _text(value: Any, default: str = "No data available") -> str:
     if value is None:

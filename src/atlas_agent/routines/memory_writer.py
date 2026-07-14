@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    routines/memory_writer.py
+# PURPOSE: Appends a routine's outcome to the workspace memory.
+# DEPS:    stdlib only
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC, datetime

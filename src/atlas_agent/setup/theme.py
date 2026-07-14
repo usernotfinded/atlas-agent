@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    setup/theme.py
+# PURPOSE: The colour palette for the interactive wizard.
+# DEPS:    prompt_toolkit
+# ==============================================================================
+
+# --- IMPORTS ---
 from prompt_toolkit.styles import Style
+
+
+# --- CONFIGURATIONS & CONSTANTS ---
 
 # Atlas Agent electric blue theme
 # primary: #1EA7FF

@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    setup/inline_select.py
+# PURPOSE: A single-choice inline picker for the setup wizard.
+# DEPS:    prompt_toolkit
+# ==============================================================================
+
+# --- IMPORTS ---
 from typing import List, Tuple, Optional
 from prompt_toolkit import Application
 from prompt_toolkit.key_binding import KeyBindings

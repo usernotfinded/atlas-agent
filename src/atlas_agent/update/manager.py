@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    update/manager.py
+# PURPOSE: Performs the self-update. Gated by update/safety.py, which decides
+#          whether replacing the running code is safe right now — the answer is no
+#          while there are open positions or pending orders.
+# DEPS:    update.safety (the gate), update.sources, update.state
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os

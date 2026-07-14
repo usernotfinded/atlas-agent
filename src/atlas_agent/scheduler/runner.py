@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scheduler/runner.py
+# PURPOSE: The scheduled entry point. Note the discipline import: a scheduled run
+#          is unattended, so it demands the same validated discipline profile an
+#          interactive agentic run does — and fails closed without one.
+# DEPS:    ai.discipline (fail-closed profile requirement), routines.engine
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass

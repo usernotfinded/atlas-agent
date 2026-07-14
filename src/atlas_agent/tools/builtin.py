@@ -1,3 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tools/builtin.py
+# PURPOSE: Declares every tool the LLM can call, and the gates each one requires.
+#          This file is the model's entire action vocabulary — read it to know what
+#          the agent is capable of doing.
+# DEPS:    tools.spec (ToolSpec), tools.mock_impl (the implementations)
+#
+# WARNING: The `execute` callables here come from tools/mock_impl.py. They are
+#          DETERMINISTIC MOCKS, not live integrations: `get_quote` does not query a
+#          market, and the shell/notification/research tools do not reach anything
+#          real. The CONTRACTS are production-shaped; the behaviour behind them is not.
+# ==============================================================================
+
 """Builtin tool contracts wired to deterministic mock implementations.
 
 The specs in this module describe tool contracts. The imported callables are
@@ -5,9 +19,19 @@ mock implementations from ``atlas_agent.tools.mock_impl`` and are not live
 market, broker, notification, shell, or research integrations.
 """
 
+# --- IMPORTS ---
 from atlas_agent.core.types import *
 from atlas_agent.tools.spec import ToolSpec, generate_input_schema
 from atlas_agent.tools.mock_impl import *
+
+
+# ==============================================================================
+# TOOL SPECS
+# ==============================================================================
+#
+# Read the three gating flags on each spec below — they are the security review of
+# this file. `risk_gated` and `approval_gated` must be True on anything that can
+# move money; a read-only price lookup legitimately needs neither.
 
 BUILTIN_TOOLS = []
 

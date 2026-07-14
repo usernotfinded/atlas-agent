@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tools/registry.py
+# PURPOSE: The set of tools an LLM is allowed to call, and the gate every call goes
+#          through. An unregistered tool cannot be invoked, so this registry defines
+#          the outer bound of what the model can DO.
+# DEPS:    tools.spec (contracts + guardrails), core.types (Session, approval)
+# ==============================================================================
+
+# --- IMPORTS ---
 import inspect
 import time
 import logging
@@ -15,18 +25,37 @@ from atlas_agent.tools.spec import (
     ToolSpec,
 )
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Below this context size, tool descriptions are sent in an abbreviated form. A small
+# model would otherwise spend most of its window reading about tools rather than the
+# market.
 CONTEXT_WINDOW_FULL_DESC_THRESHOLD = 128_000
+
+
+# ==============================================================================
+# TOOL REGISTRY
+# ==============================================================================
 
 class ToolRegistry:
     def __init__(self):
         self._tools: Dict[str, ToolSpec] = {}
         self.enabled_tools_config: Dict[str, bool] = {}  # Optional overrides from tools.yaml
+        # Per-tool call timestamps, backing the rate limiter. A model stuck in a loop
+        # calling the same tool would otherwise hammer whatever is behind it.
         self._rate_limits: Dict[str, deque] = {}
+
+    # --- Registration-time validation ---
 
     def _validate_signature(self, tool: ToolSpec) -> None:
         """
         Validates that the execute callable's signature is compatible with the input_schema.
         """
+        # Checked at REGISTRATION, not at call time. The schema is what the model is
+        # shown; the signature is what actually runs. A mismatch between them means the
+        # model would be invited to call something that cannot accept its arguments —
+        # and that failure must surface at startup, not mid-trade.
         sig = inspect.signature(tool.execute)
         params = sig.parameters
         

@@ -1,9 +1,21 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    gateway/telegram/config.py
+# PURPOSE: Settings for the Telegram webhook — the bot token, the secret header,
+#          the allowed users.
+# DEPS:    pydantic_settings (OPTIONAL — see the fallback below)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass
 
 
+# pydantic_settings is an optional dependency: the Telegram gateway is opt-in, and an
+# install that never uses it should not have to carry the package. The fallback keeps
+# `import atlas_agent` working without it.
 try:
     from pydantic_settings import BaseSettings, SettingsConfigDict
 except ModuleNotFoundError:  # pragma: no cover - exercised by fallback tests/runtime

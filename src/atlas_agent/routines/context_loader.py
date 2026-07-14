@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    routines/context_loader.py
+# PURPOSE: Gathers the memory context a routine needs before it runs.
+# DEPS:    stdlib only
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass

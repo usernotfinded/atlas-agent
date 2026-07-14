@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    setup/renderer.py
+# PURPOSE: Draws the wizard screens.
+# DEPS:    prompt_toolkit, setup.state, ui.banner
+# ==============================================================================
+
+# --- IMPORTS ---
 from typing import List, Tuple, Optional
 from atlas_agent.setup.state import WizardState
 from atlas_agent.ui.banner import ATLAS_ASCII_BANNER, ATLAS_TAGLINE

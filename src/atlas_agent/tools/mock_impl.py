@@ -1,3 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tools/mock_impl.py
+# PURPOSE: The deterministic mock behind every builtin tool. Nothing here reaches a
+#          market, a broker, a shell or the network — the tool CONTRACTS are real,
+#          the implementations are simulations.
+# DEPS:    core.types
+#
+# NOTE:    Deterministic on purpose. A mock that returned random data would make the
+#          agent's decisions unreproducible, and an unreproducible decision cannot be
+#          audited or replayed.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 # ruff: noqa: F403, F405

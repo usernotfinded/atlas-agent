@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    update/__init__.py
+# PURPOSE: Public surface of the self-update domain. Note the class name:
+#          SafeUpdateManager — updating is always mediated by the safety gate, never
+#          performed directly.
+# DEPS:    update.manager, update.safety, update.sources, update.state
+# ==============================================================================
+
+# --- IMPORTS ---
 from atlas_agent.update.manager import (
     SafeUpdateManager,
     UpdateApplyReport,

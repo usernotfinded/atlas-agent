@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    diagnostics/preflight.py
+# PURPOSE: Answers "is this install actually capable of running?" — dependencies,
+#          workspace layout, config — BEFORE anything is attempted. Read-only.
+# DEPS:    importlib.util (dependency probing without importing)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import importlib.util

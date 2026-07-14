@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    update/safety.py
+# PURPOSE: Decides whether it is safe to UPDATE the agent's own code right now.
+#          Swapping the binary out from under a live agent with open positions is a
+#          uniquely bad idea: the process that would have to close them is the one
+#          being replaced.
+# DEPS:    config + brokers + portfolio (to see what is at stake), safety.kill_switch
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import subprocess
@@ -15,13 +26,26 @@ from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.safety import KillSwitchController
 
 
+# ==============================================================================
+# SAFETY RESULT
+# ==============================================================================
+
 @dataclass(frozen=True)
 class UpdateSafetyResult:
     safe: bool
+    # blockers STOP the update; warnings merely inform. The split matters: live
+    # trading with open positions is a blocker, while an untidy working tree is not.
     blockers: list[str]
     warnings: list[str]
 
 
+# ==============================================================================
+# SAFETY PROBES
+# ==============================================================================
+
+# Each probe answers one question about what an update would interrupt. They are a
+# Protocol so the whole gate can be exercised in tests without a broker, a portfolio
+# or a git repo.
 class UpdateSafetyCheck(Protocol):
     def is_live_trading_enabled(self) -> bool:
         ...

@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    routines/engine.py
+# PURPOSE: Runs a named routine — the scheduled, unattended entry point (cron, CI,
+#          systemd). Unattended is the operative word: nobody is watching, so the
+#          lock and the safety gates matter more here than anywhere else.
+# DEPS:    routines.lock (single-instance), routines.context_loader, events.log
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from collections.abc import Callable

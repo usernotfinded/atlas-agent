@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    gateway/telegram/server.py
+# PURPOSE: The webhook endpoint Telegram posts to. A publicly-reachable HTTP surface
+#          in front of a trading agent — the secret-token header check is what stops
+#          anyone who finds the URL from driving the bot.
+# DEPS:    fastapi, gateway.telegram.bot (the handler behind this endpoint)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC, datetime

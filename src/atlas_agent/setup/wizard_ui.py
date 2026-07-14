@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    setup/wizard_ui.py
+# PURPOSE: The wizard's screen flow — provider, model, credentials, workspace,
+#          trading mode. The step that sets trading mode is the consequential one:
+#          it is where a user can move themselves from paper to live.
+# DEPS:    prompt_toolkit, setup.state, setup.renderer, providers.catalog
+# ==============================================================================
+
+# --- IMPORTS ---
 import os
 from pathlib import Path
 from typing import Any, List, Tuple

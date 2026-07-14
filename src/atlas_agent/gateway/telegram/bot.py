@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    gateway/telegram/bot.py
+# PURPOSE: The Telegram command handler. Every message runs the same gauntlet:
+#          authorised user → rate limit → TOTP (on sensitive commands) → service →
+#          sanitise the reply. It is a remote control plane for a trading agent, so
+#          none of those steps is optional.
+# DEPS:    gateway.services (the narrow service contract), gateway.telegram.auth,
+#          .ratelimit, .sanitize
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import asyncio

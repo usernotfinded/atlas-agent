@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    diagnostics/readiness.py
+# PURPOSE: Reports which capabilities are unlocked and which are still gated, and
+#          why. The "why" is the product: an operator wondering why live trading is
+#          refused should get the list of locks, not a bare "not ready".
+# DEPS:    config (the gates it reads)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os

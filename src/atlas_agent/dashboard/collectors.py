@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    dashboard/collectors.py
+# PURPOSE: Gathers the workspace's state into one snapshot for the dashboard.
+#          Strictly read-only: looking at the dashboard must never change anything.
+# DEPS:    dashboard.models (the snapshot shape), config
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

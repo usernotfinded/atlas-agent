@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    gateway/telegram/ratelimit.py
+# PURPOSE: Throttles Telegram commands. Abuse protection on a remote surface, but
+#          also a brake on a compromised or panicking operator hammering /kill.
+# DEPS:    stdlib only (threading — the bot is concurrent)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -6,8 +15,15 @@ import threading
 from typing import Callable
 
 
+# ==============================================================================
+# RATE LIMIT CONFIG
+# ==============================================================================
+
 @dataclass(frozen=True)
 class RateLimitConfig:
+    # TWO separate budgets. Money commands get a much tighter one (5/min vs 30/min):
+    # if the bot is ever compromised, an attacker gets 5 attempts a minute at anything
+    # that can move funds, not 30. The cheap read commands stay usable meanwhile.
     commands_per_minute: int = 30
     money_commands_per_minute: int = 5
 

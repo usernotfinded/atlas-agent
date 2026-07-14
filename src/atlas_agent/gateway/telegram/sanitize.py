@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    gateway/telegram/sanitize.py
+# PURPOSE: Scrubs everything on its way OUT to Telegram. A chat message is the least
+#          controllable destination in the system — it lands on a phone, in a cloud
+#          history, possibly in a group — so nothing sensitive may reach it.
+# DEPS:    stdlib only (re, functools)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import asdict, is_dataclass
@@ -6,6 +16,8 @@ import inspect
 import re
 from typing import Any, Callable, TypeVar, cast
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
 
 F = TypeVar("F", bound=Callable[..., Any])
 

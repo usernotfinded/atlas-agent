@@ -1,7 +1,25 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    core/types.py
+# PURPOSE: The shared vocabulary — types used across domains that belong to none of
+#          them (Session, cost model, approval signalling). Kept dependency-free so
+#          anything may import it without creating a cycle.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
+# --- IMPORTS ---
 from typing import Literal, Optional, Any, List
 from pydantic import BaseModel
 
+
+# ==============================================================================
+# COST MODEL
+# ==============================================================================
+
 class CostModel(BaseModel):
+    # Slippage and fees are modelled explicitly rather than assumed zero. A backtest
+    # with no cost model reports the P&L of a market that does not exist, and is the
+    # single most common way a strategy looks profitable on paper and is not.
     slippage_bps: float
     commission: float
 

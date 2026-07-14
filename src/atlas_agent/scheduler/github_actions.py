@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scheduler/github_actions.py
+# PURPOSE: Generates a GitHub Actions workflow that runs a routine on a schedule.
+#          Writes a file for the user to review and commit — it never installs or
+#          triggers anything.
+# DEPS:    stdlib only (pathlib)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from pathlib import Path

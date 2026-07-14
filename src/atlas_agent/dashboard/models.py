@@ -1,9 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    dashboard/models.py
+# PURPOSE: The shape of a dashboard snapshot — one section per domain (portfolio,
+#          safety, audit, learning, ...).
+# DEPS:    pydantic (models)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC, datetime
 from typing import Any, List, Literal, Optional
 from pydantic import BaseModel, Field
 
+
+# ==============================================================================
+# SNAPSHOT SECTIONS
+# ==============================================================================
 
 class DashboardStatusSummary(BaseModel):
     status: str
