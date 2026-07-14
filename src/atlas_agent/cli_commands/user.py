@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/user.py
+# PURPOSE: CLI handler for `atlas user` — the profile the agent is told about its
+#          user. It reaches the model prompt, so it shapes every decision.
+# DEPS:    learning.user_model
+# ==============================================================================
+
 """CLI handler for `atlas user`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

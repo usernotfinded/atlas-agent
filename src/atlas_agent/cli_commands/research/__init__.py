@@ -1,4 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/__init__.py
+# PURPOSE: Dispatch table for the `atlas research ...` subcommands.
+# DEPS:    the handler modules in this package
+#
+# NOTE:    The research surface is unusually large because it is the OUTBOUND edge:
+#          research is where the agent sends data to a third-party provider. Almost
+#          every command here exists to inspect, gate or seal that boundary rather
+#          than to cross it — preflight, opt-in, credential-boundary, dry-run,
+#          response review. Crossing it is the small part.
+# ==============================================================================
+
 """Dispatch for `atlas research` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from collections.abc import Callable

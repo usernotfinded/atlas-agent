@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/credential.py
+# PURPOSE: CLI handlers for the research CREDENTIAL BOUNDARY — proving which
+#          credentials a research call would touch, and that none of them leak into
+#          the artifacts it produces.
+# DEPS:    research.provider_credential_boundary
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/opt_in.py
+# PURPOSE: CLI handlers for the research OPT-IN policy — the explicit consent that
+#          must exist before any data leaves the machine for a research provider.
+# DEPS:    research.provider_opt_in_policy
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

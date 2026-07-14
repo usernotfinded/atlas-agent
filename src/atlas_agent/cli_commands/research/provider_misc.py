@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/provider_misc.py
+# PURPOSE: CLI handlers for the remaining research provider commands — outbound
+#          payload preview, request/response pairing, response intake policy.
+# DEPS:    research.provider_outbound_payload_preview, .._request_response_pairing,
+#          .._response_intake_policy
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/model.py
+# PURPOSE: CLI handler for `atlas model` — select the provider/model and store the
+#          API key. `getpass` is not decoration: it keeps the key out of the
+#          terminal echo and out of the shell history.
+# DEPS:    providers.catalog, providers.runtime, config.secrets
+# ==============================================================================
+
 """CLI handler for `atlas model`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import getpass

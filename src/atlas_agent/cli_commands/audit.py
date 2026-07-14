@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/audit.py
+# PURPOSE: CLI handler for `atlas audit` — verifies the hash-chained audit trail and
+#          reports whether it has been tampered with.
+# DEPS:    atlas_agent.audit (verification), cli_io (envelopes)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.audit import verify_audit_log, verify_run_manifest

@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/sandbox.py
+# PURPOSE: CLI handlers for the research SANDBOX — running the research pipeline in
+#          a contained environment with no live provider behind it.
+# DEPS:    research.llm_sandbox, research.sandbox_contracts
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.research import ResearchSessionError

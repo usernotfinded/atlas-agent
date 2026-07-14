@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/events.py
+# PURPOSE: CLI handler for `atlas events` — tails the event trail and runs the
+#          doctor over it (malformed records, secrets that escaped redaction).
+# DEPS:    events.log, events.doctor
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from typing import Any

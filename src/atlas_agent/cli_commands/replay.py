@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/replay.py
+# PURPOSE: CLI handler for `atlas replay` — reconstructs a past run from its event
+#          trail. The post-mortem command: "why did it place that order?".
+# DEPS:    atlas_agent.replay
+# ==============================================================================
+
 """CLI handler for `atlas replay`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

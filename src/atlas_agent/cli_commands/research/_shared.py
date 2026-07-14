@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/_shared.py
+# PURPOSE: Helpers common to the research subcommand handlers.
+# DEPS:    cli_io
+# ==============================================================================
+
 """Shared helpers for `atlas research` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

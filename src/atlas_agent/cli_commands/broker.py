@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/broker.py
+# PURPOSE: CLI handler for `atlas broker` — shows which broker is resolved and what
+#          it is permitted to do (sync? submit?), without ever placing an order.
+# DEPS:    brokers.resolver, brokers.status
+# ==============================================================================
+
 """CLI handler for `atlas broker`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

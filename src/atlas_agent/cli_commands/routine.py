@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/routine.py
+# PURPOSE: CLI handler for `atlas routine` — runs a named routine once.
+# DEPS:    routines.engine (which takes the single-instance lock)
+# ==============================================================================
+
 """CLI handler for `atlas routine`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

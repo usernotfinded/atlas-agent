@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/response.py
+# PURPOSE: CLI handlers for the research RESPONSE path — schema contract, review and
+#          review result. A provider response is untrusted input; nothing here
+#          accepts one without validating it against a closed schema first.
+# DEPS:    research.provider_response_schema_contract, .._review_result
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

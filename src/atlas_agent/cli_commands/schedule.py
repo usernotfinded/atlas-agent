@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/schedule.py
+# PURPOSE: CLI handler for `atlas schedule` — prints a crontab line or writes a
+#          GitHub Actions workflow. Suggests; never installs.
+# DEPS:    scheduler.cron, scheduler.github_actions
+# ==============================================================================
+
 """CLI handler for `atlas schedule`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

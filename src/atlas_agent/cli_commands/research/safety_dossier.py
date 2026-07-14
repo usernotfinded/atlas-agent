@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/safety_dossier.py
+# PURPOSE: CLI handlers for the research SAFETY DOSSIER — the assembled evidence
+#          that the research boundary held.
+# DEPS:    research.provider_safety_dossier
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from pathlib import Path

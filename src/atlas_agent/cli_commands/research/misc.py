@@ -1,4 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/misc.py
+# PURPOSE: CLI handlers for the research session commands — plan, prompt, run,
+#          verify, evaluate, artifacts.
+# DEPS:    research.session, research.artifact_store
+#
+# NOTE:    "misc" is a smell, not a category. At ~1.5k lines this module has no
+#          organising theme; splitting it by subcommand family would be an
+#          improvement, and the banners below are a stopgap.
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC

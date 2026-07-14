@@ -1,3 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/__init__.py
+# PURPOSE: Collects every CLI command handler in one import surface, so cli.py can
+#          register them without reaching into each module.
+# DEPS:    the individual handler modules in this package
+#
+# NOTE:    Handlers in this package are THIN. They parse arguments, call a domain,
+#          and emit an envelope — no business logic lives here, because a rule that
+#          only exists on the CLI path is a rule the scheduler and the agent loop
+#          would not be bound by.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.cli_commands.audit import handle_audit

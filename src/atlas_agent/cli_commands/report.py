@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/report.py
+# PURPOSE: CLI handler for `atlas report` — daily, weekly and ad-hoc reports from
+#          local data.
+# DEPS:    reports.daily, reports.weekly, reports.adhoc
+# ==============================================================================
+
 """CLI handler for `atlas report`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import sys

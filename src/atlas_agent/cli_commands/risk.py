@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/risk.py
+# PURPOSE: CLI handler for `atlas risk` — shows the active risk limits and the kill
+#          switch state, reconciled with the on-disk runtime flag (so a tripped
+#          switch shows as tripped even if the config file says otherwise).
+# DEPS:    cli_safety (the reconciliation), risk.limits
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.cli_context import CLIContext

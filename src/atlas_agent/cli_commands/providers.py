@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/providers.py
+# PURPOSE: CLI handler for `atlas providers` — lists providers and reports where
+#          each credential is coming FROM (process env vs .env.atlas vs missing),
+#          without printing any of them.
+# DEPS:    providers.catalog, providers.runtime
+# ==============================================================================
+
 """CLI handler for `atlas providers`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import sys

@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/adapter.py
+# PURPOSE: CLI handlers for the research provider ADAPTER — inspecting and
+#          conformance-checking the interface a research provider must satisfy.
+# DEPS:    research.provider_adapter_interface, .._contract
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/demo.py
+# PURPOSE: CLI handler for `atlas demo` — seeds a workspace with synthetic data.
+# DEPS:    atlas_agent.demo (which refuses to seed a workspace that looks real)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import sys

@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/discipline.py
+# PURPOSE: CLI handler for `atlas discipline` — sets up and validates the trading
+#          discipline profile. Without a valid one, agentic runs fail closed, so
+#          this command is a prerequisite for the agent doing anything at all.
+# DEPS:    ai.discipline (validation, including the prompt-injection blocklist)
+# ==============================================================================
+
 """CLI handler for `atlas discipline`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

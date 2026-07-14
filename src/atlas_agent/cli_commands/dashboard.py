@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/dashboard.py
+# PURPOSE: CLI handler for `atlas dashboard` — renders the workspace snapshot to HTML.
+# DEPS:    dashboard.collectors, dashboard.render
+# ==============================================================================
+
 """CLI handler for `atlas dashboard`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from pathlib import Path

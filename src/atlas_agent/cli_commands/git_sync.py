@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/git_sync.py
+# PURPOSE: CLI handler for `atlas git-sync` — commits and pushes memory/ and
+#          reports/. The only command that can publish workspace content to a remote.
+# DEPS:    routines.git_sync (the allowlist and the secret scan live there)
+# ==============================================================================
+
 """CLI handler for `atlas git-sync`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

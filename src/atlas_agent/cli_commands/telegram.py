@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/telegram.py
+# PURPOSE: CLI handler for `atlas telegram` — diagnostics for the remote control
+#          plane. Reports whether the token and the allowlist are configured, as
+#          booleans, without printing either.
+# DEPS:    atlas_agent.telegram_control (the network-free diagnostics)
+# ==============================================================================
+
 """CLI handler for `atlas telegram`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

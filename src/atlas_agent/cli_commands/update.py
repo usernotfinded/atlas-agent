@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/update.py
+# PURPOSE: CLI handler for `atlas update` — checks for and applies a self-update.
+#          The apply path is gated: it refuses while there are open positions or
+#          pending orders.
+# DEPS:    update.manager (SafeUpdateManager), update.safety (the gate)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from pathlib import Path

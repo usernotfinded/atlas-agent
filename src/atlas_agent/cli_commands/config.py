@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/config.py
+# PURPOSE: CLI handler for `atlas config` — get, set and unset settings. Routes
+#          secrets to .env.atlas and everything else to config.toml, so a user who
+#          types a key into `atlas config set` does not commit it by accident.
+# DEPS:    atlas_agent.config (the routing lives there, not here)
+# ==============================================================================
+
 """CLI handler for `atlas config`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os

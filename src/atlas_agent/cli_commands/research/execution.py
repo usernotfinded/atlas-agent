@@ -1,4 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/execution.py
+# PURPOSE: CLI handlers for research provider EXECUTION — the unlock state, the dry
+#          run, the readiness report and the audit packet. This is the boundary a
+#          real provider call crosses, and most of these commands exist to keep it shut.
+# DEPS:    research.provider_execution_state, .._unlock_state, .._dry_run,
+#          .._readiness_report, .._audit_packet
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/request.py
+# PURPOSE: CLI handlers for building a research REQUEST and its call plan.
+# DEPS:    research.provider_call_plan
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

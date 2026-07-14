@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/memory.py
+# PURPOSE: CLI handler for `atlas memory` — search the memory index and run the
+#          memory doctor, whose one ERROR-level finding is a leaked credential.
+# DEPS:    learning.memory_index, atlas_agent.memory_doctor
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import asdict

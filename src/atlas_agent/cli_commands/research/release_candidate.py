@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/release_candidate.py
+# PURPOSE: CLI handlers for the research release-candidate flow — readiness and
+#          cutover.
+# DEPS:    research.release_candidate_readiness, .._cutover
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

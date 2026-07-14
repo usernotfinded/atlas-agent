@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/notify.py
+# PURPOSE: CLI handler for `atlas notify` — sends a notification through the
+#          configured transport. Default transport is `disabled`, so this sends
+#          nothing until someone opts in.
+# DEPS:    notifications.dispatcher
+# ==============================================================================
+
 """CLI handler for `atlas notify`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

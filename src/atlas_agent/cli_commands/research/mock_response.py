@@ -1,4 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/mock_response.py
+# PURPOSE: CLI handlers for the MOCK response pipeline — simulate, review, import,
+#          seal. It exists so the whole research response path can be exercised
+#          end-to-end without a real provider call, and so a candidate response can
+#          be reviewed before anything is trusted.
+# DEPS:    research.provider_mock_response_* modules
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

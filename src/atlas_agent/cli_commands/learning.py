@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/learning.py
+# PURPOSE: CLI handler for `atlas learning` — generate, review and accept the
+#          agent's suggestions about its own behaviour. The accept step is where a
+#          human takes responsibility for a rule the agent wrote.
+# DEPS:    learning.generator, learning.approval, learning.storage
+# ==============================================================================
+
 """CLI handler for `atlas learning`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import sys

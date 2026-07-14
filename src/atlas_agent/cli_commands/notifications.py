@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/notifications.py
+# PURPOSE: CLI handler for `atlas notifications` — inspect the delivery history.
+# DEPS:    notifications.storage
+# ==============================================================================
+
 """CLI handler for `atlas notifications`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from pathlib import Path

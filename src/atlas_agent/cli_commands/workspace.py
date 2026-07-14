@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/workspace.py
+# PURPOSE: CLI handler for `atlas workspace` — create, inspect and select the
+#          workspace. Picking the wrong one means trading against the wrong book.
+# DEPS:    atlas_agent.workspace
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from pathlib import Path

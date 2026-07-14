@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/portfolio.py
+# PURPOSE: CLI handler for `atlas portfolio` — shows the book. Read-only.
+# DEPS:    portfolio.state
+# ==============================================================================
+
 """CLI handler for `atlas portfolio`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

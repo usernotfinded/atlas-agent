@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/reflection.py
+# PURPOSE: CLI handler for `atlas reflection` — generate, review and approve
+#          reflection artifacts.
+# DEPS:    reflection.generator, reflection.approval, reflection.storage
+# ==============================================================================
+
 """CLI handler for `atlas reflection`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import sys

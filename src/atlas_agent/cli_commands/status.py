@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/status.py
+# PURPOSE: CLI handler for `atlas status` — version, mode, workspace. Read-only.
+# DEPS:    atlas_agent (__version__), cli_context
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent import __version__

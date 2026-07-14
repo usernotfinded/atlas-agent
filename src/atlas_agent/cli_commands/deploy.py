@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/deploy.py
+# PURPOSE: CLI handler for `atlas deploy` — writes deployment templates for review.
+#          Scaffolds files; deploys nothing.
+# DEPS:    atlas_agent.deploy
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.cli_context import CLIContext

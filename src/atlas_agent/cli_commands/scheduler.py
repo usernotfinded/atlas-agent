@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/scheduler.py
+# PURPOSE: CLI handler for `atlas scheduler` — the unattended entry point invoked by
+#          cron or CI. Requires a valid discipline profile and fails closed without one.
+# DEPS:    scheduler.runner
+# ==============================================================================
+
 """CLI handler for `atlas scheduler`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

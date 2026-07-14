@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/research/preflight.py
+# PURPOSE: CLI handlers for research PREFLIGHT — generating and freezing the call
+#          plan, so a human can read exactly what WOULD be sent before it is.
+# DEPS:    research.provider_preflight_freeze, providers.provider_preflight
+# ==============================================================================
+
 """CLI handlers for `atlas research ...` subcommands."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 

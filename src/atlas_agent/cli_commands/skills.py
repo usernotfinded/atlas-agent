@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli_commands/skills.py
+# PURPOSE: CLI handler for `atlas skills` — propose, diff, approve and PROMOTE
+#          skills. Promotion is the consequential verb: it moves a proposal into
+#          the set of rules the agent actually follows.
+# DEPS:    skills.manager, skills.approval, skills.library
+# ==============================================================================
+
 """CLI handler for `atlas skills`."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 
