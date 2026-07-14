@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/approval.py
+# PURPOSE: The state machine a learning suggestion must walk before it counts.
+#          There is NO transition from draft straight to accepted: a suggestion the
+#          agent wrote about its own behaviour has to pass through a human.
+# DEPS:    learning.models (the states), learning.storage (persistence)
+# ==============================================================================
+
 """Learning suggestion approval workflow.
 
 Manages state transitions for learning suggestions:
@@ -5,6 +14,8 @@ draft -> pending_review -> accepted/rejected -> archived
 
 All operations are local. No provider or broker calls.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.learning.models import LearningSuggestion, SuggestionStatus

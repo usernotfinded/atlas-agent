@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reflection/renderers.py
+# PURPOSE: Renders a reflection artifact as Markdown for human review.
+# DEPS:    reflection.models
+# ==============================================================================
+
 """Markdown renderer for reflection artifacts."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.reflection.models import ReflectionArtifact

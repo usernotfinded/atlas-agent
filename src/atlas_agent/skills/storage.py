@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    skills/storage.py
+# PURPOSE: Persists skill CANDIDATES — proposals, not active rules. Deliberately a
+#          different directory from skills/library.py, so an unreviewed proposal can
+#          never be mistaken for a skill the agent is following.
+# DEPS:    skills.models
+# ==============================================================================
+
 """Local storage for skill candidate artifacts.
 
 Stores candidates under `.atlas/skill_candidates/` as JSON files.
 All operations are local and safe.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

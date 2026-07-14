@@ -1,9 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/user_model.py
+# PURPOSE: What the agent believes about its user — preferences, trading style,
+#          profile. Read into the prompt, so it shapes every decision the model makes.
+# DEPS:    stdlib only
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
+
+# ==============================================================================
+# USER MODEL
+# ==============================================================================
 
 @dataclass(frozen=True)
 class UserModel:

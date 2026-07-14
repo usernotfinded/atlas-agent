@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    skills/library.py
+# PURPOSE: The ACTIVE skill library — the rules the agent actually follows. Kept in
+#          its own directory, separate from candidates, so the question "what is this
+#          agent currently operating under?" has a single, listable answer.
+# DEPS:    skills.models
+# ==============================================================================
+
 """Local skill library storage.
 
 Stores promoted skills under `.atlas/skills/library/` as JSON files.
 All operations are local and safe.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

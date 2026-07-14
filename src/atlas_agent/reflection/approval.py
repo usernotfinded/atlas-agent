@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reflection/approval.py
+# PURPOSE: The state machine for reflection artifacts. No path from draft to
+#          approved that does not pass through a human.
+# DEPS:    reflection.models, reflection.storage
+# ==============================================================================
+
 """Reflection approval workflow.
 
 Manages state transitions for reflection artifacts:

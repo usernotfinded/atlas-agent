@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    notifications/storage.py
+# PURPOSE: Records what was sent, where, and whether it arrived. A notification is
+#          an outbound side effect, so it needs the same "what did this thing
+#          actually do?" trail as an order does.
+# DEPS:    notifications.models
+# ==============================================================================
+
 """Local notification record storage.
 
 Stores notification delivery results as JSON artifacts under

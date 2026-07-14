@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reports/__init__.py
+# PURPOSE: Public surface of the reports domain: daily, weekly and ad-hoc reports
+#          built entirely from local data.
+# DEPS:    reports.daily, reports.weekly, reports.generator, reports.renderers
+# ==============================================================================
+
+# --- IMPORTS ---
 from atlas_agent.reports.daily import generate_daily_report
 from atlas_agent.reports.generator import generate_report
 from atlas_agent.reports.models import ReportData

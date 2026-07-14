@@ -1,9 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    notifications/transports.py
+# PURPOSE: The three ways a notification can be handled: dropped (disabled),
+#          rendered but not sent (dry-run), or actually delivered (Slack). Only the
+#          third one touches the network.
+# DEPS:    notifications.models, notifications.redaction
+# ==============================================================================
+
 """Notification transports.
 
 Disabled, dry-run, and Slack webhook transports.
 All transports are testable via dependency injection.
 No real network calls in disabled or dry-run modes.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -19,6 +30,11 @@ from atlas_agent.notifications.models import (
 from atlas_agent.notifications.redaction import preview_payload, redact_text
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# The HTTP call is INJECTED rather than imported. That is what lets the Slack transport
+# be tested end-to-end without a socket — and it means the only code in this module
+# that can reach the network is code the caller handed in.
 HttpPost = Callable[[str, dict[str, str], dict[str, Any]], dict[str, Any]]
 
 
@@ -26,9 +42,16 @@ class NotificationTransportError(RuntimeError):
     pass
 
 
+# ==============================================================================
+# TRANSPORTS
+# ==============================================================================
+
 class DisabledTransport:
     """Transport that immediately returns a disabled result without network calls."""
 
+    # Returns a RESULT, not None and not an exception. "Disabled" is a successful,
+    # legitimate outcome, and callers must not have to special-case it — otherwise
+    # every call site grows an `if notifications_enabled` branch.
     def send(self, payload: NotificationPayload, _config: NotificationConfig) -> NotificationResult:
         return NotificationResult(
             notification_id=payload.notification_id,

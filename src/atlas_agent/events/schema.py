@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    events/schema.py
+# PURPOSE: Validates an event record before it is written. Two jobs: keep the trail
+#          structurally sound (so replay never chokes on it), and act as the LAST
+#          secret check before anything hits disk.
+# DEPS:    safety.secrets (the leak scanner)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import datetime
@@ -7,6 +17,10 @@ from typing import Any
 from atlas_agent.safety.secrets import scan_text_for_secrets
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# All six are mandatory. `run_id` in particular: an event without one cannot be tied to
+# a run, and an untraceable event is not evidence of anything.
 REQUIRED_EVENT_FIELDS = (
     "timestamp",
     "event_type",
@@ -16,6 +30,9 @@ REQUIRED_EVENT_FIELDS = (
     "payload",
 )
 
+# A closed set. An event type not listed here is REJECTED — which means adding a new
+# kind of event is a deliberate act that shows up in a diff, not something a stray
+# call site can do silently. The trail is only complete if its vocabulary is known.
 KNOWN_EVENT_TYPES = {
     "agent_started",
     "market_state_detected",
@@ -64,11 +81,23 @@ LIKELY_SECRET_PATTERNS = (
 )
 
 
+# ==============================================================================
+# VALIDATION
+# ==============================================================================
+
 def validate_event_record(record: dict[str, Any]) -> list[str]:
+    """Check an event record. Returns a list of problems — empty means valid.
+
+    Returns:
+        Every error found, not just the first, so a caller fixing a malformed event
+        sees the whole picture in one go.
+    """
     errors: list[str] = []
     for field in REQUIRED_EVENT_FIELDS:
         if field not in record:
             errors.append(f"missing field: {field}")
+    # Early return: with a field missing there is nothing to type-check below, and the
+    # follow-on errors would be noise obscuring the real one.
     if errors:
         return errors
 
@@ -105,6 +134,15 @@ def validate_event_record(record: dict[str, Any]) -> list[str]:
     return errors
 
 
+# ==============================================================================
+# LEAK DETECTION
+# ==============================================================================
+#
+# The safety net UNDER the redaction engine. By the time a record gets here it has
+# already been scrubbed twice (see EventLogger.write), so anything this finds is a
+# bug in redaction — which is exactly why it is worth checking. A detector that only
+# ever fires when the primary defence has already failed is doing its job.
+
 def find_likely_secrets(value: Any) -> list[str]:
     findings: list[str] = []
     _scan(value, findings)
@@ -120,10 +158,17 @@ def find_likely_secrets(value: Any) -> list[str]:
 
 
 def _scan(value: Any, findings: list[str]) -> None:
+    # Recurses through nested structures, because a secret buried three levels down in
+    # a broker's response payload is still a secret on disk.
     if isinstance(value, dict):
         for key, item in value.items():
             key_text = str(key).lower()
             if any(marker in key_text for marker in ("token", "secret", "password", "api_key")):
+                # The check is "was this redacted?", not "does this look like a key?".
+                # A secret-named field holding anything OTHER than the redaction marker
+                # means the scrubber missed it.
+                # Only the KEY name is reported — never the value, or the report would
+                # leak the very thing it is flagging.
                 if isinstance(item, str) and item and item != "[REDACTED]":
                     findings.append(f"{key}: non-redacted value")
             _scan(item, findings)

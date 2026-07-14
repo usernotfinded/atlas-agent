@@ -1,3 +1,10 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reflection/models.py
+# PURPOSE: The shape of a reflection artifact and the states it can be in.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
 """Reflection artifact models.
 
 Reflection artifacts are structured local records that analyze input artifacts

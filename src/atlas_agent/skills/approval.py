@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    skills/approval.py
+# PURPOSE: The state machine for skill candidates. Note the extra terminal state
+#          the other domains do not have: PROMOTED. That is the step where a
+#          proposal stops being a document and starts influencing the agent.
+# DEPS:    skills.models, skills.storage
+# ==============================================================================
+
 """Skill candidate approval workflow.
 
 Manages state transitions for skill candidates:

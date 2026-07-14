@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/reflections.py
+# PURPOSE: Writes the agent's periodic reflection — a dated markdown note on what
+#          happened and what it might mean.
+# DEPS:    events.log (the reflection is itself an auditable event)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import datetime
@@ -5,6 +14,10 @@ from pathlib import Path
 
 from atlas_agent.events.log import EventLogger
 
+
+# ==============================================================================
+# REFLECTION GENERATION
+# ==============================================================================
 
 def generate_reflection(
     memory_dir: Path,

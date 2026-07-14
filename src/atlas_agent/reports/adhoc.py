@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reports/adhoc.py
+# PURPOSE: On-demand report entry point. Unlike daily/weekly it can also emit JSON,
+#          because an ad-hoc report is the one people pipe into other tools.
+# DEPS:    reports.generator, reports.renderers, reports.writer
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.reports.generator import generate_report

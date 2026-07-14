@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    notifications/models.py
+# PURPOSE: The shape of an outbound notification. Everything here leaves the
+#          machine, so the models are built to carry no secret and no instruction
+#          the receiving system could act on.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
 """Notification payload and result models.
 
 Safe, serializable models for notification payloads, severities,
 transport modes, and delivery results. Contains no secrets.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -13,6 +24,10 @@ from uuid import uuid4
 from pydantic import BaseModel, Field
 
 
+# ==============================================================================
+# ENUMS
+# ==============================================================================
+
 class NotificationSeverity(str, Enum):
     info = "info"
     warning = "warning"
@@ -20,6 +35,9 @@ class NotificationSeverity(str, Enum):
     critical = "critical"
 
 
+# `disabled` is first and is the default. Real delivery (slack) is opt-in, and
+# `dry_run` exists so the whole path can be exercised without anything actually being
+# sent — which is what makes it safe to test notification wiring against a live config.
 class NotificationTransport(str, Enum):
     disabled = "disabled"
     dry_run = "dry_run"

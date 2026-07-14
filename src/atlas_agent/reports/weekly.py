@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reports/weekly.py
+# PURPOSE: The weekly report entry point. A thin composition of generator →
+#          renderer → writer; the period is the only thing that differs from daily.py.
+# DEPS:    reports.generator, reports.renderers, reports.writer
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.reports.generator import generate_report

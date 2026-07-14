@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    skills/models.py
+# PURPOSE: The shape of a skill candidate and a promoted library entry. A skill is
+#          a rule the agent will follow, so a candidate and a promoted skill are
+#          deliberately DIFFERENT types — the type system marks the boundary.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
 """Skill candidate models.
 
 Skill candidates are structured, reviewable artifacts derived from reflections

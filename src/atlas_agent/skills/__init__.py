@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    skills/__init__.py
+# PURPOSE: Public surface of the skills domain. A "skill" is a reusable rule the
+#          agent proposes for itself; PROMOTION into the active library is the gate,
+#          and it requires a human.
+# DEPS:    skills.manager, skills.models, skills.storage, skills.library
+# ==============================================================================
+
+# --- IMPORTS ---
 from atlas_agent.skills.manager import (
     approve_skill,
     archive_skill,

@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    notifications/__init__.py
+# PURPOSE: Public surface of the notifications domain. Everything routed through
+#          here leaves the machine, so the default transport is `disabled` and real
+#          delivery is always an explicit opt-in.
+# DEPS:    notifications.dispatcher, notifications.transports, notifications.models
+# ==============================================================================
+
+# --- IMPORTS ---
 from atlas_agent.notifications.clickup import (
     ClickUpNotifier,
     NotificationConfigurationError,

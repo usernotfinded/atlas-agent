@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    notifications/clickup.py
+# PURPOSE: ClickUp notifier. One of the few places in the project that deliberately
+#          sends data OUT to a third party, so the token handling and the payload
+#          scrubbing matter more than the transport itself.
+# DEPS:    urllib (stdlib HTTP), notifications.models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

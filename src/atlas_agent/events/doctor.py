@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    events/doctor.py
+# PURPOSE: Audits the event trail after the fact — malformed records, and secrets
+#          that slipped past redaction. The retrospective counterpart to the
+#          validation events/schema.py performs at write time.
+# DEPS:    events.log (the trail), events.schema (validation + leak detection)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,6 +17,10 @@ from typing import Any
 from atlas_agent.events.log import list_event_files, read_event_file
 from atlas_agent.events.schema import find_likely_secrets, validate_event_record
 
+
+# ==============================================================================
+# ISSUE MODELS
+# ==============================================================================
 
 @dataclass(frozen=True)
 class EventIssue:
@@ -27,6 +41,8 @@ class EventDoctorResult:
 
     @property
     def ok(self) -> bool:
+        # Warnings do not fail the check; errors do. A leaked secret is always an error —
+        # it is not an untidiness to note, it is a credential sitting on disk.
         return not self.errors
 
 
