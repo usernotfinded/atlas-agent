@@ -1,7 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    market/calendar.py
+# PURPOSE: Exchange trading hours. Defaults to US equities (NYSE/NASDAQ core hours).
+# DEPS:    stdlib only
+#
+# NOTE:    Regular hours only — this knows nothing about market holidays. A holiday
+#          therefore reads as a normal weekday. In practice the broker rejects the
+#          order anyway, but do not treat "open" here as a guarantee of a live venue.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+
+# ==============================================================================
+# MARKET HOURS
+# ==============================================================================
 
 class MarketConfig:
     def __init__(

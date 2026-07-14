@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    execution/submit_dry_run.py
+# PURPOSE: Runs every gate a live submit would run, and then does NOT submit. The
+#          rehearsal: it answers "would this order go through, and if not, which
+#          lock stops it?" without putting anything at risk.
+# DEPS:    the same gates as submit_execution.py — approval, risk, broker sync —
+#          minus the broker call itself. That symmetry is the whole value: a dry
+#          run that checked different things would be worthless as a rehearsal.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -19,6 +31,10 @@ from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.models import OrderRiskInput
 
 
+# ==============================================================================
+# REPORT MODEL
+# ==============================================================================
+
 @dataclass
 class DryRunReport:
     ok: bool
@@ -31,6 +47,9 @@ class DryRunReport:
     message: str = ""
     risk: dict[str, Any] | None = None
     sync: dict[str, Any] | None = None
+    # "preview" is not decoration: compute_client_order_id() is deterministic, so this
+    # is the EXACT id a real submit would use. It lets an operator cross-check against
+    # the broker for an order that may already exist before deciding to send another.
     client_order_id_preview: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -48,6 +67,10 @@ class DryRunReport:
             "client_order_id_preview": self.client_order_id_preview,
         }
 
+
+# ==============================================================================
+# DRY RUN
+# ==============================================================================
 
 def run_submit_dry_run(
     order_id: str,

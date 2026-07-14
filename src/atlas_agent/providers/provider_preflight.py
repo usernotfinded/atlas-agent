@@ -1,3 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/provider_preflight.py
+# PURPOSE: Produces a signed, inspectable "call plan" describing EXACTLY what would
+#          be sent to a provider — before anything is sent. The point is reviewable
+#          consent: a human (or an auditor) can read the plan and see what leaves the
+#          machine, rather than trusting that it was harmless.
+# DEPS:    hashlib (artifact integrity) — and deliberately nothing else. See below.
+#
+# DESIGN:  This module is INERT by construction. It makes no network call, reads no
+#          credential, imports no provider SDK, and sets every safety flag to False.
+#          That is not a coincidence to be preserved by care — it is why the module
+#          has no dependency capable of doing any of those things.
+# ==============================================================================
+
 """Provider preflight dry-run call-plan artifact generator.
 
 This module generates a local-only, dry-run provider call-plan artifact.
@@ -15,6 +30,7 @@ The artifact is purely informational and does not authorize any provider
 execution. All safety flags are set to False.
 """
 
+# --- IMPORTS ---
 from __future__ import annotations
 
 import hashlib
@@ -26,6 +42,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
 # ---------------------------------------------------------------------------
 # Validation constants
 # ---------------------------------------------------------------------------

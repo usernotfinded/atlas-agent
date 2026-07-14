@@ -1,8 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    market_data/sample_data.py
+# PURPOSE: Ships a tiny synthetic OHLCV series so a fresh install can run a backtest
+#          with no data setup. Note the ticker: DEMO-SYMBOL, which is not a real
+#          instrument — nobody can mistake a demo result for a real backtest.
+# DEPS:    stdlib only (pathlib)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from pathlib import Path
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# A clean uptrend by construction. It exists to prove the pipeline runs end-to-end,
+# NOT to demonstrate that a strategy works — any strategy will look good on this.
 SAMPLE_CSV = """date,symbol,open,high,low,close,volume
 2026-04-20,DEMO-SYMBOL,100,102,99,100,1200
 2026-04-21,DEMO-SYMBOL,100,103,99.5,101,1250
@@ -22,9 +36,15 @@ SAMPLE_CSV = """date,symbol,open,high,low,close,volume
 """
 
 
+# ==============================================================================
+# SAMPLE DATA SEEDING
+# ==============================================================================
+
 def ensure_sample_data(path: str | Path = "data/sample/ohlcv.csv") -> Path:
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
+    # Never overwrites. A user who replaced the sample file with their own data must
+    # not have it silently clobbered on the next run.
     if not output.exists():
         output.write_text(SAMPLE_CSV, encoding="utf-8")
     return output

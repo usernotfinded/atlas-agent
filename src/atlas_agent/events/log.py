@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    events/log.py
+# PURPOSE: The operational event trail — what the agent did, in order, day by day.
+#          Distinct from atlas_agent.audit: that one is hash-chained and exists to
+#          be tamper-evident; this one exists to be READ, by `atlas replay`, by the
+#          dashboard, and by a human trying to understand a run.
+# DEPS:    events.schema (validation), jsonl (I/O), redaction (scrubbing)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -11,9 +22,19 @@ from atlas_agent.jsonl import tail_jsonl, write_jsonl
 from atlas_agent.redaction import redact_payload
 
 
+# ==============================================================================
+# RUN IDENTITY
+# ==============================================================================
+
 def generate_run_id() -> str:
+    # The thread that ties an entire run's events together. `atlas replay` groups on it,
+    # so it must be unique across processes and machines — hence uuid4, not a counter.
     return uuid4().hex
 
+
+# ==============================================================================
+# EVENT WRITER
+# ==============================================================================
 
 class EventLogger:
     def __init__(self, events_dir: str | Path = "events") -> None:
@@ -21,6 +42,8 @@ class EventLogger:
         self.events_dir.mkdir(parents=True, exist_ok=True)
 
     def path_for_day(self, day: date | None = None) -> Path:
+        # One file per UTC day. Keeps any single file small enough to tail cheaply, and
+        # makes retention ("drop events older than N days") a matter of deleting files.
         effective_day = day or datetime.now(UTC).date()
         return self.events_dir / f"{effective_day.isoformat()}.jsonl"
 
@@ -41,13 +64,23 @@ class EventLogger:
             "mode": mode,
             "payload": redact_payload(payload or {}),
         }
+        # Redacted TWICE, and that is not an oversight. The first pass scrubs the
+        # caller's payload; this second pass covers the assembled record — including the
+        # fields we added ourselves (`command`, in particular, can carry a key that a
+        # user typed on the command line).
         # Final pass immediately before writing any event record.
         record = redact_payload(record)
+        # Validated before the write, not after. A malformed record would break `atlas
+        # replay` for the whole day's file, so it is rejected at the source.
         errors = validate_event_record(record)
         if errors:
             raise ValueError(f"invalid event record: {', '.join(errors)}")
         write_jsonl(self.path_for_day(), record, sort_keys=True)
 
+
+# ==============================================================================
+# EVENT READERS
+# ==============================================================================
 
 def list_event_files(events_dir: str | Path = "events") -> list[Path]:
     base = Path(events_dir)
@@ -61,6 +94,9 @@ def read_event_file(path: str | Path) -> list[dict[str, Any]]:
     if not target.exists():
         return []
     events: list[dict[str, Any]] = []
+    # Raises on a corrupt line with the line NUMBER, rather than skipping it. A silently
+    # dropped event would make a replay quietly incomplete — and an incomplete replay of
+    # an incident is worse than an obvious failure to replay it at all.
     for line_no, raw_line in enumerate(target.read_text(encoding="utf-8").splitlines(), start=1):
         line = raw_line.strip()
         if not line:

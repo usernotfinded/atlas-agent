@@ -1,3 +1,21 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    execution/submit_execution.py
+# PURPOSE: The live-submit path — the single place in the project where a real
+#          order reaches a real venue. Every gate in the system converges here:
+#          kill switch, live config locks, HMAC-backed approval, fresh quote,
+#          risk limits, broker sync. All of them must say yes.
+# DEPS:    safety.kill_switch, execution.approval, execution.quotes,
+#          execution.submit_state (crash-safe state machine), risk.manager,
+#          brokers.resolver / brokers.sync
+#
+# DESIGN:  Gates are checked in cost order — cheap local checks before anything
+#          that touches the network — and the state machine is advanced BEFORE the
+#          broker call, so a crash mid-submit leaves an "uncertain" record that
+#          reconciliation can resolve, never a silent gap.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -40,6 +58,10 @@ from atlas_agent.risk.models import OrderRiskInput
 from atlas_agent.safety.kill_switch import KillSwitchController
 
 
+# ==============================================================================
+# REPORT MODEL
+# ==============================================================================
+
 @dataclass
 class SubmitExecutionReport:
     ok: bool
@@ -48,6 +70,9 @@ class SubmitExecutionReport:
     blocked_reason: str | None = None
     message: str = ""
     client_order_id: str | None = None
+    # Every gate records its verdict here, including the ones that passed. A blocked
+    # submit has to be explainable after the fact — "which lock stopped my order?" is
+    # the first question an operator asks, and a bare boolean cannot answer it.
     gates: dict[str, str] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     sync: dict[str, Any] | None = None

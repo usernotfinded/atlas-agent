@@ -1,9 +1,25 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/generator.py
+# PURPOSE: Produces learning suggestions. With provider execution disabled (the
+#          default) it emits a suggestion explicitly LABELLED as such, rather than
+#          inventing a plausible-sounding insight.
+# DEPS:    learning.models
+#
+# DESIGN:  "No fake insights" is the load-bearing rule. A fabricated lesson about
+#          the user's own trading would be believed — it looks exactly like a real
+#          one — so the absence of a model must be stated in the output, never
+#          papered over.
+# ==============================================================================
+
 """Learning suggestion generator with dry-run/static fallback.
 
 When provider execution is disabled (the default), the generator produces a
 structured static learning suggestion that clearly marks `provider_execution_disabled`.
 No fake insights are invented. If input data is missing, the suggestion says so.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from pathlib import Path

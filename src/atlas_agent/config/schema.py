@@ -1,3 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    config/schema.py
+# PURPOSE: The typed shape of every setting Atlas understands, and the safe-by-
+#          default values it falls back to. This is the constitution: if a value
+#          is not declared here, the runtime does not honour it.
+# DEPS:    pydantic (validation)
+#
+# DESIGN:  Defaults are chosen so that a config file with *nothing* in it yields a
+#          harmless agent — paper mode, live trading off, approval required. Every
+#          dangerous capability must be switched on explicitly.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os
@@ -7,11 +21,20 @@ from typing import Any, Literal, Optional, Set
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, model_validator
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
 TRUE_VALUES = {"1", "true", "t", "yes", "y", "on"}
 FALSE_VALUES = {"0", "false", "f", "no", "n", "off"}
 
 
+# ==============================================================================
+# PRIMITIVE PARSERS
+# ==============================================================================
+
 def parse_bool(value: str | bool | None, *, default: bool = False) -> bool:
+    # Unrecognised input raises rather than defaulting to False. A typo'd
+    # `ENABLE_LIVE_TRADING=ture` must not be read as "off" — the operator clearly
+    # meant something, and guessing which is not our job.
     if value is None:
         return default
     if isinstance(value, bool):
@@ -29,6 +52,9 @@ def parse_float(name: str, default: float) -> float:
     if raw is None or raw == "":
         return default
     value = float(raw)
+    # Negatives are rejected because every numeric setting here is a limit or a
+    # size. A negative cap would invert the comparison it feeds and turn a risk
+    # ceiling into a floor.
     if value < 0:
         raise ValueError(f"{name} cannot be negative")
     return value
@@ -44,6 +70,11 @@ def parse_int(name: str, default: int) -> int:
     return value
 
 
+# --- Legacy compatibility map ---
+
+# Flat pre-nesting keys → their dotted home in the current schema. Consumed by the
+# `map_legacy_fields` validator so that an old config file keeps working instead of
+# silently losing its risk limits to "unknown field".
 LEGACY_CONFIG_FIELD_MAP: dict[str, str] = {
     "enable_live_trading": "broker.enable_live_trading",
     "enable_live_submit": "broker.enable_live_submit",
@@ -75,8 +106,14 @@ LEGACY_CONFIG_FIELD_MAP: dict[str, str] = {
 def parse_csv_set(value: str | None) -> set[str]:
     if not value:
         return set()
+    # Upper-cased on the way in so that symbol allow/blocklists compare against
+    # broker tickers (always upper) without every call site remembering to fold case.
     return {item.strip().upper() for item in value.split(",") if item.strip()}
 
+
+# ==============================================================================
+# SETTING GROUPS
+# ==============================================================================
 
 class ModelConfig(BaseModel):
     class GoogleModelSettings(BaseModel):
@@ -103,13 +140,22 @@ class ProviderConfig(BaseModel):
 
 class BrokerConfig(BaseModel):
     provider: str = "none"
+
+    # TWO gates, not one, and both default to False. `enable_live_trading` unlocks
+    # the live *mode*; `enable_live_submit` unlocks actually *placing* an order.
+    # Splitting them means you can run the live pipeline end-to-end — real prices,
+    # real portfolio, real risk checks — with order submission still bolted shut.
     enable_live_trading: bool = False
     enable_live_submit: bool = False   # NEW: separate opt-in for actual order placement
+
     paper_broker_default: str = "paper"
     # Note: credential keys are stored here as names of env vars, not values
 
 
 class RiskConfig(BaseModel):
+    # --- Baseline limits (apply in every mode) ---
+    # Deliberately tiny defaults. If a limit is ever missing from a config, the
+    # agent must end up over-constrained and idle, never unconstrained.
     max_daily_loss: float = 100.0
     max_position_notional: float = 100.0
     max_trades_per_day: int = 5
@@ -121,7 +167,11 @@ class RiskConfig(BaseModel):
     enforce_market_hours: bool = False
     symbol_allowlist: Optional[Set[str]] = None
     symbol_blocklist: Optional[Set[str]] = None
-    # NEW: live-submit-specific hard limits (defense-in-depth)
+
+    # --- Live-submit hard limits (defence in depth) ---
+    # A second, tighter cage that applies only on the live submit path, so live can
+    # be capped far below what paper is allowed to do. Each field has a sentinel
+    # meaning "no separate live limit — inherit the baseline above".
     live_submit_max_order_notional: float = 0.0  # 0 means use max_order_notional
     live_submit_allowed_symbols: Optional[Set[str]] = None  # None means use symbol_allowlist
     live_submit_allowed_sides: Optional[Set[str]] = None    # e.g. {"buy"}, None means all
@@ -130,6 +180,9 @@ class RiskConfig(BaseModel):
 class SafetyConfig(BaseModel):
     kill_switch_enabled: bool = False
     heartbeat_timeout_seconds: int = 300
+
+    # Approval is required by default, and the default mode still demands a human on
+    # live orders. Turning either off is an explicit, auditable act.
     require_order_approval: bool = True
     order_approval_mode: str = "manual_live" # auto_paper, manual_live, disabled_live
 
@@ -171,7 +224,13 @@ class NotificationConfig(BaseModel):
     slack_webhook_url_env: str = "SLACK_WEBHOOK_URL"
 
 
+# ==============================================================================
+# ROOT CONFIG
+# ==============================================================================
+
 class AtlasConfig(BaseModel):
+    # Paper by default. Reaching "live" requires flipping this *and* both broker
+    # gates — see live_disabled_reasons() for the full set of locks.
     trading_mode: str = "paper" # backtest, paper, live
     workspace_root: Path = Path(".")
     memory_dir: Path = Path("memory")
@@ -197,12 +256,18 @@ class AtlasConfig(BaseModel):
     git_commit_author_name: str = "Atlas Agent"
     git_commit_author_email: str = "atlas-agent@example.local"
 
+    # --- Legacy field migration (runs before validation) ---
+
     @model_validator(mode='before')
     @classmethod
     def map_legacy_fields(cls, data: Any) -> Any:
+        # mode='before' is essential: the flat legacy keys are not fields on this
+        # model, so by the time normal validation ran they would already have been
+        # dropped as unknown. Rewriting them here is what keeps an old config file
+        # from silently booting with default risk limits.
         if not isinstance(data, dict):
             return data
-        
+
         # Helper to set nested values
         def set_nested(d, path, val):
             parts = path.split('.')
@@ -228,7 +293,12 @@ class AtlasConfig(BaseModel):
         
         return data
 
-    # Compatibility properties
+    # --- Compatibility accessors ---
+    # Flat read-only views onto the nested groups above. They exist so that older
+    # call sites (and the checkers pinned to them) keep reading `config.max_daily_loss`
+    # while the data lives in `config.risk`. Read-only on purpose: writing through
+    # them would let a caller edit the nested model behind pydantic's back.
+
     @property
     def enable_live_trading(self) -> bool:
         return self.broker.enable_live_trading
@@ -333,7 +403,20 @@ class AtlasConfig(BaseModel):
         from atlas_agent.config.builder import get_effective_config
         return get_effective_config()
 
+    # ==========================================================================
+    # LIVE-TRADING GATE
+    # ==========================================================================
+
     def live_disabled_reasons(self) -> tuple[str, ...]:
+        """List every reason live trading is currently blocked.
+
+        Returns:
+            A tuple of human-readable reasons. Empty means live is unlocked.
+        """
+        # Collects *all* reasons rather than short-circuiting on the first one. An
+        # operator enabling live trading needs the full list up front — telling them
+        # one lock at a time turns the process into a frustrating game of whack-a-mole
+        # against a system where being blocked is the safe state.
         reasons: list[str] = []
         if self.trading_mode != "live":
             reasons.append("TRADING_MODE must be live")

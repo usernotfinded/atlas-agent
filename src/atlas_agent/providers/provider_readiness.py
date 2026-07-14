@@ -1,3 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/provider_readiness.py
+# PURPOSE: The POLICY gate over provider calls: decides whether a request is even
+#          permitted, independently of whether it would technically work. Answers
+#          "may we ask this model this?", not "can we reach it?".
+# DEPS:    providers.provider_preflight (shares its validators, so policy and
+#          preflight cannot drift apart on what a valid request looks like)
+#
+# NOTE:    Like preflight, this module is inert: policy-only, no network, no keys.
+#          A gate that could itself make the call it is gating would be no gate.
+# ==============================================================================
+
 """Provider readiness gate and capability inventory.
 
 This module provides a local-only capability inventory and policy gate
@@ -12,6 +25,7 @@ It is strictly dry-run, audit-only, policy-only. It does NOT:
   - Authorize any execution
 """
 
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -25,6 +39,10 @@ from atlas_agent.providers.provider_preflight import (
     validate_purpose,
 )
 
+
+# ==============================================================================
+# HELPERS
+# ==============================================================================
 
 def _utc_timestamp() -> str:
     return datetime.now(UTC).replace(microsecond=0).isoformat()

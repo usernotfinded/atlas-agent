@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    workspace.py
+# PURPOSE: Answers "which workspace am I operating on?" and creates new ones from
+#          templates. Every command depends on this: pick the wrong workspace and
+#          the agent trades against the wrong config, portfolio and audit trail.
+# DEPS:    tomlkit (global config), importlib.resources (packaged templates)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -12,12 +22,25 @@ from typing import Any
 import tomlkit
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
 DEFAULT_TEMPLATE = "routine-trader"
+
+# The global config is written to disk in the clear, so secret-looking keys are
+# stripped on the way out. See _sanitize_default_config().
 SENSITIVE_CONFIG_MARKERS = ("KEY", "SECRET", "TOKEN", "PASSWORD")
 
 
+# ==============================================================================
+# MODELS
+# ==============================================================================
+
 @dataclass(frozen=True)
 class WorkspaceResolution:
+    # `path=None` with a non-None `warning` is the "found something, rejected it"
+    # case — distinct from `path=None, warning=None`, which means "nothing found".
+    # Callers rely on that distinction to decide whether to complain or to offer
+    # `atlas init`.
     path: Path | None
     source: str | None
     warning: str | None
@@ -28,6 +51,10 @@ class WorkspaceResolution:
 class WorkspaceInitError(RuntimeError):
     pass
 
+
+# ==============================================================================
+# GLOBAL DEFAULT WORKSPACE
+# ==============================================================================
 
 def get_default_config_path() -> Path:
     return Path.home() / ".atlas" / "config.json"
@@ -61,8 +88,13 @@ def clear_default_workspace() -> None:
     _write_default_config(data)
 
 
+# ==============================================================================
+# WORKSPACE RESOLUTION
+# ==============================================================================
+
 def is_workspace(path: Path) -> bool:
-    # A workspace is identified by the presence of core directories
+    # `memory/` is the marker directory: it is the one thing every template creates
+    # and no bare directory has by accident.
     return path.is_dir() and (path / "memory").exists()
 
 
@@ -71,6 +103,20 @@ def resolve_workspace_path(args_workspace: str | None = None) -> Path | None:
 
 
 def resolve_workspace(args_workspace: str | None = None) -> WorkspaceResolution:
+    """Resolve the active workspace using a fixed precedence chain.
+
+    Args:
+        args_workspace: the value of the --workspace flag, if the user passed one.
+
+    Returns:
+        A WorkspaceResolution naming the winning source, or carrying a warning if a
+        source was configured but pointed somewhere invalid.
+    """
+    # Precedence runs explicit → ambient. Note that an *invalid* source at any tier
+    # stops the chain and returns a warning, instead of silently falling through to
+    # the next one: if you passed --workspace and it was wrong, quietly trading
+    # against the cwd instead would be the worst possible outcome.
+
     # 1. CLI flag
     if args_workspace:
         candidate = Path(args_workspace).expanduser().resolve()
@@ -113,6 +159,10 @@ def resolve_workspace(args_workspace: str | None = None) -> WorkspaceResolution:
     return WorkspaceResolution(path=None, source=None, warning=None)
 
 
+# ==============================================================================
+# GLOBAL CONFIG FILE I/O
+# ==============================================================================
+
 def _default_workspace_candidate() -> Path | None:
     data = _load_default_config()
     raw = data.get("default_workspace")
@@ -134,7 +184,7 @@ def _load_default_config() -> dict[str, Any]:
             except Exception:
                 pass
         return {}
-    
+
     try:
         if path.suffix == ".json":
             with open(path, "r", encoding="utf-8") as f:
@@ -144,6 +194,9 @@ def _load_default_config() -> dict[str, Any]:
                 parsed = tomlkit.load(f)
                 return dict(parsed)
     except Exception:
+        # A corrupt global config degrades to "no default workspace" rather than
+        # taking down every `atlas` invocation on the machine. The user can still
+        # pass --workspace, and `set_default_workspace` will rewrite the file clean.
         return {}
 
 
@@ -160,6 +213,10 @@ def _write_default_config(data: dict[str, Any]) -> None:
 
 
 def _sanitize_default_config(data: dict[str, Any]) -> dict[str, Any]:
+    # Allowlist, not blocklist. Two independent filters:
+    #   - secret-looking keys are dropped outright;
+    #   - only scalars survive, so no nested structure can smuggle a credential
+    #     past the key check inside a dict or list value.
     sanitized: dict[str, Any] = {}
     for key, value in data.items():
         key_text = str(key)
@@ -170,6 +227,10 @@ def _sanitize_default_config(data: dict[str, Any]) -> dict[str, Any]:
     return sanitized
 
 
+# ==============================================================================
+# WORKSPACE CREATION
+# ==============================================================================
+
 def init_workspace(
     path: str | Path,
     template: str = DEFAULT_TEMPLATE,
@@ -177,12 +238,17 @@ def init_workspace(
 ) -> WorkspaceResolution:
     target_path = Path(path).expanduser().resolve()
     overwritten = False
+
+    # Re-initialising an existing workspace without --force is a no-op, not an
+    # error: `atlas init` has to stay idempotent so it can be run from a setup
+    # script without guarding it.
     if is_workspace(target_path):
         if not force:
             return WorkspaceResolution(path=target_path, source="cwd", warning=None)
         overwritten = True
-    
-    # If not force and directory exists and is not empty, fail
+
+    # A non-empty directory that is *not* a workspace is someone else's data. We
+    # refuse rather than scatter template files into it.
     if not force and target_path.exists() and any(target_path.iterdir()):
         raise WorkspaceInitError(f"workspace path already exists and is not empty: {target_path}")
 
@@ -207,7 +273,13 @@ def init_workspace(
     )
 
 
+# --- Template plumbing ---
+
 def _resolve_template(template: str) -> Traversable | Path | None:
+    # Two lookups because the two deployment shapes differ: importlib.resources is
+    # the only thing that works from an installed wheel (the template may live
+    # inside a zip), while the __file__-relative path is what works in an editable
+    # checkout where package data was never staged.
     try:
         packaged_template = resources.files("atlas_agent").joinpath("templates", template)
         if packaged_template.is_dir():
@@ -222,6 +294,8 @@ def _resolve_template(template: str) -> Traversable | Path | None:
 
 
 def _copy_template_tree(source_root: Traversable | Path, target_path: Path) -> None:
+    # Hand-rolled instead of shutil.copytree because the source may be a Traversable
+    # backed by a zipped wheel, which has no filesystem path for copytree to walk.
     for source in source_root.iterdir():
         destination = target_path / source.name
         if source.is_dir():
@@ -233,6 +307,9 @@ def _copy_template_tree(source_root: Traversable | Path, target_path: Path) -> N
 
 
 def _ensure_runtime_dirs(target_path: Path) -> None:
+    # Created eagerly rather than lazily at first write. Templates ship no empty
+    # directories (git cannot track them), and a missing audit/ or events/ dir on
+    # the write path would mean losing the very record that explains the failure.
     for directory in (
         target_path / ".atlas" / "backtests",
         target_path / ".atlas" / "locks",

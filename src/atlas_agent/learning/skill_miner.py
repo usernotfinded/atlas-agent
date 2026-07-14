@@ -1,17 +1,40 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/skill_miner.py
+# PURPOSE: Placeholder. Intended to mine reusable skills from the trade journal.
+# DEPS:    stdlib only
+#
+# WARNING: No mining happens. The journal is read only to check that it is longer
+#          than 50 characters; its CONTENT is never analysed. On any non-trivial
+#          journal this returns the same static proposed skill, so a "mined" skill
+#          reflects nothing the agent actually learned.
+#
+#          The proposed skill still passes through the normal human review gate, so
+#          this is misleading rather than dangerous — but do not read a proposal from
+#          here as evidence of anything.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import datetime
 from pathlib import Path
 
 
+# ==============================================================================
+# SKILL MINING (STUB — see the warning above)
+# ==============================================================================
+
 def mine_skills_from_journal(memory_dir: Path) -> list[dict]:
     """Placeholder for mining skills from journal experience."""
     journal_path = memory_dir / "trade_journal.md"
     if not journal_path.exists():
         return []
-    
+
     # Real implementation would use LLM to analyze journal.
     # For MVP, we'll return a static proposed skill if journal is non-empty.
+    # NOTE: `content` is measured, never read. The 50-char floor is the entire
+    # "analysis" — it only distinguishes an empty journal from a non-empty one.
     content = journal_path.read_text(encoding="utf-8")
     if len(content) > 50:
         return [

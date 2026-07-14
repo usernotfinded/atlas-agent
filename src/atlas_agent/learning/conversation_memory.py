@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/conversation_memory.py
+# PURPOSE: Ingests conversations into the searchable memory index. Conversations
+#          are user-authored free text, so they are the most likely place for a
+#          pasted API key to enter the system — hence the scrubbing on ingest.
+# DEPS:    learning.memory_index (the SQLite index)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import datetime
@@ -7,6 +17,11 @@ from pathlib import Path
 from atlas_agent.learning.memory_index import rebuild_memory_index, search_memory_index
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Scrubbed on the way IN, not on the way out. Memory files are fed back into the model
+# prompt, so a secret that lands here is a secret on its way to a provider — and by
+# then it is too late to filter it.
 SECRET_VALUE_RE = re.compile(
     r"(?P<name>[A-Z0-9_]*(?:API_KEY|API_SECRET|SECRET_KEY|TOKEN|PASSWORD)[A-Z0-9_]*)"
     r"\s*=\s*"

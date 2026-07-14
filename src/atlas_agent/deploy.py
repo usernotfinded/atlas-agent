@@ -1,14 +1,34 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    deploy.py
+# PURPOSE: Scaffolds deployment artefacts (Docker, systemd, VPS/serverless/GPU
+#          notes) into a workspace. Templates only — this module never deploys
+#          anything, it just writes files the operator then reviews and runs.
+# DEPS:    stdlib only (pathlib, dataclasses)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
 
 
+# ==============================================================================
+# MODELS
+# ==============================================================================
+
 @dataclass(frozen=True)
 class GeneratedFile:
     path: Path
+    # False means the file already existed and was left untouched — see
+    # ensure_deploy_files(), which never overwrites.
     created: bool
 
+
+# ==============================================================================
+# TEMPLATES
+# ==============================================================================
 
 DOCKERFILE = """FROM python:3.12-slim
 
@@ -98,6 +118,8 @@ Keep model workers separate from broker credentials when possible.
 """
 
 
+# --- Target → files map ---
+
 DEPLOYMENT_FILES = {
     "docker": {
         Path("deploy/Dockerfile"): DOCKERFILE,
@@ -118,7 +140,20 @@ DEPLOYMENT_FILES = {
 }
 
 
+# ==============================================================================
+# SCAFFOLDING
+# ==============================================================================
+
 def ensure_deploy_files(kind: str, base_dir: Path | None = None) -> list[GeneratedFile]:
+    """Write the deployment templates for *kind*, without overwriting.
+
+    Args:
+        kind: one of the keys in DEPLOYMENT_FILES.
+        base_dir: workspace root; defaults to the current directory.
+
+    Returns:
+        One GeneratedFile per template, each flagged with whether it was written.
+    """
     base = base_dir or Path.cwd()
     if kind not in DEPLOYMENT_FILES:
         raise ValueError(f"unknown deploy target: {kind}")
@@ -126,6 +161,9 @@ def ensure_deploy_files(kind: str, base_dir: Path | None = None) -> list[Generat
     generated: list[GeneratedFile] = []
     for relative_path, content in DEPLOYMENT_FILES[kind].items():
         path = base / relative_path
+        # Never overwrite. These files get hand-edited the moment they exist — an
+        # operator's tuned systemd unit or compose file must survive a re-run of
+        # `atlas deploy`. Existing files are still reported, with created=False.
         created = not path.exists()
         if created:
             path.parent.mkdir(parents=True, exist_ok=True)

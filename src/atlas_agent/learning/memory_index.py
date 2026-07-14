@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/memory_index.py
+# PURPOSE: A local SQLite full-text index over the workspace's memory files, so the
+#          agent can retrieve relevant past context instead of pasting everything
+#          into the prompt.
+# DEPS:    sqlite3 (stdlib — the index is a local file, never a service)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import sqlite3
@@ -5,6 +15,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# A derived artifact, always rebuildable from the .md files it indexes. That is why it
+# can be deleted freely and why nothing treats it as a source of truth.
 INDEX_FILENAME = "memory.sqlite"
 
 

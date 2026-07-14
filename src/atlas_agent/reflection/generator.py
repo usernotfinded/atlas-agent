@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reflection/generator.py
+# PURPOSE: Produces reflection artifacts. With no provider configured it emits a
+#          reflection that SAYS SO, rather than fabricating an insight about the
+#          user's trading that would be indistinguishable from a real one.
+# DEPS:    reflection.models
+# ==============================================================================
+
 """Reflection generator with dry-run/static fallback.
 
 When provider execution is disabled (the default), the generator produces a

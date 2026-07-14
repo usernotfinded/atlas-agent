@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    notifications/dispatcher.py
+# PURPOSE: Chooses the transport for an outbound notification. The one place that
+#          decides whether a message actually leaves the machine.
+# DEPS:    notifications.models, notifications.transports
+# ==============================================================================
+
 """Notification dispatcher.
 
 Routes notifications to the appropriate transport based on configuration.
 Safe defaults: disabled or dry-run. Never real delivery unless explicitly configured.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from atlas_agent.notifications.models import (

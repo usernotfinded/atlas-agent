@@ -1,7 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reports/generator.py
+# PURPOSE: Assembles report data from local sources. Degrades to explicit "no data"
+#          rather than to a plausible-looking empty report — a P&L report that
+#          silently shows zero because the source was missing is a lie.
+# DEPS:    reports.sources, reports.models
+# ==============================================================================
+
 """Report generator for daily, weekly, and ad-hoc local reports.
 
 Uses only local data sources. Safe when data is missing.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC, datetime

@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/renderers.py
+# PURPOSE: Renders a learning suggestion for a human (Markdown) or a machine (JSON).
+#          Presentation only — nothing here decides anything.
+# DEPS:    learning.models
+# ==============================================================================
+
 """Markdown and JSON string renderers for learning suggestion output."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
 
 from atlas_agent.learning.models import LearningSuggestion
+
+
+# ==============================================================================
+# RENDERERS
+# ==============================================================================
 
 
 def render_markdown(suggestion: LearningSuggestion) -> str:

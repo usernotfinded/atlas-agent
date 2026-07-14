@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/models.py
+# PURPOSE: The shape of a learning suggestion — the agent's proposal about how it
+#          should change its own behaviour. This is the most delicate thing in the
+#          system: an agent editing its own rules. Hence the state machine and the
+#          mandatory human accept.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
 """Learning suggestion models.
 
 Learning suggestions are structured, reviewable artifacts derived from
@@ -6,6 +16,8 @@ remain offline, do not call providers or brokers, and require explicit human
 review before any downstream use. Suggestions are advisory-only and never
 auto-executed.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC, datetime

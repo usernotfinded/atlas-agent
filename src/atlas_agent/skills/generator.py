@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    skills/generator.py
+# PURPOSE: Produces skill candidates. With no provider configured it says so in the
+#          output rather than inventing a trading rule — a fabricated skill would be
+#          a fabricated rule the agent might later be asked to follow.
+# DEPS:    skills.models
+# ==============================================================================
+
 """Skill candidate generator with dry-run/static fallback.
 
 When provider execution is disabled (the default), the generator produces a

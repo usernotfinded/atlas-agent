@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    skills/manager.py
+# PURPOSE: Moves skills through their lifecycle on disk — proposed → active →
+#          archived — and diffs them so a reviewer can see exactly what changed
+#          before approving a rule the agent will then follow.
+# DEPS:    difflib (the review diff), shutil (directory promotion)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import difflib

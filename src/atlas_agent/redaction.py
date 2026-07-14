@@ -1,3 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    redaction.py
+# PURPOSE: The last line of defence before anything leaves the process. Scrubs
+#          secrets from free text and from structured payloads on their way to
+#          logs, audit records, CLI output and notifications.
+# DEPS:    pydantic (BaseModel payloads), atlas_agent.config.secrets (key oracle)
+#
+# DESIGN:  Defence in depth, on purpose. Four independent strategies run in
+#          sequence — known env values, known header/assignment shapes, known
+#          vendor prefixes, then generic high-entropy tokens. Any one of them can
+#          miss; a secret has to slip past all four to escape.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os
@@ -10,6 +25,8 @@ from pydantic import BaseModel
 
 from atlas_agent.config.secrets import is_secret_key
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
 
 REDACTED_VALUE = "[REDACTED]"
 
@@ -41,7 +58,12 @@ SECRET_FIELD_NAMES = {
     "TELEGRAM_BOT_TOKEN",
     "CLICKUP_API_TOKEN",
 }
+# Identifiers that *look* like high-entropy secrets but are safe — and are needed
+# in the clear, because an audit trail with a redacted order_id is worthless.
 SAFE_ID_KEYS = {"run_id", "order_id", "id"}
+
+
+# --- Secret-shaped patterns ---
 
 BEARER_TOKEN_RE = re.compile(r"\b(Bearer\s+)[A-Za-z0-9._~+/=-]+", re.IGNORECASE)
 AUTH_HEADER_RE = re.compile(
@@ -78,12 +100,24 @@ SECRET_NAME_RE = re.compile(
 )
 
 
+# ==============================================================================
+# REDACTION ENGINE
+# ==============================================================================
+
 class RedactionEngine:
+
+    # --- Known-secret inventory ---
+
     def __init__(self) -> None:
         self._known_secrets: set[str] = set()
         self.refresh()
 
     def refresh(self) -> None:
+        # Snapshot the *values* of secret-looking env vars so we can redact them by
+        # literal match anywhere they surface — even inside a broker's error string
+        # that no pattern below would recognise.
+        # The len>=4 floor keeps trivially short values (e.g. a stub "x") from
+        # turning every stray character in the output into [REDACTED].
         self._known_secrets = {
             value
             for key, value in os.environ.items()
@@ -94,10 +128,14 @@ class RedactionEngine:
     def known_secrets(self) -> set[str]:
         return set(self._known_secrets)
 
+    # --- Redaction passes ---
+
     def redact_text(self, text: str, *, key_context: str | None = None) -> str:
         if not isinstance(text, str):
             return text
 
+        # Longest-first: if one secret is a substring of another, replacing the
+        # short one first would leave the tail of the long one exposed in the clear.
         redacted = text
         for secret in sorted(self._known_secrets, key=len, reverse=True):
             redacted = redacted.replace(secret, REDACTED_VALUE)
@@ -106,13 +144,21 @@ class RedactionEngine:
         redacted = AUTH_HEADER_RE.sub(r"\g<name>\g<sep>[REDACTED]", redacted)
         redacted = SECRET_ASSIGNMENT_RE.sub(self._secret_assignment_sub, redacted)
         redacted = SECRET_VALUE_RE.sub(REDACTED_VALUE, redacted)
+
+        # The entropy sweep is the only pass that can eat a legitimate value, so it
+        # is suppressed for keys we know carry safe identifiers.
         if (key_context or "").lower() not in SAFE_ID_KEYS:
             redacted = self._redact_high_entropy_substrings(redacted)
+
+        # Second sweep: an earlier substitution can splice text back together into a
+        # NAME=value shape that did not exist in the original input.
         if _scan_text_for_secrets(redacted):
             redacted = SECRET_ASSIGNMENT_RE.sub(self._secret_assignment_sub, redacted)
         return redacted
 
     def redact_payload(self, payload: Any, *, key_context: str | None = None) -> Any:
+        # Normalise pydantic models and dataclasses down to plain dicts first, so
+        # the recursion below has exactly one container shape to reason about.
         if isinstance(payload, BaseModel):
             payload = payload.model_dump(mode="python")
         if is_dataclass(payload):
@@ -134,6 +180,8 @@ class RedactionEngine:
             return self.redact_text(payload, key_context=key_context)
         return payload
 
+    # --- Key and token heuristics ---
+
     def _is_sensitive_key(self, key: str) -> bool:
         key_upper = key.upper()
         if key_upper in SECRET_FIELD_NAMES:
@@ -150,6 +198,9 @@ class RedactionEngine:
         return f"{key_name}{match.group('sep')}{quote}{REDACTED_VALUE}{quote}"
 
     def _looks_high_entropy_token(self, value: str) -> bool:
+        # A deliberately conservative credential sniff. Every clause below exists to
+        # avoid a false positive, because this pass runs over arbitrary prose and a
+        # redacted stack trace is a debugging dead end.
         token = value.strip()
         if len(token) < 28 or len(token) > 160:
             return False
@@ -158,10 +209,13 @@ class RedactionEngine:
         allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._~+/=-")
         if any(ch not in allowed for ch in token):
             return False
+        # Mixed alpha+digit rules out long English words and bare hashes of digits.
         has_alpha = any(ch.isalpha() for ch in token)
         has_digit = any(ch.isdigit() for ch in token)
         if not (has_alpha and has_digit):
             return False
+        # Character variety is the actual entropy proxy: a real key spreads its
+        # alphabet, whereas a long repetitive identifier (aaaa-bbbb-1111) does not.
         unique_ratio = len(set(token)) / len(token)
         return unique_ratio >= 0.45
 
@@ -175,6 +229,13 @@ class RedactionEngine:
         return CANDIDATE_TOKEN_RE.sub(_sub, text)
 
 
+# ==============================================================================
+# MODULE-LEVEL FACADE
+# ==============================================================================
+
+# Built at import time so callers never have to thread an engine through. The env
+# snapshot it captures goes stale if secrets are loaded later — that is exactly
+# what `refresh_redaction_secrets()` is for, and config loading must call it.
 _DEFAULT_ENGINE = RedactionEngine()
 
 
@@ -193,6 +254,8 @@ def redact_text(text: str) -> str:
 def redact_payload(payload: Any) -> Any:
     return _DEFAULT_ENGINE.redact_payload(payload)
 
+
+# --- Leak detection (used to decide whether a second pass is needed) ---
 
 def _scan_text_for_secrets(text: str) -> list[str]:
     findings: list[str] = []

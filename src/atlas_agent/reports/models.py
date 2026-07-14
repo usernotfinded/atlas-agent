@@ -1,7 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reports/models.py
+# PURPOSE: The shape of a report. Local data only — a report never triggers a
+#          broker call, so reading one can never change anything.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
 """Report models for local daily/weekly/ad-hoc report generation.
 
 Reports use only local data. No provider calls, no broker calls, no network.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass, field

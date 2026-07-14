@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    brokers/sync.py
+# PURPOSE: Pulls the venue's view of the account — balances, positions, working
+#          orders — and normalises it into a BrokerSyncResult. This is the picture
+#          risk limits are computed against, so a partial sync is a safety concern,
+#          not a performance one.
+# DEPS:    brokers.base (read-only provider), brokers.errors (sanitisation),
+#          audit (every sync is recorded)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
@@ -10,9 +22,15 @@ from atlas_agent.brokers.models import BrokerSyncResult
 from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition, PendingOrder
 
 
+# ==============================================================================
+# BROKER SYNC SERVICE
+# ==============================================================================
+
 class BrokerSyncService:
     def __init__(
         self,
+        # Typed as BrokerProvider, the READ-ONLY protocol. This service structurally
+        # cannot place an order, no matter what it is handed.
         broker: BrokerProvider,
         audit_writer: Optional[AuditWriter] = None,
         run_id: str = "unknown",
@@ -41,6 +59,13 @@ class BrokerSyncService:
         operation_results: dict[str, Any] = {}
         operation_errors: dict[str, Exception] = {}
 
+        # Fetched in PARALLEL, and each failure captured independently rather than
+        # aborting the batch. Two reasons, both about safety rather than speed:
+        #   - the four endpoints are read-only and independent, so a slow `balances`
+        #     must not delay the `positions` that a live-submit decision is waiting on;
+        #   - one endpoint failing must not hide the state of the other three. It is
+        #     validate_live_sync() — not this method — that decides which gaps are fatal,
+        #     and it can only do that if it can see all four outcomes.
         with ThreadPoolExecutor(max_workers=len(operations), thread_name_prefix="broker-sync") as executor:
             futures = {
                 name: executor.submit(call)

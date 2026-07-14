@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    memory_doctor.py
+# PURPOSE: Health check for a workspace's memory tree. Reports what is missing,
+#          what has gone stale, and — the one thing that is an error rather than a
+#          warning — whether a credential has leaked into a memory file.
+# DEPS:    atlas_agent.safety.secrets (secret scanner)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -6,6 +16,8 @@ from pathlib import Path
 
 from atlas_agent.safety.secrets import scan_text_for_secrets
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
 
 REQUIRED_MEMORY_FILES = (
     "portfolio.md",
@@ -31,8 +43,15 @@ REQUIRED_REPORT_DIRS = (
 REQUIRED_SKILL_DIRS = ("proposed", "active", "archived")
 
 
+# ==============================================================================
+# FINDING MODELS
+# ==============================================================================
+
 @dataclass(frozen=True)
 class DoctorFinding:
+    # severity is the whole point of this type. "warning" = the workspace is untidy
+    # (a missing file the agent will recreate). "error" = something is actually
+    # wrong and a human must look — in practice: unreadable state, or a leaked secret.
     severity: str
     code: str
     message: str
@@ -54,8 +73,15 @@ class MemoryDoctorResult:
 
     @property
     def ok(self) -> bool:
+        # Warnings do not fail the check: a fresh workspace is legitimately missing
+        # most of its memory files, and failing on that would make `doctor` useless
+        # exactly when a user first runs it.
         return not self.errors
 
+
+# ==============================================================================
+# DOCTOR ENTRY POINT
+# ==============================================================================
 
 def run_memory_doctor(
     *,
@@ -74,6 +100,12 @@ def run_memory_doctor(
     _check_journal(memory_dir, result)
     return result
 
+
+# ==============================================================================
+# INDIVIDUAL CHECKS
+# ==============================================================================
+
+# --- Memory files (the only check that can raise a security error) ---
 
 def _check_memory_files(memory_dir: Path, result: MemoryDoctorResult) -> None:
     memory_dir.mkdir(parents=True, exist_ok=True)
@@ -101,6 +133,10 @@ def _check_memory_files(memory_dir: Path, result: MemoryDoctorResult) -> None:
                 )
             )
             continue
+        # Memory files are LLM-written prose that gets fed back into future prompts.
+        # A key that lands here is not just at rest on disk — it is on its way into
+        # a provider request. Hence "error", the only one this module raises.
+        # Note the message carries the *names* the scanner matched, never the values.
         secret_findings = scan_text_for_secrets(text)
         if secret_findings:
             result.findings.append(
@@ -113,8 +149,12 @@ def _check_memory_files(memory_dir: Path, result: MemoryDoctorResult) -> None:
             )
 
 
+# --- Stale state ---
+
 def _check_pending_orders(pending_orders_dir: Path, stale_hours: int, result: MemoryDoctorResult) -> None:
     pending_orders_dir.mkdir(parents=True, exist_ok=True)
+    # An order still awaiting approval a day later is almost always abandoned, and
+    # acting on a stale one means trading on a thesis the market has moved past.
     threshold = datetime.now(UTC) - timedelta(hours=stale_hours)
     for path in sorted(pending_orders_dir.glob("*.json")):
         modified = datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
@@ -128,6 +168,8 @@ def _check_pending_orders(pending_orders_dir: Path, stale_hours: int, result: Me
                 )
             )
 
+
+# --- Directory structure ---
 
 def _check_reports_dirs(reports_dir: Path, result: MemoryDoctorResult) -> None:
     for name in REQUIRED_REPORT_DIRS:
@@ -156,6 +198,8 @@ def _check_skills_dirs(skills_dir: Path, result: MemoryDoctorResult) -> None:
                 )
             )
 
+
+# --- Index and journal integrity ---
 
 def _check_conversation_index(memory_dir: Path, result: MemoryDoctorResult) -> None:
     path = memory_dir / "conversation_index.md"

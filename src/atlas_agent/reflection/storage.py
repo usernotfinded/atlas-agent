@@ -1,8 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reflection/storage.py
+# PURPOSE: Persists reflection artifacts as browsable JSON files.
+# DEPS:    reflection.models
+# ==============================================================================
+
 """Local storage for reflection artifacts.
 
 Stores artifacts under `.atlas/reflections/` as JSON files.
 All operations are local and safe.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

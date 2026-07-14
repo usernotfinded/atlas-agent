@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/__init__.py
+# PURPOSE: Public surface of the learning domain. The agent proposes lessons drawn
+#          from its own journal — but every suggestion is ADVISORY and requires an
+#          explicit human accept before it can influence anything.
+# DEPS:    learning.loop, learning.models, learning.storage, learning.approval
+# ==============================================================================
+
+# --- IMPORTS ---
 from atlas_agent.learning.loop import run_learning_cycle
 from atlas_agent.learning.reflections import generate_reflection
 from atlas_agent.learning.user_model import load_user_model, save_user_model

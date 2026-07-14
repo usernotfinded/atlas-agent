@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reports/writer.py
+# PURPOSE: Writes a rendered report to the reports/ tree under a dated filename.
+# DEPS:    stdlib only
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import UTC, datetime

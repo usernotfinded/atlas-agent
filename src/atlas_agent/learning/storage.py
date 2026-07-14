@@ -1,8 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/storage.py
+# PURPOSE: Persists learning suggestions as reviewable JSON files on disk.
+# DEPS:    learning.models
+# ==============================================================================
+
 """Local storage for learning suggestion artifacts.
 
 Stores suggestions under `.atlas/learning/suggestions/` as JSON files.
 All operations are local and safe.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -12,6 +21,11 @@ from typing import Any
 from atlas_agent.learning.models import LearningSuggestion, SuggestionStatus
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# One file per suggestion, in a directory a human can browse. The point is
+# reviewability: a suggestion the agent made about itself should be as easy to read
+# and delete as any other file.
 SUGGESTIONS_DIR = ".atlas/learning/suggestions"
 
 

@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    safety/deadman.py
+# PURPOSE: The dead-man's switch. Watches the heartbeat and trips the kill switch
+#          when the agent stops proving it is alive. This is the brake that works
+#          when nothing else can: it defends against the agent CRASHING with open
+#          positions, which is exactly the case where the agent cannot save itself.
+# DEPS:    safety.kill_switch (what it trips), market.session (when it is armed),
+#          safety.atomic_write (heartbeat persistence)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import asyncio
@@ -17,16 +29,28 @@ from atlas_agent.safety.atomic_write import atomic_write_json
 from atlas_agent.safety.kill_switch import KILL_SWITCH_MODES, KillSwitchController
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
 Notifier = Callable[[str], Any]
 AuditHook = Callable[[str, str, dict[str, Any]], Any]
 TriggerHook = Callable[[dict[str, Any]], Any]
 
 
+# ==============================================================================
+# CONFIGURATION
+# ==============================================================================
+
 @dataclass(frozen=True)
 class DeadmanConfig:
+    # timeout_minutes=0 means DISABLED (see `enabled` below). Off by default, because
+    # a deadman that trips spuriously would flatten a healthy book — the cure being
+    # worse than the disease. Enabling it is a deliberate act.
     timeout_minutes: int = 0
     action: str = "soft"
     auto_reset: bool = True
+
+    # Off by default: outside market hours a "dead" agent cannot do any harm, since no
+    # order would fill anyway. Arming it then would only generate false alarms.
     active_outside_market: bool = False
     check_interval_seconds: float = 5.0
     flatten_strategy: str = "market"
@@ -38,6 +62,10 @@ class DeadmanConfig:
 
     @classmethod
     def from_env(cls) -> DeadmanConfig:
+        # Every value is validated here, at construction, and an invalid one RAISES
+        # rather than falling back to a default. A deadman configured with a typo must
+        # refuse to start — silently running with `action="soft"` when the operator
+        # asked for "flatten" is the kind of surprise this module exists to eliminate.
         timeout_raw = os.getenv("DEADMAN_TIMEOUT_MINUTES", "").strip()
         timeout_minutes = int(timeout_raw) if timeout_raw else 0
         action = os.getenv("DEADMAN_ACTION", "soft").strip().lower()
@@ -76,6 +104,10 @@ class DeadmanConfig:
         )
 
 
+# ==============================================================================
+# HEARTBEAT MODELS
+# ==============================================================================
+
 @dataclass(frozen=True)
 class HeartbeatStatus:
     enabled: bool
@@ -94,6 +126,14 @@ class HeartbeatRecord:
     source: str
     actor: str
 
+
+# ==============================================================================
+# HEARTBEAT FILE I/O
+# ==============================================================================
+#
+# The file is the CROSS-PROCESS channel. An external supervisor, a cron job or a
+# separate `atlas` invocation can stamp it, which is what allows a deadman running
+# in one process to be fed by an agent running in another.
 
 def deadman_heartbeat_path(memory_dir: Path) -> Path:
     return memory_dir / "deadman_heartbeat.json"
@@ -121,6 +161,15 @@ def write_deadman_heartbeat(
 
 
 def read_deadman_heartbeat(path: str | Path) -> HeartbeatRecord | None:
+    """Read the external heartbeat file, or None if it is absent or unusable.
+
+    Returns:
+        A HeartbeatRecord, or None. None means "no usable heartbeat here" — the
+        caller must treat that as an ABSENCE of a fresh signal, never as a fresh one.
+        Every failure path below therefore returns None rather than a synthesised
+        record with the current time, which would silently feed the deadman a
+        heartbeat the agent never sent.
+    """
     target = Path(path)
     if not target.exists():
         return None
@@ -131,6 +180,8 @@ def read_deadman_heartbeat(path: str | Path) -> HeartbeatRecord | None:
     timestamp_raw = payload.get("timestamp")
     source = str(payload.get("source", "")).strip()
     actor = str(payload.get("actor", "")).strip()
+    # The timestamp is the only field that MUST parse — it is the one the freshness
+    # check depends on. source/actor are provenance labels and degrade to placeholders.
     if not isinstance(timestamp_raw, str) or not timestamp_raw:
         return None
     try:
@@ -141,12 +192,21 @@ def read_deadman_heartbeat(path: str | Path) -> HeartbeatRecord | None:
         source = "external"
     if not actor:
         actor = "unknown"
+    # A naive timestamp is assumed UTC. Comparing naive to aware datetimes raises, and
+    # an exception inside the deadman's watch loop is the last thing anyone wants.
     if timestamp.tzinfo is None:
         timestamp = timestamp.replace(tzinfo=UTC)
     return HeartbeatRecord(timestamp=timestamp, source=source, actor=actor)
 
 
+# ==============================================================================
+# DEADMAN SWITCH
+# ==============================================================================
+
 class DeadmanSwitch:
+
+    # --- Construction ---
+
     def __init__(
         self,
         *,
@@ -169,11 +229,15 @@ class DeadmanSwitch:
         self.heartbeat_path = Path(heartbeat_path) if heartbeat_path is not None else None
         self._now = now_func or (lambda: datetime.now(UTC))
         self._sleep = sleep_func or asyncio.sleep
+        # Construction itself counts as a heartbeat. Without this the switch would be
+        # born already `timeout_minutes` overdue and would trip on its very first tick.
         start = self._now()
         self._last_heartbeat_at = start
         self._last_heartbeat_source = "startup"
         self._triggered = False
         self._lock = threading.RLock()
+
+    # --- Heartbeat recording ---
 
     def record_heartbeat(
         self,
@@ -181,6 +245,10 @@ class DeadmanSwitch:
         source: str,
         actor: str = "system",
     ) -> None:
+        # Clearing `_triggered` here is what makes the switch re-armable: once the agent
+        # proves it is alive again, the deadman goes back on watch. Note this does NOT
+        # release the kill switch it tripped — that stays armed until a human disables
+        # it, which is the whole point of a deadman.
         with self._lock:
             now = self._now()
             self._last_heartbeat_at = now
@@ -210,6 +278,8 @@ class DeadmanSwitch:
         self.record_heartbeat(source=source, actor=actor)
         return True
 
+    # --- Observation ---
+
     def status(self) -> HeartbeatStatus:
         self._refresh_from_external_heartbeat()
         now = self._now()
@@ -230,12 +300,19 @@ class DeadmanSwitch:
             triggered=triggered,
         )
 
+    # ==========================================================================
+    # WATCH LOOP
+    # ==========================================================================
+
     async def run(
         self,
         *,
         stop_event: asyncio.Event | None = None,
         broker: Broker | None = None,
     ) -> None:
+        # stop_event is checked twice per iteration — before and after the tick — so a
+        # shutdown requested *during* a tick does not cost a full sleep interval before
+        # it is honoured.
         while True:
             if stop_event is not None and stop_event.is_set():
                 return
@@ -245,19 +322,38 @@ class DeadmanSwitch:
             await self._sleep(self.config.check_interval_seconds)
 
     async def tick(self, *, broker: Broker | None = None) -> bool:
+        """One watch cycle. Returns True only if this call tripped the switch."""
+        # Four gates in order, cheapest and least destructive first. Every one of them
+        # is a reason NOT to trip — reaching the bottom is what trips it.
+
+        # 1. Disabled → nothing to do.
         if not self.config.enabled:
             return False
+
+        # 2. Pick up a heartbeat written by another process before judging staleness,
+        #    otherwise a healthy agent in a separate process looks dead from here.
         self._refresh_from_external_heartbeat()
         now = self._now()
         market_state = self.market_detector.get_state(now)
+
+        # 3. Market closed → stand down. A dead agent outside market hours holds no
+        #    live risk, and flattening into a closed book achieves nothing but noise.
         if not self.config.active_outside_market and market_state != "open":
             return False
+
         with self._lock:
             elapsed = now - self._last_heartbeat_at
+            # 4a. Already tripped → return False rather than re-trip. This is the latch
+            #     that stops the loop from re-issuing flatten orders every 5 seconds
+            #     into an account it has already flattened.
             if self._triggered:
                 return False
+            # 4b. Heartbeat still fresh → the agent is alive.
             if elapsed < timedelta(minutes=self.config.timeout_minutes):
                 return False
+            # Latch set INSIDE the lock, before the (slow, awaited) kill-switch call
+            # below. Otherwise two concurrent ticks could both pass the check and both
+            # fire the brake.
             self._triggered = True
             last_heartbeat = self._last_heartbeat_at.isoformat()
             last_source = self._last_heartbeat_source

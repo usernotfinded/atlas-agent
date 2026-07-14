@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    skills/renderers.py
+# PURPOSE: Renders skill candidates and library entries for humans (Markdown) and
+#          machines (JSON).
+# DEPS:    skills.models
+# ==============================================================================
+
 """Markdown and JSON string renderers for skill candidate output."""
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

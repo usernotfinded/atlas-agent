@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    telegram_control.py
+# PURPOSE: Pure parsing and authorisation logic for the Telegram control plane.
+#          Deliberately network-free: this module decides *whether* a message is
+#          allowed to do something, never does it. That keeps the authorisation
+#          boundary unit-testable without a bot, a token or a socket.
+# DEPS:    safety.kill_switch (valid modes), safety.totp (second factor)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os
@@ -7,6 +18,8 @@ from typing import Mapping
 from atlas_agent.safety.kill_switch import KILL_SWITCH_MODES
 from atlas_agent.safety.totp import verify_totp
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
 
 TELEGRAM_COMMANDS = (
     "/status",
@@ -27,8 +40,14 @@ TELEGRAM_COMMANDS = (
 )
 
 
+# ==============================================================================
+# DIAGNOSTICS
+# ==============================================================================
+
 @dataclass(frozen=True)
 class TelegramDiagnostics:
+    # Booleans, never the values themselves: this struct exists precisely so that
+    # `atlas telegram doctor` can confirm a token is configured without printing it.
     token_present: bool
     allowed_users_present: bool
     mode: str
@@ -67,7 +86,14 @@ def get_telegram_commands() -> tuple[str, ...]:
     return TELEGRAM_COMMANDS
 
 
+# ==============================================================================
+# AUTHORISATION
+# ==============================================================================
+
 def is_authorized_user(user_id: str | int, allowed_user_ids: str | None) -> bool:
+    # Unconfigured means "nobody", not "everybody". If the allowlist is missing the
+    # bot must be inert — the failure mode of the opposite default is a stranger on
+    # Telegram holding the kill switch.
     if not allowed_user_ids:
         return False
     requested = str(user_id).strip()
@@ -86,15 +112,25 @@ def is_authorized_user_from_env(
     return is_authorized_user(user_id, allowed)
 
 
+# ==============================================================================
+# COMMAND PARSING
+# ==============================================================================
+
 def parse_kill_command_mode(command_text: str) -> str | None:
     parts = command_text.strip().split()
     if not parts:
         return None
     if parts[0].lower() != "/kill":
         return None
+    # A bare `/kill` means "soft": the mildest mode, because the operator who typed
+    # it under pressure did not ask to liquidate anything. Escalating to flatten must
+    # be spelled out.
     if len(parts) == 1:
         return "soft"
     mode = parts[1].strip().lower()
+    # Validated against the canonical mode set rather than passed through, so a typo
+    # (`/kill flatn`) returns None and is rejected instead of reaching the switch as
+    # an unrecognised — and possibly mis-handled — mode.
     if mode in KILL_SWITCH_MODES:
         return mode
     return None
@@ -109,8 +145,14 @@ def parse_resume_totp(command_text: str) -> str | None:
     return parts[1].strip()
 
 
+# ==============================================================================
+# RESUME SECOND FACTOR
+# ==============================================================================
+
 def should_require_totp_for_resume(state_mode: str | None = None) -> bool:
-    # Resume is always sensitive. Flatten is explicitly mandatory.
+    # Killing is cheap; *un*-killing is the dangerous direction. Anyone who has
+    # grabbed the chat can stop the agent — only a second factor should be able to
+    # start it trading again. Unknown mode (None) requires TOTP too: fail closed.
     return True if state_mode is None else state_mode.lower() in {"soft", "cancel", "flatten"}
 
 
@@ -121,6 +163,8 @@ def verify_resume_totp_from_env(
 ) -> bool:
     values = env if env is not None else os.environ
     secret = values.get("ATLAS_TOTP_SECRET", "").strip()
+    # No secret configured → resume is impossible, not automatic. An unconfigured
+    # second factor must never degrade into no second factor.
     if not secret:
         return False
     return verify_totp(secret, totp_code)

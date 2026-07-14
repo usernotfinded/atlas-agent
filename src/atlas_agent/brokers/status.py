@@ -1,9 +1,25 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    brokers/status.py
+# PURPOSE: The static support matrix — which brokers exist, and exactly what each
+#          is allowed to do. This table is the ALLOWLIST that brokers/guards.py
+#          enforces: a broker absent from it cannot trade, full stop.
+# DEPS:    none (pure data — no network, no credentials, no runtime resolution)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Literal
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Only "default_paper" and "supported_opt_in" can reach a live venue. The other four
+# are all shades of no — the distinction exists so an operator gets told WHY a broker
+# is unavailable ("not implemented" vs "not configured" vs "will never be supported")
+# rather than a flat refusal.
 BrokerSupportKind = Literal[
     "default_paper",
     "supported_opt_in",
@@ -13,6 +29,10 @@ BrokerSupportKind = Literal[
     "unsupported",
 ]
 
+
+# ==============================================================================
+# SUPPORT ENTRY
+# ==============================================================================
 
 @dataclass(frozen=True)
 class BrokerSupportEntry:
@@ -25,9 +45,16 @@ class BrokerSupportEntry:
     broker_id: str
     display_name: str
     status: BrokerSupportKind
+
+    # Three capabilities, granted separately and in increasing danger:
+    #   paper      → simulate only, no network;
+    #   read_only  → observe a real account (guard_sync);
+    #   live_submit→ place real orders (guard_submit).
+    # A broker can be trusted to be read while still being barred from writing.
     paper_supported: bool
     read_only_supported: bool
     live_submit_supported: bool
+
     requires_explicit_opt_in: bool
     default_enabled: bool
     notes: str
@@ -46,9 +73,16 @@ class BrokerSupportEntry:
         }
 
 
+# ==============================================================================
+# SUPPORT INVENTORY
+# ==============================================================================
+
 # Static support inventory. Keep this in sync with actual adapter implementations.
 # This table is intentionally conservative: if a broker is not explicitly ready,
 # it is marked disabled/placeholder/unsupported.
+#
+# The conservatism is structural, not stylistic: a broker that is merely FORGOTTEN
+# here is treated as unknown, and unknown means blocked. Omission fails safe.
 _BROKER_SUPPORT_INVENTORY: tuple[BrokerSupportEntry, ...] = (
     BrokerSupportEntry(
         broker_id="paper",

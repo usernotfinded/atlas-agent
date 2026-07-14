@@ -1,3 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    execution/submit_state.py
+# PURPOSE: The crash-safe state machine behind a live submit. Records what we were
+#          about to do BEFORE we do it, so that a process killed mid-submit leaves
+#          a record saying "an order may exist at the venue" rather than nothing.
+# DEPS:    execution.approval (payload integrity — the same v2 schema and hashes)
+#
+# DESIGN:  The dangerous state is not "failed" but "unknown". A submit that threw
+#          after the request left the machine may still have reached the broker, so
+#          it is marked UNCERTAIN, never failed — and only reconciliation against
+#          the venue is allowed to settle it.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import copy
@@ -21,14 +36,21 @@ class SubmitStateError(Exception):
 
 
 
-# ---------------------------------------------------------------------------
-# client_order_id generation
-# ---------------------------------------------------------------------------
+# ==============================================================================
+# CLIENT ORDER ID
+# ==============================================================================
 
+# The client_order_id is the IDEMPOTENCY KEY: it is what lets reconciliation ask the
+# broker "did you already get this order?" after a crash. It is derived from the
+# order, not random, so the same order always yields the same id — a fresh uuid on
+# every retry would make a duplicate submit indistinguishable from a new one.
 _MAX_CLIENT_ORDER_ID_LEN = 64
 _CLIENT_ORDER_ID_SAFE_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 _BROKER_ORDER_ID_SAFE_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
+# A broker-supplied id gets written into our state files and logs. This blocklist
+# stops a hostile or buggy broker response from smuggling credential-shaped text into
+# them through the one field we echo back verbatim.
 _FORBIDDEN_BROKER_ORDER_ID_SUBSTRINGS = frozenset({
     "API_KEY",
     "APIKEY",

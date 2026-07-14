@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    learning/loop.py
+# PURPOSE: The learning cycle: reflect on what happened, mine candidate skills,
+#          write both out for review. Runs offline and touches no broker — the
+#          agent thinks about its past here, it does not act on it.
+# DEPS:    learning.reflections, learning.skill_miner, learning.user_model, events.log
+#
+# NOTE:    mine_skills_from_journal() is currently a stub — see its file warning.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import datetime
@@ -7,6 +19,11 @@ from atlas_agent.events.log import EventLogger
 from atlas_agent.learning.reflections import generate_reflection
 from atlas_agent.learning.skill_miner import mine_skills_from_journal, save_proposed_skill
 from atlas_agent.learning.user_model import load_user_model
+
+
+# ==============================================================================
+# LEARNING CYCLE
+# ==============================================================================
 
 def run_learning_cycle(
     memory_dir: Path,

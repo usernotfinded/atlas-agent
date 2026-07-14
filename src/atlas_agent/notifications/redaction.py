@@ -1,8 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    notifications/redaction.py
+# PURPOSE: Scrubs notification payloads before they are logged or previewed. The
+#          specific hazard here is the WEBHOOK URL: a Slack webhook is itself a
+#          credential — anyone holding it can post to the channel — and it would
+#          otherwise appear in plain text in every delivery log line.
+# DEPS:    notifications.models
+# ==============================================================================
+
 """Notification redaction helpers.
 
 Redacts secrets from notification payloads and results before logging
 or previewing. Never exposes webhook URLs or tokens.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import re

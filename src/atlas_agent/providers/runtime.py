@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/runtime.py
+# PURPOSE: Works out which provider, model, endpoint and credential a run will
+#          actually use — and reports WHERE each came from. The provenance matters:
+#          "which key is this agent about to spend money with?" must be answerable
+#          without printing the key.
+# DEPS:    providers.catalog (the profiles), config.secrets (the .env.atlas store)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os
@@ -14,9 +25,16 @@ from atlas_agent.providers.catalog import (
     normalize_provider_id,
 )
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
+
 GOOGLE_NATIVE_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 GOOGLE_OPENAI_COMPATIBLE_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
+
+# ==============================================================================
+# CREDENTIAL RESOLUTION
+# ==============================================================================
 
 def _resolve_api_key(profile: ProviderProfile) -> tuple[str, str, str]:
     """Return (api_key_value, api_key_source, api_key_env_var_used) for a provider profile.
@@ -28,10 +46,19 @@ def _resolve_api_key(profile: ProviderProfile) -> tuple[str, str, str]:
 
     Source strings: "process_env", "env_atlas", "missing", "none"
     """
+    # The SOURCE is returned alongside the value, and it is the interesting half: the
+    # diagnostics surface reports the source and the var NAME, never the key. That is
+    # how `atlas model status` can tell you which credential is in play without leaking
+    # it into a terminal, a screenshot or a log.
+    #
+    # "missing" and "none" are distinct: "none" means this provider needs no key (a
+    # local model), while "missing" means it needs one and does not have it. Collapsing
+    # them would let a misconfigured cloud provider look deliberately keyless.
     if profile.auth_header_type == "none" and not profile.key_required:
         return ("", "none", "")
 
-    # Priority 1: Check process environment
+    # Process env beats .env.atlas, matching load_atlas_secrets(override=False) — one
+    # precedence rule for credentials, applied consistently across the project.
     for var_name in profile.env_precedence:
         val = os.getenv(var_name)
         if val:

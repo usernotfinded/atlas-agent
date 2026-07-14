@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/null_provider.py
+# PURPOSE: A provider that makes no model call and always says HOLD. The safe
+#          default when no LLM is configured: the agent stays runnable end-to-end,
+#          and the one thing it will never do is propose a trade.
+# DEPS:    providers.base (the contract it implements)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -5,6 +15,10 @@ import json
 from atlas_agent.providers.base import BaseAIProvider, ProviderRequest, ProviderResponse
 from atlas_agent.tools.spec import LLMResponse, ModelCapabilities, ToolDescription
 
+
+# ==============================================================================
+# NULL PROVIDER
+# ==============================================================================
 
 class NullProvider(BaseAIProvider):
     name = "null"
@@ -17,7 +31,12 @@ class NullProvider(BaseAIProvider):
         model: str | None = None,
         temperature: float = 0.0,
     ) -> LLMResponse:
+        # Inputs explicitly discarded. This is not laziness — it is the contract: no
+        # prompt content may influence the answer, because the answer is a constant.
         del system_prompt, messages, tools, model, temperature
+        # action=hold, confidence=0.0, proposed_order=None. Every field is chosen so
+        # that a downstream component treating this like a real decision still ends up
+        # doing nothing: the confidence floor rejects it, and there is no order to route.
         payload = {
             "action": "hold",
             "symbol": "UNKNOWN",

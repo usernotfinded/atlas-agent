@@ -1,3 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    audit/verify.py
+# PURPOSE: The read half of the tamper-evidence scheme. Replays a log against its
+#          manifest and reports every way the record fails to add up.
+# DEPS:    audit.chain (per-event integrity), audit.manifest (root/rolling hashes)
+#
+# DESIGN:  Verification never raises on a bad log — a corrupt audit trail is the
+#          expected input here, not an exceptional one. Failures accumulate into
+#          the result so the caller sees the whole picture at once.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -13,6 +26,10 @@ from atlas_agent.audit.models import (
     ManifestVerificationResult
 )
 
+
+# ==============================================================================
+# LOG VERIFICATION
+# ==============================================================================
 
 def verify_audit_log(
     audit_path: str | Path, 
@@ -61,12 +78,18 @@ def verify_audit_log(
                         first_error_index = i
                     errors.append(f"Line {i}: Hash chain broken (event_id={event.event_id})")
 
+                # Advance the chain even on failure, so a single corrupted event does
+                # not cascade into a spurious error on every line after it. We want to
+                # report where the damage is, not how far it echoes.
                 previous_hash = event.event_hash
                 last_event_hash = event.event_hash
                 events_checked += 1
                 event_hashes.append(event.event_hash)
 
-        # Check tail deletion if expected values are provided
+        # The hash chain alone cannot see a *truncated* log: chop off the last N
+        # events and what remains is still perfectly self-consistent. Only the
+        # manifest's expected count and final hash — recorded when the run sealed —
+        # can reveal that the tail is gone.
         if expected_event_count is not None and events_checked != expected_event_count:
             errors.append(f"Event count mismatch: expected {expected_event_count}, found {events_checked} (Tail deletion detected)")
 
@@ -85,6 +108,10 @@ def verify_audit_log(
         rolling_root=rolling_root,
     )
 
+
+# ==============================================================================
+# MANIFEST VERIFICATION
+# ==============================================================================
 
 def verify_run_manifest(manifest_path: str | Path) -> ManifestVerificationResult:
     """
@@ -112,13 +139,19 @@ def verify_run_manifest(manifest_path: str | Path) -> ManifestVerificationResult
         )
         
     errors = []
-    
-    # 1. Verify root hash
+
+    # Three checks, each closing a hole the others leave open. An attacker has to
+    # defeat all three, and they constrain each other:
+    #
+    #   1. root hash    → the manifest itself was not edited after sealing.
+    #      Without it, someone could simply rewrite the expected count and hashes to
+    #      match a doctored log, and checks 2-3 would happily agree.
     actual_root_hash = compute_root_hash(manifest)
     if manifest.root_hash != actual_root_hash:
         errors.append("Manifest root hash mismatch: manifest was likely modified after sealing.")
 
-    # 2. Verify log integrity
+    #   2. log integrity → the chain is intact AND the tail was not truncated
+    #      (the count/final-hash arguments are what catch truncation).
     log_result = verify_audit_log(
         manifest.audit_log_path,
         expected_event_count=manifest.event_count,
@@ -129,7 +162,10 @@ def verify_run_manifest(manifest_path: str | Path) -> ManifestVerificationResult
     if not log_result.valid:
         errors.extend(log_result.errors)
 
-    # 3. Verify rolling root binds intermediate events (if present; absent means legacy manifest)
+    #   3. rolling root → the *middle* of the chain was not swapped out. Pinning only
+    #      the first and last hashes would leave the interior replaceable wholesale.
+    #      `None` means a legacy manifest predating this field: skipped rather than
+    #      failed, or every historical run would be reported as tampered with.
     if manifest.event_hash_rolling_root is not None:
         if log_result.rolling_root != manifest.event_hash_rolling_root:
             errors.append(

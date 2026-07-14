@@ -1,7 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reports/renderers.py
+# PURPOSE: Renders report data to Markdown (for people) and JSON (for machines and
+#          the checkers). Deterministic: the same data must always render byte-for-
+#          byte identically, because the release checkers diff this output.
+# DEPS:    reports.models
+# ==============================================================================
+
 """Markdown and JSON renderers for report data.
 
 All output is deterministic and contains no fake content.
 """
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

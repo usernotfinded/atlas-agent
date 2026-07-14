@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reflection/__init__.py
+# PURPOSE: Public surface of the reflection domain. Same shape as learning/ and
+#          skills/: generate → review → approve. All three keep the agent's
+#          self-analysis behind a human gate.
+# DEPS:    reflection.generator, reflection.approval, reflection.storage
+# ==============================================================================
+
+# --- IMPORTS ---
 from atlas_agent.reflection.approval import approve, archive, reject, submit_for_review
 from atlas_agent.reflection.generator import generate_reflection
 from atlas_agent.reflection.models import ReflectionArtifact, ReflectionStatus

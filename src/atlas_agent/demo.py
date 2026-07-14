@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    demo.py
+# PURPOSE: Seeds a workspace with synthetic memory, skills and events so the UI
+#          and the docs have something to show. Every value written here is fake
+#          by construction — see the guard below, which refuses to run in a
+#          workspace that looks like somebody's real trading setup.
+# DEPS:    events.log (event trail), skills.manager (skill promotion)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,6 +18,11 @@ from atlas_agent.events.log import EventLogger, generate_run_id
 from atlas_agent.skills.manager import improve_proposed_skills
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Fingerprints of a *real* workspace. If any of these appear, seeding is refused:
+# scattering synthetic positions and journal entries over a live setup would
+# corrupt the very memory the agent trades on.
 REAL_LOOKING_MARKERS = (
     "ALPACA_API_KEY=",
     "ALPACA_API_SECRET=",
@@ -17,11 +33,19 @@ REAL_LOOKING_MARKERS = (
 )
 
 
+# ==============================================================================
+# MODELS
+# ==============================================================================
+
 @dataclass(frozen=True)
 class DemoSeedResult:
     written_paths: tuple[Path, ...]
     warning: str | None = None
 
+
+# ==============================================================================
+# WORKSPACE SEEDING
+# ==============================================================================
 
 def seed_demo_workspace(
     *,
@@ -32,6 +56,9 @@ def seed_demo_workspace(
     events_dir: Path,
     force: bool = False,
 ) -> DemoSeedResult:
+    # Refuse first, write nothing. --force exists as an escape hatch, but the default
+    # is to abort: the cost of a false positive is a re-run with a flag, while the
+    # cost of a false negative is synthetic trades written into a real journal.
     warning = _safety_warning(workspace_dir)
     if warning and not force:
         return DemoSeedResult(
@@ -111,6 +138,9 @@ def seed_demo_workspace(
         if path not in written:
             written.append(path)
 
+    # A synthetic but *complete* event trail: started → memory → skill → reflection
+    # → completed. The dashboard and `atlas replay` both refuse to render a run with
+    # a broken chain, so a demo that only wrote files would show up as a failed run.
     logger = EventLogger(events_dir)
     run_id = generate_run_id()
     logger.write(
@@ -152,7 +182,11 @@ def seed_demo_workspace(
     return DemoSeedResult(written_paths=tuple(written), warning=warning)
 
 
+# --- File helpers ---
+
 def _write_if_missing(path: Path, content: str) -> list[Path]:
+    # Idempotent by design: seeding twice must not clobber notes a user added to a
+    # demo workspace between runs.
     if path.exists():
         return []
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -160,7 +194,19 @@ def _write_if_missing(path: Path, content: str) -> list[Path]:
     return [path]
 
 
+# ==============================================================================
+# REAL-WORKSPACE GUARD
+# ==============================================================================
+
 def _safety_warning(workspace_dir: Path) -> str | None:
+    """Detect signs that this workspace is real rather than a demo sandbox.
+
+    Returns:
+        A human-readable reason, or None if the workspace looks safe to seed.
+    """
+    # Two independent signals, because either alone is easy to miss:
+    #   - credentials in .env  → the workspace can reach a broker;
+    #   - an account id in the portfolio → it has been reconciled against one.
     env_path = workspace_dir / ".env"
     if env_path.exists():
         text = env_path.read_text(encoding="utf-8", errors="replace")

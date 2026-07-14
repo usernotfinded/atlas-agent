@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/provider_audit_pack.py
+# PURPOSE: Assembles the shareable audit pack — the bundle a user hands to a
+#          reviewer or attaches to a report. It is the export boundary, so it runs
+#          the evidence index's secret and absolute-path scans before sealing.
+# DEPS:    providers.provider_evidence_index (the scans), providers.provider_preflight
+#          (the artifacts). Note `stat`: file permissions on the pack are set
+#          deliberately, not left to the umask.
+# ==============================================================================
+
 """Local-only provider audit pack orchestration.
 
 This module creates a self-contained audit/export pack from the existing
@@ -5,6 +16,7 @@ provider preflight evidence pipeline. It does not call providers, load
 credentials, use the network, touch brokers, or authorize execution.
 """
 
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

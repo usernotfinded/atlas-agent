@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    reports/sources.py
+# PURPOSE: Reads the local artifacts a report is built from — events, journal,
+#          portfolio, audit. Every reader returns a safe default when its source is
+#          absent, so a missing file degrades one section rather than the whole report.
+# DEPS:    the local workspace files only — no network, no broker
+# ==============================================================================
+
 """Local data sources for report generation.
 
 All functions read only local files and return safe defaults when data is missing.

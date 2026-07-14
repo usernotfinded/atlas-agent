@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    brokers/paper.py
+# PURPOSE: The default broker: a deterministic simulator with no network calls and
+#          no credentials. It is the fallback everything else degrades TO, so it has
+#          to behave like a real broker in every respect that matters — including
+#          rejecting the orders a real one would reject.
+# DEPS:    portfolio.state (the simulated book), execution.order (the contract),
+#          execution.audit + portfolio.journal (the same records a live run writes)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import math
@@ -24,6 +36,10 @@ from atlas_agent.brokers.models import (
 from atlas_agent.brokers.base import BrokerProvider
 
 
+# ==============================================================================
+# PAPER BROKER
+# ==============================================================================
+
 @dataclass
 class PaperBroker:
     state: PortfolioState
@@ -31,6 +47,8 @@ class PaperBroker:
     journal: TradeJournal | None = None
     fills: list[Order] = field(default_factory=list)
     open_orders_list: list[BrokerOrder] = field(default_factory=list)
+
+    # --- Account ---
 
     def get_account(self) -> AccountSnapshot:
         equity = self.state.equity()
@@ -44,7 +62,12 @@ class PaperBroker:
     def get_positions(self) -> list[Position]:
         return list(self.state.positions.values())
 
+    # --- Orders ---
+
     def place_order(self, order: Order) -> OrderResult:
+        # The paper broker validates as strictly as a live one would. That is the point:
+        # if a bad price sailed through here, the bug would only ever surface in
+        # production, and paper mode's whole job is to be the place where it does not.
         price = order.limit_price
         if price is None or isinstance(price, bool) or not isinstance(price, (int, float)) or not math.isfinite(price) or price <= 0:
             return OrderResult(
