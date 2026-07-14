@@ -1,17 +1,17 @@
 # ==============================================================================
 # PROJECT: Atlas Agent
 # FILE:    learning/skill_miner.py
-# PURPOSE: Placeholder. Intended to mine reusable skills from the trade journal.
+# PURPOSE: Mines reusable skills from the trade journal — or, today, honestly
+#          reports that it cannot.
 # DEPS:    stdlib only
 #
-# WARNING: No mining happens. The journal is read only to check that it is longer
-#          than 50 characters; its CONTENT is never analysed. On any non-trivial
-#          journal this returns the same static proposed skill, so a "mined" skill
-#          reflects nothing the agent actually learned.
-#
-#          The proposed skill still passes through the normal human review gate, so
-#          this is misleading rather than dangerous — but do not read a proposal from
-#          here as evidence of anything.
+# NOT IMPLEMENTED: real mining requires an LLM pass over the journal, which does not
+#          exist yet. Until it does, mine_skills_from_journal() returns NOTHING.
+#          It deliberately does not fabricate a plausible-looking proposal, because a
+#          skill is a rule the agent will follow and its "evidence" field is a claim
+#          about the user's own trading history. An invented one would be believed —
+#          it looks exactly like a real one. This is the same rule the rest of the
+#          learning domain already states: "No fake insights are invented."
 # ==============================================================================
 
 # --- IMPORTS ---
@@ -22,32 +22,26 @@ from pathlib import Path
 
 
 # ==============================================================================
-# SKILL MINING (STUB — see the warning above)
+# SKILL MINING
 # ==============================================================================
 
 def mine_skills_from_journal(memory_dir: Path) -> list[dict]:
-    """Placeholder for mining skills from journal experience."""
-    journal_path = memory_dir / "trade_journal.md"
-    if not journal_path.exists():
-        return []
+    """Mine candidate skills from the trade journal.
 
-    # Real implementation would use LLM to analyze journal.
-    # For MVP, we'll return a static proposed skill if journal is non-empty.
-    # NOTE: `content` is measured, never read. The 50-char floor is the entire
-    # "analysis" — it only distinguishes an empty journal from a non-empty one.
-    content = journal_path.read_text(encoding="utf-8")
-    if len(content) > 50:
-        return [
-            {
-                "name": "journal_pattern_recognition",
-                "purpose": "Identify recurring trade patterns from journal history.",
-                "when_to_use": "During pre-market routine or weekly review.",
-                "inputs": "trade_journal.md",
-                "outputs": "pattern_report.md",
-                "evidence": "Observed multiple similar entries in trade_journal.md",
-            }
-        ]
+    Args:
+        memory_dir: the workspace memory directory.
+
+    Returns:
+        Always an empty list: journal mining is not implemented (see the module
+        header). Callers already handle this — `atlas skills propose` reports
+        "No new skills identified from journal.", which is the truth.
+    """
     return []
+
+
+# ==============================================================================
+# SKILL PERSISTENCE
+# ==============================================================================
 
 def save_proposed_skill(skills_dir: Path, skill: dict) -> Path:
     proposed_dir = skills_dir / "proposed"
