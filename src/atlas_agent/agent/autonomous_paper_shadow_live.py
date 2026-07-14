@@ -1,3 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper_shadow_live.py
+# PURPOSE: SHADOW mode: run the full live pipeline — real prices, real risk checks,
+#          real decisions — and simulate the fills instead of sending them. The last
+#          rehearsal before real money, and the closest thing to live that places no
+#          order.
+# DEPS:    agent.autonomous_paper_kernel (the simulated fills)
+#
+# NOTE:    "Shadow" is a promise: nothing in this module may reach a broker. If a
+#          real submit path ever appears here, the mode has lost its only guarantee.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

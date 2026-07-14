@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/open_market_cycle.py
+# PURPOSE: What the agent does while the market is OPEN — the only cycle in which
+#          trading routines run. Everything that can place an order lives here.
+# DEPS:    routines.engine (the routines it dispatches)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import datetime
@@ -7,6 +16,10 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger
 from atlas_agent.routines.engine import RoutineResult, run_routine
 
+
+# ==============================================================================
+# OPEN MARKET CYCLE
+# ==============================================================================
 
 def run_open_market_cycle(
     config: AtlasConfig,

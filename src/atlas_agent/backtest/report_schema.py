@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/report_schema.py
+# PURPOSE: A closed schema contract for backtest JSON reports. Catches SILENT
+#          structural drift — a renamed metric that downstream tooling would read
+#          as a missing one, and quietly report as zero.
+# DEPS:    none (dependency-free on purpose, so the contract can be checked from
+#          anywhere, including a reviewer's machine with nothing installed)
+# ==============================================================================
+
 """Backtest report schema validator.
 
 Provides a lightweight, dependency-free schema contract for backtest

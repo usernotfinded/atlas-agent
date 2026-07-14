@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper_models.py
+# PURPOSE: The state and metrics of an autonomous paper run.
+# DEPS:    pydantic, backtest.models — the paper loop reuses the BACKTEST fill and
+#          position types on purpose, so a paper run and a backtest are measured by
+#          exactly the same arithmetic.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from typing import Any, Literal

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/benchmarks.py
+# PURPOSE: The do-nothing alternatives a strategy is measured against. A strategy
+#          that "made 8%" has said nothing until you know what buy-and-hold made.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from typing import Protocol, Sequence

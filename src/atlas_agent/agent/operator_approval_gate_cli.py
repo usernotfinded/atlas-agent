@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/operator_approval_gate_cli.py
+# PURPOSE: CONFIGLESS entry point for `atlas agent operator-approval-gate`. Routed
+#          directly by cli_bootstrap.py, bypassing the main CLI entirely.
+# DEPS:    stdlib only (argparse, json) + the approval-gate engine.
+#
+# WARNING: One of the four trust-contract commands — see the note in
+#          bounded_live_autonomy_readiness_cli.py. No config, no heavy imports.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import argparse

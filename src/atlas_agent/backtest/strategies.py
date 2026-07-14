@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/strategies.py
+# PURPOSE: The strategies a backtest can run: buy-and-hold, moving-average cross,
+#          and RSI mean reversion. These are the REAL implementations — unlike the
+#          same-named stubs in the top-level strategies/ package, the maths here is
+#          actually computed (see _rsi at the bottom).
+# DEPS:    backtest.strategy (the contract), backtest.models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass

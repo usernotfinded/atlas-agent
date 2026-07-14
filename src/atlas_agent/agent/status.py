@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/status.py
+# PURPOSE: Renders "what is the agent doing right now?" — mode, market state, kill
+#          switch. Read-only: asking for status never changes anything.
+# DEPS:    config, market.session, risk.kill_switch
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import datetime
@@ -7,6 +16,10 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.market.session import MarketSessionDetector
 from atlas_agent.risk.kill_switch import KillSwitch
 
+
+# ==============================================================================
+# STATUS
+# ==============================================================================
 
 def get_agent_status(config: AtlasConfig) -> str:
     payload = get_agent_status_payload(config)

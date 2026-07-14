@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/data.py
+# PURPOSE: Loads the bars a backtest runs on, in strict chronological order.
+# DEPS:    stdlib only (csv)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import csv

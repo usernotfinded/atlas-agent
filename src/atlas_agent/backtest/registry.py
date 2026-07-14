@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/registry.py
+# PURPOSE: Maps a strategy id to its factory. Also discovers third-party strategies
+#          via entry points, which is how a user plugs in their own without editing
+#          this file.
+# DEPS:    importlib.metadata (entry points), backtest.strategies
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from importlib import metadata as importlib_metadata

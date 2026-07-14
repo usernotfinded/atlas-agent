@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/validation.py
+# PURPOSE: Sanity-checks a strategy BEFORE a backtest is run against it — that its
+#          parameters are in range, and that it does not emit malformed orders.
+#          Cheaper to fail here than to produce a plausible report from broken input.
+# DEPS:    backtest.registry, backtest.strategy
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import math

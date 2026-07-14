@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper_metrics.py
+# PURPOSE: Tracks the running performance of an autonomous paper session — the
+#          numbers that later decide whether the agent has earned any trust.
+# DEPS:    agent.autonomous_paper_models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from collections import deque

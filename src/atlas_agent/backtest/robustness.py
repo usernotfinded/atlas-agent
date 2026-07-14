@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/robustness.py
+# PURPOSE: Attacks a strategy's result to see whether it survives. Perturb the
+#          inputs, shift the window, add costs — a strategy whose edge evaporates
+#          under any of that was never an edge, it was a fit to one history.
+# DEPS:    backtest.engine (re-runs it), backtest.metrics
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

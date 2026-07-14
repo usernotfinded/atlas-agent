@@ -1,3 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/bounded_live_autonomy_readiness_cli.py
+# PURPOSE: CONFIGLESS entry point for `atlas agent bounded-live-readiness`. Routed
+#          directly by cli_bootstrap.py, bypassing the main CLI entirely.
+# DEPS:    stdlib only (argparse, json) + the readiness engine.
+#
+# WARNING: This is one of four trust-contract commands. It must run with NO config
+#          loaded and NO third-party import on the path — that is what lets an
+#          auditor evaluate the gate on a machine whose config they do not trust.
+#          Adding a heavyweight import here breaks the contract and trips the checkers.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import argparse

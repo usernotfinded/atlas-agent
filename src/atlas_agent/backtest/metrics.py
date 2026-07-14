@@ -1,9 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/metrics.py
+# PURPOSE: Turns an equity curve into the numbers people judge a strategy by —
+#          return, Sharpe, drawdown, win rate.
+# DEPS:    stdlib only (statistics, math)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass
 from math import sqrt
 from statistics import fmean, pstdev
 
+
+# ==============================================================================
+# INPUT MODELS
+# ==============================================================================
 
 @dataclass(frozen=True)
 class TradeRecord:
@@ -23,10 +36,21 @@ class MetricsInput:
     ending_equity: float
     equity_curve: list[float]
     trades: list[TradeRecord]
+
+    # Which periods held a position. Needed because a strategy that was flat 95% of
+    # the time and got lucky once has a very different risk profile from one that was
+    # always exposed — and the headline return alone cannot tell them apart.
     exposure_points: list[bool]
+
+    # The buy-and-hold comparison. A strategy that returned 8% in a market that
+    # returned 20% did not make money; it lost 12% of the alternative.
     start_price: float
     end_price: float
     benchmark_return_pct: float | None = None
+
+    # 252 = US trading days per year. Annualises Sharpe. Wrong for crypto (365) or
+    # intraday bars, and getting it wrong scales the risk-adjusted return by sqrt of
+    # the ratio — a silently flattering error.
     periods_per_year: int = 252
 
 
@@ -45,6 +69,10 @@ class MetricsCalculator:
         )
 
 
+# ==============================================================================
+# METRICS CALCULATION
+# ==============================================================================
+
 def calculate_metrics(
     *,
     starting_cash: float,
@@ -61,15 +89,20 @@ def calculate_metrics(
         raise ValueError("starting_cash must be positive")
     total_return = (ending_equity - starting_cash) / starting_cash
     periods = max(len(equity_curve), 1)
-    
-    # Simple annualized return
+
+    # CAUTION: annualising a short backtest extrapolates wildly. A 3% gain over 5 bars
+    # becomes an eye-watering annualised figure, and that number is meaningless. Read
+    # `total_return_pct` on short runs, not this.
     annualized = (1 + total_return) ** (periods_per_year / periods) - 1 if periods > 0 else 0.0
-    
+
     closed_returns = _closed_trade_returns(trades)
+    # Buy-and-hold is computed automatically when not supplied, so a strategy is ALWAYS
+    # reported against the do-nothing alternative. Beating cash is not the bar; beating
+    # holding the asset is.
     if benchmark_return_pct is None:
         benchmark = (end_price - start_price) / start_price if start_price > 0 else 0.0
         benchmark_return_pct = benchmark * 100.0
-    
+
     return BacktestMetrics(
         total_return_pct=total_return * 100.0,
         annualized_return_pct=annualized * 100.0,
@@ -91,7 +124,12 @@ def calculate_metrics(
     )
 
 
+# --- Individual metrics ---
+
 def _closed_trade_returns(trades: list[TradeRecord]) -> list[float]:
+    # Only SELLS count as closed trades. A buy that is still open has no realised
+    # return, and counting it would let a strategy holding a losing position report a
+    # perfect win rate simply by never selling.
     returns: list[float] = []
     for trade in trades:
         if trade.side != "sell":

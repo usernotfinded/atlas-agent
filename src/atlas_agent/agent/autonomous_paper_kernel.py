@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper_kernel.py
+# PURPOSE: The deterministic core of the autonomous paper loop: given a state and a
+#          decision, produce the next state. Pure and side-effect-free by design —
+#          the same inputs must always yield the same book, or the whole exercise
+#          proves nothing.
+# DEPS:    agent.autonomous_paper_models, audit (the record)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from copy import deepcopy

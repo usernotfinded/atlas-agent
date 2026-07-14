@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/runner.py
+# PURPOSE: The top-level agent driver. Reads the market state and dispatches to the
+#          open- or closed-market cycle — so what the agent does at 3am is a
+#          different, and much narrower, thing than what it does at 10am.
+# DEPS:    market.session (the dispatch key), agent.open/closed_market_cycle
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import time

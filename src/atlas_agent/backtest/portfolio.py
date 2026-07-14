@@ -1,3 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/portfolio.py
+# PURPOSE: Multi-asset portfolio backtesting — allocation, rebalancing, stress and
+#          replay. The largest module in the project by some margin.
+# DEPS:    backtest.engine, backtest.metrics, hashlib (artifact sealing)
+#
+# NOTE:    At ~3k lines this file is well past the point where banners help. It is a
+#          decomposition candidate, not a navigation problem: the sections below map
+#          it, but the real fix is to split it.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import csv

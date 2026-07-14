@@ -1,3 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/bounded_live_autonomy_readiness.py
+# PURPOSE: The L2→L3 autonomy gate. Decides, from accumulated evidence alone,
+#          whether the agent may be granted a wider bound of unsupervised action.
+#          It is the most consequential gate in the project: what it unlocks is
+#          "the agent acts without a human in the loop".
+# DEPS:    the upstream evidence artifacts only — deliberately nothing else.
+#
+# DESIGN:  Evidence-only and simulated-only, by construction. The module imports no
+#          broker, no risk object and no credential loader, so the thing that decides
+#          whether autonomy is safe is structurally incapable of exercising it. A gate
+#          that could act on its own verdict would be no gate at all.
+#          The sequence is fail-closed: every step must pass, and anything unrecognised
+#          is a refusal, never a pass.
+# ==============================================================================
+
 """Bounded live autonomy readiness gate (CAND-015) — evidence-only, simulated-only.
 
 This module evaluates upstream CAND-004/CAND-005/CAND-006/CAND-007/CAND-008

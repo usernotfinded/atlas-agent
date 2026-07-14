@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper.py
+# PURPOSE: The autonomous PAPER loop — the agent running unsupervised, end to end,
+#          against a simulated book. This is the proving ground: the whole point is
+#          to accumulate evidence about whether the agent could ever be trusted with
+#          real money, without risking any.
+# DEPS:    pydantic (artifact models), agent.autonomous_paper_kernel
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

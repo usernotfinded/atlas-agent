@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper_scorecard.py
+# PURPOSE: Renders the verdict on an autonomous paper run as a signed artifact — the
+#          document a human reads when deciding whether this agent has earned more
+#          rope.
+# DEPS:    agent.autonomous_paper_quality
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Bumped when the artifact shape changes. The release checkers pin against it, so a
+# scorecard from an older schema is rejected rather than silently misread.
 ARTIFACT_TYPE = "autonomous_paper_scorecard"
 SCHEMA_VERSION = 1
 PROMOTION_STATES = (

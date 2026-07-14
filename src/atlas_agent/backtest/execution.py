@@ -1,23 +1,42 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/execution.py
+# PURPOSE: Simulates how an order would have filled. This is where a backtest is
+#          honest or a lie: an execution model that ignores slippage and commission
+#          produces the P&L of a market that does not exist.
+# DEPS:    backtest.models
+#
+# NOTE:    Optimistic by construction. Limit orders are assumed to fill whenever the
+#          bar merely TOUCHED the price, and market orders at the close. Real fills
+#          face queue position and partial fills; treat backtest results as an upper
+#          bound, not an expectation.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import datetime
 from typing import Optional
 
 from atlas_agent.backtest.models import (
-    BacktestOrder, 
-    BacktestFill, 
-    MarketBar, 
+    BacktestOrder,
+    BacktestFill,
+    MarketBar,
     BacktestConfig
 )
 
+
+# ==============================================================================
+# EXECUTION SIMULATOR
+# ==============================================================================
 
 class ExecutionSimulator:
     def __init__(self, config: BacktestConfig):
         self.config = config
 
     def process_order(
-        self, 
-        order: BacktestOrder, 
+        self,
+        order: BacktestOrder,
         bar: MarketBar
     ) -> Optional[BacktestFill]:
         """
@@ -37,14 +56,18 @@ class ExecutionSimulator:
         elif order.type == "limit":
             if order.price is None:
                 return None
-            
-            # Simplified limit fill: if price is within [low, high]
+
+            # Touch-fill: if the bar's range crossed the limit, assume we filled at it.
+            # Generous — in reality a touched limit may never reach the front of the
+            # queue — but it is at least DETERMINISTIC, which a probabilistic model
+            # would not be. See the module warning.
             if bar.low <= order.price <= bar.high:
                 fill_price = order.price
                 can_fill = True
 
         if can_fill:
-            # Apply slippage
+            # Slippage always works AGAINST us: a buy fills higher, a sell lower. Any
+            # other sign convention would manufacture free money in every backtest.
             slippage_amt = 0.0
             if self.config.slippage_bps > 0:
                 slippage_factor = self.config.slippage_bps / 10000.0
@@ -54,9 +77,10 @@ class ExecutionSimulator:
                 else:
                     fill_price -= slippage_amt
 
+            # Notional is computed from the POST-slippage price, so commission is
+            # charged on what we actually paid rather than on the ideal price.
             notional = order.quantity * fill_price
-            
-            # Apply commission
+
             commission_amt = 0.0
             if self.config.commission_bps > 0:
                 commission_amt = notional * (self.config.commission_bps / 10000.0)

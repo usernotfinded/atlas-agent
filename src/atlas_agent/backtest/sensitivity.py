@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/sensitivity.py
+# PURPOSE: Sweeps a strategy's parameters and reports how much the result moves. A
+#          strategy that only works at period=14 and collapses at 13 and 15 is
+#          overfitted — this is the module that catches that.
+# DEPS:    backtest.engine, backtest.strategy (the parameter specs it sweeps)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

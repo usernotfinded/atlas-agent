@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/gated_submit_conformance_cli.py
+# PURPOSE: CONFIGLESS entry point for `atlas agent submit-conformance`. Routed
+#          directly by cli_bootstrap.py, bypassing the main CLI entirely.
+# DEPS:    stdlib only (argparse, json) + the conformance engine.
+#
+# WARNING: One of the four trust-contract commands — see the note in
+#          bounded_live_autonomy_readiness_cli.py. No config, no heavy imports.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import argparse

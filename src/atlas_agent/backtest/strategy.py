@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/strategy.py
+# PURPOSE: The backtest strategy contract, and the declarative parameter specs that
+#          let a strategy's inputs be validated and swept without the sweeper
+#          knowing anything about the strategy.
+# DEPS:    pydantic (parameter specs), backtest.models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass

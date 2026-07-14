@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/walk_forward.py
+# PURPOSE: Walk-forward analysis: tune on a window, test on the NEXT one, roll
+#          forward, repeat. The only backtest result here that was not fitted to the
+#          data it is scored on — and therefore the only one worth much.
+# DEPS:    backtest.engine, backtest.data, backtest.metrics
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/evaluation.py
+# PURPOSE: Judges whether a backtest result is TRUSTWORTHY, not merely whether it
+#          was profitable. Too few trades, too short a window, a return that hinges
+#          on one lucky bar — all of these are ways a strategy can look good and be
+#          worthless.
+# DEPS:    backtest.models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

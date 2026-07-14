@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/models.py
+# PURPOSE: The value types of a backtest — bars, orders, fills, positions, metrics.
+#          Also reused by the autonomous paper loop, so a paper run and a backtest
+#          are scored by identical arithmetic.
+# DEPS:    pydantic (models)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import datetime

@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper_lock.py
+# PURPOSE: Guarantees a single writer to an autonomous-paper state directory. Two
+#          concurrent runs sharing one book would interleave their fills and produce
+#          a P&L history that never happened — and the evidence would look valid.
+# DEPS:    fcntl (stdlib — a real OS lock, not a lockfile convention)
+#
+# NOTE:    fcntl.flock is released automatically when the process dies, so a crashed
+#          run cannot leave the directory permanently wedged. That is why it is used
+#          here rather than a marker file, which would need stale-detection.
+# ==============================================================================
+
 """Fail-closed exclusive lock for a stateful autonomous-paper state directory.
 
 Uses POSIX ``fcntl.flock`` so that only one autonomous-paper run can hold a

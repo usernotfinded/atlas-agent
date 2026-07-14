@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/scorecard.py
+# PURPOSE: Rolls evaluation, robustness, sensitivity and walk-forward into one
+#          verdict a human can act on. The scorecard is what says "this strategy is
+#          worth paper-trading" — it never says "worth trading live".
+# DEPS:    backtest.evaluation, .robustness, .sensitivity, .walk_forward
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

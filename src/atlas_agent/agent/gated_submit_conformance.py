@@ -1,3 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/gated_submit_conformance.py
+# PURPOSE: Proves that the live-submit path really is gated — that every lock the
+#          design claims (kill switch, approval, risk, quote freshness, broker sync)
+#          was actually consulted, in order, on every submit in the evidence.
+# DEPS:    hashlib (artifact integrity) — and no broker, no credentials, no network.
+#
+# DESIGN:  Evidence-only, fail-closed. A conformance checker that could reach a
+#          broker would be able to fake the very evidence it exists to audit.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import hashlib

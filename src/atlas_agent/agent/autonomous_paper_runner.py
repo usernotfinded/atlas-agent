@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper_runner.py
+# PURPOSE: Drives an autonomous paper session: hold the lock, load state, step the
+#          kernel, persist, seal. The state file is the run's entire memory across
+#          invocations, so it is written atomically (tempfile + replace) — a torn
+#          write would silently corrupt a book nobody is watching.
+# DEPS:    agent.autonomous_paper_kernel, .._lock, .._metrics
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import hashlib

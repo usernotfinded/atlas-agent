@@ -1,3 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/runtime_readiness_envelope.py
+# PURPOSE: Defines and verifies the ENVELOPE the agent is allowed to operate inside
+#          — the bounds on what a run may do at all. Everything outside the envelope
+#          is refused before it is attempted.
+# DEPS:    hashlib (artifact integrity) — no broker, no credentials, no network.
+#
+# DESIGN:  Evidence-only and fail-closed, like the other three readiness modules in
+#          this package. The envelope must be checkable without being exercisable.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import hashlib

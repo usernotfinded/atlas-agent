@@ -1,3 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/operator_approval_gate.py
+# PURPOSE: Proves that the human-approval path actually holds — that no order can
+#          reach a venue without an operator having said yes. This module does not
+#          IMPLEMENT the gate (that is execution/approval.py); it verifies, from
+#          evidence, that the gate was not bypassed.
+# DEPS:    the upstream evidence artifacts only.
+#
+# DESIGN:  Evidence-only and simulated-only. It touches no broker and no credential,
+#          so the thing that audits the approval boundary cannot itself cross it.
+#          Fail-closed throughout: an unrecognised artifact is a failure, not a pass.
+# ==============================================================================
+
 """Operator approval gate engine (CAND-008) — evidence-only, simulated-only.
 
 This module validates upstream CAND-004/CAND-005/CAND-006/CAND-007 artifacts by

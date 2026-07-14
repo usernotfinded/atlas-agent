@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/__init__.py
+# PURPOSE: Public surface of the backtest domain — run a strategy over history, and
+#          then attack the result (evaluation, robustness, sensitivity, walk-forward)
+#          before believing any of it.
+# DEPS:    backtest.engine, .models, .metrics, .registry, .report
+# ==============================================================================
+
+# --- IMPORTS ---
 from atlas_agent.backtest.models import (
     BacktestConfig,
     BacktestResult,

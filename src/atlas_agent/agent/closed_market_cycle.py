@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/closed_market_cycle.py
+# PURPOSE: What the agent does while the market is CLOSED — research, learning,
+#          reflection, reporting. Deliberately no trading routines: with no venue to
+#          send to, an order here could only be wrong.
+# DEPS:    routines.engine (the routines it dispatches)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import datetime
@@ -7,6 +17,10 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.events.log import EventLogger
 from atlas_agent.routines.engine import RoutineResult, run_routine
 
+
+# ==============================================================================
+# CLOSED MARKET CYCLE
+# ==============================================================================
 
 def run_closed_market_cycle(
     config: AtlasConfig,

@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/autonomous_paper_quality.py
+# PURPOSE: Judges whether an autonomous paper run was any GOOD — not merely whether
+#          it made money. A run that profited by breaching its own discipline is a
+#          failure here, because the next one would lose the same way.
+# DEPS:    agent.autonomous_paper_models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

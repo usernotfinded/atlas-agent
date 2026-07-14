@@ -1,3 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/loop.py
+# PURPOSE: The agentic reasoning loop: prompt the model, execute the tools it asks
+#          for, feed the results back, repeat until it stops or a bound is hit.
+#          This is where an LLM's output becomes actions, so every tool call passes
+#          the kill switch and the risk manager on its way through.
+# DEPS:    providers.base (the model), tools.registry (what it may call),
+#          risk.manager + safety.kill_switch (the gates), audit (the record)
+#
+# DESIGN:  The loop is BOUNDED on every axis — iterations, tool calls, tokens. An
+#          unbounded agent with broker access is not a feature, it is an incident.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 import hashlib
 import math
@@ -18,16 +33,32 @@ from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import LLMResponse, ToolCall, ToolResult, ToolError, GuardrailChain
 
 
+# ==============================================================================
+# GUARDRAIL CHAIN
+# ==============================================================================
+
 class DefaultGuardrailChain:
     def __init__(self, registry: ToolRegistry):
         self.registry = registry
 
     def evaluate(self, tool_call: ToolCall, session: Session) -> Union[ToolResult, ToolError, UserApprovalPending, None]:
+        """Decide whether a tool call may proceed.
+
+        Returns:
+            None to allow, or a UserApprovalPending / ToolError to intercept it.
+        """
+        # An unknown tool returns None (allow) rather than an error, because the
+        # REGISTRY is what refuses to execute it. This chain only adds the approval
+        # gate on top; it is not the thing that bounds the tool set.
         try:
             tool = self.registry.get_tool(tool_call.name)
         except KeyError:
             return None
-            
+
+        # The gate is read off the tool's own spec, not from a list kept here. A tool
+        # that can move money declares approval_gated=True in tools/builtin.py, and the
+        # protection travels with the definition instead of relying on this file being
+        # updated in step.
         if tool.approval_gated:
              return UserApprovalPending(
                 approval_id=f"approve_{tool_call.id}",
@@ -37,12 +68,22 @@ class DefaultGuardrailChain:
         return None
 
 
+# ==============================================================================
+# AGENT LOOP
+# ==============================================================================
+
 class AgentLoop:
+
+    # --- Construction ---
+
     def __init__(
         self,
         provider: AIProvider,
         tool_registry: ToolRegistry,
         guardrails: GuardrailChain,
+        # Two independent ceilings. `max_iterations` bounds reasoning turns;
+        # `max_tool_calls` bounds actions across ALL turns. A model that loops calling
+        # one tool would exhaust the second long before the first, and vice versa.
         max_iterations: int = 10,
         max_tool_calls: int = 50,
         audit_writer: AuditWriter | None = None,
@@ -73,15 +114,28 @@ class AgentLoop:
         self.log_raw_prompts = log_raw_prompts
         self.log_provider_text = log_provider_text
 
+    # ==========================================================================
+    # LLM ARGUMENT VALIDATION (the trust boundary)
+    # ==========================================================================
+    #
+    # Everything below parses arguments the MODEL produced. It is untrusted input in
+    # the strictest sense: it is generated text, it can be steered by a poisoned
+    # prompt, and it feeds straight into the risk manager. Nothing here coerces or
+    # guesses — every failure raises.
+
     def _parse_positive_float(self, raw: Any, field_name: str) -> float:
         if raw is None:
             raise ValueError(f"missing required field: {field_name}")
+        # bool before float: isinstance(True, int) holds, so True would parse as 1.0
+        # and become a real quantity.
         if isinstance(raw, bool):
             raise ValueError(f"invalid numeric field: {field_name}")
         try:
             value = float(raw)
         except (TypeError, ValueError) as exc:
             raise ValueError(f"invalid numeric field: {field_name}") from exc
+        # NaN/inf must die here. NaN loses every comparison silently, so a NaN notional
+        # would satisfy each risk ceiling downstream without any of them noticing.
         if not math.isfinite(value):
             raise ValueError(f"{field_name} must be a positive finite number")
         if value <= 0:
@@ -89,11 +143,17 @@ class AgentLoop:
         return value
 
     def _market_reference_price(self, args: dict[str, Any]) -> float:
+        # A market order has no price of its own, but risk cannot size it without one.
+        # Four aliases are accepted because models are inconsistent about which key they
+        # use — and the alternative (defaulting to zero, or skipping the check) would
+        # let a market order past every notional limit as though it were free.
         for field_name in ("price", "reference_price", "current_price", "estimated_price"):
             raw_value = args.get(field_name)
             if raw_value is None:
                 continue
             return self._parse_positive_float(raw_value, field_name)
+        # No price, no order. Raising is the whole point: an unpriceable order is an
+        # unbounded one.
         raise ValueError("market orders require an explicit positive reference/current/estimated execution price")
 
     def _build_propose_order_risk_input(
@@ -106,6 +166,8 @@ class AgentLoop:
         if not symbol:
             raise ValueError("missing required field: symbol")
 
+        # Allowlist, not a cast. A model emitting "long" or "SELL_SHORT" is rejected
+        # rather than coerced into something that happens to parse.
         side = str(args.get("side") or "").strip().lower()
         if side not in {"buy", "sell"}:
             raise ValueError("invalid field: side")
@@ -130,6 +192,10 @@ class AgentLoop:
             stop_loss=args.get("stop_loss"),
         )
 
+    # ==========================================================================
+    # RUN
+    # ==========================================================================
+
     def run(
         self,
         user_objective: str,
@@ -139,6 +205,8 @@ class AgentLoop:
         run_id: str | None = None,
         portfolio_snapshot: PortfolioSnapshot | None = None,
         open_order_ids: List[str] | None = None,
+        # Defaults to False. Safety actions (cancel, flatten) place real orders, so the
+        # loop may not authorise its own cleanup unless the caller says it can.
         allow_auto_safety_actions: bool = False,
     ) -> AgentResult:
         run_id = run_id or f"run_{int(session.turn_count)}_{session.id}"
@@ -175,6 +243,8 @@ class AgentLoop:
             
         return result
 
+    # --- The loop itself ---
+
     def _run_loop(
         self,
         user_objective: str,
@@ -191,6 +261,9 @@ class AgentLoop:
         total_tool_calls = 0
         errors = []
 
+        # `range(max_iterations)` rather than `while True`: the loop cannot fail to
+        # terminate. Falling out of it is a legitimate outcome (status="max_iterations"),
+        # not an error — a model that will not stop is exactly what the bound is for.
         for i in range(self.max_iterations):
             # 1. Get model response
             if self.audit_writer:
@@ -208,6 +281,8 @@ class AgentLoop:
                     tools=self.tool_registry.describe_for_model(self.provider.capabilities()),
                 )
             except Exception as exc:
+                # Sanitised before it is logged. Provider exceptions routinely carry the
+                # full request body — which includes the API key and the prompt.
                 from atlas_agent.runtime_errors import make_safe_runtime_error
                 safe_error = make_safe_runtime_error(operation="provider_complete", exc=exc)
                 logging.error(f"Provider error: {safe_error.message}")
@@ -233,6 +308,11 @@ class AgentLoop:
                     "is_final": llm_response.is_final
                 }
                 
+                # Off by default, the model's raw text is NOT written to the audit log —
+                # only a hash of it. The trail still proves which response was received
+                # (the hash is reproducible from the text), while the reasoning itself,
+                # which can quote memory, positions and prompts, stays out of the record.
+                # `log_provider_text` is the explicit opt-in for debugging.
                 if self.log_provider_text:
                     payload["text"] = response_text
                 else:
@@ -288,9 +368,21 @@ class AgentLoop:
                     total_tool_calls=total_tool_calls,
                 )
 
-            # 2. Execute tool calls
+            # ------------------------------------------------------------------
+            # TOOL EXECUTION — the gauntlet, in this exact order:
+            #   1. call budget      → have we already acted too many times?
+            #   2. kill switch      → is the system braking right now?
+            #   3. risk manager     → would this specific order breach a limit?
+            #   4. guardrails       → does this tool need a human?
+            #   5. execute
+            # The order is not arbitrary: each step is cheaper and more categorical
+            # than the next, and the kill switch is checked BEFORE risk so that a
+            # braking system never even evaluates an order it would refuse anyway.
+            # ------------------------------------------------------------------
             tool_results = []
             for tool_call in llm_response.tool_calls:
+                # Checked per CALL, not per iteration: a single model turn can request
+                # twenty tool calls, and the budget has to bind inside that turn too.
                 if total_tool_calls >= self.max_tool_calls:
                     if self.audit_writer:
                         self.audit_writer.write_event(
@@ -305,14 +397,23 @@ class AgentLoop:
                         total_tool_calls=total_tool_calls,
                     )
 
+                # Incremented BEFORE the call, not after. A tool that raises still counts
+                # against the budget — otherwise a model could burn the loop forever on
+                # calls that fail.
                 total_tool_calls += 1
-                
+
                 # 1. Kill Switch Check
+                # Re-evaluated on EVERY tool call, not once per run. An operator hitting
+                # /kill mid-reasoning must stop the very next action, not wait for the
+                # loop to come round again.
                 if self.kill_switch:
                     kill_decision = self.kill_switch.evaluate()
                     if not kill_decision.allowed:
                         diagnostics = {"kill_switch": kill_decision.model_dump()}
-                        
+
+                        # A braking switch does not merely block: cancel_all/flatten_all
+                        # demand corrective action, so the loop builds and runs a safety
+                        # plan rather than simply refusing and walking away from an open book.
                         if kill_decision.status in ["cancel_required", "flatten_required"]:
                             portfolio = portfolio_snapshot or PortfolioSnapshot(
                                 cash=10000.0, equity=10000.0, total_exposure=0.0
@@ -344,7 +445,11 @@ class AgentLoop:
                                     }
                                 )
 
-                            # ATTEMPT EXECUTION if allowed
+                            # THREE conditions, all required, before the loop is allowed
+                            # to auto-execute a plan that places real orders: an executor
+                            # exists, the caller opted in, and the plan itself did not ask
+                            # for a human. Any one of them missing leaves the plan recorded
+                            # but unexecuted — visible, and waiting for a person.
                             if self.safety_executor and allow_auto_safety_actions and not plan.requires_approval:
                                 exec_res = self.safety_executor.execute_plan(
                                     plan, session, portfolio, mode=mode # type: ignore
@@ -375,12 +480,19 @@ class AgentLoop:
                 except KeyError:
                     pass
 
+                # Gated on the tool's OWN `risk_gated` flag (from tools/builtin.py), so a
+                # new order-placing tool inherits the check by declaring it, rather than
+                # by someone remembering to extend a condition here.
                 if tool_spec and tool_spec.risk_gated and self.risk_manager and tool_call.name == "propose_order":
                     current_portfolio = portfolio_snapshot or PortfolioSnapshot(
                         cash=10000.0, equity=10000.0, total_exposure=0.0
                     )
-                    
+
                     try:
+                        # This can raise on malformed model output — see the validation
+                        # section above. A raise here means the order never reaches risk,
+                        # which is correct: an unparseable order is not a rejected order,
+                        # it is not an order at all.
                         risk_input = self._build_propose_order_risk_input(tool_call, session)
                         
                         risk_decision = self.risk_manager.evaluate_order(

@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/report.py
+# PURPOSE: Renders a backtest result as JSON and Markdown.
+# DEPS:    backtest.models, backtest.report_schema
+#
+# NOTE:    The "informational only" framing in the docstring is not boilerplate —
+#          check_forbidden_claims.py scans this output for language that would read
+#          as a performance promise, and fails the build on a hit.
+# ==============================================================================
+
 """Backtest report generation.
 
 Produces JSON and Markdown research summaries from BacktestResult data.

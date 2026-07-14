@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    agent/planner.py
+# PURPOSE: Shows what the agent WOULD do — which routine the current market state
+#          selects — without doing any of it. The dry run of the agent itself.
+# DEPS:    config, market.session
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from typing import Any
@@ -5,6 +14,10 @@ from typing import Any
 from atlas_agent.config import AtlasConfig
 from atlas_agent.market.session import MarketSessionDetector
 
+
+# ==============================================================================
+# PLAN
+# ==============================================================================
 
 def get_agent_plan(config: AtlasConfig) -> str:
     payload = get_agent_plan_payload(config)

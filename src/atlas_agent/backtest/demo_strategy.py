@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/demo_strategy.py
+# PURPOSE: A trivial strategy used to exercise the stateful paper loop end to end.
+#          A test fixture, not a trading idea.
+# DEPS:    backtest.strategy (the contract), backtest.models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass

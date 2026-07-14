@@ -1,3 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    backtest/engine.py
+# PURPOSE: Walks bars forward in time, asks the strategy for a decision on each, and
+#          simulates the fills. The one invariant that makes a backtest meaningful:
+#          the strategy sees only bars up to `t`, never `t+1`.
+# DEPS:    backtest.execution (fills), backtest.metrics, backtest.benchmarks
+#
+# NOTE:    Look-ahead bias is the failure mode this file exists to avoid. A strategy
+#          handed a future bar cannot lose, and the report will look magnificent.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from datetime import datetime
