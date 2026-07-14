@@ -21,9 +21,17 @@
     "url": "https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.26"
   },
   "ci_status": {
-    "status": "placeholder",
-    "note": "Runs to be captured by scripts/update_release_assurance_ci.py",
-    "runs": []
+    "status": "recorded",
+    "note": "Runs captured by scripts/update_release_assurance_ci.py",
+    "runs": [
+      {
+        "name": "Release Gate",
+        "run_id": 29351722091,
+        "url": "https://github.com/usernotfinded/atlas-agent/actions/runs/29351722091",
+        "conclusion": "",
+        "created_at": "2026-07-14T16:56:48Z"
+      }
+    ]
   },
   "local_checks": {
     "all_passed": true,
