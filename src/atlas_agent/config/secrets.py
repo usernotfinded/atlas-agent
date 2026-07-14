@@ -119,8 +119,15 @@ def set_secret(key: str, value: str) -> None:
     if not found:
         lines.append(f"{key}={value}")
 
-    # Ensure trailing newline
-    env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    # Atomic: temp file + rename, never a direct write. A crash or a full disk part-way
+    # through a direct write would truncate .env.atlas, destroying every OTHER secret in
+    # it — and the loss would be silent, surfacing later as an inexplicable auth failure.
+    #
+    # Imported inside the function on purpose: `atlas_agent.safety` pulls in
+    # safety.deadman, which imports atlas_agent.config, which imports this module. A
+    # module-scope import here would be a circular import. Same reason the redaction
+    # import below is deferred.
+    _atomic_write_env(env_path, "\n".join(lines) + "\n")
 
     # Do not clobber a value the process was launched with: env wins over file, and
     # load_atlas_secrets() relies on that same precedence (override=False).
@@ -132,6 +139,22 @@ def set_secret(key: str, value: str) -> None:
         refresh_redaction_secrets()
     except ImportError:
         pass
+
+# --- Atomic persistence ---
+
+def _atomic_write_env(env_path: Path, content: str) -> None:
+    """Write the .env.atlas file atomically, with 0600 permissions.
+
+    Args:
+        env_path: destination path.
+        content: the complete new contents of the file.
+    """
+    # Deferred import — see the note at the call site. atlas_agent.safety imports
+    # atlas_agent.config, so importing it at module scope would close a cycle.
+    from atlas_agent.safety.atomic_write import atomic_write_text
+
+    atomic_write_text(env_path, content, encoding="utf-8", chmod=0o600)
+
 
 # --- Input validation ---
 
@@ -160,8 +183,9 @@ def unset_secret(key: str) -> None:
     lines = env_path.read_text(encoding="utf-8").splitlines()
     new_lines = [line for line in lines if not line.strip().startswith(f"{key}=")]
 
+    # Atomic here too: removing one secret must not be able to destroy the rest.
     if len(lines) != len(new_lines):
-        env_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+        _atomic_write_env(env_path, "\n".join(new_lines) + "\n")
         if key in os.environ:
             del os.environ[key]
 

@@ -10,6 +10,8 @@
 # --- IMPORTS ---
 from __future__ import annotations
 
+from typing import Any
+
 from atlas_agent.config import AtlasConfig
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.safety import KillSwitchController
