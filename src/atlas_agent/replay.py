@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    replay.py
+# PURPOSE: Reconstructs the story of a past agent run from its event log — what it
+#          saw, what it decided, what risk said, what the broker did. This is the
+#          post-mortem tool: it answers "why did it place that order?".
+# DEPS:    atlas_agent.events.log (event source)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,18 +17,32 @@ from typing import Any
 from atlas_agent.events.log import list_event_files, read_event_file
 
 
+# ==============================================================================
+# SUMMARY MODEL
+# ==============================================================================
+
 @dataclass
 class ReplaySummary:
     source: str
     run_id: str | None
+
+    # These buckets mirror the agent's pipeline stages in order — context, market,
+    # decision, risk, order, artifacts. Keeping the field order aligned with the
+    # real execution order is what makes a rendered summary readable top to bottom.
     inputs_context: list[str] = field(default_factory=list)
     market_state: list[str] = field(default_factory=list)
     decision: list[str] = field(default_factory=list)
     risk_outcome: list[str] = field(default_factory=list)
     order_outcome: list[str] = field(default_factory=list)
     artifacts: list[str] = field(default_factory=list)
+
+    # Gaps in the chain above, not exceptions. See summarize_run().
     warnings: list[str] = field(default_factory=list)
 
+
+# ==============================================================================
+# REPLAY ENTRY POINTS
+# ==============================================================================
 
 def replay_last_run(events_dir: str | Path = "events") -> ReplaySummary | None:
     grouped = _group_events_by_run(events_dir)
@@ -48,6 +72,9 @@ def replay_from_path(path: str | Path, events_dir: str | Path = "events") -> Rep
     if target.suffix == ".md":
         if not target.exists():
             return None
+        # A rendered report is a lossy artefact: it has no event timeline, so we can
+        # only echo its head back. Flagged explicitly so nobody reads the empty
+        # risk/decision buckets below as "the agent skipped those stages".
         text = target.read_text(encoding="utf-8", errors="replace")
         summary = ReplaySummary(source=str(target), run_id=None)
         summary.inputs_context.append("report-only replay; event timeline unavailable")
@@ -57,6 +84,10 @@ def replay_from_path(path: str | Path, events_dir: str | Path = "events") -> Rep
     # fallback: attempt latest run
     return replay_last_run(events_dir)
 
+
+# ==============================================================================
+# EVENT TIMELINE → SUMMARY
+# ==============================================================================
 
 def summarize_run(events: list[dict[str, Any]], *, source: str, run_id: str | None) -> ReplaySummary:
     summary = ReplaySummary(source=source, run_id=run_id)
@@ -86,6 +117,11 @@ def summarize_run(events: list[dict[str, Any]], *, source: str, run_id: str | No
         elif event_type in {"agent_completed"}:
             summary.artifacts.append(f"agent_completed: {payload}")
 
+    # --- Chain-integrity checks ---
+    # These two warnings are the whole point of replay. A decision that never
+    # reached risk, or an order that never reached a terminal state, means the
+    # pipeline was interrupted — a crash, a kill switch, a lost process. Silence
+    # here would let a half-executed run look identical to a clean one.
     if not summary.risk_outcome and summary.decision:
         summary.warnings.append("decision present without risk outcome")
     if any("order_created" in entry for entry in summary.order_outcome) and not any(
@@ -95,6 +131,10 @@ def summarize_run(events: list[dict[str, Any]], *, source: str, run_id: str | No
         summary.warnings.append("order created without final order outcome")
     return summary
 
+
+# ==============================================================================
+# EVENT GROUPING HELPERS
+# ==============================================================================
 
 def _group_events_by_run(events_dir: str | Path) -> dict[str, list[dict[str, Any]]]:
     grouped: dict[str, list[dict[str, Any]]] = {}
@@ -120,6 +160,9 @@ def _group_by_run_id(events: list[dict[str, Any]]) -> dict[str, list[dict[str, A
 
 
 def _event_timestamp(event: dict[str, Any]) -> str:
+    # Sorts lexicographically because timestamps are ISO-8601 UTC (see output.now_iso),
+    # where string order and chronological order coincide. An untimestamped event
+    # sorts to the front rather than blowing up the sort.
     value = event.get("timestamp")
     if isinstance(value, str):
         return value

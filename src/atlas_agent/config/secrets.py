@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    config/secrets.py
+# PURPOSE: The only module that reads or writes credentials. Secrets live in
+#          .env.atlas (0600), never in config.toml, so that the config file stays
+#          safe to commit, share and print.
+# DEPS:    python-dotenv (loading), atlas_agent.config.paths (file location)
+# ==============================================================================
+
+# --- IMPORTS ---
 import os
 from pathlib import Path
 from typing import Optional
@@ -5,14 +15,27 @@ from dotenv import load_dotenv
 
 from atlas_agent.config.paths import get_env_atlas_path
 
+
+# --- ERRORS ---
+
 class InvalidSecretValueError(ValueError):
     """Raised when a secret value cannot be safely stored in .env.atlas."""
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Substring match, not equality: this is the oracle the redaction engine consults
+# too, so it errs towards over-classifying. A false positive costs a redacted log
+# line; a false negative leaks a key.
 SECRET_KEYWORDS = {
     "api_key", "token", "secret", "password", "authorization",
     "bearer", "cookie", "private_key", "credentials", "apca_api_key_id", "apca_api_secret_key"
 }
+
+
+# ==============================================================================
+# KEY CLASSIFICATION
+# ==============================================================================
 
 def is_secret_key(key: str) -> bool:
     """Check if a key looks like a secret."""
@@ -37,6 +60,10 @@ def canonical_env_var(dotted_path: str) -> str:
 
     return "_".join(parts)
 
+# ==============================================================================
+# SECRET LIFECYCLE (LOAD / SET / UNSET / GET)
+# ==============================================================================
+
 def load_atlas_secrets() -> None:
     """Load secrets from .env.atlas into environment. Process env wins."""
     env_path = get_env_atlas_path()
@@ -48,6 +75,11 @@ def load_atlas_secrets() -> None:
         # Sandbox/local environments may restrict access to user-global secrets
         pass
 
+    # Every path that changes the set of live secrets must re-arm the redaction
+    # engine: it redacts by literal value match against a snapshot of the env, and
+    # a secret loaded after that snapshot would print in the clear.
+    # Imported lazily to keep the config layer importable without the redaction
+    # module, which imports back into config.secrets (circular at module scope).
     try:
         from atlas_agent.redaction import refresh_redaction_secrets
         refresh_redaction_secrets()
@@ -56,11 +88,16 @@ def load_atlas_secrets() -> None:
 
 def set_secret(key: str, value: str) -> None:
     """Write a secret to .env.atlas."""
+    # Validate before touching the file: a malformed key or a value with a newline
+    # would corrupt the .env format and silently swallow every line after it.
     _validate_secret_key(key)
     _validate_secret_value(value)
     env_path = get_env_atlas_path()
     env_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # 0600 is re-asserted on every write, not just at creation: the file may have
+    # been created by an earlier version, or had its mode widened by a careless
+    # `chmod -R`. Cheap to enforce, expensive to get wrong.
     if not env_path.exists():
         env_path.touch(mode=0o600)
     else:
@@ -70,6 +107,8 @@ def set_secret(key: str, value: str) -> None:
     if env_path.exists():
         lines = env_path.read_text(encoding="utf-8").splitlines()
 
+    # Rewrite in place if the key is already there, so repeated `atlas config set`
+    # calls update the entry instead of stacking duplicates that shadow each other.
     found = False
     for i, line in enumerate(lines):
         if line.strip().startswith(f"{key}="):
@@ -83,8 +122,8 @@ def set_secret(key: str, value: str) -> None:
     # Ensure trailing newline
     env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    # Also update current process env so it's immediately available,
-    # but only if not already set by the process itself to respect precedence
+    # Do not clobber a value the process was launched with: env wins over file, and
+    # load_atlas_secrets() relies on that same precedence (override=False).
     if key not in os.environ:
         os.environ[key] = value
 
@@ -94,12 +133,19 @@ def set_secret(key: str, value: str) -> None:
     except ImportError:
         pass
 
+# --- Input validation ---
+
 def _validate_secret_key(key: str) -> None:
+    # Shell-identifier grammar. Anything else could not be exported as an env var,
+    # and a key containing `=` or a newline would let a caller inject extra lines
+    # into .env.atlas.
     import re
     if not isinstance(key, str) or not re.fullmatch(r"^[A-Za-z_][A-Za-z0-9_]*$", key):
         raise ValueError(f"Invalid secret key name: {key}")
 
 def _validate_secret_value(value: str) -> None:
+    # The .env format is line-oriented and has no escaping: an embedded newline
+    # would end the assignment early and turn the remainder into a rogue entry.
     if not isinstance(value, str):
         raise InvalidSecretValueError("Secret values must be single-line text.")
     if "\n" in value or "\r" in value or "\0" in value:

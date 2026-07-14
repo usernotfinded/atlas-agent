@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    jsonl.py
+# PURPOSE: Append-only JSONL I/O. Every audit trail, event log and order journal
+#          in the project is a JSONL file, and this is the only module allowed to
+#          read or write them.
+# DEPS:    stdlib only (json, os, collections.deque, pathlib)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -6,6 +16,10 @@ from collections import deque
 from pathlib import Path
 from typing import Any
 
+
+# ==============================================================================
+# WRITING
+# ==============================================================================
 
 class JsonlWriter:
     def __init__(self, path: str | Path, *, sort_keys: bool = True) -> None:
@@ -22,6 +36,10 @@ def write_jsonl(path: str | Path, record: dict[str, Any], *, sort_keys: bool = T
     JsonlWriter(path, sort_keys=sort_keys).write(record)
 
 
+# ==============================================================================
+# READING (TAIL)
+# ==============================================================================
+
 def tail_lines(path: str | Path, limit: int) -> list[str]:
     target = Path(path)
     if limit <= 0 or not target.exists():
@@ -29,6 +47,9 @@ def tail_lines(path: str | Path, limit: int) -> list[str]:
 
     lines: deque[str] = deque(maxlen=limit)
     with target.open("rb") as handle:
+        # Read backwards in chunks from EOF rather than loading the file. Audit
+        # logs grow without bound, and `atlas events tail -n 20` must not pull a
+        # multi-gigabyte journal into memory to show the last 20 lines.
         handle.seek(0, os.SEEK_END)
         position = handle.tell()
         buffer = b""
