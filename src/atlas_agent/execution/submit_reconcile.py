@@ -1,3 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    execution/submit_reconcile.py
+# PURPOSE: Resolves the one genuinely dangerous state in the system: a submit that
+#          crashed or timed out, where an order may or may not exist at the venue.
+#          Asks the broker "do you have this client_order_id?" and settles the fact.
+# DEPS:    execution.submit_state (the uncertain records it repairs),
+#          brokers.resolver (the source of truth — the venue, not our own files)
+#
+# DESIGN:  Reconciliation NEVER submits and never cancels. It only observes and
+#          records. That restraint is the point: acting on an uncertain state is
+#          exactly how a duplicate order gets placed.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -23,6 +38,10 @@ from atlas_agent.execution.submit_state import (
 )
 
 
+# ==============================================================================
+# REPORT MODEL
+# ==============================================================================
+
 @dataclass
 class ReconcileReport:
     ok: bool
@@ -41,8 +60,15 @@ class ReconcileReport:
         }
 
 
+# ==============================================================================
+# BROKER LOOKUP
+# ==============================================================================
+
 def _get_reconcile_lookup(sync_provider: Any):
     """Return a callable get_order_by_client_order_id if available, else None."""
+    # Lookup is BY CLIENT ORDER ID, never by our internal order id. The client id is the
+    # idempotency key we sent to the venue, so it is the only handle that can answer
+    # "did my request arrive?" for a submit whose response we never saw.
     lookup = getattr(sync_provider, "get_order_by_client_order_id", None)
     if not callable(lookup):
         return None

@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    brokers/resolver.py
+# PURPOSE: Decides WHICH broker a run actually gets, and hands back a paper broker
+#          whenever the live path is not fully unlocked. The safe default lives
+#          here: everything that fails to qualify for live falls back to simulation.
+# DEPS:    brokers.paper (the fallback), brokers.base (the contracts),
+#          brokers.guards / brokers.status (via the callers that gate submission)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import hashlib
@@ -19,14 +30,27 @@ if TYPE_CHECKING:
     from atlas_agent.config import AtlasConfig
 
 
+# ==============================================================================
+# RESOLUTION MODELS
+# ==============================================================================
+
 @dataclass(frozen=True)
 class BrokerStatus:
     mode: str
     broker_id: str
+
+    # Four separate booleans rather than one "ready" flag, because they answer four
+    # different questions and routinely disagree:
+    #   configured             → the operator named this broker;
+    #   credentials_configured → the keys are present;
+    #   can_sync               → we may READ the account;
+    #   can_submit             → we may WRITE to it.
+    # A broker can be fully credentialled and still not permitted to submit.
     configured: bool
     credentials_configured: bool
     can_sync: bool
     can_submit: bool
+
     code: str
     message: str
 
@@ -45,6 +69,10 @@ class BrokerStatus:
 
 @dataclass(frozen=True)
 class BrokerResolution:
+    # The two halves are resolved INDEPENDENTLY. A run can legitimately end up with a
+    # working sync_provider (read the real account) and execution_broker=None (may not
+    # write to it) — that is the read-only live mode, and collapsing the pair into one
+    # object would make it unrepresentable.
     execution_broker: Broker | None
     sync_provider: BrokerProvider | None
     status: BrokerStatus
@@ -56,6 +84,10 @@ class OptInStatus:
     code: str
     message: str
 
+
+# ==============================================================================
+# BROKER RESOLVER
+# ==============================================================================
 
 class BrokerResolver:
     def __init__(self, config: AtlasConfig | None) -> None:

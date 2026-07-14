@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    brokers/binance.py
+# PURPOSE: The Binance adapter. Validates its configuration up front and refuses to
+#          operate without a complete, explicitly-enabled live setup.
+# DEPS:    brokers.base (BrokerConfigurationError), config (the live gates)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os
@@ -9,18 +18,32 @@ from atlas_agent.execution.order import AccountSnapshot, FlattenResult, Order, O
 from atlas_agent.portfolio.positions import Position
 
 
+# ==============================================================================
+# BINANCE BROKER
+# ==============================================================================
+
 @dataclass(frozen=True)
 class BinanceBroker:
     config: AtlasConfig
+
+    # --- Credentials & configuration ---
 
     def _api_secret(self) -> str | None:
         # BINANCE_SECRET_KEY is kept as a legacy compatibility alias.
         return os.getenv("BINANCE_API_SECRET") or os.getenv("BINANCE_SECRET_KEY")
 
     def _validate_config(self) -> None:
+        # Starts from the GLOBAL live gates and adds Binance-specific requirements on
+        # top, rather than checking only its own. A per-broker check that forgot the
+        # project-wide locks would be a way around them.
+        #
+        # All reasons are collected before raising, so an operator learns everything
+        # that is missing in one go instead of fixing them one error at a time.
         reasons = list(self.config.live_disabled_reasons())
         if self.config.live_broker != "binance":
             reasons.append("LIVE_BROKER must be binance")
+        # Presence only — the values are never read into the message. This error string
+        # is surfaced to the user and may be logged.
         if not os.getenv("BINANCE_API_KEY"):
             reasons.append("BINANCE_API_KEY is missing")
         if not self._api_secret():

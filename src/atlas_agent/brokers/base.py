@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    brokers/base.py
+# PURPOSE: The contracts every broker adapter satisfies. Structural (Protocol),
+#          not inherited: an adapter is anything with the right methods, so a paper
+#          broker, a real venue and a test double are interchangeable to the rest
+#          of the system — which is what makes the order path testable at all.
+# DEPS:    execution.order (order/result types), brokers.models (sync types)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from typing import Protocol, List
@@ -17,6 +28,13 @@ from atlas_agent.execution.order import (
 from atlas_agent.portfolio.positions import Position
 
 
+# ==============================================================================
+# TRADING CONTRACT (the write path)
+# ==============================================================================
+
+# Deliberately minimal — five methods. Every capability here can MOVE MONEY, so the
+# surface is kept as small as the system can function with. Anything a broker can
+# additionally do stays off this Protocol and out of the order path.
 class Broker(Protocol):
     def get_account(self) -> AccountSnapshot:
         ...
@@ -38,6 +56,13 @@ class Broker(Protocol):
         ...
 
 
+# ==============================================================================
+# SYNC CONTRACT (the read path)
+# ==============================================================================
+
+# Split from Broker on purpose: this interface is READ-ONLY. Reconciliation and
+# status reporting only need to observe the venue, and giving them an object that
+# cannot place an order means they structurally cannot cause one.
 class BrokerProvider(Protocol):
     """
     Interface for broker data synchronization.
@@ -55,6 +80,15 @@ class BrokerProvider(Protocol):
         ...
 
 
+# ==============================================================================
+# ERRORS
+# ==============================================================================
+
+# Two distinct types, because the two failures demand opposite responses:
+#   - Configuration → we never reached the venue. Nothing happened. Safe to retry
+#     once the config is fixed.
+#   - Operation     → we DID reach the venue, or may have. The outcome is unknown,
+#     and a blind retry risks a duplicate order. This is reconciliation's problem.
 class BrokerConfigurationError(RuntimeError):
     pass
 

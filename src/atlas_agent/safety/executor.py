@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    safety/executor.py
+# PURPOSE: Carries out a SafetyActionPlan. The counterpart of action_plan.py: that
+#          module decides, this one acts — and it re-checks every gate on the way,
+#          because time passed between planning and execution.
+# DEPS:    safety.kill_switch (re-checked here), risk.manager, tools.registry
+#          (actions run as tools, so they inherit the tool sandbox), audit
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import logging
@@ -19,6 +30,10 @@ from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import ToolCall, ToolResult, ToolError
 
 
+# ==============================================================================
+# SAFETY ACTION EXECUTOR
+# ==============================================================================
+
 class SafetyActionExecutor:
     def __init__(
         self,
@@ -36,6 +51,8 @@ class SafetyActionExecutor:
         self.run_id = run_id
         self.iteration = iteration
 
+    # --- Plan execution (two gates before anything runs) ---
+
     def execute_plan(
         self,
         plan: SafetyActionPlan,
@@ -44,6 +61,8 @@ class SafetyActionExecutor:
         mode: Literal["paper", "live"] = "paper",
         approved: bool = False
     ) -> SafetyPlanExecutionResult:
+        # `approved` is passed in by the caller and NOT inferred from the plan. The plan
+        # states what it requires; only the caller can attest that a human said yes.
         if self.audit_writer:
             self.audit_writer.write_event(
                 "safety_plan_execution_requested",
@@ -70,7 +89,13 @@ class SafetyActionExecutor:
                 errors=["Safety plan requires explicit approval"]
             )
 
-        # Check Kill Switch before starting
+        # The kill switch is re-evaluated HERE, not trusted from the plan. An arbitrary
+        # amount of time passed while the plan sat waiting for approval, and the switch
+        # may have escalated to locked_down since. Executing a stale plan against a
+        # system that has since locked down is precisely what lockdown forbids.
+        #
+        # Only locked_down blocks: the milder modes are the very reason this plan exists
+        # (a cancel_all plan is *supposed* to run while the switch says cancel_all).
         kill_decision = self.kill_switch.evaluate()
         if not kill_decision.allowed and kill_decision.mode == "locked_down":
             if self.audit_writer:
@@ -91,6 +116,10 @@ class SafetyActionExecutor:
         skipped = []
         errors = []
 
+        # Keep going after a failure rather than aborting the loop. If flattening AAPL
+        # fails, the remaining positions must still be attempted — stopping at the first
+        # error would leave the rest of the book open, which is the outcome this plan
+        # exists to prevent. Every failure is still collected and reported below.
         for action in plan.actions:
             if action.type == "no_op":
                 skipped.append(action)
@@ -106,6 +135,10 @@ class SafetyActionExecutor:
                 failed.append(result)
                 errors.append(f"Action {action.type} failed: {result.error}")
 
+        # "partially_completed" is deliberately distinct from both success and failure:
+        # a flatten that closed 2 of 3 positions left real exposure on the book, and
+        # collapsing that into either "completed" or "failed" would mislead the operator
+        # about whether anything is still at risk.
         status: SafetyActionExecutionStatus = "completed"
         if failed:
             status = "partially_completed" if executed else "failed"
@@ -134,6 +167,8 @@ class SafetyActionExecutor:
 
         return final_result
 
+    # --- Single-action execution ---
+
     def _execute_action(
         self,
         action: SafetyAction,
@@ -141,6 +176,9 @@ class SafetyActionExecutor:
         portfolio: PortfolioSnapshot,
         mode: str
     ) -> SafetyActionExecutionResult:
+        # An explicit allowlist, even though the names currently map 1:1. It is the
+        # boundary that stops a plan from naming an arbitrary tool: safety actions may
+        # reach ONLY these four, and nothing in a plan can widen that.
         tool_mapping = {
             "cancel_order": "cancel_order",
             "flatten_position": "flatten_position",

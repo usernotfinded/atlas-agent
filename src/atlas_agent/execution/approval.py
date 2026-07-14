@@ -1,3 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    execution/approval.py
+# PURPOSE: The human-in-the-loop gate for live orders. Parks an order on disk, and
+#          later proves that the thing being approved is byte-for-byte the thing
+#          that was proposed.
+# DEPS:    hmac/hashlib (integrity), execution.order (the payload)
+#
+# DESIGN:  The pending-order file lives in a directory a human is invited to edit,
+#          which makes it the softest surface in the order path. Three defences
+#          layer over it:
+#            1. order_hash  — detects any edit to the order fields;
+#            2. HMAC        — detects an edit made by someone WITHOUT the secret,
+#                             so a tamperer cannot simply recompute the hash;
+#            3. TTL         — an approval that sat too long is void, so a stale
+#                             file cannot be executed against a moved market.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import hashlib
@@ -14,8 +33,13 @@ from typing import Any
 from atlas_agent.execution.order import Order
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
 def _get_approval_secret() -> str | None:
     """Read optional ATLAS_APPROVAL_SECRET_KEY from environment."""
+    # Optional: without it the order_hash still catches accidental corruption, but not
+    # a deliberate edit by someone who can just recompute the hash. The HMAC is what
+    # upgrades this from tamper-EVIDENT to tamper-RESISTANT.
     return os.environ.get("ATLAS_APPROVAL_SECRET_KEY") or None
 
 
@@ -27,8 +51,15 @@ class InvalidPendingOrderError(ValueError):
     """Raised when a pending order file is malformed, tampered, or unsupported."""
 
 
+# An order id becomes a FILENAME. Without this allowlist, an id like "../../etc/x"
+# would let a caller write or read outside pending_orders/ — a path traversal on the
+# one directory that decides which orders are allowed to execute.
 _SAFE_APPROVAL_ID = re.compile(r"^[A-Za-z0-9_.-]+$")
 
+
+# ==============================================================================
+# APPROVAL MANAGER
+# ==============================================================================
 
 class ApprovalManager:
     def __init__(
@@ -41,10 +72,17 @@ class ApprovalManager:
         self.pending_dir.mkdir(parents=True, exist_ok=True)
         self._secret_key = secret_key if secret_key is not None else _get_approval_secret()
 
+    # --- Parking an order for review ---
+
     def create_pending_order(self, order: Order, *, ttl_minutes: int = 30) -> Path:
+        # 30 minutes by default. An approval is consent to trade AT A PRICE, and that
+        # consent decays: rubber-stamping an order and executing it hours later would
+        # put it into a market the approver never saw.
         now = datetime.now(UTC)
         expires_at = now + timedelta(minutes=ttl_minutes)
         order_dict = _order_to_dict(order)
+        # Computed at creation and re-verified at approval. This is what makes "approve
+        # order X" mean the X that was proposed, not an X someone edited in between.
         order_hash = _compute_order_hash(order_dict)
         transitions = [
             {"status": "pending_approval", "at": now.isoformat(), "actor": "system"}
@@ -82,11 +120,18 @@ class ApprovalManager:
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         return path
 
+    # --- Recording an approval ---
+
     def approve(self, order_id: str, *, actor: str = "cli:user") -> Path:
+        # _read_payload() validates and integrity-checks before we get here, so an order
+        # that was edited on disk can never be approved — the tamper check runs BEFORE
+        # the approval is granted, not after.
         path = self.path_for(order_id)
         if not path.exists():
             raise FileNotFoundError(f"pending order not found: {order_id}")
         payload = self._read_payload(path)
+        # An anonymous approval is not an approval. `actor` ends up in the audit trail
+        # as the answer to "who authorised this trade".
         if not isinstance(actor, str) or not actor.strip():
             raise InvalidPendingOrderError("approval actor invalid")
         expires_at_raw = payload.get("expires_at")
@@ -98,6 +143,9 @@ class ApprovalManager:
             raise InvalidPendingOrderError("invalid expires_at")
         if expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=UTC)
+        # Expiry is checked at APPROVE time as well as at is_approved() time. Approving
+        # an already-expired order would mint a fresh-looking approval over a stale
+        # proposal — the TTL has to bind at every step, not just the last one.
         if datetime.now(UTC) > expires_at:
             raise InvalidPendingOrderError("pending order expired")
         now = datetime.now(UTC)
@@ -122,7 +170,16 @@ class ApprovalManager:
         path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         return path
 
+    # --- Checking an approval (the gate the router calls) ---
+
     def is_approved(self, order_id: str) -> bool:
+        """Is this order approved, right now, and provably unmodified?
+
+        Returns:
+            True only if EVERY check passes. Every failure path returns False —
+            never an exception, never a maybe. This is the predicate that stands
+            between a proposal and a real trade, so the default answer is no.
+        """
         path = self.path_for(order_id)
         if not path.exists():
             return False
@@ -134,10 +191,18 @@ class ApprovalManager:
             expires_at = datetime.fromisoformat(expires_at_raw)
             if expires_at.tzinfo is None:
                 expires_at = expires_at.replace(tzinfo=UTC)
+            # Re-checked at submit time, not merely at approve time: an approval that has
+            # expired while waiting in the queue is void, and this is the last chance to
+            # notice before the order reaches the venue.
             if datetime.now(UTC) > expires_at:
                 return False
+            # `approved` and `status` must BOTH agree. They are two independent fields,
+            # and a file where they disagree is a file that has been tampered with.
             if not payload.get("approved") or payload.get("status") != "approved":
                 return False
+            # "unknown" is explicitly rejected, not just falsy values: it is the
+            # placeholder a v1→v2 upgrade leaves behind, and an upgraded record must not
+            # count as a human decision nobody actually made.
             actor = payload.get("approval_actor")
             if not actor or actor == "unknown":
                 return False
@@ -158,6 +223,8 @@ class ApprovalManager:
                 expires_at=payload.get("expires_at", ""),
                 secret_key=secret_key,
             )
+            # The tamper check. If a single approval field was edited on disk, the
+            # recomputed hash will not match and the order is not approved.
             if approval_hash != recomputed:
                 return False
             return True
@@ -169,7 +236,13 @@ class ApprovalManager:
             TypeError,
             OSError,
         ):
+            # A broad catch, and deliberately so: ANY failure to establish that this
+            # order is approved means it is not approved. There is no error path here
+            # that should propagate, because a caller that sees an exception might
+            # handle it — and the only correct handling is "do not trade".
             return False
+
+    # --- Reading and validating the file ---
 
     def _read_payload(self, path: Path) -> dict[str, Any]:
         raw = path.read_text(encoding="utf-8")
@@ -203,14 +276,24 @@ class ApprovalManager:
         return path
 
 
+# ==============================================================================
+# INTEGRITY: HASHING & HMAC
+# ==============================================================================
+
 def _order_to_dict(order: Order) -> dict[str, object]:
     payload = asdict(order)
+    # datetime is not JSON-serialisable, and the hash below is computed over JSON.
+    # Normalising to ISO here keeps the hash reproducible across processes.
     payload["created_at"] = order.created_at.isoformat()
     return payload
 
 
 def _compute_order_hash(order_dict: dict[str, Any]) -> str:
     """Compute sha256 of canonical JSON of the immutable order payload only."""
+    # Covers ONLY the order fields — never the approval decision. The two are hashed
+    # separately on purpose: approving an order changes the decision fields, and if
+    # they shared one hash, every approval would invalidate the very hash that proves
+    # the order was not edited.
     canonical = json.dumps(order_dict, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
@@ -230,6 +313,12 @@ def _compute_approval_hash(
     When secret_key is provided, uses HMAC-SHA256 for authentication.
     When absent, falls back to plain SHA256 for paper/demo compatibility.
     """
+    # `order_hash` is folded INTO the approval hash, which binds the decision to one
+    # specific order. Without that link, an attacker could lift a valid approval block
+    # from one pending file and paste it over a different order.
+    #
+    # `expires_at` is included too, so the TTL cannot be extended by editing the file:
+    # moving the expiry invalidates the hash.
     canonical = json.dumps(
         {
             "order_hash": order_hash,
@@ -244,12 +333,24 @@ def _compute_approval_hash(
         separators=(",", ":"),
     )
     payload = canonical.encode("utf-8")
+    # HMAC when a secret exists, plain SHA-256 when it does not. The difference is not
+    # cosmetic: a plain hash is reproducible by anyone editing the file, so on its own
+    # it detects only ACCIDENTAL corruption. Authentication of live approvals requires
+    # the secret — which is why assert_live_hmac_approval() below insists on it.
     if secret_key:
         return hmac.new(secret_key.encode("utf-8"), payload, hashlib.sha256).hexdigest()
     return hashlib.sha256(payload).hexdigest()
 
 
+# ==============================================================================
+# PAYLOAD VALIDATION
+# ==============================================================================
+
+# --- Numeric predicates ---
+
 def _is_number(value: Any) -> bool:
+    # `not isinstance(value, bool)` matters: in Python bool subclasses int, so True
+    # would otherwise pass as a valid quantity and evaluate to 1.
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
@@ -543,6 +644,10 @@ def _upgrade_v1_to_v2(payload: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+# ==============================================================================
+# LIVE-SUBMIT AUTHENTICATION GATE
+# ==============================================================================
+
 def assert_live_hmac_approval(payload: dict[str, Any]) -> None:
     """Fail closed if a live submit lacks HMAC-backed approval.
 
@@ -551,6 +656,14 @@ def assert_live_hmac_approval(payload: dict[str, Any]) -> None:
     legacy SHA-256 approvals are still accepted to preserve backward
     compatibility for existing deployments and reviewer/demo workflows.
     """
+    # A DOWNGRADE guard, not an authentication check. Once a secret is configured,
+    # an approval that carries only a plain SHA-256 hash is refused — otherwise an
+    # attacker could strip the HMAC, recompute the weaker hash (which needs no secret),
+    # and have it accepted as though nothing had changed.
+    #
+    # Note the deliberate limit of this guard: with no secret configured it returns
+    # early and plain-SHA approvals are accepted. That is a backwards-compatibility
+    # decision, and it means the HMAC layer protects only deployments that opted in.
     if _get_approval_secret() is None:
         return
     alg = payload.get("approval_hash_alg")
@@ -561,7 +674,14 @@ def assert_live_hmac_approval(payload: dict[str, Any]) -> None:
         )
 
 
+# ==============================================================================
+# PATH SAFETY
+# ==============================================================================
+
 def _validate_approval_id(order_id: str) -> str:
+    # The id becomes a path segment, so this is a path-traversal guard on the directory
+    # that authorises live orders. "." and ".." are rejected before the regex because
+    # they match no character class but are still dangerous as path components.
     if not isinstance(order_id, str):
         raise InvalidApprovalIdError("Invalid pending order id.")
     candidate = order_id.strip()

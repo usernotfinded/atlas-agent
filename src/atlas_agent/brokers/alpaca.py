@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    brokers/alpaca.py
+# PURPOSE: The Alpaca adapter — the one live venue this project actually supports.
+#          Translates between Atlas order types and Alpaca's REST API, and refuses
+#          anything it does not recognise in either direction.
+# DEPS:    urllib (stdlib HTTP — no vendor SDK, so no extra supply-chain surface on
+#          the path that moves real money), brokers.base, brokers.models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -20,13 +31,30 @@ from atlas_agent.execution.order import AccountSnapshot, FlattenResult, Order, O
 from atlas_agent.portfolio.positions import Position
 
 
+# ==============================================================================
+# ALPACA BROKER
+# ==============================================================================
+
 @dataclass(frozen=True)
 class AlpacaBroker:
     config: AtlasConfig
+
+    # Two distinct hosts. Which one is selected is decided by config, not by a flag on
+    # a request — so a paper run cannot accidentally address the live endpoint even if
+    # every other field is identical.
     paper_endpoint: str = "https://paper-api.alpaca.markets"
     live_endpoint: str = "https://api.alpaca.markets"
 
+    # --- CONFIGURATIONS & CONSTANTS ---
+
+    # Only market and limit. Stops, brackets and trailing orders are unsupported
+    # deliberately: each carries execution semantics the risk layer does not model, and
+    # an order type risk cannot reason about is one it cannot bound.
     _VALID_ORDER_TYPES = {"market", "limit"}
+
+    # An allowlist for statuses coming BACK from the venue. An unrecognised status is
+    # treated as unknown rather than mapped to a guess — and "I don't know what happened
+    # to this order" must never be silently rounded to "filled" or "cancelled".
     _STATUS_ALLOWLIST = {
         "new",
         "partially_filled",

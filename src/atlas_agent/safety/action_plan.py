@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    safety/action_plan.py
+# PURPOSE: Turns a kill-switch verdict into a concrete, reviewable list of actions.
+#          Plans only — nothing here touches a broker. Separating "decide what to do"
+#          from "do it" is what lets a human read the plan before it executes.
+# DEPS:    safety.models (plan/action shapes), risk.manager (the plan is itself
+#          risk-checked — see _plan_flatten_all)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from typing import Any, List, Optional, Literal
@@ -6,21 +17,30 @@ from uuid import uuid4
 from atlas_agent.risk.models import PortfolioSnapshot, OrderRiskInput, RiskPosition
 from atlas_agent.risk.manager import RiskManager
 from atlas_agent.safety.models import (
-    SafetyAction, 
-    SafetyActionPlan, 
-    KillSwitchDecision, 
+    SafetyAction,
+    SafetyActionPlan,
+    KillSwitchDecision,
     KillSwitchMode
 )
 
 
+# ==============================================================================
+# SAFETY ACTION PLANNER
+# ==============================================================================
+
 class SafetyActionPlanner:
     def __init__(
-        self, 
+        self,
         risk_manager: Optional[RiskManager] = None,
+        # Defaults to False: even in paper mode, a safety plan is auto-approved only
+        # when someone explicitly says so. Silent auto-execution is opt-in, never
+        # inherited from "it's only paper".
         allow_auto_paper_actions: bool = False
     ):
         self.risk_manager = risk_manager
         self.allow_auto_paper_actions = allow_auto_paper_actions
+
+    # --- Dispatch ---
 
     def create_plan(
         self,
@@ -31,7 +51,11 @@ class SafetyActionPlanner:
     ) -> SafetyActionPlan:
         plan_id = str(uuid4())
         ks_mode = decision.mode
-        
+
+        # One branch per kill-switch mode, most severe first. Note that `normal` is the
+        # fallthrough at the bottom — an unrecognised mode therefore produces a no-op
+        # plan, which is safe here precisely BECAUSE the switch itself already blocked
+        # the order. This module never grants permission; it only plans the cleanup.
         if ks_mode == "locked_down":
             return self._plan_lockdown(plan_id, ks_mode)
             
@@ -54,7 +78,13 @@ class SafetyActionPlanner:
             requires_approval=False
         )
 
+    # --- Per-mode plans ---
+
     def _plan_lockdown(self, plan_id: str, mode: KillSwitchMode) -> SafetyActionPlan:
+        # Lockdown plans a NOTIFICATION and nothing else. It deliberately does not
+        # cancel or flatten: lockdown is the "we no longer trust our own state" mode,
+        # and a system that cannot trust its state must not be sending orders — not even
+        # well-meant corrective ones. Getting a human involved is the entire plan.
         return SafetyActionPlan(
             plan_id=plan_id,
             mode=mode,
@@ -88,9 +118,12 @@ class SafetyActionPlanner:
                 description=f"Cancel order {order_id}",
                 params={"order_id": order_id}
             ))
-            
+
+        # Approval is required unless BOTH conditions hold: we are in paper, and auto
+        # actions were explicitly enabled. Live always needs a human — no exceptions,
+        # and no config that can grant one.
         requires_approval = not (run_mode == "paper" and self.allow_auto_paper_actions)
-        
+
         return SafetyActionPlan(
             plan_id=plan_id,
             mode=mode,
@@ -121,7 +154,9 @@ class SafetyActionPlanner:
         requires_approval = not (run_mode == "paper" and self.allow_auto_paper_actions)
         
         for pos in portfolio.positions:
-            # Generate flatten action
+            # The closing side is the OPPOSITE of the position's sign: a long (qty > 0)
+            # is closed by selling, a short (qty < 0) by buying. Getting this backwards
+            # would double the exposure the flatten was meant to remove.
             side = "sell" if pos.quantity > 0 else "buy"
             actions.append(SafetyAction(
                 type="flatten_position",
@@ -132,8 +167,14 @@ class SafetyActionPlanner:
                     "side": side
                 }
             ))
-            
-            # Verify risk reduction if RiskManager is available
+
+            # Flatten orders are run through the RiskManager like any other order. Not
+            # to gate them — a flatten reduces risk by construction — but as a TRIPWIRE:
+            # if risk says this order does not reduce risk, then our reading of the
+            # position is wrong (bad sign, stale price, corrupt snapshot), and the last
+            # thing to do is send it. The whole plan is abandoned rather than partially
+            # executed, because a half-flattened book from a bad snapshot is worse than
+            # an untouched one a human then looks at.
             if self.risk_manager:
                 risk_input = OrderRiskInput(
                     symbol=pos.symbol,
@@ -144,7 +185,8 @@ class SafetyActionPlanner:
                 )
                 decision = self.risk_manager.evaluate_order(risk_input, portfolio, mode=run_mode) # type: ignore
                 if not decision.allowed or decision.classification not in ["reduces_risk", "closes_position"]:
-                    # This should basically never happen if the logic is correct
+                    # Unreachable in a consistent system — which is exactly what makes it
+                    # worth checking. Reaching here means an invariant is already broken.
                     return SafetyActionPlan(
                         plan_id=plan_id,
                         mode=mode,
@@ -154,7 +196,7 @@ class SafetyActionPlanner:
                         requires_approval=True,
                         diagnostics={"failed_decision": decision.model_dump()}
                     )
-        
+
         return SafetyActionPlan(
             plan_id=plan_id,
             mode=mode,

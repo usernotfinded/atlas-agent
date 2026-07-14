@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    execution/order_router.py
+# PURPOSE: The gauntlet every order runs before it reaches a broker. Enforces the
+#          project's central invariant — nothing is submitted that has not passed,
+#          in this order: input validation → RiskManager → approval → broker.
+# DEPS:    risk.manager (mandatory gate), execution.approval (human gate),
+#          brokers.base (the only exit), events.log + execution.audit (the record)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import math
@@ -13,6 +24,10 @@ from atlas_agent.execution.order import Order, OrderResult
 from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.risk.manager import RiskManager
 
+
+# ==============================================================================
+# ORDER ROUTER
+# ==============================================================================
 
 @dataclass
 class OrderRouter:
@@ -34,6 +49,17 @@ class OrderRouter:
         run_id: str | None = None,
         command: str = "atlas run-once",
     ) -> OrderResult:
+        """Route an order through every gate. The only path to a broker.
+
+        Returns:
+            An OrderResult. Rejections are RETURNED, never raised — a blocked order
+            is a normal outcome of a working safety system, not an exceptional one,
+            and callers must be able to log it without a try/except.
+        """
+        # --- Gate 1: input sanity -------------------------------------------------
+        # Rejected here, before risk ever sees it. A NaN quantity would slip past every
+        # downstream limit check (NaN > max is False, so it violates nothing), so it has
+        # to die at the door rather than be caught by a comparison that cannot catch it.
         if isinstance(order.quantity, bool) or not isinstance(order.quantity, (int, float)) or not math.isfinite(order.quantity) or order.quantity <= 0:
             return OrderResult(
                 accepted=False,
@@ -65,6 +91,10 @@ class OrderRouter:
                     "quantity": order.quantity,
                 },
             )
+        # --- Gate 2: risk ---------------------------------------------------------
+        # Mandatory and unconditional. There is no config flag, no mode and no caller
+        # that can skip this call — that is the invariant the whole project rests on
+        # ("RiskManager is mandatory before broker execution", safety/policy.py).
         decision = self.risk_manager.validate_order(
             order,
             portfolio,
@@ -109,7 +139,13 @@ class OrderRouter:
                 payload={"order_id": order.id},
             )
 
+        # --- Gate 3: live-only locks ----------------------------------------------
+        # Everything below applies to live mode ONLY. Paper orders skip straight to the
+        # broker, which is the point: paper is where the agent is allowed to be wrong.
         if mode == "live":
+            # The config gates are re-read HERE, at submit time, rather than trusted from
+            # startup. A kill switch tripped or a flag flipped while this order was in
+            # flight must still stop it.
             live_reasons = self.config.live_disabled_reasons()
             if live_reasons:
                 if event_logger is not None and run_id is not None:
@@ -132,6 +168,9 @@ class OrderRouter:
                     message="live trading gates failed",
                     reasons=live_reasons,
                 )
+            # An allowlist of exactly one value. Any other approval mode — including one
+            # that would auto-approve — is REJECTED rather than honoured: on the live
+            # path, "I don't recognise this policy" must mean no, not yes.
             if self.config.order_approval_mode != "manual_live":
                 return OrderResult(
                     accepted=False,
@@ -140,6 +179,10 @@ class OrderRouter:
                     status="rejected",
                     message="unsupported live approval mode",
                 )
+            # --- Gate 4: human approval -------------------------------------------
+            # Unapproved live orders are PARKED, not dropped: written to disk as pending
+            # so a human can review and approve them out of band. The order does not
+            # proceed on this pass, and the caller is told so.
             if not self.approval_manager.is_approved(order.id):
                 pending_path = self.approval_manager.create_pending_order(order)
                 if event_logger is not None and run_id is not None:
@@ -162,9 +205,17 @@ class OrderRouter:
                     message=f"live order pending approval: {pending_path}",
                 )
 
+        # --- The broker call: the point of no return -------------------------------
+        # Everything above this line is reversible. Once place_order() is entered, an
+        # order may exist at the venue even if we never see the response — which is why
+        # a broker exception below is reported as status="failed" (outcome UNKNOWN) and
+        # never as "rejected" (outcome known: nothing happened). Reconciliation, not
+        # this function, is what resolves a failed submit.
         try:
             result = broker.place_order(order)
         except Exception as exc:
+            # Sanitised before it touches a log line: broker exceptions carry request
+            # bodies and API keys.
             broker_error = make_broker_error(
                 operation="place_order",
                 broker=broker,
