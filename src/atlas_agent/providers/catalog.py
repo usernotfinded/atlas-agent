@@ -1,8 +1,23 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/catalog.py
+# PURPOSE: The static inventory of every LLM provider Atlas knows — its endpoint,
+#          its auth scheme, which env vars carry its key, and which models it
+#          offers. Pure data: the single source of truth the wizard, the runtime
+#          resolver and the preflight checks all read from.
+# DEPS:    none (deliberately — no network, no credentials, no side effects)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
 
+
+# ==============================================================================
+# MODEL OPTION
+# ==============================================================================
 
 @dataclass(frozen=True)
 class ModelOption:
@@ -15,8 +30,15 @@ class ModelOption:
 
     def __post_init__(self) -> None:
         # Product rule: user-facing model labels must exactly match stored IDs.
+        # Forced here rather than trusted at each call site, so a friendly label can
+        # never drift from the id actually sent to the API — which is how someone ends
+        # up billed for a model they did not think they had selected.
         object.__setattr__(self, "label", self.id)
 
+
+# ==============================================================================
+# PROVIDER PROFILE
+# ==============================================================================
 
 @dataclass(frozen=True)
 class ProviderProfile:
@@ -28,9 +50,16 @@ class ProviderProfile:
     base_url_required: bool
     model_required: bool
     key_required: bool
+
+    # --- Credential plumbing ---
+    # Only NAMES of env vars are ever stored here — never a key. This whole struct is
+    # printable, loggable and serialisable to diagnostics precisely because of that.
     canonical_env_var: str
     accepted_env_aliases: tuple[str, ...] = ()
+    # Ordered: the first var found wins. Vendors rename their env vars over time, and
+    # this is what keeps an older setup working while a newer name takes precedence.
     env_precedence: tuple[str, ...] = ()
+
     auth_header_type: str = "bearer"  # "bearer", "x-api-key", "x-goog-api-key", "none"
     required_headers: dict[str, str] = field(default_factory=dict)
     optional_metadata_env_vars: tuple[str, ...] = ()

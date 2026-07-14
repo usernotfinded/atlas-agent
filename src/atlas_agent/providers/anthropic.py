@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/anthropic.py
+# PURPOSE: Anthropic adapter. Anthropic's message and tool-call format differs from
+#          OpenAI's, so it cannot share the openai_compatible client — the shape
+#          translation lives in providers/adapters.py (AnthropicAdapter).
+# DEPS:    providers.adapters (response normalisation), providers.base
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import os
@@ -14,8 +24,15 @@ from atlas_agent.providers.base import (
 from atlas_agent.tools.spec import LLMResponse, ModelCapabilities, ToolDescription
 
 
+# ==============================================================================
+# ANTHROPIC PROVIDER
+# ==============================================================================
+
 @dataclass(frozen=True)
 class AnthropicProvider(BaseAIProvider):
+    # The env var NAME, never the key itself. The value is read at call time, so a
+    # provider object can be constructed, logged and passed around without ever holding
+    # a credential in a field that could be dumped.
     api_key_env: str = "ANTHROPIC_API_KEY"
     name: str = "anthropic"
     default_model: str | None = None

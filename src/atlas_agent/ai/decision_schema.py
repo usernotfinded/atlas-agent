@@ -1,3 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    ai/decision_schema.py
+# PURPOSE: The border between the LLM and the trading system. Parses a model's
+#          free-form JSON into a typed decision, and REJECTS anything malformed.
+#          Everything past this file is trusted; nothing before it is.
+# DEPS:    stdlib only (json, math)
+#
+# DESIGN:  An allowlist at every field. The model is an untrusted input source — it
+#          hallucinates, it drifts, it can be steered by a poisoned prompt — so this
+#          parser refuses rather than coerces. A decision that does not validate is
+#          not a decision.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -5,6 +20,10 @@ from dataclasses import dataclass
 from typing import Any
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Closed sets, not free text. An action the system does not understand cannot be
+# executed, so an LLM inventing "short_squeeze" is rejected rather than mishandled.
 VALID_ACTIONS = {"buy", "sell", "hold", "close", "reduce", "increase"}
 VALID_HORIZONS = {"intraday", "swing", "long"}
 VALID_ORDER_TYPES = {"market", "limit"}
@@ -13,6 +32,10 @@ VALID_ORDER_TYPES = {"market", "limit"}
 class DecisionSchemaError(ValueError):
     pass
 
+
+# ==============================================================================
+# DECISION MODELS
+# ==============================================================================
 
 @dataclass(frozen=True)
 class ProposedOrder:
@@ -30,10 +53,24 @@ class AIDecision:
     time_horizon: str
     reasoning_summary: str
     risk_notes: str
+    # Optional: an LLM may reason about a symbol without proposing a trade. `None` here
+    # is the common case and the safe one.
     proposed_order: ProposedOrder | None = None
 
 
+# ==============================================================================
+# PARSING (the trust boundary)
+# ==============================================================================
+
 def parse_decision(payload: str | dict[str, Any]) -> AIDecision:
+    """Parse an LLM payload into a typed decision, or raise.
+
+    Raises:
+        DecisionSchemaError: on any missing, malformed or out-of-range field.
+    """
+    # Raising, never defaulting. A missing `action` must not silently become "hold":
+    # that would turn a broken model response into a valid-looking decision, and the
+    # audit trail would record a choice nobody made.
     data = json.loads(payload) if isinstance(payload, str) else payload
     try:
         action = str(data["action"]).lower()
@@ -47,6 +84,9 @@ def parse_decision(payload: str | dict[str, Any]) -> AIDecision:
         raise DecisionSchemaError(f"invalid action: {action}")
     if time_horizon not in VALID_HORIZONS:
         raise DecisionSchemaError(f"invalid time horizon: {time_horizon}")
+    # Confidence feeds the minimum_confidence risk gate. An out-of-range value (a model
+    # returning 95 instead of 0.95) would sail past that floor, so the range is bounded
+    # here rather than trusted downstream.
     if not 0 <= confidence <= 1:
         raise DecisionSchemaError("confidence must be between 0 and 1")
 
@@ -62,12 +102,20 @@ def parse_decision(payload: str | dict[str, Any]) -> AIDecision:
     )
 
 
+# --- Order parsing ---
+
 def _is_positive_finite(value: float) -> bool:
+    # bool is excluded (True would pass as quantity 1) and NaN/inf are excluded (NaN
+    # defeats every downstream limit comparison silently). This is the same guard the
+    # order path applies — enforced here too, because a model is more likely to emit
+    # nonsense than a strategy is.
     import math
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value > 0
 
 
 def _parse_order(payload: Any) -> ProposedOrder | None:
+    # "null" the STRING is accepted alongside None: LLMs routinely emit it, and treating
+    # it as a malformed order would reject an otherwise valid "no trade" answer.
     if payload in (None, {}, "null"):
         return None
     try:

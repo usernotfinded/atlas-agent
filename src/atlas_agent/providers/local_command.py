@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/local_command.py
+# PURPOSE: Runs a local shell command as an LLM provider (a locally-hosted model
+#          behind a CLI). Legacy, and deliberately fenced in — see the notes below.
+# DEPS:    subprocess + shlex (execution), providers.adapters (JSON normalisation)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -10,6 +19,10 @@ from atlas_agent.providers.base import BaseAIProvider, ProviderRequest, Provider
 from atlas_agent.tools.spec import LLMResponse, ModelCapabilities, ToolDescription
 
 
+# ==============================================================================
+# LOCAL COMMAND PROVIDER
+# ==============================================================================
+
 @dataclass(frozen=True)
 class LocalCommandProvider(BaseAIProvider):
     """Legacy compatibility provider for local shell-backed model integrations.
@@ -19,11 +32,20 @@ class LocalCommandProvider(BaseAIProvider):
     """
 
     command: str
+    # Bounded by default. A local model that hangs would otherwise stall the agent loop
+    # indefinitely — with, potentially, open positions and a heartbeat going stale.
     timeout_seconds: int = 30
     name: str = "local_command"
     default_model: str | None = None
 
     def _run(self, prompt_text: str) -> subprocess.CompletedProcess[str]:
+        # Two properties do the security work here:
+        #   - shlex.split + a list argv, with NO shell=True. The command is never handed
+        #     to a shell, so nothing in it can be expanded, chained or substituted.
+        #   - the prompt goes in via STDIN, never interpolated into the command line, so
+        #     model input cannot influence what gets executed.
+        # check=False because a non-zero exit is handled by the caller as a failed
+        # completion, not as an exception to unwind the agent loop.
         return subprocess.run(
             shlex.split(self.command),
             input=prompt_text,

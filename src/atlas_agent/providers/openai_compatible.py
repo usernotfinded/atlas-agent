@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/openai_compatible.py
+# PURPOSE: One client for every vendor that speaks the OpenAI wire format — OpenAI
+#          itself, OpenRouter, DeepSeek, LM Studio, Google's compat endpoint. Only
+#          the base_url and the auth header differ.
+# DEPS:    urllib (stdlib HTTP — no vendor SDK), providers.adapters (normalisation)
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -16,13 +26,20 @@ from atlas_agent.providers.base import (
 from atlas_agent.tools.spec import LLMResponse, ModelCapabilities, ToolDescription
 
 
+# ==============================================================================
+# OPENAI-COMPATIBLE PROVIDER
+# ==============================================================================
+
 @dataclass(frozen=True)
 class OpenAICompatibleProvider(BaseAIProvider):
+    # The env var NAME, not the key. Constructing this object never reads a credential.
     api_key_env: str = "OPENAI_API_KEY"
     base_url: str = "https://api.openai.com/v1"
     name: str = "openai_compatible"
     default_model: str | None = None
     api_key_override: str | None = None
+    # The one real divergence between "OpenAI-compatible" vendors: they agree on the
+    # request body and disagree on how to carry the key.
     auth_header_type: str = "bearer"
     extra_headers: dict[str, str] | None = None
 

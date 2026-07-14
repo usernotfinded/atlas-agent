@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/factory.py
+# PURPOSE: Turns resolved runtime config into a concrete AIProvider. The one place
+#          that decides which vendor the agent talks to — and the place that decides
+#          when to talk to nobody at all.
+# DEPS:    providers.runtime (resolution), the concrete adapters, providers.base
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from typing import Any
@@ -10,6 +20,10 @@ from atlas_agent.providers.openai_compatible import OpenAICompatibleProvider
 from atlas_agent.providers.runtime import resolve_runtime_provider
 
 
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# All of these speak the OpenAI wire format, so one adapter serves them all. The list
+# is what makes adding an OpenAI-compatible vendor a one-line change.
 _OPENAI_COMPATIBLE_PROVIDERS = {
     "openai",
     "openrouter",
@@ -20,7 +34,14 @@ _OPENAI_COMPATIBLE_PROVIDERS = {
 }
 
 
+# ==============================================================================
+# PROVIDER CONSTRUCTION
+# ==============================================================================
+
 def build_provider_from_runtime(runtime: dict[str, Any]) -> AIProvider:
+    # An allowlist with no default branch: an unrecognised provider id RAISES at the
+    # bottom rather than falling back to something. "I don't know this vendor" must not
+    # resolve into a working model call against an unreviewed endpoint.
     provider_id = str(runtime.get("provider") or "").strip()
     model = str(runtime.get("model") or "").strip()
     auth_method = str(runtime.get("auth_method") or "").strip()
@@ -90,6 +111,14 @@ def get_provider_from_runtime_config(
 
     runtime = resolve_runtime_provider(config, provider=provider, model=model)
 
+    # The paper-only fallback. Missing credentials in PAPER degrade to the offline
+    # NullProvider (warn and carry on) — a beginner exploring the tool should not hit a
+    # wall before they have an API key.
+    #
+    # There is deliberately NO equivalent branch for live. In live mode, missing
+    # credentials fall through to build_provider_from_runtime() and RAISE. Falling back
+    # to a "hold forever" provider on a live account would be a silent, invisible
+    # failure — the agent would appear healthy while doing nothing at all.
     if mode == "paper":
         provider_id = str(runtime.get("provider") or "").strip()
         if provider_id == "null":

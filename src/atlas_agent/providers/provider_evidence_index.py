@@ -1,5 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/provider_evidence_index.py
+# PURPOSE: Indexes and validates the preflight evidence artifacts, and — crucially —
+#          re-scans them before they are exported. An evidence pack is meant to be
+#          SHARED (with a reviewer, an auditor, a bug report), so it is the last
+#          place a secret or a local path can escape the machine.
+# DEPS:    providers.provider_preflight (the artifacts it indexes)
+# ==============================================================================
+
 """Provider evidence index generator and inspector."""
 
+# --- IMPORTS ---
 import datetime
 import hashlib
 import json
@@ -13,14 +24,24 @@ from atlas_agent.providers.provider_preflight import (
     verify_preflight_evidence_bundle,
 )
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Matches secret-shaped KEY NAMES, not values. The artifacts should never contain a
+# credential at all, so this is a belt-and-braces scan on content that is about to be
+# handed to someone else.
 _SECRET_FRAGMENT_RE = re.compile(
     r"(?:api[_-]?key|secret|token|password|bearer|authorization|credential)",
     re.IGNORECASE,
 )
 
+# Absolute paths leak the machine's layout — usernames, directory structure, sometimes
+# a company name. Evidence packs travel, so they must carry relative paths only.
 # A simple heuristic for Unix-like or Windows absolute paths
 _ABSOLUTE_PATH_RE = re.compile(r"^(?:/|[a-zA-Z]:\\)")
 
+# An allowlist: an artifact type not named here is not indexed. Prevents an unrelated
+# file that happens to sit in the directory from being swept into an exported pack.
 KNOWN_ARTIFACT_TYPES = {
     "provider_call_plan",
     "provider_preflight_validation_report",

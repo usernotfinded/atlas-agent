@@ -1,3 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    providers/adapters.py
+# PURPOSE: Normalises every vendor's response shape into one LLMResponse. This is
+#          the layer that absorbs the fact that OpenAI, Anthropic and JSON-only
+#          models each report tool calls differently — so nothing downstream has to.
+# DEPS:    jsonschema (tool-argument validation), tools.spec (the target shape)
+#
+# DESIGN:  Written defensively throughout. A provider response is UNTRUSTED input:
+#          the API may change under us, a proxy may mangle it, a local model may
+#          emit something almost-but-not-quite valid. Every accessor tolerates a
+#          missing or wrongly-typed field rather than raising deep in a parse.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json
@@ -8,16 +23,31 @@ import jsonschema
 
 from atlas_agent.tools.spec import LLMResponse, TokenUsage, ToolCall, ToolDescription
 
+
+# --- CONFIGURATIONS & CONSTANTS ---
+
+# Models routinely wrap JSON in a markdown fence despite being told not to. Stripping
+# it here is cheaper than losing an otherwise valid decision to a formatting quirk.
 _FENCED_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.IGNORECASE | re.DOTALL)
 
 
+# ==============================================================================
+# DEFENSIVE ACCESSORS
+# ==============================================================================
+
 def _value(source: Any, key: str, default: Any = None) -> Any:
+    # Handles both dicts and objects, because SDKs disagree: some return parsed JSON,
+    # others return typed model objects. Callers should not have to care which.
     if isinstance(source, dict):
         return source.get(key, default)
     return getattr(source, key, default)
 
 
 def _to_raw_dict(value: Any) -> dict[str, Any]:
+    # Tries every known way an SDK might expose its payload — plain dict, pydantic
+    # model_dump(), legacy .dict(), then __dict__ — and falls back to a stringified
+    # value rather than raising. This output is destined for the audit log, and losing
+    # the whole record because a vendor changed its object type would be a poor trade.
     if isinstance(value, dict):
         return value
     if hasattr(value, "model_dump"):
