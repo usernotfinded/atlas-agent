@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    risk/portfolio.py
+# PURPOSE: Adapter between the internal portfolio state (PortfolioState) and the
+#          snapshot the risk domain knows how to read (PortfolioSnapshot). Keeps
+#          the RiskManager insulated from how portfolio state is maintained.
+# DEPS:    atlas_agent.portfolio.state, atlas_agent.risk.models
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 from typing import List
@@ -5,8 +15,12 @@ from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition, PendingOrder
 
 
+# ==============================================================================
+# STATE -> SNAPSHOT ADAPTER
+# ==============================================================================
+
 def get_portfolio_snapshot(
-    state: PortfolioState, 
+    state: PortfolioState,
     marks: dict[str, float] | None = None,
     open_orders: List[PendingOrder] | None = None
 ) -> PortfolioSnapshot:
@@ -16,14 +30,21 @@ def get_portfolio_snapshot(
     marks = marks or {}
     positions = []
     total_unrealized_pnl = 0.0
-    
+
+    # --- Value each position ---
     for symbol, pos in state.positions.items():
+        # With no market mark we fall back to the average entry price, so the
+        # position shows zero P&L rather than being valued at an invented price.
+        # That is the conservative choice when the price feed is incomplete.
         market_price = marks.get(symbol, pos.average_price)
         market_value = pos.market_value(market_price)
+
+        # Notional is absolute: a short ties up capital just like a long, and the
+        # size limits must treat the two the same way.
         notional = abs(market_value)
         unrealized = pos.unrealized_pnl(market_price)
         total_unrealized_pnl += unrealized
-        
+
         positions.append(RiskPosition(
             symbol=symbol,
             quantity=pos.quantity,
@@ -32,10 +53,10 @@ def get_portfolio_snapshot(
             notional=notional,
             side="long" if pos.quantity > 0 else "short" if pos.quantity < 0 else "flat"
         ))
-        
+
     equity = state.equity(marks)
     exposure = state.exposure(marks)
-    
+
     return PortfolioSnapshot(
         cash=state.cash,
         equity=equity,
