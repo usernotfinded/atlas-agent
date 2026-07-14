@@ -6,12 +6,12 @@
   "next_planned_release": "v0.6.27",
   "release_type": "github_only",
   "pypi_published": false,
-  "release_commit": "TBD",
+  "release_commit": "54ac1afa80c6483ae5eb6ba803d135b365c6983b",
   "annotated_tag": {
     "name": "v0.6.26",
     "local": true,
     "remote": true,
-    "dereferences_to": "TBD"
+    "dereferences_to": "54ac1afa80c6483ae5eb6ba803d135b365c6983b"
   },
   "github_release": {
     "created": true,
