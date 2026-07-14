@@ -1,3 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    cli.py
+# PURPOSE: The main CLI: argument parser, command dispatch, and the run-once agent
+#          entry point. Every command that is not one of the four configless
+#          trust-contract commands (see cli_bootstrap.py) arrives here.
+# DEPS:    cli_commands/ (the handlers), config, brokers, risk, safety, agent
+#
+# WARNING: THE TRUST CONTRACTS ARE PINNED TO THIS FILE. The command surface here is
+#          asserted against by scripts/check_cli_command_compatibility.py and the
+#          release checkers — renaming a command, changing a flag, or altering an
+#          output envelope will trip them. Treat the public surface as a contract,
+#          not as code.
+#
+# WARNING: At ~5.9k lines this file is a decomposition candidate, and the migration
+#          is already under way: cli_commands/ + cli_registry.py exist precisely so
+#          handlers can be moved out one at a time. New commands belong in
+#          cli_commands/, not here.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import argparse
@@ -10,6 +31,9 @@ import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+
+# --- CONFIGURATIONS & CONSTANTS ---
 
 YELLOW = "\033[93m"
 RESET = "\033[0m"
@@ -88,6 +112,15 @@ from atlas_agent.workspace import (
     set_default_workspace,
 )
 
+
+# ==============================================================================
+# ARGUMENT PARSER
+# ==============================================================================
+#
+# This function defines the ENTIRE public command surface of `atlas`. It is what
+# check_cli_command_compatibility.py diffs against, so every subparser, flag and
+# default below is part of the trust contract. Adding is safe; renaming and removing
+# are not.
 
 def build_parser() -> argparse.ArgumentParser:
     description = r"""
@@ -2368,6 +2401,15 @@ Safety First:
     return parser
 
 
+# ==============================================================================
+# AGENT EXECUTION (run-once)
+# ==============================================================================
+#
+# The single-cycle agent entry point: load context, ask the model, risk-check the
+# decision, route the order. `mode` selects paper or live, and it is the only lever
+# that changes which broker the OrderRouter is handed — every gate below applies
+# identically in both.
+
 def run_once(
     mode: str,
     config: AtlasConfig | None = None,
@@ -2473,6 +2515,10 @@ def run_once(
     )
 
 
+# ==============================================================================
+# BROKER SELECTION
+# ==============================================================================
+
 def _broker_for_mode(
     mode: str,
     config: AtlasConfig,
@@ -2484,6 +2530,9 @@ def _broker_for_mode(
     resolver = BrokerResolver(config)
     resolution = resolver.resolve_execution_broker(mode)
 
+    # Live mode RAISES when the resolved broker may not submit, rather than silently
+    # falling back to paper. A user who asked for live and got a simulated fill —
+    # believing it was real — is the worst outcome this whole system can produce.
     if mode == "live" and not resolution.status.can_submit:
         raise BrokerConfigurationError(resolution.status.message)
 
@@ -2747,11 +2796,19 @@ def _run_once_live_analysis(
     )
 
 
+# ==============================================================================
+# KILL SWITCH SECOND FACTOR
+# ==============================================================================
+
 def _requires_kill_switch_totp(
     *,
     state_mode: str,
     explicit_2fa: bool,
 ) -> bool:
+    """Does this kill-switch operation need a TOTP code?"""
+    # `flatten` is the only mode that TRADES — it sells to close positions. Cancelling
+    # or pausing merely stops the agent, which is always safe; liquidating a book is
+    # not, so it is the one that demands a second factor by default.
     if explicit_2fa:
         return True
     return state_mode == "flatten"
@@ -2786,8 +2843,15 @@ def _readiness_passed(report: Any) -> bool:
     return all(getattr(check, "status", None) != "fail" for check in checks)
 
 
+# ==============================================================================
+# PRE-FLIGHT GUARDS
+# ==============================================================================
+
 def _check_discipline_or_exit(config: AtlasConfig) -> None:
     """Exit with an error if the user discipline profile is missing or invalid."""
+    # sys.exit, not a return value. Every agentic command must be unable to proceed
+    # without a validated discipline profile, and a guard that a caller could forget
+    # to check would be no guard at all.
     from atlas_agent.ai.discipline import (
         DisciplineNotConfiguredError,
         InvalidDisciplineProfileError,
@@ -3882,6 +3946,10 @@ def cmd_agent_shadow_live(args: argparse.Namespace) -> int:
     return 0 if report.get("status") in ("matched", "minor_divergence") else 2
 
 
+# ==============================================================================
+# DISPATCH
+# ==============================================================================
+
 def main(argv: list[str] | None = None) -> int:
     import json
 
@@ -3889,6 +3957,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         args = parser.parse_args(argv)
     except SystemExit as exc:
+        # argparse exits with 0 on --help/--version. Converting that back into a normal
+        # return keeps `atlas --help` from looking like a crash to a caller that wraps
+        # main() rather than the process.
         if exc.code == 0:
             return 0
         raise
@@ -3898,6 +3969,11 @@ def main(argv: list[str] | None = None) -> int:
     if _research_cmd in RESEARCH_COMMAND_ALIAS_MAP:
         args.research_command = RESEARCH_COMMAND_ALIAS_MAP[_research_cmd]
 
+    # --- Configless commands ---------------------------------------------------
+    # These run with `config=None` BEFORE any config is loaded, because they are how a
+    # user fixes a broken config in the first place. `atlas config set` must work on a
+    # workspace whose config.toml does not parse — otherwise a typo would lock the user
+    # out of the only command that could repair it.
     if args.command == "config":
         from atlas_agent.cli_commands.config import handle_config
 
