@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_credential_boundary.py
+# PURPOSE: Link 3: names which credentials are IN SCOPE for a call, and proves none of
+#          them appear in the artifact itself. Names only — never values.
+# DEPS:    research.sandbox_contracts
+# ==============================================================================
+
 """Provider credential boundary — local, configless credential boundary artifact.
 
 This module creates, validates, replays, and summarizes provider credential boundary

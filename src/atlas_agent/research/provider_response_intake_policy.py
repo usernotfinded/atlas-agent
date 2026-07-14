@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_response_intake_policy.py
+# PURPOSE: Response side: the policy that decides whether a response may be TAKEN IN at
+#          all — before anything downstream is allowed to read it.
+# DEPS:    research.provider_response_schema_contract, research.sandbox_contracts
+# ==============================================================================
+
 """Provider response intake policy — local, configless response intake policy artifact.
 
 This module creates, loads, lists, shows, validates, replays, and summarizes provider

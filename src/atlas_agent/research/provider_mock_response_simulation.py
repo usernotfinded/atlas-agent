@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_mock_response_simulation.py
+# PURPOSE: Mock pipeline, step 1: synthesises a candidate response so the entire intake
+#          path can be exercised with no provider and no network behind it.
+# DEPS:    research.provider_response_schema_contract, research.sandbox_contracts
+# ==============================================================================
+
 """Provider mock response simulation — local, configless mock response artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

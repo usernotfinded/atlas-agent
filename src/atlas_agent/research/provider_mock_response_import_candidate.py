@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_mock_response_import_candidate.py
+# PURPOSE: Mock pipeline, step 4: promotes a reviewed, unblocked candidate into an
+#          importable artifact. The first step at which a response becomes usable.
+# DEPS:    research.provider_mock_response_trust_decision_blocker, research.sandbox_contracts
+# ==============================================================================
+
 """Provider mock response import candidate — local, configless mock response import artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

@@ -1,3 +1,10 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/perplexity.py
+# PURPOSE: Perplexity research provider adapter.
+# DEPS:    urllib (stdlib HTTP)
+# ==============================================================================
+
 from __future__ import annotations
 
 import json

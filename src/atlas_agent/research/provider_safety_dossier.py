@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_safety_dossier.py
+# PURPOSE: The assembled PROOF: gathers the whole chain into the offline safety report a
+#          human reads to decide whether the research boundary actually held.
+# DEPS:    the full chain of provider_* artifacts
+# ==============================================================================
+
 """Provider safety dossier — offline safety report.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

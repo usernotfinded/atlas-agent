@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_outbound_payload_preview.py
+# PURPOSE: Link 5: renders the EXACT bytes that would leave the machine, for a human to
+#          read. The last point at which a leak is catchable by eye.
+# DEPS:    research.provider_call_plan, research.sandbox_contracts
+# ==============================================================================
+
 """Provider outbound payload preview — local, configless payload preview artifact.
 
 This module creates, loads, lists, shows, validates, replays, and summarizes provider

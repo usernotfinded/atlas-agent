@@ -1,3 +1,10 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/errors.py
+# PURPOSE: The error types of the research domain, and their sanitised messages.
+# DEPS:    stdlib only
+# ==============================================================================
+
 from __future__ import annotations
 
 

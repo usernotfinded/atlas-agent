@@ -1,3 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/session.py
+# PURPOSE: The research session lifecycle — plan, prompt, run, verify, evaluate, and
+#          the artifacts each step seals. The spine the rest of research/ hangs off.
+# DEPS:    research.artifact_store, research.command_specs, research.errors
+#
+# WARNING: At ~6.7k lines this is by far the largest file in the project, and it is
+#          past the point where section banners can rescue it. The convention's own
+#          rule applies: "if a file needs more than ~5 banners to be navigable, the
+#          file is too big". This is the primary decomposition candidate — the
+#          banners below are a map of a building that should be several buildings.
+# ==============================================================================
+
+# --- IMPORTS ---
 from __future__ import annotations
 
 import json

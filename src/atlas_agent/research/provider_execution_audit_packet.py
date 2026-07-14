@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_execution_audit_packet.py
+# PURPOSE: Link 10: seals the whole chain into one packet — the record a reviewer or an
+#          auditor is handed. Hash-bound, so a doctored link no longer verifies.
+# DEPS:    the upstream chain artifacts, research.sandbox_contracts
+# ==============================================================================
+
 """Provider execution audit packet — local, auditable chain-consolidation artifact.
 
 This module creates, validates, and replays provider execution audit packet artifacts.

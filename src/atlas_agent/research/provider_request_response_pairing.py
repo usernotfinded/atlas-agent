@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_request_response_pairing.py
+# PURPOSE: Binds a response to the REQUEST that produced it. Without the pairing, a
+#          response could be swapped for another and no artifact would notice.
+# DEPS:    research.provider_call_plan, research.sandbox_contracts
+# ==============================================================================
+
 """Provider request/response pairing contract — local, configless pairing artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_preflight_freeze.py
+# PURPOSE: Link 2: PINS the call plan. Once frozen, the plan cannot change, so what a
+#          reviewer approved is provably what would be sent — not what it drifted into.
+# DEPS:    research.provider_call_plan, research.sandbox_contracts
+# ==============================================================================
+
 """Provider preflight freeze — local, configless chain-consolidation artifact.
 
 This module creates, validates, replays, and summarizes provider preflight freeze

@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_mock_response_trust_decision_blocker.py
+# PURPOSE: Mock pipeline, step 3: the BLOCKER. Records every reason a candidate response
+#          must not be trusted. A non-empty blocker set halts the pipeline.
+# DEPS:    research.provider_mock_response_review_sandbox, research.sandbox_contracts
+# ==============================================================================
+
 """Provider mock response trust decision blocker — local, configless mock response trust blocker artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

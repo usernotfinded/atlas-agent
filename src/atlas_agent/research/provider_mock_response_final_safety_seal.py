@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_mock_response_final_safety_seal.py
+# PURPOSE: Mock pipeline, TERMINAL node: the final safety seal. Nothing downstream may
+#          consume a mock response that does not carry this seal.
+# DEPS:    research.provider_mock_response_import_candidate, research.sandbox_contracts
+# ==============================================================================
+
 """Provider mock response final safety seal — terminal node in the mock response pipeline.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

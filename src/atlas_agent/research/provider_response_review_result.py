@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_response_review_result.py
+# PURPOSE: Response side: the human review verdict on a response. Nothing acts on a
+#          provider response that has not been reviewed and recorded here.
+# DEPS:    research.provider_response_schema_contract, research.sandbox_contracts
+# ==============================================================================
+
 """Provider response review result contract — local, configless review result artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

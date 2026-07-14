@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_response_schema_contract.py
+# PURPOSE: Response side: the CLOSED schema a provider response must satisfy. A response
+#          is untrusted input, and an unrecognised shape is rejected, never coerced.
+# DEPS:    research.sandbox_contracts
+# ==============================================================================
+
 """Provider response schema contract — local, configless schema contract artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

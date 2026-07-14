@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_execution_state.py
+# PURPOSE: Link 6: the opt-in state machine. Tracks whether provider execution is
+#          unlocked, and refuses any transition that is not explicitly authorised.
+# DEPS:    research.sandbox_contracts
+# ==============================================================================
+
 """Provider execution opt-in state machine — local, auditable state artifacts.
 
 This module defines and validates local provider execution opt-in state artifacts.

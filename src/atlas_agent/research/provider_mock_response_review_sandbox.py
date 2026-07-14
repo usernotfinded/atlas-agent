@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_mock_response_review_sandbox.py
+# PURPOSE: Mock pipeline, step 2: reviews a candidate response in a contained sandbox,
+#          so a bad response is caught here rather than downstream.
+# DEPS:    research.provider_mock_response_simulation, research.sandbox_contracts
+# ==============================================================================
+
 """Provider mock response review sandbox — local, configless mock response review artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

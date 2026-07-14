@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/artifact_store.py
+# PURPOSE: Reads and writes research artifacts on disk, under a stable layout the CLI and
+#          the checkers both rely on.
+# DEPS:    stdlib only
+# ==============================================================================
+
 from __future__ import annotations
 
 import json

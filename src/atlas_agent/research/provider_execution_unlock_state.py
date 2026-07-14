@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_execution_unlock_state.py
+# PURPOSE: Link 7: the UNLOCK artifact — the record of the gate being opened, by whom
+#          and against which frozen plan. Fail-closed: no artifact, no unlock.
+# DEPS:    research.provider_execution_state, research.sandbox_contracts
+# ==============================================================================
+
 """Provider execution unlock state contract — local, configless unlock state artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

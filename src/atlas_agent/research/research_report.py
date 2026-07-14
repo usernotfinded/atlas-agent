@@ -1,3 +1,10 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/research_report.py
+# PURPOSE: The research report value type.
+# DEPS:    stdlib only
+# ==============================================================================
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

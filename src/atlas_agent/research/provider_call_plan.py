@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_call_plan.py
+# PURPOSE: Link 1 of the evidence chain: WHAT we would send. Builds the auditable
+#          call-plan artifact that every later link is checked against.
+# DEPS:    research.sandbox_contracts (hashing/validation) — no network, no keys
+# ==============================================================================
+
 """Provider call plan — local, auditable provider call-plan artifacts.
 
 This module prepares local, auditable provider call-plan artifacts.

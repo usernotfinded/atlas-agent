@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_adapter_interface.py
+# PURPOSE: Defines the interface a research provider adapter must satisfy — and ships a
+#          DISABLED harness, so the interface exists before any live adapter does.
+# DEPS:    research.sandbox_contracts
+# ==============================================================================
+
 """Provider adapter interface contract — local, configless adapter interface and disabled harness.
 
 This module defines a future adapter interface and a disabled adapter harness.

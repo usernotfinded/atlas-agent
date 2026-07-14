@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_execution_readiness_report.py
+# PURPOSE: Link 9: consolidates the chain so far into one readiness verdict. Fail-closed:
+#          a missing or unverifiable upstream link is a refusal, not a gap to ignore.
+# DEPS:    the upstream chain artifacts, research.sandbox_contracts
+# ==============================================================================
+
 """Provider execution readiness report — local, configless chain-diagnostic artifact.
 
 This module creates, validates, and replays provider execution readiness reports.

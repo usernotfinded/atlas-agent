@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_adapter_interface_contract.py
+# PURPOSE: The conformance artifact for the adapter interface: proves a given adapter
+#          satisfies the contract, without instantiating anything that could call out.
+# DEPS:    research.provider_adapter_interface, research.sandbox_contracts
+# ==============================================================================
+
 """Provider adapter interface contract — local, configless adapter interface artifact.
 
 This module creates, loads, lists, shows, validates, replays, summarizes, and doctors

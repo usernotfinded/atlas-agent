@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/release_candidate_readiness.py
+# PURPOSE: Readiness report for a research release candidate. Sandbox/paper/preflight
+#          evidence only — it never consults a live provider.
+# DEPS:    the research chain artifacts
+# ==============================================================================
+
 """Release candidate readiness report — sandbox/paper/preflight only.
 
 This module creates, validates, lists, shows, replays, summarizes, and doctors

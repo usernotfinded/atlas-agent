@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/release_candidate_cutover.py
+# PURPOSE: Dry run of the research release cutover. Local release engineering only: it
+#          builds a deterministic report and changes nothing.
+# DEPS:    research.release_candidate_readiness
+# ==============================================================================
+
 """Release candidate cutover dry run - local release engineering only.
 
 This module builds and validates a deterministic report for checking whether

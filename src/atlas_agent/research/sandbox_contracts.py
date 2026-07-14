@@ -1,3 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/sandbox_contracts.py
+# PURPOSE: The shared primitives every artifact in this package is built on:
+#          deterministic hashing, closed-schema validation, and sanitisation.
+# DEPS:    stdlib only — no network, no API keys, no provider SDKs
+#
+# NOTE:    Determinism is the load-bearing property. The whole chain's value rests
+#          on an artifact hashing to the same value on a reviewer's machine as on
+#          the one that produced it.
+# ==============================================================================
+
 """Sandbox contract helpers — deterministic hashing, validation, and sanitization.
 
 No network. No API keys. No provider SDKs.

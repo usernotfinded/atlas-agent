@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/command_specs.py
+# PURPOSE: Declarative specs for the research CLI commands, so the command surface and
+#          its documentation cannot drift apart.
+# DEPS:    stdlib only
+# ==============================================================================
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

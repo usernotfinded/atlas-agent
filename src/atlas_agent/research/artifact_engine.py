@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/artifact_engine.py
+# PURPOSE: Narrow internal helpers for artifact mechanics. Deliberately has no registry
+#          and no dispatch — it is plumbing, not a framework.
+# DEPS:    stdlib only
+# ==============================================================================
+
 """Small internal helpers for pilot research artifact mechanics.
 
 This module is intentionally narrow for CAND-014 Phase 2. It has no registry,

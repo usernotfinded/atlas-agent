@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_execution_dry_run.py
+# PURPOSE: Link 8: runs the ENTIRE execution path and stops short of sending. The
+#          rehearsal — same gates, same artifacts, no outbound request.
+# DEPS:    research.provider_call_plan, research.sandbox_contracts
+# ==============================================================================
+
 """Provider execution dry-run — local, auditable preflight artifacts.
 
 This module prepares local, auditable provider execution dry-run artifacts.

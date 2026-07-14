@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/llm_sandbox.py
+# PURPOSE: Prepares bounded, local, REPLAYABLE input contracts for LLM calls. Scaffolding
+#          for a future live path; it makes no call itself.
+# DEPS:    research.sandbox_contracts
+# ==============================================================================
+
 """LLM Provider Sandbox — local-only request contract scaffolding.
 
 This module prepares bounded, local, replayable input contracts for future LLM

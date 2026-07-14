@@ -1,3 +1,10 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/providers.py
+# PURPOSE: Registry of the available research providers.
+# DEPS:    research.perplexity
+# ==============================================================================
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

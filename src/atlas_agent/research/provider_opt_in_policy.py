@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    research/provider_opt_in_policy.py
+# PURPOSE: Link 4: the explicit CONSENT. Without an opt-in artifact, no data may leave
+#          the machine. Absence of consent is refusal, never a default yes.
+# DEPS:    research.sandbox_contracts
+# ==============================================================================
+
 """Provider opt-in policy — local, configless policy artifact.
 
 This module creates, validates, replays, and summarizes provider opt-in policy
