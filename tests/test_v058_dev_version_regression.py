@@ -27,19 +27,19 @@ ROOT = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 
 
-def test_pyproject_version_is_current_dev() -> None:
+def test_pyproject_version_is_current_dev(release_identity: dict) -> None:
     import tomllib
     with open(ROOT / "pyproject.toml", "rb") as f:
         data = tomllib.load(f)
-    assert data.get("project", {}).get("version") == "0.6.25"
+    assert data.get("project", {}).get("version") == release_identity["source_version"]
 
 
-def test_init_version_is_current_dev() -> None:
+def test_init_version_is_current_dev(release_identity: dict) -> None:
     init = ROOT / "src" / "atlas_agent" / "__init__.py"
     text = init.read_text(encoding="utf-8")
     m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
     assert m is not None
-    assert m.group(1) == "0.6.25"
+    assert m.group(1) == release_identity["source_version"]
 
 
 def test_public_stable_v058_tag_exists() -> None:
@@ -159,7 +159,7 @@ def test_forbidden_claims_scan_still_passes() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_version_consistency_script_accepts_dev() -> None:
+def test_version_consistency_script_accepts_dev(release_identity: dict) -> None:
     result = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "check_version_consistency.py")],
         cwd=ROOT,
@@ -169,8 +169,8 @@ def test_version_consistency_script_accepts_dev() -> None:
     assert result.returncode == 0, (
         f"Version consistency check failed:\n{result.stdout}\n{result.stderr}"
     )
-    assert "0.6.25" in result.stdout
-    assert "v0.6.25" in result.stdout
+    assert release_identity["source_version"] in result.stdout
+    assert release_identity["current_public_release"] in result.stdout
 
 
 # ---------------------------------------------------------------------------

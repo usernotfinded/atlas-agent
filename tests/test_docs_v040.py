@@ -81,13 +81,13 @@ def _public_version_label(version: str) -> str:
     return f"v{version}"
 
 
-def test_readme_contains_v030_essentials():
+def test_readme_contains_v030_essentials(release_identity: dict):
     readme = Path("README.md").read_text(encoding="utf-8")
 
     # The README shows the latest public release tag as current status,
     # which may differ from the source package version during release prep.
     essentials = [
-        "Current Status (v0.6.25)",
+        f"Current Status ({release_identity['current_public_release']})",
         "atlas backtest run",
         "atlas broker sync",
         "read-only",
@@ -97,7 +97,7 @@ def test_readme_contains_v030_essentials():
         "heartbeat",
         "live submit remains disabled by default"
     ]
-    
+
     for item in essentials:
         assert item.lower() in readme.lower(), f"Essential term '{item}' missing from README.md"
 

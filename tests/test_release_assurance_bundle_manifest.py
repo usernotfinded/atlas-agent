@@ -16,19 +16,17 @@ CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_bundle_manifest.
 RELEASE_ASSURANCE_SCRIPT = REPO_ROOT / "scripts" / "release_assurance.py"
 DEMO_SCRIPT = REPO_ROOT / "scripts" / "demo_release_assurance_snapshot_bundle.sh"
 
-RELEASE = "v0.6.25"
 
-
-def _release_fully_published() -> bool:
+def _release_fully_published(release: str) -> bool:
     """Return True only if the release tag and GitHub release are already public."""
-    local_tag = _run("git", "tag", "-l", RELEASE, cwd=REPO_ROOT)
-    if local_tag.stdout.strip() != RELEASE:
+    local_tag = _run("git", "tag", "-l", release, cwd=REPO_ROOT)
+    if local_tag.stdout.strip() != release:
         return False
-    remote_tag = _run("git", "ls-remote", "--tags", "origin", RELEASE, cwd=REPO_ROOT)
-    if RELEASE not in remote_tag.stdout:
+    remote_tag = _run("git", "ls-remote", "--tags", "origin", release, cwd=REPO_ROOT)
+    if release not in remote_tag.stdout:
         return False
-    gh_release = _run("gh", "release", "view", RELEASE, "--json", "url", cwd=REPO_ROOT)
-    return gh_release.returncode == 0 and RELEASE in gh_release.stdout
+    gh_release = _run("gh", "release", "view", release, "--json", "url", cwd=REPO_ROOT)
+    return gh_release.returncode == 0 and release in gh_release.stdout
 
 
 def _run(*args: str | Path, cwd: Path | None = None, timeout: int = 60) -> subprocess.CompletedProcess[str]:
@@ -60,7 +58,7 @@ def _build_manifest(
     baseline_dir: Path,
     snapshot_dir: Path,
     output_dir: Path,
-    release: str = RELEASE,
+    release: str,
     deterministic: bool = False,
 ) -> Path:
     args = [
@@ -96,9 +94,10 @@ def test_demo_rejects_unknown_option():
     assert "Unknown option" in result.stderr
 
 
-def test_manifest_checker_passes_on_valid_temp_output(tmp_path: Path):
-    if not _release_fully_published():
-        pytest.skip(f"{RELEASE} is not fully published yet; run after tag push and GitHub Release creation")
+def test_manifest_checker_passes_on_valid_temp_output(tmp_path: Path, release_identity: dict):
+    release = release_identity["current_public_release"]
+    if not _release_fully_published(release):
+        pytest.skip(f"{release} is not fully published yet; run after tag push and GitHub Release creation")
 
     baseline_dir = tmp_path / "baseline"
     snapshot_dir = tmp_path / "with-reviewer-trust-snapshot"
@@ -107,7 +106,7 @@ def test_manifest_checker_passes_on_valid_temp_output(tmp_path: Path):
         sys.executable,
         RELEASE_ASSURANCE_SCRIPT,
         "--version",
-        RELEASE,
+        release,
         "--output",
         str(baseline_dir),
         cwd=REPO_ROOT,
@@ -119,7 +118,7 @@ def test_manifest_checker_passes_on_valid_temp_output(tmp_path: Path):
         sys.executable,
         RELEASE_ASSURANCE_SCRIPT,
         "--version",
-        RELEASE,
+        release,
         "--output",
         str(snapshot_dir),
         "--include-reviewer-trust-snapshot",
@@ -128,16 +127,17 @@ def test_manifest_checker_passes_on_valid_temp_output(tmp_path: Path):
     )
     assert snapshot_result.returncode == 0, snapshot_result.stderr
 
-    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path)
+    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path, release=release)
 
     check_result = _run(sys.executable, CHECK_SCRIPT, str(manifest_path), cwd=REPO_ROOT)
     assert check_result.returncode == 0, check_result.stderr + "\n" + check_result.stdout
     assert "PASSED" in check_result.stdout
 
 
-def test_manifest_checker_fails_snapshot_in_baseline(tmp_path: Path):
+def test_manifest_checker_fails_snapshot_in_baseline(tmp_path: Path, release_identity: dict):
+    release = release_identity["current_public_release"]
     baseline_dir, snapshot_dir = _make_valid_fake_bundles(tmp_path)
-    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path)
+    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path, release=release)
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     baseline_name = manifest["baseline_bundle"]["relative_path"]
@@ -150,9 +150,10 @@ def test_manifest_checker_fails_snapshot_in_baseline(tmp_path: Path):
     assert "reviewer_trust_snapshot_included" in result.stdout
 
 
-def test_manifest_checker_fails_snapshot_missing_in_opt_in(tmp_path: Path):
+def test_manifest_checker_fails_snapshot_missing_in_opt_in(tmp_path: Path, release_identity: dict):
+    release = release_identity["current_public_release"]
     baseline_dir, snapshot_dir = _make_valid_fake_bundles(tmp_path)
-    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path)
+    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path, release=release)
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     snapshot_name = manifest["snapshot_bundle"]["relative_path"]
@@ -165,29 +166,32 @@ def test_manifest_checker_fails_snapshot_missing_in_opt_in(tmp_path: Path):
     assert "reviewer_trust_snapshot_included" in result.stdout
 
 
-def test_manifest_checker_fails_credential_like_string(tmp_path: Path):
+def test_manifest_checker_fails_credential_like_string(tmp_path: Path, release_identity: dict):
+    release = release_identity["current_public_release"]
     baseline_dir, snapshot_dir = _make_valid_fake_bundles(tmp_path)
     (baseline_dir / "leaked.txt").write_text("sk-12345678901234567890", encoding="utf-8")
-    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path)
+    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path, release=release)
 
     result = _run(sys.executable, CHECK_SCRIPT, str(manifest_path), cwd=REPO_ROOT)
     assert result.returncode != 0
     assert "Secret-like pattern matched" in result.stdout
 
 
-def test_manifest_checker_fails_forbidden_claim(tmp_path: Path):
+def test_manifest_checker_fails_forbidden_claim(tmp_path: Path, release_identity: dict):
+    release = release_identity["current_public_release"]
     baseline_dir, snapshot_dir = _make_valid_fake_bundles(tmp_path)
     (baseline_dir / "marketing.txt").write_text("guaranteed profit", encoding="utf-8")
-    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path)
+    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path, release=release)
 
     result = _run(sys.executable, CHECK_SCRIPT, str(manifest_path), cwd=REPO_ROOT)
     assert result.returncode != 0
     assert "Forbidden claim found" in result.stdout
 
 
-def test_manifest_checker_json_output(tmp_path: Path):
+def test_manifest_checker_json_output(tmp_path: Path, release_identity: dict):
+    release = release_identity["current_public_release"]
     baseline_dir, snapshot_dir = _make_valid_fake_bundles(tmp_path)
-    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path)
+    manifest_path = _build_manifest(baseline_dir, snapshot_dir, tmp_path, release=release)
 
     result = _run(sys.executable, CHECK_SCRIPT, str(manifest_path), "--json", cwd=REPO_ROOT)
     assert result.returncode == 0, result.stderr
@@ -197,9 +201,10 @@ def test_manifest_checker_json_output(tmp_path: Path):
 
 
 @pytest.mark.slow
-def test_demo_runs_end_to_end(tmp_path: Path):
-    if not _release_fully_published():
-        pytest.skip(f"{RELEASE} is not fully published yet; run after tag push and GitHub Release creation")
+def test_demo_runs_end_to_end(tmp_path: Path, release_identity: dict):
+    release = release_identity["current_public_release"]
+    if not _release_fully_published(release):
+        pytest.skip(f"{release} is not fully published yet; run after tag push and GitHub Release creation")
 
     result = _run(
         "bash",

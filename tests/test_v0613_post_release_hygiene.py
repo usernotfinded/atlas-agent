@@ -164,10 +164,11 @@ class TestFailures:
         finally:
             mod.RELEASE_METADATA = original
 
-    def test_source_version_bumped_fails(self, tmp_path: Path) -> None:
+    def test_source_version_bumped_fails(self, tmp_path: Path, release_identity: dict) -> None:
         mod = _load_script_module()
         original_pyproject = mod.PYPROJECT
         original_init = mod.INIT_PY
+        current_source = release_identity["source_version"]
         try:
             fake_pyproject = tmp_path / "pyproject.toml"
             fake_pyproject.write_text('version = "0.6.14"\n', encoding="utf-8")
@@ -177,8 +178,8 @@ class TestFailures:
             mod.INIT_PY = fake_init
             code, result = mod.run_check()
             assert code == 1
-            assert any("0.6.25" in e and "pyproject.toml" in e.lower() for e in result["errors"])
-            assert any("0.6.25" in e and "__init__.py" in e.lower() for e in result["errors"])
+            assert any(current_source in e and "pyproject.toml" in e.lower() for e in result["errors"])
+            assert any(current_source in e and "__init__.py" in e.lower() for e in result["errors"])
         finally:
             mod.PYPROJECT = original_pyproject
             mod.INIT_PY = original_init

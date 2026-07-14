@@ -363,10 +363,12 @@ class TestCheckerFailures:
         assert "v0.6.13" in result.stdout.lower()
         assert "released" in result.stdout.lower()
 
-    def test_checker_fails_if_release_metadata_moves_to_v0626(self, tmp_path: Path) -> None:
+    def test_checker_fails_if_release_metadata_moves_to_next_planned(self, tmp_path: Path, release_identity: dict) -> None:
+        current_public = release_identity["current_public_release"]
+        next_planned = release_identity["next_planned_release"]
         tmp = _make_isolated_repo(
             tmp_path,
-            metadata_patch={'"current_public_release": "v0.6.25"': '"current_public_release": "v0.6.26"'},
+            metadata_patch={f'"current_public_release": "{current_public}"': f'"current_public_release": "{next_planned}"'},
         )
         result = _run_isolated_checker(tmp)
         assert result.returncode == 1

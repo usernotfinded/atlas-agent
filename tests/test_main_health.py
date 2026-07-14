@@ -33,11 +33,12 @@ def _write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
-def _fixture(tmp_path: Path) -> Path:
-    _write(tmp_path / "pyproject.toml", '[project]\nversion = "0.6.25"\n')
+def _fixture(tmp_path: Path, release_identity: dict) -> Path:
+    source_version = release_identity["source_version"]
+    _write(tmp_path / "pyproject.toml", f'[project]\nversion = "{source_version}"\n')
     _write(
         tmp_path / "src" / "atlas_agent" / "__init__.py",
-        '__version__ = "0.6.25"\n',
+        f'__version__ = "{source_version}"\n',
     )
     _write(tmp_path / "scripts" / "check_trust_center.py", "# fixture\n")
     _write(tmp_path / "scripts" / "check_onboarding_docs.py", "# fixture\n")
@@ -54,6 +55,7 @@ def _fixture(tmp_path: Path) -> Path:
 
 def _runner(
     *,
+    release_identity: dict,
     branch: str = "main",
     head: str = "abc123",
     origin: str = "abc123",
@@ -63,6 +65,10 @@ def _runner(
     tag: str = "",
     future_tag: str = "",
 ):
+    previous_public = release_identity["previous_public_release"]
+    current_public = release_identity["current_public_release"]
+    next_planned = release_identity["next_planned_release"]
+
     def fake_runner(repo_root: Path, args: list[str]):
         key = tuple(args)
         if key == ("rev-parse", "--show-toplevel"):
@@ -103,11 +109,11 @@ def _runner(
             return CHECKER.CommandResult(0, "v0.6.19\n" if not tag else tag, "")
         if key == ("tag", "--list", "v0.6.20"):
             return CHECKER.CommandResult(0, "v0.6.20\n" if not tag else tag, "")
-        if key == ("tag", "--list", "v0.6.24"):
-            return CHECKER.CommandResult(0, "v0.6.24\n" if not tag else tag, "")
-        if key == ("tag", "--list", "v0.6.25"):
-            return CHECKER.CommandResult(0, "v0.6.25\n" if not tag else tag, "")
-        if key == ("tag", "--list", "v0.6.26"):
+        if key == ("tag", "--list", previous_public):
+            return CHECKER.CommandResult(0, f"{previous_public}\n" if not tag else tag, "")
+        if key == ("tag", "--list", current_public):
+            return CHECKER.CommandResult(0, f"{current_public}\n" if not tag else tag, "")
+        if key == ("tag", "--list", next_planned):
             return CHECKER.CommandResult(0, future_tag, "")
         if key == (
             "diff",
@@ -125,21 +131,21 @@ def _runner(
     return fake_runner
 
 
-def test_text_mode_runs_on_mocked_clean_main_state(tmp_path: Path, capsys) -> None:
-    repo = _fixture(tmp_path)
+def test_text_mode_runs_on_mocked_clean_main_state(tmp_path: Path, capsys, release_identity: dict) -> None:
+    repo = _fixture(tmp_path, release_identity)
 
-    exit_code = CHECKER.main([str(repo)], git_runner=_runner())
+    exit_code = CHECKER.main([str(repo)], git_runner=_runner(release_identity=release_identity))
 
     captured = capsys.readouterr()
     assert exit_code == 0
     assert "Main health report PASSED" in captured.out
-    assert "Source version: 0.6.25" in captured.out
+    assert f"Source version: {release_identity['source_version']}" in captured.out
 
 
-def test_json_mode_returns_artifact_type(tmp_path: Path, capsys) -> None:
-    repo = _fixture(tmp_path)
+def test_json_mode_returns_artifact_type(tmp_path: Path, capsys, release_identity: dict) -> None:
+    repo = _fixture(tmp_path, release_identity)
 
-    exit_code = CHECKER.main(["--json", str(repo)], git_runner=_runner())
+    exit_code = CHECKER.main(["--json", str(repo)], git_runner=_runner(release_identity=release_identity))
 
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 0
@@ -147,22 +153,22 @@ def test_json_mode_returns_artifact_type(tmp_path: Path, capsys) -> None:
     assert payload["valid"] is True
 
 
-def test_reports_source_version_check(tmp_path: Path) -> None:
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
+def test_reports_source_version_check(tmp_path: Path, release_identity: dict) -> None:
+    report = CHECKER.collect_report(_fixture(tmp_path, release_identity), git_runner=_runner(release_identity=release_identity))
 
-    assert report.source_version == "0.6.25"
+    assert report.source_version == release_identity["source_version"]
     assert report.checks["expected_source_version"] is True
 
 
-def test_reports_public_release_v0625(tmp_path: Path) -> None:
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
+def test_reports_public_release(tmp_path: Path, release_identity: dict) -> None:
+    report = CHECKER.collect_report(_fixture(tmp_path, release_identity), git_runner=_runner(release_identity=release_identity))
 
-    assert report.public_release == "v0.6.25"
+    assert report.public_release == release_identity["current_public_release"]
     assert report.checks["public_release_expected"] is True
 
 
-def test_release_metadata_validation_passes_when_consistent(tmp_path: Path) -> None:
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
+def test_release_metadata_validation_passes_when_consistent(tmp_path: Path, release_identity: dict) -> None:
+    report = CHECKER.collect_report(_fixture(tmp_path, release_identity), git_runner=_runner(release_identity=release_identity))
 
     assert not any(f.code.startswith("release_metadata") for f in report.findings)
     assert not any(f.code == "public_release_tag_missing" for f in report.findings)
@@ -170,57 +176,61 @@ def test_release_metadata_validation_passes_when_consistent(tmp_path: Path) -> N
 
 
 def test_release_metadata_drift_detected_when_source_version_mismatches(
-    tmp_path: Path,
+    tmp_path: Path, release_identity: dict
 ) -> None:
-    repo = _fixture(tmp_path)
+    repo = _fixture(tmp_path, release_identity)
     (repo / "pyproject.toml").write_text('[project]\nversion = "0.6.99"\n')
     (repo / "src" / "atlas_agent" / "__init__.py").write_text('__version__ = "0.6.99"\n')
 
-    report = CHECKER.collect_report(repo, git_runner=_runner())
+    report = CHECKER.collect_report(repo, git_runner=_runner(release_identity=release_identity))
 
     assert any(f.code == "release_metadata_drift" for f in report.findings)
 
 
-def test_public_release_tag_missing_detected(tmp_path: Path) -> None:
-    def no_v0625_tag(repo_root: Path, args: list[str]):
-        key = tuple(args)
-        if key == ("tag", "--list", "v0.6.25"):
-            return CHECKER.CommandResult(0, "", "")
-        return _runner()(repo_root, args)
+def test_public_release_tag_missing_detected(tmp_path: Path, release_identity: dict) -> None:
+    current_public = release_identity["current_public_release"]
 
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=no_v0625_tag)
+    def no_current_public_tag(repo_root: Path, args: list[str]):
+        key = tuple(args)
+        if key == ("tag", "--list", current_public):
+            return CHECKER.CommandResult(0, "", "")
+        return _runner(release_identity=release_identity)(repo_root, args)
+
+    report = CHECKER.collect_report(_fixture(tmp_path, release_identity), git_runner=no_current_public_tag)
 
     assert any(f.code == "public_release_tag_missing" for f in report.findings)
 
 
-def test_next_release_tag_exists_detected(tmp_path: Path) -> None:
-    def v0626_exists(repo_root: Path, args: list[str]):
-        key = tuple(args)
-        if key == ("tag", "--list", "v0.6.26"):
-            return CHECKER.CommandResult(0, "v0.6.26\n", "")
-        return _runner()(repo_root, args)
+def test_next_release_tag_exists_detected(tmp_path: Path, release_identity: dict) -> None:
+    next_planned = release_identity["next_planned_release"]
 
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=v0626_exists)
+    def next_planned_exists(repo_root: Path, args: list[str]):
+        key = tuple(args)
+        if key == ("tag", "--list", next_planned):
+            return CHECKER.CommandResult(0, f"{next_planned}\n", "")
+        return _runner(release_identity=release_identity)(repo_root, args)
+
+    report = CHECKER.collect_report(_fixture(tmp_path, release_identity), git_runner=next_planned_exists)
 
     assert any(f.code == "next_release_tag_exists" for f in report.findings)
 
 
-def test_reports_repo_root_check(tmp_path: Path) -> None:
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
+def test_reports_repo_root_check(tmp_path: Path, release_identity: dict) -> None:
+    report = CHECKER.collect_report(_fixture(tmp_path, release_identity), git_runner=_runner(release_identity=release_identity))
 
     assert report.checks["repo_root"] is True
 
 
-def test_reports_current_branch_main_check(tmp_path: Path) -> None:
-    report = CHECKER.collect_report(_fixture(tmp_path), git_runner=_runner())
+def test_reports_current_branch_main_check(tmp_path: Path, release_identity: dict) -> None:
+    report = CHECKER.collect_report(_fixture(tmp_path, release_identity), git_runner=_runner(release_identity=release_identity))
 
     assert report.checks["on_main"] is True
 
 
-def test_flags_non_main_branch_using_mocked_git_output(tmp_path: Path) -> None:
+def test_flags_non_main_branch_using_mocked_git_output(tmp_path: Path, release_identity: dict) -> None:
     report = CHECKER.collect_report(
-        _fixture(tmp_path),
-        git_runner=_runner(branch="feature/test"),
+        _fixture(tmp_path, release_identity),
+        git_runner=_runner(release_identity=release_identity, branch="feature/test"),
     )
 
     assert report.exit_code == 1
@@ -228,10 +238,10 @@ def test_flags_non_main_branch_using_mocked_git_output(tmp_path: Path) -> None:
     assert any(f.code == "not_on_main" for f in report.findings)
 
 
-def test_flags_head_not_matching_origin_main(tmp_path: Path) -> None:
+def test_flags_head_not_matching_origin_main(tmp_path: Path, release_identity: dict) -> None:
     report = CHECKER.collect_report(
-        _fixture(tmp_path),
-        git_runner=_runner(head="abc123", origin="def456"),
+        _fixture(tmp_path, release_identity),
+        git_runner=_runner(release_identity=release_identity, head="abc123", origin="def456"),
     )
 
     assert report.exit_code == 1
@@ -239,20 +249,20 @@ def test_flags_head_not_matching_origin_main(tmp_path: Path) -> None:
     assert any(f.code == "head_not_pushed" for f in report.findings)
 
 
-def test_flags_dirty_worktree_using_mocked_git_status(tmp_path: Path) -> None:
+def test_flags_dirty_worktree_using_mocked_git_status(tmp_path: Path, release_identity: dict) -> None:
     report = CHECKER.collect_report(
-        _fixture(tmp_path),
-        git_runner=_runner(status=" M README.md\n"),
+        _fixture(tmp_path, release_identity),
+        git_runner=_runner(release_identity=release_identity, status=" M README.md\n"),
     )
 
     assert report.checks["working_tree_clean"] is False
     assert any(w.code == "working_tree_dirty" for w in report.warnings)
 
 
-def test_flags_staged_changes_using_mocked_git_status(tmp_path: Path) -> None:
+def test_flags_staged_changes_using_mocked_git_status(tmp_path: Path, release_identity: dict) -> None:
     report = CHECKER.collect_report(
-        _fixture(tmp_path),
-        git_runner=_runner(status="M  README.md\n", staged="README.md\n"),
+        _fixture(tmp_path, release_identity),
+        git_runner=_runner(release_identity=release_identity, status="M  README.md\n", staged="README.md\n"),
     )
 
     assert report.checks["no_staged_changes"] is False
@@ -262,12 +272,13 @@ def test_flags_staged_changes_using_mocked_git_status(tmp_path: Path) -> None:
 def test_warns_on_untracked_generated_artifacts_without_printing_secret_values(
     tmp_path: Path,
     capsys,
+    release_identity: dict,
 ) -> None:
     fake_secret = "sk-" + ("a" * 24)
     status = f"?? artifacts/release_evidence/ATLAS_TOKEN_{fake_secret}.json\n"
-    repo = _fixture(tmp_path)
+    repo = _fixture(tmp_path, release_identity)
 
-    exit_code = CHECKER.main([str(repo)], git_runner=_runner(status=status))
+    exit_code = CHECKER.main([str(repo)], git_runner=_runner(release_identity=release_identity, status=status))
 
     captured = capsys.readouterr()
     assert exit_code == 0
@@ -276,10 +287,11 @@ def test_warns_on_untracked_generated_artifacts_without_printing_secret_values(
     assert "[REDACTED]" in captured.out
 
 
-def test_flags_accidental_future_release_tag_using_mocked_git_tag(tmp_path: Path) -> None:
+def test_flags_accidental_future_release_tag_using_mocked_git_tag(tmp_path: Path, release_identity: dict) -> None:
+    current_public = release_identity["current_public_release"]
     report = CHECKER.collect_report(
-        _fixture(tmp_path),
-        git_runner=_runner(future_tag="v0.6.25\n"),
+        _fixture(tmp_path, release_identity),
+        git_runner=_runner(release_identity=release_identity, future_tag=f"{current_public}\n"),
     )
 
     assert report.exit_code == 1
@@ -287,8 +299,8 @@ def test_flags_accidental_future_release_tag_using_mocked_git_tag(tmp_path: Path
     assert any(f.code == "unrequested_maintenance_tag" for f in report.findings)
 
 
-def test_handles_missing_git_gracefully(tmp_path: Path, capsys) -> None:
-    repo = _fixture(tmp_path)
+def test_handles_missing_git_gracefully(tmp_path: Path, capsys, release_identity: dict) -> None:
+    repo = _fixture(tmp_path, release_identity)
 
     def missing_git(repo_root: Path, args: list[str]):
         raise FileNotFoundError("git")
@@ -304,14 +316,15 @@ def test_handles_missing_git_gracefully(tmp_path: Path, capsys) -> None:
 def test_handles_missing_gh_gracefully_in_include_github_mode(
     tmp_path: Path,
     monkeypatch,
+    release_identity: dict,
 ) -> None:
-    repo = _fixture(tmp_path)
+    repo = _fixture(tmp_path, release_identity)
     monkeypatch.setattr(CHECKER.shutil, "which", lambda name: None)
 
     report = CHECKER.collect_report(
         repo,
         include_github=True,
-        git_runner=_runner(),
+        git_runner=_runner(release_identity=release_identity),
     )
 
     assert report.exit_code == 0
@@ -320,7 +333,7 @@ def test_handles_missing_gh_gracefully_in_include_github_mode(
     assert any(w.code == "github_cli_missing" for w in report.warnings)
 
 
-def test_does_not_call_gh_unless_include_github_is_passed(tmp_path: Path) -> None:
+def test_does_not_call_gh_unless_include_github_is_passed(tmp_path: Path, release_identity: dict) -> None:
     calls: list[list[str]] = []
 
     def gh_runner(repo_root: Path, args: list[str]):
@@ -328,34 +341,34 @@ def test_does_not_call_gh_unless_include_github_is_passed(tmp_path: Path) -> Non
         return CHECKER.CommandResult(0, "", "")
 
     CHECKER.collect_report(
-        _fixture(tmp_path),
+        _fixture(tmp_path, release_identity),
         include_github=False,
-        git_runner=_runner(),
+        git_runner=_runner(release_identity=release_identity),
         gh_runner=gh_runner,
     )
 
     assert calls == []
 
 
-def test_does_not_modify_files(tmp_path: Path) -> None:
-    repo = _fixture(tmp_path)
+def test_does_not_modify_files(tmp_path: Path, release_identity: dict) -> None:
+    repo = _fixture(tmp_path, release_identity)
     evidence = repo / "artifacts" / "release_evidence" / "evidence.md"
     _write(evidence, "local evidence\n")
     before = evidence.read_text(encoding="utf-8")
 
     CHECKER.collect_report(
         repo,
-        git_runner=_runner(status="?? artifacts/release_evidence/evidence.md\n"),
+        git_runner=_runner(release_identity=release_identity, status="?? artifacts/release_evidence/evidence.md\n"),
     )
 
     assert evidence.read_text(encoding="utf-8") == before
 
 
-def test_docs_mention_main_source_version_can_differ_from_public_release() -> None:
+def test_docs_mention_main_source_version_can_differ_from_public_release(release_identity: dict) -> None:
     text = DOC.read_text(encoding="utf-8").lower()
 
     assert "main source version can differ from public release" in text
-    assert "public github release is `v0.6.25`" in text
+    assert f"public github release is `{release_identity['current_public_release']}`" in text
 
 
 def test_docs_discourage_destructive_git_cleanup() -> None:

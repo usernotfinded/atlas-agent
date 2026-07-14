@@ -21,7 +21,6 @@ VERSION_SCRIPT = REPO_ROOT / "scripts" / "check_version_consistency.py"
 
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
-CURRENT_DEV_SERIES = "0.6.25"
 
 
 class TestScriptExists:
@@ -51,7 +50,7 @@ class TestScriptPassesOnCurrentRepo:
             f"Version consistency script failed:\n{result.stdout}\n{result.stderr}"
         )
 
-    def test_json_output(self) -> None:
+    def test_json_output(self, release_identity: dict) -> None:
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--json"],
             capture_output=True,
@@ -60,27 +59,27 @@ class TestScriptPassesOnCurrentRepo:
         assert result.returncode == 0, result.stderr
         data = json.loads(result.stdout)
         assert data["passed"] is True
-        assert data["current_package_version"] == CURRENT_DEV_SERIES
-        assert data["current_init_version"] == CURRENT_DEV_SERIES
+        assert data["current_package_version"] == release_identity["source_version"]
+        assert data["current_init_version"] == release_identity["source_version"]
         assert data["stable_tag"] == HISTORICAL_STABLE_TAG
         assert data["stable_tag_version"] == HISTORICAL_STABLE_VERSION
 
 
 class TestCurrentDevVersion:
-    def test_pyproject_version_is_post_stable_dev(self) -> None:
+    def test_pyproject_version_is_post_stable_dev(self, release_identity: dict) -> None:
         import tomllib
         pyproject = REPO_ROOT / "pyproject.toml"
         with open(pyproject, "rb") as f:
             data = tomllib.load(f)
         version = data.get("project", {}).get("version")
-        assert version == CURRENT_DEV_SERIES
+        assert version == release_identity["source_version"]
 
-    def test_init_version_is_post_stable_dev(self) -> None:
+    def test_init_version_is_post_stable_dev(self, release_identity: dict) -> None:
         init_path = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
         text = init_path.read_text(encoding="utf-8")
         m = re.search(r'^__version__\s*=\s*["\']([^"\']+)["\']', text, re.MULTILINE)
         assert m is not None
-        assert m.group(1) == CURRENT_DEV_SERIES
+        assert m.group(1) == release_identity["source_version"]
 
 
 class TestHistoricalStableTag:

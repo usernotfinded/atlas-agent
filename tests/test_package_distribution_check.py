@@ -21,7 +21,6 @@ SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
 PACKAGE_VERSION = "0.5.7rc7"
 PUBLIC_TAG = "v0.5.8-rc7"
 
-CURRENT_PACKAGE_VERSION = "0.6.25"
 RUNTIME_REQUIRES_DIST = (
     "fastapi>=0.115",
     "httpx>=0.27",
@@ -324,7 +323,7 @@ class TestOutputRedaction:
 
 
 class TestWheelMetadataParser:
-    def test_parses_correct_wheel(self, tmp_path: Path) -> None:
+    def test_parses_correct_wheel(self, tmp_path: Path, release_identity: dict) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "check_package_distribution_wheel", str(SCRIPT)
@@ -333,13 +332,14 @@ class TestWheelMetadataParser:
         sys.modules["check_package_distribution_wheel"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
-        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        current_version = release_identity["source_version"]
+        wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=current_version)
         ok, errors = cpd._check_wheel_metadata(wheel_path)
         assert ok, f"Unexpected errors: {errors}"
         assert errors == []
 
-    def test_requires_pydantic_in_wheel_metadata(self, tmp_path: Path) -> None:
+    def test_requires_pydantic_in_wheel_metadata(self, tmp_path: Path, release_identity: dict) -> None:
         import importlib.util
 
         spec = importlib.util.spec_from_file_location(
@@ -349,14 +349,15 @@ class TestWheelMetadataParser:
         sys.modules["check_package_distribution_wheel_pydantic"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        current_version = release_identity["source_version"]
+        wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
         deps_without_pydantic = tuple(
             dep for dep in RUNTIME_REQUIRES_DIST if not dep.startswith("pydantic")
         )
         _make_fake_wheel(
             wheel_path,
             name="atlas_agent",
-            version=CURRENT_PACKAGE_VERSION,
+            version=current_version,
             requires_dist=deps_without_pydantic,
         )
 
@@ -430,7 +431,7 @@ class TestWheelMetadataParser:
 
 
 class TestWheelTemplateParser:
-    def test_parses_wheel_templates(self, tmp_path: Path) -> None:
+    def test_parses_wheel_templates(self, tmp_path: Path, release_identity: dict) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "check_package_distribution_wheel_templates", str(SCRIPT)
@@ -439,14 +440,15 @@ class TestWheelTemplateParser:
         sys.modules["check_package_distribution_wheel_templates"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
-        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        current_version = release_identity["source_version"]
+        wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=current_version)
         with zipfile.ZipFile(wheel_path, "a") as zf:
             _write_fake_wheel_templates(zf)
         ok, errors = cpd._check_wheel_templates(wheel_path)
         assert ok, f"Unexpected errors: {errors}"
 
-    def test_rejects_wheel_missing_templates(self, tmp_path: Path) -> None:
+    def test_rejects_wheel_missing_templates(self, tmp_path: Path, release_identity: dict) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "check_package_distribution_wheel_templates_missing", str(SCRIPT)
@@ -455,8 +457,9 @@ class TestWheelTemplateParser:
         sys.modules["check_package_distribution_wheel_templates_missing"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
-        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        current_version = release_identity["source_version"]
+        wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=current_version)
         ok, errors = cpd._check_wheel_templates(wheel_path)
         assert not ok
         assert any("Template file missing from wheel" in e for e in errors)
@@ -467,6 +470,7 @@ class TestWheelInstallPhases:
         self,
         monkeypatch,
         tmp_path: Path,
+        release_identity: dict,
     ) -> None:
         import importlib.util
 
@@ -477,8 +481,9 @@ class TestWheelInstallPhases:
         sys.modules["check_package_distribution_no_deps_install"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
-        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        current_version = release_identity["source_version"]
+        wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=current_version)
         commands: list[list[str]] = []
 
         def fake_run(cmd, **kwargs):
@@ -504,6 +509,7 @@ class TestWheelInstallPhases:
         self,
         monkeypatch,
         tmp_path: Path,
+        release_identity: dict,
     ) -> None:
         import importlib.util
 
@@ -514,8 +520,9 @@ class TestWheelInstallPhases:
         sys.modules["check_package_distribution_runtime_unavailable"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
-        _make_fake_wheel(wheel_path, name="atlas_agent", version=CURRENT_PACKAGE_VERSION)
+        current_version = release_identity["source_version"]
+        wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
+        _make_fake_wheel(wheel_path, name="atlas_agent", version=current_version)
         commands: list[list[str]] = []
 
         def fake_run(cmd, **kwargs):
@@ -548,6 +555,7 @@ class TestWheelInstallPhases:
         self,
         monkeypatch,
         tmp_path: Path,
+        release_identity: dict,
     ) -> None:
         import importlib.util
 
@@ -558,11 +566,12 @@ class TestWheelInstallPhases:
         sys.modules["check_package_distribution_runtime_metadata_missing"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel_path = tmp_path / f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl"
+        current_version = release_identity["source_version"]
+        wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
         _make_fake_wheel(
             wheel_path,
             name="atlas_agent",
-            version=CURRENT_PACKAGE_VERSION,
+            version=current_version,
             requires_dist=(),
         )
 
@@ -596,7 +605,7 @@ class TestWheelInstallPhases:
 
 
 class TestSdistMetadataParser:
-    def test_parses_correct_sdist(self, tmp_path: Path) -> None:
+    def test_parses_correct_sdist(self, tmp_path: Path, release_identity: dict) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "check_package_distribution_sdist", str(SCRIPT)
@@ -605,8 +614,9 @@ class TestSdistMetadataParser:
         sys.modules["check_package_distribution_sdist"] = cpd
         spec.loader.exec_module(cpd)
 
-        sdist_path = tmp_path / f"atlas-agent-{CURRENT_PACKAGE_VERSION}.tar.gz"
-        _make_fake_sdist(sdist_path, name="atlas-agent", version=CURRENT_PACKAGE_VERSION)
+        current_version = release_identity["source_version"]
+        sdist_path = tmp_path / f"atlas-agent-{current_version}.tar.gz"
+        _make_fake_sdist(sdist_path, name="atlas-agent", version=current_version)
         ok, errors = cpd._check_sdist_metadata(sdist_path)
         assert ok, f"Unexpected errors: {errors}"
         assert errors == []
@@ -653,7 +663,7 @@ class TestSdistMetadataParser:
 
 
 class TestSdistTemplateParser:
-    def test_parses_sdist_templates(self, tmp_path: Path) -> None:
+    def test_parses_sdist_templates(self, tmp_path: Path, release_identity: dict) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "check_package_distribution_sdist_templates", str(SCRIPT)
@@ -662,17 +672,18 @@ class TestSdistTemplateParser:
         sys.modules["check_package_distribution_sdist_templates"] = cpd
         spec.loader.exec_module(cpd)
 
-        sdist_path = tmp_path / f"atlas-agent-{CURRENT_PACKAGE_VERSION}.tar.gz"
+        current_version = release_identity["source_version"]
+        sdist_path = tmp_path / f"atlas-agent-{current_version}.tar.gz"
         _make_fake_sdist(
             sdist_path,
             name="atlas-agent",
-            version=CURRENT_PACKAGE_VERSION,
+            version=current_version,
             include_templates=True,
         )
         ok, errors = cpd._check_sdist_templates(sdist_path)
         assert ok, f"Unexpected errors: {errors}"
 
-    def test_rejects_sdist_missing_templates(self, tmp_path: Path) -> None:
+    def test_rejects_sdist_missing_templates(self, tmp_path: Path, release_identity: dict) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "check_package_distribution_sdist_templates_missing", str(SCRIPT)
@@ -681,8 +692,9 @@ class TestSdistTemplateParser:
         sys.modules["check_package_distribution_sdist_templates_missing"] = cpd
         spec.loader.exec_module(cpd)
 
-        sdist_path = tmp_path / f"atlas-agent-{CURRENT_PACKAGE_VERSION}.tar.gz"
-        _make_fake_sdist(sdist_path, name="atlas-agent", version=CURRENT_PACKAGE_VERSION)
+        current_version = release_identity["source_version"]
+        sdist_path = tmp_path / f"atlas-agent-{current_version}.tar.gz"
+        _make_fake_sdist(sdist_path, name="atlas-agent", version=current_version)
         ok, errors = cpd._check_sdist_templates(sdist_path)
         assert not ok
         assert any("Template file missing from sdist" in e for e in errors)
@@ -713,7 +725,7 @@ class TestArtifactFilenameChecks:
         assert wheel == tmp_path / "a-first.whl"
         assert sdist == tmp_path / "a-first.tar.gz"
 
-    def test_correct_filenames_pass(self) -> None:
+    def test_correct_filenames_pass(self, release_identity: dict) -> None:
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "check_package_distribution_fn", str(SCRIPT)
@@ -722,8 +734,9 @@ class TestArtifactFilenameChecks:
         sys.modules["check_package_distribution_fn"] = cpd
         spec.loader.exec_module(cpd)
 
-        wheel = Path(f"atlas_agent-{CURRENT_PACKAGE_VERSION}-py3-none-any.whl")
-        sdist = Path(f"atlas-agent-{CURRENT_PACKAGE_VERSION}.tar.gz")
+        current_version = release_identity["source_version"]
+        wheel = Path(f"atlas_agent-{current_version}-py3-none-any.whl")
+        sdist = Path(f"atlas-agent-{current_version}.tar.gz")
         errors = cpd._check_artifact_filenames(wheel, sdist)
         assert errors == []
 
@@ -763,7 +776,7 @@ class TestArtifactFilenameChecks:
 
 
 class TestRealBuild:
-    def test_real_build_passes(self) -> None:
+    def test_real_build_passes(self, release_identity: dict) -> None:
         result = _run_script()
         if result.returncode == 2 and "build missing" in (result.stdout + result.stderr).lower():
             pytest.skip("build module not available")
@@ -771,7 +784,7 @@ class TestRealBuild:
             f"Package distribution check failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
         assert "Package distribution verification PASSED" in result.stdout
-        assert f"Package version: {CURRENT_PACKAGE_VERSION}" in result.stdout
+        assert f"Package version: {release_identity['source_version']}" in result.stdout
         assert "Template resources checked: yes" in result.stdout
         assert "Wheel-installed template init checked: yes" in result.stdout
         assert "Build isolation: disabled" in result.stdout or "Network allowed: False" in result.stdout
