@@ -238,12 +238,12 @@ and approval queue mutation were not enabled by it.
 
 ### Candidate status in the `v0.6.25` release
 
-`v0.6.25` is the current public GitHub release. Two candidates, **CAND-019**
-and **CAND-020**, are **released** as part of `v0.6.25` on 2026-07-13. Live
+`v0.6.25` is a historical public GitHub release. Two candidates, **CAND-019**
+and **CAND-020**, were **released** as part of `v0.6.25` on 2026-07-13. Live
 trading, live submit, broker/provider execution, credential loading, network
-access, order placement, and approval queue mutation are not enabled.
+access, order placement, and approval queue mutation were not enabled.
 
-- **CAND-019** is released in `v0.6.25` as a docs/config hardcoded release-
+- **CAND-019** was released in `v0.6.25` as a docs/config hardcoded release-
   literal sweep. It extends `scripts/check_hardcoded_release_literals.py` to
   scan `configs/`, `examples/`, and `docs/examples/` for monitored release-
   identity literals and adds regression tests. It uses only the Python standard
@@ -253,16 +253,30 @@ access, order placement, and approval queue mutation are not enabled.
   creation, or approval queue mutation, and it does not change `RiskManager`,
   kill switch, deadman, heartbeat, or audit hash-chain behavior. It does not
   broaden the CAND-014 provider-artifact extraction boundary.
-- **CAND-020** is released in `v0.6.25` as a post-v0.6.24 test drift sweep. It
+- **CAND-020** was released in `v0.6.25` as a post-v0.6.24 test drift sweep. It
   updates stale post-`v0.6.24` test fixtures and assertions to the current
   release identity, adds `0.6.24` to the `SECURITY.md` supported-versions table,
   and records this candidate. Test-only drift fixes; no runtime, safety, broker,
   provider, credential, network, or trading changes.
 
-### Candidate status in the `v0.6.26` planning line
+### Candidate status in the `v0.6.26` release
 
-`v0.6.26` is the next planned release line and is not released. No candidates
-are accepted for `v0.6.26`. Live trading, live submit, broker/provider execution,
+`v0.6.26` is the current public GitHub release. One candidate, **CAND-021**, is
+**released** as part of `v0.6.26` on 2026-07-13. Live trading, live submit,
+broker/provider execution, credential loading, network access, order placement,
+and approval queue mutation are not enabled.
+
+- **CAND-021** is released in `v0.6.26` as a metadata-driven current-state test
+  fixtures candidate. It adds a shared `release_identity` pytest fixture in
+  `tests/conftest.py` that loads current release identity from
+  `docs/releases/release-metadata.json`, and refactors current-state tests to use
+  fixture values instead of hardcoded release-identity literals. Test-only; no
+  runtime, safety, broker, provider, credential, network, or trading changes.
+
+### Candidate status in the `v0.6.27` planning line
+
+`v0.6.27` is the next planned release line and is not released. No candidates
+are accepted for `v0.6.27`. Live trading, live submit, broker/provider execution,
 credential loading, network access, order placement, and approval queue mutation
 are not enabled.
 
@@ -416,7 +430,7 @@ L2 is the highest autonomy level Atlas Agent supports for live-market workflows.
 
 ## L3 — Bounded Live Autonomy under Strict Risk Limits
 
-L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.25` current public release; `v0.6.24` and earlier are historical, `v0.6.26` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
+L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.26` current public release; `v0.6.25` and earlier are historical, `v0.6.27` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
 
 ### Required preconditions
 

@@ -1,20 +1,21 @@
 {
   "release_line": "v0.6.26",
-  "status": "planning",
-  "source_version": "0.6.25",
-  "current_public_release": "v0.6.25",
-  "next_planned_release": "v0.6.26",
-  "release_date": null,
+  "status": "released",
+  "source_version": "0.6.26",
+  "current_public_release": "v0.6.26",
+  "next_planned_release": "v0.6.27",
+  "release_date": "2026-07-13",
   "pypi_published": false,
-  "tag_created": false,
-  "github_release_created": false,
+  "tag_created": true,
+  "github_release_created": true,
   "candidates": [
     {
       "id": "CAND-021",
       "title": "Metadata-driven current-state test fixtures",
-      "status": "accepted",
+      "status": "released",
       "accepted": true,
       "acceptance_verdict": "PASS",
+      "release_date": "2026-07-13",
       "safety_notes": "Adds a shared release_identity pytest fixture from release-metadata.json and refactors current-state tests to use fixture values instead of hardcoded release identity. Test-only; no runtime, safety, broker, provider, credential, or trading changes."
     }
   ]

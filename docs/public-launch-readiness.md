@@ -4,9 +4,9 @@
 
 ## Public launch status
 
-Atlas Agent is a **v0.6.25 public release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The current tagged public GitHub release is `v0.6.25`; `v0.6.24` and earlier releases are historical.
+Atlas Agent is a **v0.6.26 public release for sandbox/paper/preflight workflows**. It is ready to be shown publicly for review, evaluation, and contribution, but it is **not a live-trading-ready product**. The current tagged public GitHub release is `v0.6.26`; `v0.6.25` and earlier releases are historical.
 
-The source package version on `main` is `0.6.25`. `v0.6.25` is tagged and released on GitHub only; PyPI was not published.
+The source package version on `main` is `0.6.26`. `v0.6.26` is tagged and released on GitHub only; PyPI was not published.
 
 This document explains what is verified, what remains disabled, and what reviewers should check.
 
@@ -152,8 +152,10 @@ No broker, no network, no credentials, no live trading.
 - `docs/releases/v0.6.14-plan.md` present — historical v0.6.14 planning seed
 - `docs/releases/v0.6.15-plan.md` present — historical v0.6.15 planning seed
 - `docs/releases/v0.6.16-plan.md` present — historical v0.6.16 planning seed
-- `docs/releases/v0.6.25.md` present — current public release notes
-- `docs/trust/v0.6.25-status.md` present — current public trust status
+- `docs/releases/v0.6.26.md` present — current public release notes
+- `docs/trust/v0.6.26-status.md` present — current public trust status
+- `docs/releases/v0.6.25.md` present — historical release notes
+- `docs/trust/v0.6.25-status.md` present — historical trust status
 - `docs/releases/v0.6.24.md` present — historical release notes
 - `docs/trust/v0.6.24-status.md` present — historical trust status
 - `docs/releases/v0.6.21.md` present — historical release notes
@@ -177,12 +179,13 @@ No broker, no network, no credentials, no live trading.
 - Clean install verification does not access PyPI by default.
 - No `dist/`, `build/`, or `*.egg-info/` artifacts are staged.
 - Artifact retention visibility is provided by the manual `release-assurance-artifact-retention-audit` workflow; it is read-only and does not download, delete, or clean up artifacts.
-- Version on `main` is `0.6.25`; latest stable public GitHub release is `v0.6.25`. `v0.6.24` and earlier releases are historical.
-- `v0.6.25` is the current public GitHub-only release; `v0.6.26` is the next planning line.
+- Version on `main` is `0.6.26`; latest stable public GitHub release is `v0.6.26`. `v0.6.25` and earlier releases are historical.
+- `v0.6.26` is the current public GitHub-only release; `v0.6.27` is the next planning line.
 - [v0.6.15 Post-Release Evidence](./releases/v0.6.15-post-release-evidence.md) records the historical v0.6.15 deterministic cutover evidence.
 - [v0.6.24 Planning Seed](./releases/v0.6.24-plan.md) records the historical planning seed for the now-historical `v0.6.24`.
 - [v0.6.25 Planning Seed](./releases/v0.6.25-plan.md) records the historical planning seed for the now-released `v0.6.25`.
-- [v0.6.26 Planning Seed](./releases/v0.6.26-plan.md) seeds the next planning line and does not authorize a release.
+- [v0.6.26 Planning Seed](./releases/v0.6.26-plan.md) records the historical planning seed for the now-released `v0.6.26`.
+- [v0.6.27 Planning Seed](./releases/v0.6.27-plan.md) seeds the next planning line and does not authorize a release.
 - [v0.6.14 Final Paper Portfolio Readiness Audit](./releases/v0.6.14-final-readiness-audit.md) preserves the historical pre-cutover Go/No-Go dossier.
 
 ## Known limitations

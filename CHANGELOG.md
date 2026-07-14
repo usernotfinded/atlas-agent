@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.26] - 2026-07-13
+
+### Added
+
+- Opened the `v0.6.27` planning line: `docs/releases/v0.6.27-plan.md`,
+  `docs/releases/v0.6.27-candidates.json`, `docs/releases/v0.6.27-candidates.md`,
+  and `docs/releases/v0.6.27-candidate-selection.md`.
+- Released `CAND-021: Metadata-driven current-state test fixtures` as part of
+  `v0.6.26`. Adds a shared `release_identity` pytest fixture from
+  `docs/releases/release-metadata.json` and refactors current-state tests to use
+  fixture values instead of hardcoded release identity. Test-only; no runtime,
+  safety, broker, provider, credential, version, or release-metadata behavior
+  changes; the CAND-014 extraction boundary is unchanged.
+- Added `docs/releases/v0.6.26.md` release notes,
+  `docs/trust/v0.6.26-status.md` trust status,
+  `docs/releases/v0.6.26-plan.md` released plan,
+  `docs/releases/v0.6.26-candidates.md` released candidates, and
+  `docs/releases/v0.6.26-candidate-selection.md` selection gate.
+
+### Changed
+
+- Cut over current public release from `v0.6.25` to `v0.6.26`. Package/source
+  version is now `0.6.26`. `v0.6.25` is the historical previous public release.
+  `v0.6.27` is the next planned release line.
+- Updated public docs, trust center, and release checklists to reflect
+  `v0.6.26` current, `v0.6.25` historical, `v0.6.27` next planned.
+
 ## [0.6.25] - 2026-07-13
 
 ### Added

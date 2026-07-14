@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "package_series": "0.6.25",
+  "package_series": "0.6.26",
   "top_level_commands": [
     "agent",
     "approve-order",
