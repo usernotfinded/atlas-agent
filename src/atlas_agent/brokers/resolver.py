@@ -26,9 +26,6 @@ from atlas_agent.portfolio.state import PortfolioState
 if TYPE_CHECKING:
     from atlas_agent.config import AtlasConfig
 
-if TYPE_CHECKING:
-    from atlas_agent.config import AtlasConfig
-
 
 # ==============================================================================
 # RESOLUTION MODELS

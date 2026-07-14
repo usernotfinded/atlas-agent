@@ -225,7 +225,13 @@ class ApprovalManager:
             )
             # The tamper check. If a single approval field was edited on disk, the
             # recomputed hash will not match and the order is not approved.
-            if approval_hash != recomputed:
+            #
+            # compare_digest, never ==. A plain comparison short-circuits on the first
+            # differing byte and so leaks, through timing, how many leading bytes of a
+            # forged hash were right — which is precisely the feedback an attacker needs
+            # to forge the rest one byte at a time. This hash authorises a live order;
+            # it does not get a fast comparison.
+            if not hmac.compare_digest(approval_hash, recomputed):
                 return False
             return True
         except (

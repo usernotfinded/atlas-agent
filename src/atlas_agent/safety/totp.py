@@ -47,10 +47,21 @@ def verify_totp(
     # tolerating clock skew between the phone and this machine. Widening it trades
     # security for convenience linearly — each extra step is another 30s during
     # which an observed code stays replayable.
+    #
+    # compare_digest, never ==. A plain string comparison short-circuits on the first
+    # differing character, so its running time leaks how many leading digits were
+    # correct — enough, over many attempts, to recover a code digit by digit. The cost
+    # of the constant-time compare is nothing; the cost of the timing leak is the
+    # second factor guarding the resume path.
+    #
+    # `matched` is deliberately NOT an early `return`: the loop always runs every
+    # offset, so verification time does not reveal WHICH window matched either.
+    matched = False
     for offset in range(-valid_window, valid_window + 1):
-        if _totp_at_counter(secret, counter_now + offset, digits=digits) == normalized:
-            return True
-    return False
+        candidate = _totp_at_counter(secret, counter_now + offset, digits=digits)
+        if hmac.compare_digest(candidate, normalized):
+            matched = True
+    return matched
 
 
 def generate_totp(
