@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/reflection/test_reflection_approval.py
+# PURPOSE: Verifies reflection approval behavior and regression expectations.
+# DEPS:    tempfile, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for atlas_agent.reflection.approval."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import tempfile
@@ -14,6 +23,12 @@ from atlas_agent.reflection.models import (
 )
 from atlas_agent.reflection.storage import load_artifact, save_artifact
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _sample_artifact(tmpdir: str) -> ReflectionArtifact:
     artifact = ReflectionArtifact(

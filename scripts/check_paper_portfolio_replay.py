@@ -1,9 +1,25 @@
 #!/usr/bin/env python3.11
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_paper_portfolio_replay.py
+# PURPOSE: Validates paper portfolio replay requirements for local and CI
+#         workflows.
+# DEPS:    sys, json, os, argparse, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import sys
 import json
 import os
 import argparse
 from pathlib import Path
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def main():
     parser = argparse.ArgumentParser(description="Check CAND-006 paper portfolio replay evidence artifacts.")

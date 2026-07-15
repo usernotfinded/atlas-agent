@@ -1,9 +1,19 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_reviewer_outreach.py
+# PURPOSE: Verify controlled reviewer outreach docs, checklists, and message
+#         drafts.
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Verify controlled reviewer outreach docs, checklists, and message drafts.
 
 Deterministic and local. Does not call the GitHub API, load credentials,
 access the network, or modify repo files.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,6 +23,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -76,6 +88,12 @@ ABSOLUTE_PATH_PATTERNS = [
     re.compile(r"/private/var/[A-Za-z0-9_/-]+"),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

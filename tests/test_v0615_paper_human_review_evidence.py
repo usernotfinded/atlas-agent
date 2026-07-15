@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0615_paper_human_review_evidence.py
+# PURPOSE: Verifies v0615 paper human review evidence behavior and regression
+#         expectations.
+# DEPS:    hashlib, json, subprocess, sys, pathlib, scripts.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import hashlib
 import json
 import subprocess
@@ -6,6 +16,8 @@ from pathlib import Path
 
 from scripts.check_v0615_paper_human_review_evidence import check
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "check_v0615_paper_human_review_evidence.py"
@@ -50,6 +62,12 @@ GATE_FILES = [
     ".github/workflows/ci.yml",
 ]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(

@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_reviewer_trust_snapshot_workflow.py
+# PURPOSE: Verifies reviewer trust snapshot workflow behavior and regression
+#         expectations.
+# DEPS:    subprocess, sys, pathlib, pytest, scripts.
+# ==============================================================================
+
 """Static tests for the reviewer trust snapshot workflow and its checker."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -10,6 +20,12 @@ import pytest
 
 from scripts.check_reviewer_trust_snapshot_workflow import check_workflow
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent

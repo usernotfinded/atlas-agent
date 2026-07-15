@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_code_inventory_imports.py
+# PURPOSE: Verifies code inventory imports behavior and regression expectations.
+# DEPS:    importlib, re, pathlib, pytest.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import importlib
 import re
 from pathlib import Path
@@ -7,6 +16,8 @@ import pytest
 # These modules were flagged as unused in the code inventory,
 # but are intentionally kept to preserve public API compatibility
 # or fail-closed stub behavior. We test that they remain importable.
+# --- CONFIGURATION AND CONSTANTS ---
+
 CANDIDATE_MODULES = [
     "atlas_agent.ai.analyst",
     "atlas_agent.execution.trade_executor",
@@ -61,6 +72,12 @@ CLASSIFICATIONS = {
     "atlas_agent.brokers.ibkr_stub": "cli_or_dynamic",
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.mark.parametrize("module_name", CANDIDATE_MODULES)
 def test_inventory_module_is_importable(module_name):

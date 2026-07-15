@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_backtest_cli.py
+# PURPOSE: Verifies backtest cli behavior and regression expectations.
+# DEPS:    os, subprocess, json, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import subprocess
 import json
@@ -5,8 +14,16 @@ import pytest
 
 from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION, validate_backtest_report
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 pytestmark = pytest.mark.slow
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture(scope="module", autouse=True)
 def _isolated_backtest_workspace(tmp_path_factory):

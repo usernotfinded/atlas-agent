@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_candidate_audit_docs.py
+# PURPOSE: Verifies release candidate audit docs behavior and regression
+#         expectations.
+# DEPS:    pathlib, pytest.
+# ==============================================================================
+
 """Tests for the release-candidate audit document.
 
 These tests validate that the audit document exists, contains required
 sections, and does not contain prohibited claims or false success claims.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -11,8 +21,16 @@ from pathlib import Path
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 AUDIT_PATH = Path("docs/archive/release-candidates/release-candidate-audit-v0.5.7.dev2.md")
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestReleaseCandidateAuditDocs:
     def test_audit_document_exists(self) -> None:

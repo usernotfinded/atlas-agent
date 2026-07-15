@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_release_assurance_diagnostics_artifact.py
+# PURPOSE: Validate a downloaded release-assurance diagnostics artifact.
+# DEPS:    argparse, json, re, shutil, sys, tempfile, additional local modules.
+# ==============================================================================
+
 """Validate a downloaded release-assurance diagnostics artifact.
 
 Validates the JSON schema, failure semantics, optional expectations, and scans
@@ -14,6 +21,8 @@ Exit codes:
   2 = operational error (missing path, bad zip, invalid JSON, etc.)
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -26,6 +35,8 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -113,6 +124,12 @@ _UNSAFE_COMMAND_EVIDENCE: list[tuple[str, re.Pattern[str]]] = [
     ("twine" + " publish", re.compile(re.escape("twine" + " publish"), re.IGNORECASE)),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 class ValidationOptions:
     """Options controlling validation expectations."""

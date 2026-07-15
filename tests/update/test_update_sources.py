@@ -1,5 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/update/test_update_sources.py
+# PURPOSE: Verifies update sources behavior and regression expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 from atlas_agent.update.sources import is_public_stable, is_version_newer, GitHubReleaseSource, UpdateSourceError
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_is_public_stable():
     assert is_public_stable("0.5.9") is True

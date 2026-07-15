@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_deploy_atlas_safety.py
+# PURPOSE: Verifies deploy atlas safety behavior and regression expectations.
+# DEPS:    re, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import re
@@ -7,11 +16,19 @@ from atlas_agent.deploy import DEPLOYMENT_FILES, ensure_deploy_files
 from atlas_agent.safety.secrets import scan_text_for_secrets
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 SECRET_VALUE_PATTERN = re.compile(
     r"\b(?:sk-|pplx-|xox[baprs]-|akia)[A-Za-z0-9_-]{10,}",
     flags=re.IGNORECASE,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_deploy_templates_do_not_embed_secret_values() -> None:
     for files in DEPLOYMENT_FILES.values():

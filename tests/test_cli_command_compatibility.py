@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_cli_command_compatibility.py
+# PURPOSE: Verifies cli command compatibility behavior and regression
+#         expectations.
+# DEPS:    argparse, importlib, json, os, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the CLI command compatibility check.
 
 These tests verify that:
@@ -6,6 +15,8 @@ These tests verify that:
 - Mutated/temporary contracts correctly fail when commands are missing.
 - The check script itself remains safe (no shell=True, no network calls).
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -20,10 +31,18 @@ from types import ModuleType
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_cli_command_compatibility.py"
 CONTRACT_PATH = REPO_ROOT / "tests" / "fixtures" / "cli_command_contract.json"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_check_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

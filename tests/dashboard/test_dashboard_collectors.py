@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/dashboard/test_dashboard_collectors.py
+# PURPOSE: Verifies dashboard collectors behavior and regression expectations.
+# DEPS:    json, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -5,6 +14,12 @@ from pathlib import Path
 from atlas_agent.config import AtlasConfig
 from atlas_agent.dashboard.collectors import collect_dashboard_snapshot
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_collect_dashboard_snapshot_handles_empty_workspace(tmp_path: Path, monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)

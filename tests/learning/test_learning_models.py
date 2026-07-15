@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/learning/test_learning_models.py
+# PURPOSE: Verifies learning models behavior and regression expectations.
+# DEPS:    json, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for learning suggestion models."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -12,6 +21,12 @@ from atlas_agent.learning.models import (
     SuggestionAudit,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestLearningSuggestionSchema:
     def test_default_status_is_draft(self) -> None:

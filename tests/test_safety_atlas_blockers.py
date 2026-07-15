@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_safety_atlas_blockers.py
+# PURPOSE: Verifies safety atlas blockers behavior and regression expectations.
+# DEPS:    dataclasses, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -18,6 +27,8 @@ from atlas_agent.risk.validation import RiskDecision
 from atlas_agent.routines.engine import RoutineResult
 from atlas_agent.cli import main
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 GOOD_PROFILE = (
     "# Profile\n\n"
     "## Decision temperament\n\nCautious.\n\n"
@@ -31,6 +42,12 @@ GOOD_PROFILE = (
     "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path, **overrides) -> AtlasConfig:
     values = {
@@ -161,4 +178,3 @@ def test_risk_manager_rejection_blocks_live_broker_and_pending_order(
     assert result.reasons == ("blocked by mandatory RiskManager",)
     assert broker.called is False
     assert not (config.pending_orders_dir / f"{order.id}.json").exists()
-

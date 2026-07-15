@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_portfolio_proposal.py
+# PURPOSE: Verifies paper portfolio proposal behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 from pathlib import Path
@@ -8,7 +18,15 @@ from atlas_agent.backtest.portfolio import (
     write_portfolio_proposal_reports,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 DATA_PATH = Path("data/sample/ohlcv_extended.csv")
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_paper_portfolio_proposal_schema(tmp_path):
     report = build_paper_portfolio_proposal(
@@ -57,4 +75,3 @@ def test_portfolio_demo_script():
     content = demo.read_text()
     assert "--mode live" not in content
     assert "atlas_agent.cli backtest portfolio-proposal" in content
-

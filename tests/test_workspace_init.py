@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_workspace_init.py
+# PURPOSE: Verifies workspace init behavior and regression expectations.
+# DEPS:    importlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from importlib import resources
@@ -8,6 +17,12 @@ from atlas_agent.cli import main
 import atlas_agent.workspace as workspace_mod
 from atlas_agent.workspace import WorkspaceInitError, init_workspace
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_init_creates_expected_workspace(tmp_path) -> None:
     workspace = tmp_path / "my-trader"

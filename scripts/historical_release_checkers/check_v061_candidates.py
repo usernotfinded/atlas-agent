@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/historical_release_checkers/check_v061_candidates.py
+# PURPOSE: Read-only v0.6.1 patch candidate selection checker.
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Read-only v0.6.1 patch candidate selection checker.
 
 Verifies that the patch candidate selection document exists, contains
@@ -20,6 +27,8 @@ Deterministic and local. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -28,6 +37,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -69,6 +80,12 @@ FORBIDDEN_CLAIM_PHRASES = [
     "github release v0.6.1",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {

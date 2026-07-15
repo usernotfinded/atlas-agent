@@ -1,11 +1,28 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_readme_atlas_blockers.py
+# PURPOSE: Verifies readme atlas blockers behavior and regression expectations.
+# DEPS:    re, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 README = Path(__file__).resolve().parents[1] / "README.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _readme() -> str:
     return README.read_text(encoding="utf-8")

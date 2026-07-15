@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_atomic_write.py
+# PURPOSE: Verifies atomic write behavior and regression expectations.
+# DEPS:    json, threading, pathlib, typing, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -9,6 +18,12 @@ import pytest
 
 from atlas_agent.safety.atomic_write import atomic_write_json, atomic_write_text
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_atomic_write_text_creates_target(tmp_path: Path) -> None:
     target = tmp_path / "target.txt"

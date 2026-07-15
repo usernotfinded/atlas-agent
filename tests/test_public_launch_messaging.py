@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_public_launch_messaging.py
+# PURPOSE: Verifies public launch messaging behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Tests for public launch messaging script and docs — Batch 10.11.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,6 +23,8 @@ from pathlib import Path
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_public_launch_messaging.py"
@@ -58,6 +70,12 @@ _FORBIDDEN_FRAGMENTS = (
     "/var/tmp/",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(*args: str) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(

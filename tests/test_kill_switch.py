@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_kill_switch.py
+# PURPOSE: Verifies kill switch behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.config import AtlasConfig
@@ -6,6 +15,12 @@ from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.risk.kill_switch import KillSwitch
 from atlas_agent.risk.manager import RiskManager
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_kill_switch_file_toggle(tmp_path) -> None:
     switch = KillSwitch(tmp_path / "kill")
@@ -27,4 +42,3 @@ def test_kill_switch_blocks_order() -> None:
 
     assert not decision.allowed
     assert "kill switch is enabled" in decision.reasons
-

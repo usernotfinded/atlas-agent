@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_backtest_metrics.py
+# PURPOSE: Verifies backtest metrics behavior and regression expectations.
+# DEPS:    json, datetime, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -6,6 +15,12 @@ from datetime import datetime
 from atlas_agent.backtest.metrics import MetricsCalculator, MetricsInput, TradeRecord, calculate_metrics
 from atlas_agent.backtest.models import BacktestMetrics
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_metrics_calculate_correctly() -> None:
     metrics = calculate_metrics(

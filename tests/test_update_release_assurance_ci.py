@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_update_release_assurance_ci.py
+# PURPOSE: Verifies update release assurance ci behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, pathlib, pytest, scripts.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 from pathlib import Path
@@ -13,6 +23,12 @@ from scripts.update_release_assurance_ci import (
     update_md_file,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def sample_runs():

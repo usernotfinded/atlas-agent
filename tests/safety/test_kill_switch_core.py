@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_kill_switch_core.py
+# PURPOSE: Verifies kill switch core behavior and regression expectations.
+# DEPS:    dataclasses, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,6 +16,12 @@ from atlas_agent.execution.order import AccountSnapshot, FlattenResult, Order, O
 from atlas_agent.portfolio.positions import Position
 from atlas_agent.safety.kill_switch import KillSwitchController
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @dataclass
 class StubBroker:

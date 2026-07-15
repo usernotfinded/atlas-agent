@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_dossier_cli.py
+# PURPOSE: Verifies research dossier cli behavior and regression expectations.
+# DEPS:    json, os, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -9,6 +18,8 @@ import pytest
 
 from atlas_agent.cli import main
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 FORBIDDEN_FRAGMENTS = [
     "Authorization",
@@ -25,6 +36,12 @@ FORBIDDEN_FRAGMENTS = [
 ]
 
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _create_research_artifact(tmp_path: Path, monkeypatch, symbol: str = "AAPL") -> str:
     from atlas_agent.research.session import run_research_session

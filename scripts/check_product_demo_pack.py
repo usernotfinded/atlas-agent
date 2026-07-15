@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_product_demo_pack.py
+# PURPOSE: Validate the v0.6.12 Product Demo and Marketplace Readiness Pack.
+# DEPS:    argparse, os, re, sys, pathlib.
+# ==============================================================================
+
 """Validate the v0.6.12 Product Demo and Marketplace Readiness Pack.
 
 Checks that demo scripts, artifact indexes, public-facing docs, and marketplace
@@ -13,6 +20,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -21,6 +30,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -182,6 +193,12 @@ NEGATIVE_CONTEXT_INDICATORS = (
     "out of scope",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

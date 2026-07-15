@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_ai_decision_schema.py
+# PURPOSE: Verifies ai decision schema behavior and regression expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -5,6 +14,12 @@ import pytest
 from atlas_agent.ai.decision_schema import DecisionSchemaError, parse_decision
 from atlas_agent.ai.signal_parser import parse_and_validate_signal
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_valid_decision_schema_parses() -> None:
     decision = parse_decision(
@@ -123,4 +138,3 @@ def test_decision_schema_rejects_boolean_limit_price(bad_limit_price) -> None:
                 "proposed_order": {"side": "buy", "quantity": 1, "order_type": "limit", "limit_price": bad_limit_price},
             }
         )
-

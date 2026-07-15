@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v058_rc2_cutover.py
+# PURPOSE: Verifies v058 rc2 cutover behavior and regression expectations.
+# DEPS:    hashlib, importlib, json, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the v0.5.8rc2 cutover verification checker.
 
 These tests verify that:
@@ -13,6 +21,8 @@ These tests verify that:
 - Checker does not mutate files.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import hashlib
@@ -26,9 +36,17 @@ from unittest.mock import patch
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CUTOVER_SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v058_rc2_cutover.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_cutover_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

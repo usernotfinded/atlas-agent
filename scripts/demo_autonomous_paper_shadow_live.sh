@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_autonomous_paper_shadow_live.sh
+# PURPOSE: Demonstrates the autonomous paper shadow live workflow using safe
+#         local defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 # CAND-005 deterministic shadow-live read-only comparison demo
 #
 # Runs the stateful autonomous-paper loop offline, evaluates it with the
@@ -13,7 +28,6 @@
 # Usage:
 #   bash scripts/demo_autonomous_paper_shadow_live.sh
 #   DEMO_WORKSPACE=/path/to/empty/dir bash scripts/demo_autonomous_paper_shadow_live.sh
-set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"

@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_v0612_release_prep.py
+# PURPOSE: Read-only v0.6.12 release prep checker.
+# DEPS:    argparse, json, shutil, subprocess, sys, pathlib.
+# ==============================================================================
+
 """Read-only v0.6.12 release prep checker.
 
 Supports three modes:
@@ -26,6 +33,8 @@ which is treated as a warning if unavailable. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +44,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -70,6 +81,12 @@ UNSAFE_CLAIMS = [
     "financial advice",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {

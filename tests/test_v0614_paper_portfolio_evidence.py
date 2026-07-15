@@ -1,14 +1,32 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0614_paper_portfolio_evidence.py
+# PURPOSE: Verifies v0614 paper portfolio evidence behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pytest, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 import sys
 import pytest
 from pathlib import Path
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "check_v0614_paper_portfolio_evidence.py"
 JSON_FILE = ROOT / "docs" / "releases" / "v0.6.14-paper-portfolio-evidence.json"
 MD_FILE = ROOT / "docs" / "releases" / "v0.6.14-paper-portfolio-evidence.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def run_script() -> subprocess.CompletedProcess:
     return subprocess.run(

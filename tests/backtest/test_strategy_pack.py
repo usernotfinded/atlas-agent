@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/backtest/test_strategy_pack.py
+# PURPOSE: Verifies strategy pack behavior and regression expectations.
+# DEPS:    datetime, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -10,6 +19,12 @@ from atlas_agent.backtest.registry import default_strategy_registry
 from atlas_agent.backtest.strategy import StrategyContext
 from atlas_agent.backtest.strategies import MovingAverageCrossStrategy, RSIMeanReversionStrategy
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _bars(closes: list[float], symbol: str = "AAPL") -> list[MarketBar]:
     base = datetime(2026, 1, 1)

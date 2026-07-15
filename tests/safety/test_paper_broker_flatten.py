@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_paper_broker_flatten.py
+# PURPOSE: Verifies paper broker flatten behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.brokers.paper import PaperBroker
@@ -5,6 +14,12 @@ from atlas_agent.execution.order import Order
 from atlas_agent.portfolio.positions import Position
 from atlas_agent.portfolio.state import PortfolioState
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_paper_flatten_market_closes_multiple_positions() -> None:
     state = PortfolioState(cash=10_000)

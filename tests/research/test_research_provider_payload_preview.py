@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_provider_payload_preview.py
+# PURPOSE: Verifies research provider payload preview behavior and regression
+#         expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -22,6 +32,12 @@ from atlas_agent.research.provider_outbound_payload_preview import (
 )
 from atlas_agent.research.session import RESEARCH_ARTIFACT_SCHEMA_VERSION
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _raise_if_called(*args, **kwargs):
     raise AssertionError("Config/secrets loader must not be called")

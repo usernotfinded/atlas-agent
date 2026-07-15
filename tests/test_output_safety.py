@@ -1,9 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_output_safety.py
+# PURPOSE: Verifies output safety behavior and regression expectations.
+# DEPS:    json, datetime, pathlib, unittest, pytest.
+# ==============================================================================
+
 """Output/audit safety regression tests for Atlas Agent.
 
 These tests verify that safety-critical user-facing output and audit payloads
 never leak raw exception text, paths, secrets, headers, broker bodies, or raw
 pending order payloads.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -17,6 +26,8 @@ import pytest
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 FORBIDDEN_OUTPUT_FRAGMENTS = [
     "/Users/",
@@ -35,6 +46,12 @@ FORBIDDEN_OUTPUT_FRAGMENTS = [
     '"secret"',
 ]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def assert_no_forbidden_output(value: object) -> None:
     text = json.dumps(value, sort_keys=True) if not isinstance(value, str) else value

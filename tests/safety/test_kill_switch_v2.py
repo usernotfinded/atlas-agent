@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_kill_switch_v2.py
+# PURPOSE: Verifies kill switch v2 behavior and regression expectations.
+# DEPS:    json, logging, pytest, stat, pathlib, datetime, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -10,6 +20,12 @@ from datetime import UTC, datetime, timedelta
 from atlas_agent.safety.kill_switch import AdvancedKillSwitch
 from atlas_agent.safety.models import KillSwitchStatus, KillSwitchDecision
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class _CapturingAuditWriter:
     def __init__(self) -> None:

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/update/test_update_manager.py
+# PURPOSE: Verifies update manager behavior and regression expectations.
+# DEPS:    os, subprocess, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -9,6 +18,12 @@ from atlas_agent.update.manager import SafeUpdateManager
 from atlas_agent.update.safety import UpdateSafetyCheck
 from atlas_agent.update.sources import AvailableUpdate, UpdateSource
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class StubSource(UpdateSource):
     def __init__(self, name: str, result: AvailableUpdate | None = None, error: Exception | None = None) -> None:

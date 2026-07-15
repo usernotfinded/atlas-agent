@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_paper_human_review_pack.sh
+# PURPOSE: Demonstrates the paper human review pack workflow using safe local
+#         defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 echo "Atlas Agent paper human review pack demo"
 
@@ -81,4 +95,3 @@ PY
 echo "=== Paper human review pack demo PASS ==="
 echo "Generated paper-human-review-pack.json and paper-human-review-pack.md."
 echo "Output is non-executable. No live trading, broker calls, provider calls, network calls, notifications, or credentials."
-

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/agent/test_agent_loop_kill_switch.py
+# PURPOSE: Verifies agent loop kill switch behavior and regression expectations.
+# DEPS:    pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -9,6 +18,12 @@ from atlas_agent.core.types import Session
 from atlas_agent.safety.kill_switch import AdvancedKillSwitch
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import LLMResponse, ToolCall, ToolSpec, ModelCapabilities
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class MockProvider:
     def __init__(self, responses):

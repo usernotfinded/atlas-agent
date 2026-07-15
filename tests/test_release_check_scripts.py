@@ -1,10 +1,25 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_check_scripts.py
+# PURPOSE: Verifies release check scripts behavior and regression expectations.
+# DEPS:    os, subprocess, sys, pathlib.
+# ==============================================================================
+
 """Tests for release-check scripts."""
+
+# --- IMPORTS ---
 
 import os
 import subprocess
 import sys
 from pathlib import Path
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(script_name: str, *args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
     repo_root = Path(__file__).resolve().parent.parent

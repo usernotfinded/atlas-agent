@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_models.py
+# PURPOSE: Verifies autonomous paper models behavior and regression
+#         expectations.
+# DEPS:    datetime, pytest, pydantic, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -14,6 +24,12 @@ from atlas_agent.agent.autonomous_paper_models import (
 )
 from atlas_agent.backtest.models import BacktestFill, BacktestPosition
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestStatefulPaperModels:
     def test_state_serializes_round_trip(self) -> None:

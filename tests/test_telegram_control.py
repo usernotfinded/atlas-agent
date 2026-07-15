@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_telegram_control.py
+# PURPOSE: Verifies telegram control behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.safety.totp import generate_totp
@@ -8,6 +17,12 @@ from atlas_agent.telegram_control import (
     verify_resume_totp_from_env,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_parse_kill_command_mode() -> None:
     assert parse_kill_command_mode("/kill") == "soft"

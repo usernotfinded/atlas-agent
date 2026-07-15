@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_check_hardcoded_release_literals.py
+# PURPOSE: Verifies check hardcoded release literals behavior and regression
+#         expectations.
+# DEPS:    json, re, subprocess, sys, pathlib, pytest, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import re
 import subprocess
@@ -15,6 +25,12 @@ from scripts.check_hardcoded_release_literals import (
     main,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def repo_with_drift(tmp_path, monkeypatch):

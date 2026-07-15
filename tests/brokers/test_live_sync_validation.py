@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/brokers/test_live_sync_validation.py
+# PURPOSE: Verifies live sync validation behavior and regression expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -6,6 +15,12 @@ from atlas_agent.brokers.live_sync_validation import validate_live_sync
 from atlas_agent.brokers.models import BrokerAccountState, BrokerSyncResult
 from atlas_agent.brokers.resolver import BrokerStatus
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _status() -> BrokerStatus:
     return BrokerStatus(

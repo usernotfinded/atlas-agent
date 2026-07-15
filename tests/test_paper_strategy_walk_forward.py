@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_strategy_walk_forward.py
+# PURPOSE: Verifies paper strategy walk forward behavior and regression
+#         expectations.
+# DEPS:    hashlib, json, shutil, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import hashlib
 import json
 import shutil
@@ -10,6 +21,8 @@ import pytest
 from atlas_agent.backtest.walk_forward import build_paper_strategy_walk_forward
 from atlas_agent.backtest.walk_forward import ALLOWED_WALK_FORWARD_STATUSES as ALLOWED_STATUSES
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "check_paper_strategy_walk_forward.py"
@@ -30,6 +43,12 @@ FORBIDDEN_STATUSES = {
     "outperforms_market",
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_walk_forward(output_dir: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(

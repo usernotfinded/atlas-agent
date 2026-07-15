@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_events_hardening.py
+# PURPOSE: Verifies events hardening behavior and regression expectations.
+# DEPS:    json, pathlib, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -10,6 +19,12 @@ from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.events import EventLogger, generate_run_id
 from atlas_agent.events.schema import KNOWN_EVENT_TYPES, REQUIRED_EVENT_FIELDS
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path, **overrides) -> AtlasConfig:
     values = {

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/agent/test_agent_loop.py
+# PURPOSE: Verifies agent loop behavior and regression expectations.
+# DEPS:    pytest, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -15,6 +24,12 @@ from atlas_agent.tools.spec import (
     ToolError,
     ModelCapabilities,
 )
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class MockProvider(AIProvider):
     def __init__(self, responses: list[LLMResponse]):

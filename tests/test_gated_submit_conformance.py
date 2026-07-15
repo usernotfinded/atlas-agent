@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_gated_submit_conformance.py
+# PURPOSE: Verifies gated submit conformance behavior and regression
+#         expectations.
+# DEPS:    hashlib, json, os, stat, pathlib, typing, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import hashlib
@@ -24,8 +34,16 @@ from atlas_agent.agent.gated_submit_conformance import (
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 _AS_OF = "2026-06-24T10:00:00Z"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_order_intent(**overrides: Any) -> dict[str, Any]:
     data: dict[str, Any] = {

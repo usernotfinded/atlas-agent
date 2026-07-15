@@ -1,7 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_wizard_lifecycle.py
+# PURPOSE: Verifies wizard lifecycle behavior and regression expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 from atlas_agent.setup.state import WizardState
 from atlas_agent.setup.renderer import render_wizard_screen, get_summary_lines
 from atlas_agent.setup.wizard_ui import WizardApplication
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_wizard_does_not_append_previous_steps():
     """Verify renderer output only contains current step title and choices."""

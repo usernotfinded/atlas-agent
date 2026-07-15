@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_paper_portfolio_recheck.sh
+# PURPOSE: Demonstrates the paper portfolio recheck workflow using safe local
+#         defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 echo "Atlas Agent paper portfolio recheck ledger demo"
 

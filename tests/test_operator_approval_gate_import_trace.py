@@ -1,11 +1,29 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_operator_approval_gate_import_trace.py
+# PURPOSE: Verifies operator approval gate import trace behavior and regression
+#         expectations.
+# DEPS:    subprocess, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import subprocess
 import sys
 from pathlib import Path
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class _ImportRecorder:
     def __init__(self) -> None:

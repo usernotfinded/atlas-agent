@@ -1,7 +1,16 @@
 #!/usr/bin/env python3.11
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_v0613_final_readiness_audit.py
+# PURPOSE: Check v0.6.13 final readiness audit.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """
 Check v0.6.13 final readiness audit.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -11,6 +20,8 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ARTIFACT_TYPE = "v0613_final_readiness_audit"
 
@@ -60,6 +71,12 @@ FORBIDDEN_CLAIMS = [
     "v0.6.13 github release",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check v0.6.13 final readiness audit.")

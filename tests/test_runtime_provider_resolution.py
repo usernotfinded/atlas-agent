@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_runtime_provider_resolution.py
+# PURPOSE: Verifies runtime provider resolution behavior and regression
+#         expectations.
+# DEPS:    os, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -13,6 +23,12 @@ from atlas_agent.providers.factory import (
 from atlas_agent.providers.openai_compatible import OpenAICompatibleProvider
 from atlas_agent.providers.runtime import resolve_runtime_provider
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):

@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_check_safety_atomic_write.py
+# PURPOSE: Verifies check safety atomic write behavior and regression
+#         expectations.
+# DEPS:    subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Tests for the CAND-010 safety atomic-write regression guard.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -12,6 +22,8 @@ from pathlib import Path
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKER_SCRIPT = REPO_ROOT / "scripts" / "check_safety_atomic_write.py"
@@ -23,6 +35,12 @@ GUARDED_FILES = {
 }
 HELPER_FILE = REPO_ROOT / "src" / "atlas_agent" / "safety" / "atomic_write.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_checker(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(

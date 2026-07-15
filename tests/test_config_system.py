@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_config_system.py
+# PURPOSE: Verifies config system behavior and regression expectations.
+# DEPS:    os, pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import pytest
 from pathlib import Path
 from atlas_agent.config import AtlasConfig, get_config, set_raw_value, unset_raw_value, set_secret
 from atlas_agent.config.paths import get_config_toml_path, get_env_atlas_path
 from atlas_agent.config.secrets import InvalidSecretValueError, load_atlas_secrets
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):

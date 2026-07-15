@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/risk/test_risk_manager_v2.py
+# PURPOSE: Verifies risk manager v2 behavior and regression expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -5,6 +14,12 @@ from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot, RiskPosition
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def portfolio():

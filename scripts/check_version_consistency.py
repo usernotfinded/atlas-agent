@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_version_consistency.py
+# PURPOSE: Validate version consistency across package, code, docs, and release
+#         notes.
+# DEPS:    re, sys, tomllib, pathlib, release_metadata.
+# ==============================================================================
+
 """Validate version consistency across package, code, docs, and release notes.
 
 Accepts PEP 440 rc versions (e.g. 0.5.7rc1) and public tag versions
 (e.g. v0.5.8-rc1). Rejects inconsistent mixes and stale current-version
 references.
 """
+
+# --- IMPORTS ---
 
 import re
 import sys
@@ -15,6 +25,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from release_metadata import load_metadata
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def load_version_constants(repo_root: Path) -> tuple[str, str]:
     try:

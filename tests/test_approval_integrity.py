@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_approval_integrity.py
+# PURPOSE: Verifies approval integrity behavior and regression expectations.
+# DEPS:    json, datetime, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -16,6 +25,12 @@ from atlas_agent.execution.approval import (
 )
 from atlas_agent.execution.order import Order
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_order(**kwargs) -> Order:
     defaults = {

@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_autonomous_paper_quality_contract.py
+# PURPOSE: Validates autonomous paper quality contract requirements for local
+#         and CI workflows.
+# DEPS:    argparse, json, sys, pathlib, typing.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -5,6 +15,8 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOC = REPO_ROOT / "docs" / "autonomous-paper-quality-gate.md"
@@ -119,6 +131,12 @@ REQUIRED_DIMENSIONS = (
     "no_live_side_effects",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _sentence_around(text: str, index: int) -> str:
     start = text.rfind(".", 0, index) + 1

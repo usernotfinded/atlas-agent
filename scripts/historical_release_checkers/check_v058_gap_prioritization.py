@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/historical_release_checkers/check_v058_gap_prioritization.py
+# PURPOSE: Verify the v0.5.8 gap prioritization JSON and docs.
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Verify the v0.5.8 gap prioritization JSON and docs.
 
 Deterministic and local. Does not call the GitHub API, load credentials,
 access the network, or modify repo files.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,6 +22,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GAP_FILE = REPO_ROOT / "tests" / "fixtures" / "v058_gap_prioritization.json"
@@ -84,6 +95,12 @@ SAFETY_POSTURE_PHRASES = [
     ("not production ready",),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _load_json(path: Path) -> dict:
     with open(path, encoding="utf-8") as f:

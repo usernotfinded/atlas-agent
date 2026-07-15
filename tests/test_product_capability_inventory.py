@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_product_capability_inventory.py
+# PURPOSE: Verifies product capability inventory behavior and regression
+#         expectations.
+# DEPS:    importlib, json, subprocess, sys, tempfile, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the product capability inventory checker.
 
 These tests verify that:
@@ -13,6 +22,8 @@ These tests verify that:
 - The inventory docs include disabled/default safety posture.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import importlib.util
@@ -26,9 +37,17 @@ from unittest.mock import patch
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKER_SCRIPT = REPO_ROOT / "scripts" / "check_product_capability_inventory.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

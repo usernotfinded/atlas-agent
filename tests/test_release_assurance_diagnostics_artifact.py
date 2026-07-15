@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_assurance_diagnostics_artifact.py
+# PURPOSE: Verifies release assurance diagnostics artifact behavior and
+#         regression expectations.
+# DEPS:    json, subprocess, sys, zipfile, pathlib, pytest, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the release-assurance diagnostics artifact validator (CAND-013)."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -16,9 +27,17 @@ from scripts.check_release_assurance_diagnostics_artifact import (
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_diagnostics_artifact.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _valid_diagnostics(
     *,

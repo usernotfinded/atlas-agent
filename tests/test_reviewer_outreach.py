@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_reviewer_outreach.py
+# PURPOSE: Verifies reviewer outreach behavior and regression expectations.
+# DEPS:    importlib, json, subprocess, sys, tempfile, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the reviewer outreach checker.
 
 These tests verify that:
@@ -10,6 +18,8 @@ These tests verify that:
 - Message drafts contain safe review paths.
 - The reviewer targets template contains no real personal data.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -24,9 +34,17 @@ from unittest.mock import patch
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKER_SCRIPT = REPO_ROOT / "scripts" / "check_reviewer_outreach.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

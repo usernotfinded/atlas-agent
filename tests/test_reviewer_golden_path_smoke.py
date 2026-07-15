@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_reviewer_golden_path_smoke.py
+# PURPOSE: Verifies reviewer golden path smoke behavior and regression
+#         expectations.
+# DEPS:    importlib, json, os, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the reviewer golden-path smoke test.
 
 These tests verify that:
@@ -9,6 +18,8 @@ These tests verify that:
 - --keep-temp preserves the workspace.
 - Default mode cleans up the workspace.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -23,9 +34,17 @@ from unittest.mock import patch
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SMOKE_SCRIPT = REPO_ROOT / "scripts" / "smoke_reviewer_golden_path.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_smoke_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

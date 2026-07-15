@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/e2e/tier1_feature/test_m2_backtest_report.py
+# PURPOSE: Verifies m2 backtest report behavior and regression expectations.
+# DEPS:    json, os, shutil, subprocess, tempfile, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """E2E tier1 tests for backtest and report CLI commands.
 
 These tests exercise the 'atlas backtest run' and 'atlas report generate'
@@ -6,6 +14,8 @@ which contains only DEMO-SYMBOL rows.
 
 No network calls. No real credentials. No provider or broker API calls.
 """
+# --- IMPORTS ---
+
 import json
 import os
 import shutil
@@ -17,9 +27,17 @@ import pytest
 
 from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION, validate_backtest_report
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 pytestmark = pytest.mark.slow
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture(scope="module", autouse=True)
 def _isolated_e2e_workspace(tmp_path_factory):

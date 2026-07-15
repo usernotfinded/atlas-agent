@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_doctor.py
+# PURPOSE: Verifies doctor behavior and regression expectations.
+# DEPS:    importlib, json, os, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the read-only contributor doctor script."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -11,9 +21,17 @@ from pathlib import Path
 from types import ModuleType
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "doctor.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_doctor() -> ModuleType:
     spec = importlib.util.spec_from_file_location("doctor_for_tests", SCRIPT)

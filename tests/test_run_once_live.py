@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_run_once_live.py
+# PURPOSE: Verifies run once live behavior and regression expectations.
+# DEPS:    pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,6 +18,12 @@ from atlas_agent.cli import run_once
 from atlas_agent.config import AtlasConfig
 from atlas_agent.execution.order import OrderResult
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_config(
     tmp_path: Path,

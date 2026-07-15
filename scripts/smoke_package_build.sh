@@ -1,10 +1,23 @@
 #!/usr/bin/env bash
+set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/smoke_package_build.sh
+# PURPOSE: Provides shell tooling for smoke package build.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 # Wheel/sdist package smoke: verify atlas-agent builds and installs from artifacts.
 # Usage: ./scripts/smoke_package_build.sh [--offline] [--skip-build-deps-install] [--keep-artifacts] [--skip-sdist]
 # Example: ./scripts/smoke_package_build.sh
 # Example: ./scripts/smoke_package_build.sh --offline
 
-set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"

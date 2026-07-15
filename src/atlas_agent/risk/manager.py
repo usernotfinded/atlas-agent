@@ -1,12 +1,11 @@
 # ==============================================================================
 # PROJECT: Atlas Agent
-# FILE:    risk/manager.py
-# PURPOSE: Gate di rischio. Ogni ordine passa da qui prima di raggiungere un
-#          broker: viene proiettato sul portafoglio (contando anche gli ordini
-#          gia' in volo), confrontato coi limiti, e ne esce una RiskDecision
-#          tracciata sull'audit log.
-# DEPS:    atlas_agent.risk.limits (soglie), atlas_agent.risk.models (vocabolario),
-#          atlas_agent.audit (traccia immutabile delle decisioni)
+# FILE:     risk/manager.py
+# PURPOSE: Risk gate for every broker-bound order. Projects each order against
+#          the portfolio, including pending orders, and records the resulting
+#          RiskDecision in the audit log.
+# DEPS:     atlas_agent.risk.limits (thresholds), atlas_agent.risk.models (domain
+#          vocabulary), atlas_agent.audit (immutable decision trail)
 # ==============================================================================
 
 # --- IMPORTS ---
@@ -58,8 +57,8 @@ class RiskManager:
         audit: Optional[Any] = None,
     ) -> RiskManager:
         """Legacy compatibility shim."""
-        # La config legacy arriva a volte come dict, a volte come oggetto: questo
-        # accessor uniforma i due casi invece di duplicare il ramo a ogni campo.
+        # Legacy configuration arrives as either a mapping or an object. This
+        # accessor normalizes both forms so every field does not need two branches.
         def _get(obj, key, default):
             if isinstance(obj, dict):
                 return obj.get(key, default)
@@ -73,8 +72,8 @@ class RiskManager:
             allowed_symbols=_get(config, "symbol_allowlist", None),
             blocked_symbols=_get(config, "symbol_blocklist", set()) or set(),
             live_trading_enabled=enable_live,
-            # paper_only e' l'inverso di enable_live: il vecchio schema di config
-            # aveva un flag solo, il modello nuovo ne vuole due coerenti.
+            # The legacy schema had one live-mode flag, while the current model
+            # requires an explicit, consistent inverse for paper-only operation.
             paper_only=not enable_live,
             minimum_confidence=_get(config, "minimum_confidence", 0.6),
             allow_shorting=_get(config, "allow_shorting", False),
@@ -82,7 +81,7 @@ class RiskManager:
         return cls(limits=limits, kill_switch_enabled=_get(config, "kill_switch_enabled", False))
 
     # --------------------------------------------------------------------------
-    # Legacy API — adatta oggetti "vecchio stile" al motore di valutazione
+    # Legacy API — adapt older objects to the current evaluation engine
     # --------------------------------------------------------------------------
 
     def validate_order(
@@ -97,16 +96,14 @@ class RiskManager:
         """Legacy compatibility shim."""
         from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
 
-        # NOTA DEBITO: la classe LegacyDecision e' ridefinita 4 volte in questo
-        # metodo (una per ramo di uscita). Duplicazione da consolidare in un
-        # helper a livello di modulo; lasciata com'era per non toccare la logica
-        # in un commit di sola documentazione.
+        # DEBT: LegacyDecision is defined in four exit branches in this method.
+        # It should eventually become a module-level helper, but retaining the
+        # duplication here keeps this documentation refactor behavior-neutral.
 
         # 0. Validate quantity
-        # `isinstance(x, bool)` va escluso esplicitamente perche' in Python bool
-        # e' sottoclasse di int: senza questa guardia `quantity=True` passerebbe
-        # come quantita' 1. `math.isfinite` esclude NaN/inf, che sfuggirebbero al
-        # confronto `<= 0` (ogni confronto con NaN e' False).
+        # Exclude bool explicitly because it subclasses int in Python; otherwise
+        # `quantity=True` would become quantity 1. `isfinite` also rejects NaN and
+        # infinity, which can evade ordinary ordering comparisons.
         quantity = getattr(order, "quantity", None)
         if quantity is None or isinstance(quantity, bool) or not isinstance(quantity, (int, float)) or not math.isfinite(quantity) or quantity <= 0:
             class LegacyDecision:
@@ -116,9 +113,8 @@ class RiskManager:
             return LegacyDecision(False, ("order quantity must be a positive finite number", "invalid_quantity"))
 
         # 1. Determine reference price
-        # Un limit order si valuta al suo limit price; un market order ha bisogno
-        # di un prezzo di mercato, altrimenti il notional non e' calcolabile e
-        # l'ordine va rifiutato invece che valutato su un numero inventato.
+        # A limit order is evaluated at its limit price. A market order requires a
+        # real market price so the gate fails closed instead of inventing notional.
         limit_price = getattr(order, "limit_price", None)
         if limit_price is not None:
             if isinstance(limit_price, bool) or not isinstance(limit_price, (int, float)) or not math.isfinite(limit_price) or limit_price <= 0:
@@ -149,8 +145,8 @@ class RiskManager:
         )
 
         # Build portfolio snapshot from legacy portfolio state
-        # Nei vecchi oggetti portafoglio alcuni campi sono attributi e altri
-        # metodi (es. `equity()`): questo accessor li normalizza a valore.
+        # Older portfolio objects expose some fields as attributes and others as
+        # methods such as `equity()`; normalize both forms to concrete values.
         def _get_val(obj, attr, default):
             val = getattr(obj, attr, default)
             if callable(val):
@@ -177,15 +173,15 @@ class RiskManager:
                 self.reasons = reasons
 
         reasons = [v.message for v in decision.violations]
-        # Un rifiuto senza violazioni esplicite non deve arrivare al chiamante
-        # legacy con `reasons` vuoto: resterebbe senza spiegazione del blocco.
+        # A rejected legacy decision must always explain its block, even when the
+        # current decision object contains no explicit violation records.
         if not decision.allowed and not reasons:
             reasons = [decision.reason or "Risk rejection"]
 
         return LegacyDecision(decision.allowed, tuple(reasons))
 
     # --------------------------------------------------------------------------
-    # Projection engine — dove finisce il portafoglio se l'ordine passa
+    # Projection engine — resulting portfolio state if the order proceeds
     # --------------------------------------------------------------------------
 
     def _calculate_projection(
@@ -200,25 +196,23 @@ class RiskManager:
         order_qty_delta = order.quantity if order.side == "buy" else -order.quantity
 
         # Identify active pending orders
-        # Solo gli ordini ancora vivi consumano rischio. Cancellati/riempiti/
-        # rifiutati sono gia' riflessi nella posizione o non lo saranno mai.
+        # Only active orders consume risk. Cancelled, filled, and rejected orders
+        # are already reflected in positions or will never affect them.
         active_statuses = {"pending", "open", "partially_filled"}
         pending_orders = [o for o in portfolio.open_orders if o.symbol == symbol and o.status in active_statuses]
 
         pending_qty_delta = sum((o.remaining_quantity if o.side == "buy" else -o.remaining_quantity) for o in pending_orders)
 
-        # Due scenari a confronto:
-        #  - `projected_*`              : solo posizione corrente + questo ordine
-        #  - `projected_*_with_pending` : conta anche gli ordini gia' in volo
-        # I limiti si applicano al secondo. Ignorare il pending permetterebbe di
-        # sforare qualunque soglia spezzando l'ordine in tranche piu' piccole.
+        # Compare current-position projection with the pending-aware projection.
+        # Limits use the latter so a caller cannot bypass thresholds by splitting
+        # one large order into several smaller in-flight orders.
         baseline_projected_qty = current_qty + pending_qty_delta
 
         projected_qty = current_qty + order_qty_delta
         projected_qty_with_pending = baseline_projected_qty + order_qty_delta
 
-        # Esposizione in valore assoluto: short e long impegnano capitale allo
-        # stesso modo dal punto di vista dei limiti di size.
+        # Use absolute exposure because long and short positions both consume
+        # capital for the purpose of size limits.
         projected_exposure = abs(projected_qty * order.price)
         projected_exposure_with_pending = abs(projected_qty_with_pending * order.price)
 
@@ -229,7 +223,7 @@ class RiskManager:
         elif projected_qty == 0:
             classification = "closes_position"
         elif (current_qty > 0 and projected_qty < 0) or (current_qty < 0 and projected_qty > 0):
-            # Cambio di segno: chiude e riapre dal lato opposto in un colpo solo.
+            # Crossing zero closes the current side and reopens on the opposite side.
             classification = "flips_position"
         elif abs(projected_qty) > abs(current_qty):
             classification = "increases_risk"
@@ -237,8 +231,8 @@ class RiskManager:
             classification = "reduces_risk"
 
         # Classification relative to pending baseline
-        # Stessa domanda ("sto aumentando il rischio?") ma misurata rispetto alla
-        # baseline che include gli ordini in volo, non rispetto alla sola posizione.
+        # Measure whether risk increases against the pending-aware baseline, not
+        # merely against the currently filled position.
         is_increasing_risk_with_pending = False
         if baseline_projected_qty == 0:
             is_increasing_risk_with_pending = (projected_qty_with_pending != 0)
@@ -258,13 +252,13 @@ class RiskManager:
             "projected_exposure": projected_exposure,
             "projected_exposure_with_pending": projected_exposure_with_pending,
             "included_pending_order_ids": [o.order_id for o in pending_orders],
-            # Gli ordini scartati vengono comunque elencati: senza questo, un bug
-            # nel filtro degli stati sarebbe invisibile in fase di audit.
+            # Retain excluded orders in the projection so an incorrect state filter
+            # remains visible during audit review.
             "ignored_pending_order_ids": [o.order_id for o in portfolio.open_orders if o.symbol == symbol and o.status not in active_statuses]
         }
 
     # --------------------------------------------------------------------------
-    # Core evaluation — il gate vero e proprio
+    # Core evaluation — the authoritative risk gate
     # --------------------------------------------------------------------------
 
     def evaluate_order(
@@ -274,10 +268,9 @@ class RiskManager:
         mode: Literal["paper", "live"] = "paper",
     ) -> RiskDecision:
 
-        # === FASE 1: sanity check sugli input ===
-        # Come in validate_order: `bool` va escluso a mano (e' sottoclasse di int)
-        # e NaN/inf vanno intercettati con isfinite, perche' `NaN <= 0` e' False e
-        # passerebbe indisturbato fino al broker.
+        # === PHASE 1: INPUT SANITY CHECKS ===
+        # As in validate_order, reject bool because it subclasses int, and reject
+        # non-finite values because NaN can pass ordinary comparisons unchanged.
         if isinstance(order.quantity, bool) or not isinstance(order.quantity, (int, float)) or not math.isfinite(order.quantity) or order.quantity <= 0:
             return RiskDecision(
                 allowed=False,
@@ -307,15 +300,15 @@ class RiskManager:
                 diagnostics={},
             )
 
-        # === FASE 2: proiezione dell'effetto sull'ordine ===
+        # === PHASE 2: PROJECT THE ORDER EFFECT ===
         projection = self._calculate_projection(order, portfolio)
         classification = projection["classification"]
         projected_qty_with_pending = projection["projected_quantity_with_pending"]
         projected_exposure_with_pending = projection["projected_exposure_with_pending"]
         is_increasing_risk_with_pending = projection["is_increasing_risk_with_pending"]
 
-        # L'audit registra l'inizio valutazione *prima* dell'esito: se il processo
-        # muore a meta', resta comunque traccia che l'ordine e' stato considerato.
+        # Record evaluation start before computing the outcome so a process failure
+        # still leaves evidence that the order reached the risk gate.
         if self.audit_writer:
             self.audit_writer.write_event(
                 "risk_evaluation_started",
@@ -330,14 +323,13 @@ class RiskManager:
                 }
             )
 
-        # === FASE 3: raccolta violazioni ===
-        # Le regole non fanno short-circuit: si raccolgono TUTTE le violazioni
-        # invece di fermarsi alla prima, cosi' chi legge l'audit vede l'intero
-        # quadro dei motivi di blocco e non deve iterare a colpi di tentativi.
+        # === PHASE 3: COLLECT VIOLATIONS ===
+        # Do not short-circuit rules. Collect every violation so the audit explains
+        # the complete block without forcing operators through repeated attempts.
         violations: List[RiskViolation] = []
         symbol = order.symbol.upper()
 
-        # --- 0. Kill switch (ha precedenza su tutto) ---
+        # --- 0. Kill switch (takes precedence over every other rule) ---
         if self.kill_switch_enabled:
             violations.append(RiskViolation(
                 rule="kill_switch",
@@ -347,8 +339,8 @@ class RiskManager:
             ))
 
         # --- 1. Gate live/paper ---
-        # Entrambi i flag vengono controllati: sono due lucchetti indipendenti,
-        # vedi la nota su RiskLimits in limits.py.
+        # Both flags are checked because they are independent safety locks; see the
+        # RiskLimits rationale in limits.py.
         if mode == "live":
             if self.limits.paper_only:
                 violations.append(RiskViolation(
@@ -365,9 +357,9 @@ class RiskManager:
                     actual_value=False
                 ))
 
-        # --- 2. Universo strumenti ---
-        # `is not None` e' voluto: allowlist vuota = nessun simbolo consentito,
-        # allowlist assente (None) = tutti consentiti.
+        # --- 2. Instrument universe ---
+        # `is not None` is intentional: an empty allowlist permits no symbols,
+        # while a missing allowlist permits all symbols.
         if self.limits.allowed_symbols is not None and symbol not in self.limits.allowed_symbols:
             violations.append(RiskViolation(
                 rule="allowed_symbols",
@@ -384,11 +376,10 @@ class RiskManager:
                 actual_value=symbol
             ))
 
-        # --- 3. Policy di shorting ---
-        # Si guarda alla proiezione *con pending*: un ordine puo' sembrare
-        # innocuo rispetto alla posizione corrente e portare comunque il netto in
-        # short una volta contati gli ordini gia' in volo. Vietiamo solo se il
-        # netto short *peggiora*: chiudere uno short esistente resta permesso.
+        # --- 3. Shorting policy ---
+        # Use the pending-aware projection because an apparently harmless order can
+        # still create a net short after in-flight orders settle. Block only a
+        # worsening short so covering an existing short remains possible.
         if not self.limits.allow_shorting:
             if projected_qty_with_pending < 0:
                 if is_increasing_risk_with_pending:
@@ -399,11 +390,10 @@ class RiskManager:
                         actual_value=True
                     ))
 
-        # --- 4. Limiti dimensionali (solo se il rischio aumenta) ---
-        # Esenzione deliberata: se l'ordine riduce il rischio assoluto SIA rispetto
-        # alla posizione corrente SIA rispetto alla baseline con pending, salta i
-        # limiti di size. Altrimenti un portafoglio gia' oltre soglia resterebbe
-        # incastrato, incapace di ridurre l'esposizione proprio quando serve.
+        # --- 4. Size limits (only when risk increases) ---
+        # Deliberately exempt orders that reduce absolute risk against both the
+        # current and pending-aware baselines. Otherwise an over-limit portfolio
+        # could become unable to reduce exposure when it most needs to do so.
         is_reducing_current = classification in ["reduces_risk", "closes_position"]
         is_reducing_pending = not is_increasing_risk_with_pending
 
@@ -429,8 +419,8 @@ class RiskManager:
                 ))
 
             # Symbol exposure % check
-            # Guardia su equity > 0: con equity nulla o negativa la percentuale
-            # non ha significato (e dividerebbe per zero).
+            # Require positive equity because the percentage is meaningless for
+            # zero or negative equity and zero would also cause division by zero.
             if portfolio.equity > 0:
                 exposure_pct = projected_exposure_with_pending / portfolio.equity
                 if exposure_pct > self.limits.max_symbol_exposure_pct:
@@ -442,9 +432,8 @@ class RiskManager:
                     ))
 
             # Portfolio exposure limits
-            # Si sottrae l'esposizione attuale del simbolo e si somma quella
-            # proiettata: sommare e basta conterebbe due volte il simbolo su cui
-            # stiamo operando, gonfiando il totale.
+            # Replace the symbol's current exposure with its projection; simply
+            # adding the projection would double-count the traded symbol.
             current_symbol_exposure = 0.0
             current_pos = next((p for p in portfolio.positions if p.symbol == symbol), None)
             if current_pos:
@@ -462,16 +451,15 @@ class RiskManager:
                 ))
 
             # Max open positions
-            # Il conteggio unisce posizioni aperte e simboli con ordini in volo:
-            # altrimenti si potrebbero piazzare N ordini su N simboli nuovi tutti
-            # insieme, ognuno legittimo, sforando il limite in aggregato.
+            # Count both open positions and symbols with pending orders so several
+            # individually valid new-symbol orders cannot exceed the aggregate cap.
             if classification == "opens_new_position":
                 symbols_with_positions = {p.symbol for p in portfolio.positions}
                 symbols_with_pending = {o.symbol for o in portfolio.open_orders if o.status in {"pending", "open", "partially_filled"}}
                 unique_symbols = symbols_with_positions | symbols_with_pending
 
-                # `symbol not in unique_symbols`: aggiungere size a un simbolo gia'
-                # contato non apre una nuova posizione, quindi non consuma slot.
+                # Adding size to a symbol already counted does not open another
+                # position and therefore must not consume an additional slot.
                 if len(unique_symbols) >= self.limits.max_open_positions and symbol not in unique_symbols:
                     violations.append(RiskViolation(
                         rule="max_open_positions",
@@ -480,7 +468,7 @@ class RiskManager:
                         actual_value=len(unique_symbols)
                     ))
 
-        # --- 5. Confidenza del modello (vale sempre, anche in riduzione) ---
+        # --- 5. Model confidence (always applies, including risk reduction) ---
         if order.confidence is not None and order.confidence < self.limits.minimum_confidence:
              violations.append(RiskViolation(
                 rule="minimum_confidence",
@@ -489,7 +477,7 @@ class RiskManager:
                 actual_value=order.confidence
             ))
 
-        # --- 6. Stop loss obbligatorio in live ---
+        # --- 6. Mandatory stop loss in live mode ---
         if mode == "live" and self.limits.require_stop_loss_live and order.stop_loss is None:
             violations.append(RiskViolation(
                 rule="require_stop_loss_live",
@@ -498,11 +486,11 @@ class RiskManager:
                 actual_value=None
             ))
 
-        # === FASE 4: esito ===
+        # === PHASE 4: OUTCOME ===
         diagnostics = projection.copy()
 
         if violations:
-            # --- Bloccato ---
+            # --- Blocked ---
             decision = RiskDecision(
                 allowed=False,
                 status="blocked",
@@ -526,11 +514,10 @@ class RiskManager:
                 )
         else:
             if mode == "live":
-                # --- Passato il rischio, ma in live serve comunque l'uomo ---
-                # allowed=True + requires_approval: il rischio e' a posto, manca
-                # solo l'autorizzazione umana. Chi consuma la decisione NON deve
-                # trattare allowed=True come "manda al broker" quando lo status
-                # e' requires_approval.
+                # --- Risk passed, but live mode still requires a human ---
+                # `allowed=True` with `requires_approval` means risk passed but human
+                # authorization is absent. Consumers must never interpret allowed as
+                # permission to contact a broker while this status is present.
                 decision = RiskDecision(
                     allowed=True,
                     status="requires_approval",
@@ -552,7 +539,7 @@ class RiskManager:
                         payload=decision.model_dump()
                     )
             else:
-                # --- Paper: via libera piena ---
+                # --- Paper mode: fully allowed ---
                 decision = RiskDecision(
                     allowed=True,
                     status="allowed",

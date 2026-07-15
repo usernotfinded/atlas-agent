@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/brokers/test_broker_guards.py
+# PURPOSE: Verifies broker guards behavior and regression expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -6,6 +15,12 @@ from atlas_agent.brokers.base import BrokerConfigurationError
 from atlas_agent.brokers.guards import guard_submit, guard_sync
 from atlas_agent.config import AtlasConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _live_config(
     *,

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_discipline_profile.py
+# PURPOSE: Verifies discipline profile behavior and regression expectations.
+# DEPS:    pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -20,6 +29,8 @@ from atlas_agent.ai.discipline import (
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 GOOD_PROFILE = (
     "# Profile\n\n"
     "## Decision temperament\n\nCautious.\n\n"
@@ -32,6 +43,12 @@ GOOD_PROFILE = (
     f"{_REQUIRED_SAFETY_SENTENCE}\n"
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_default_discipline_text_contains_all_sections() -> None:
     text = default_discipline_text()

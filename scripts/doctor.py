@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/doctor.py
+# PURPOSE: Local contributor environment diagnostics for Atlas Agent.
+# DEPS:    argparse, json, os, shutil, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Local contributor environment diagnostics for Atlas Agent.
 
 The doctor is read-only. It does not install dependencies, edit files, create
 branches, stage changes, commit, push, tag, release, publish packages, call
 providers, call brokers, read credential files, or print secret values.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -17,6 +27,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 CURRENT_RELEASE_TAG = "v0.6.9"
 REQUIRED_DEV_SCRIPTS = [
@@ -51,6 +63,12 @@ TRACKED_SECRET_FILENAMES = {
     "id_ed25519",
 }
 
+
+# ==============================================================================
+# SCRIPT IMPLEMENTATION
+# ==============================================================================
+
+# --- HELPERS AND ENTRYPOINTS ---
 
 @dataclass(frozen=True)
 class CommandResult:

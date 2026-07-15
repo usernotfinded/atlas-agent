@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_public_docs_consistency.py
+# PURPOSE: Verifies public docs consistency behavior and regression
+#         expectations.
+# DEPS:    importlib, json, subprocess, sys, tempfile, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for public docs consistency script — Batch 10.0.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -15,9 +26,17 @@ from pathlib import Path
 from types import ModuleType
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_public_docs_consistency.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_script_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("check_public_docs_consistency", SCRIPT)

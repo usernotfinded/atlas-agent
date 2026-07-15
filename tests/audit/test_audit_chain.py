@@ -1,8 +1,23 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/audit/test_audit_chain.py
+# PURPOSE: Verifies audit chain behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.audit.chain import compute_event_hash, verify_event_integrity
 from atlas_agent.audit.models import AuditEvent
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_deterministic_event_hashing():
     event = AuditEvent(

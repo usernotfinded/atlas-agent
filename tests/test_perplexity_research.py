@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_perplexity_research.py
+# PURPOSE: Verifies perplexity research behavior and regression expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -7,6 +16,12 @@ from atlas_agent.research.perplexity import (
     ResearchConfigurationError,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_perplexity_wrapper_fails_safely_without_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("ATLAS_RESEARCH_API_KEY", raising=False)

@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_reviewer_trust_snapshot.py
+# PURPOSE: Validate a reviewer trust snapshot.
+# DEPS:    argparse, hashlib, json, os, re, subprocess, additional local
+#         modules.
+# ==============================================================================
+
 """Validate a reviewer trust snapshot.
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -9,6 +17,8 @@ Exit codes:
   1 = blocking findings
   2 = operational error (e.g., missing snapshot directory)
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -23,6 +33,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BUILDER_SCRIPT = REPO_ROOT / "scripts" / "build_reviewer_trust_snapshot.py"
@@ -169,6 +181,12 @@ NEGATIVE_CONTEXT_INDICATORS = (
     "disabled by default",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/backtest/test_backtest_reports.py
+# PURPOSE: Verifies backtest reports behavior and regression expectations.
+# DEPS:    json, tempfile, datetime, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for atlas_agent.backtest.report module."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -24,6 +33,12 @@ from atlas_agent.backtest.report import (
 )
 from atlas_agent.backtest.report_schema import REPORT_SCHEMA_VERSION
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _sample_result() -> BacktestResult:
     """Create a minimal deterministic BacktestResult for testing."""

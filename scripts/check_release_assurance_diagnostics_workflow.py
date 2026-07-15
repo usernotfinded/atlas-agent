@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_release_assurance_diagnostics_workflow.py
+# PURPOSE: Validate the release assurance diagnostics path in the GitHub Actions
+#         workflow.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Validate the release assurance diagnostics path in the GitHub Actions workflow.
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -10,6 +18,8 @@ Exit codes:
   2 = unexpected checker error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -19,6 +29,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "release-assurance.yml"
@@ -74,6 +86,12 @@ DIAGNOSTICS_CONDITIONAL_MARKERS = (
 VALIDATOR_STEP_NAME = "Validate release assurance diagnostics artifact"
 VALIDATOR_COMMAND_MARKER = "scripts/check_release_assurance_diagnostics_artifact.py"
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _mask_safe_tokens(text: str) -> str:
     """Replace allowed read-only token expressions with a placeholder."""

@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_bounded_autonomy_governance.py
+# PURPOSE: Static check for bounded autonomy governance and roadmap alignment.
+# DEPS:    argparse, json, re, subprocess, sys, pathlib.
+# ==============================================================================
+
 """Static check for bounded autonomy governance and roadmap alignment.
 
 Deterministic and local. Does not:
@@ -13,6 +20,8 @@ Deterministic and local. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -22,6 +31,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -96,6 +107,12 @@ _NEGATIVE_INDICATORS = (
     "not a current",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

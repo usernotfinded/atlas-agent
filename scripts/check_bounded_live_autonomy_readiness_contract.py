@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_bounded_live_autonomy_readiness_contract.py
+# PURPOSE: Static contract checker for CAND-015 bounded live autonomy readiness
+#         gate.
+# DEPS:    argparse, ast, json, re, sys, pathlib, additional local modules.
+# ==============================================================================
+
 """Static contract checker for CAND-015 bounded live autonomy readiness gate.
 
 Deterministic, local-only, read-only. Does not:
@@ -13,6 +21,8 @@ Exit codes:
   2 = findings or operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -23,6 +33,8 @@ import sys
 from pathlib import Path
 from typing import cast
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -295,6 +307,12 @@ CAND015_SAFETY_CONTINUATIONS = (
     "not a ",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

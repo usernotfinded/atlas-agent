@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_paper_strategy_evaluation.py
+# PURPOSE: Static check for paper strategy evaluation (CAND-025).
+# DEPS:    argparse, json, os, re, sys, tomllib, additional local modules.
+# ==============================================================================
+
 """Static check for paper strategy evaluation (CAND-025).
 
 Deterministic, local-only, read-only. Does not:
@@ -16,6 +23,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -29,6 +38,8 @@ from pathlib import Path
 from typing import Any
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -37,6 +48,12 @@ try:
 except ImportError:
     from scripts.release_metadata import load_metadata, ReleaseMetadata
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _next_patch_version(version: str) -> str:
     """Return the next patch version (e.g. 0.6.24 -> 0.6.25)."""

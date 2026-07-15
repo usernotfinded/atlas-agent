@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/backtest/test_backtest_engine.py
+# PURPOSE: Verifies backtest engine behavior and regression expectations.
+# DEPS:    pytest, csv, pathlib, datetime, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 import csv
 from pathlib import Path
@@ -5,6 +14,12 @@ from datetime import datetime, timedelta
 from atlas_agent.backtest import BacktestConfig, BacktestEngine
 from atlas_agent.backtest.models import BacktestOrder, BacktestPosition
 from atlas_agent.backtest.data import load_market_data
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def sample_csv(tmp_path):

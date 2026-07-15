@@ -1,5 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_setup_ui.py
+# PURPOSE: Verifies setup ui behavior and regression expectations.
+# DEPS:    ast, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import ast
 from pathlib import Path
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_inline_selector_renders_without_dialog_box():
     """Verify that no modal or dialog boxes are imported or used in the wizard."""

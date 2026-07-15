@@ -1,9 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_scheduler_modes.py
+# PURPOSE: Verifies scheduler modes behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.ai.discipline import write_user_discipline
 from atlas_agent.cli import run_once
 from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.scheduler.runner import run_scheduler_once
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 GOOD_PROFILE = (
     "# Profile\n\n"
@@ -18,6 +29,12 @@ GOOD_PROFILE = (
     "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_paper_scheduler_can_run_autonomously(tmp_path) -> None:
     write_user_discipline(tmp_path, GOOD_PROFILE)
@@ -84,4 +101,3 @@ def test_kill_switch_blocks_scheduler_execution(tmp_path) -> None:
 
     assert result.order_result.status == "rejected"
     assert "kill switch is enabled" in result.order_result.reasons
-

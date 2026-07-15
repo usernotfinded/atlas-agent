@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_safety_atomic_write.py
+# PURPOSE: Static regression guard for fixed <target>.tmp safety-state writes.
+# DEPS:    argparse, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Static regression guard for fixed <target>.tmp safety-state writes.
 
 Deterministic and local-only. Does not import Atlas runtime modules, load
 credentials, contact brokers, or make network calls.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,6 +22,12 @@ import sys
 from pathlib import Path
 from typing import NamedTuple
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 class Violation(NamedTuple):
     path: Path

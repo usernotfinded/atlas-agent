@@ -1,7 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_provider_isolation.py
+# PURPOSE: Verifies paper provider isolation behavior and regression
+#         expectations.
+# DEPS:    importlib, json, os, shutil, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for paper-mode provider isolation (CAND-024).
 
 Documentation/test-only. No real provider or broker calls.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -16,6 +27,8 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_paper_provider_isolation.py"
@@ -41,6 +54,12 @@ PROVIDER_ENV_KEYS = [
     "ATLAS_ANTHROPIC_API_KEY",
 ]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(args: list[str] | None = None) -> subprocess.CompletedProcess[str]:
     cmd = [sys.executable, str(SCRIPT)]

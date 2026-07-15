@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/reflection/test_reflection_models.py
+# PURPOSE: Verifies reflection models behavior and regression expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for atlas_agent.reflection.models."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -12,6 +21,12 @@ from atlas_agent.reflection.models import (
     ReflectionStatus,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestReflectionStatus:
     def test_enum_values(self):

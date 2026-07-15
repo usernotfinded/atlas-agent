@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_github_actions_schedule.py
+# PURPOSE: Verifies github actions schedule behavior and regression
+#         expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.safety.secrets import scan_text_for_secrets
@@ -6,6 +16,12 @@ from atlas_agent.scheduler.github_actions import (
     write_github_actions_workflow,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_github_actions_workflow_file_is_generated(tmp_path) -> None:
     path = write_github_actions_workflow(
@@ -67,4 +83,3 @@ def test_github_actions_workflow_configures_symbol_before_routines(tmp_path) -> 
         assert "atlas config set market.symbol DEMO-SYMBOL" in block, (
             f"Missing symbol config before {routine} routine run"
         )
-

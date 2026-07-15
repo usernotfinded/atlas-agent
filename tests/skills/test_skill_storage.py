@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/skills/test_skill_storage.py
+# PURPOSE: Verifies skill storage behavior and regression expectations.
+# DEPS:    pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for skill candidate storage."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,6 +22,12 @@ from atlas_agent.skills.storage import (
     delete_candidate,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestSkillCandidateStorage:
     def test_save_and_load_candidate(self, tmp_path: Path) -> None:

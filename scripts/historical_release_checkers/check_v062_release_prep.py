@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/historical_release_checkers/check_v062_release_prep.py
+# PURPOSE: Read-only v0.6.2 release prep checker (post-v0.6.2 state check).
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Read-only v0.6.2 release prep checker (post-v0.6.2 state check).
 
 Verifies that the repository remains correctly prepared after the v0.6.2 release:
@@ -26,6 +33,8 @@ Deterministic and local. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -34,6 +43,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -66,6 +77,12 @@ UNSAFE_CLAIMS = [
     "financial advice",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {

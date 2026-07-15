@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_demo_artifact_index.py
+# PURPOSE: Verifies demo artifact index behavior and regression expectations.
+# DEPS:    json, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT_INDEX = ROOT / "docs" / "demo-artifact-index.md"
@@ -14,6 +25,12 @@ LINKING_DOCS = [
     ROOT / "docs" / "external-reviewer-walkthrough.md",
 ]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_artifact_index_exists() -> None:
     assert ARTIFACT_INDEX.exists()

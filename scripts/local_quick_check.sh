@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/local_quick_check.sh
+# PURPOSE: Runs the local quick check validation workflow.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 # Atlas Agent — Local Quick Check
 # Medium-cost local gate intended to run before committing.

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_discipline_cli.py
+# PURPOSE: Verifies discipline cli behavior and regression expectations.
+# DEPS:    subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import subprocess
@@ -5,6 +14,8 @@ import sys
 from pathlib import Path
 
 import pytest
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 PYTHON = sys.executable
 
@@ -21,6 +32,12 @@ GOOD_PROFILE = (
     "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _atlas(args: list[str], cwd: Path | None = None) -> tuple[int, str, str]:
     cmd = [PYTHON, "-m", "atlas_agent.cli"] + args

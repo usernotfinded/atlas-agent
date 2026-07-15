@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_readme_quickstart_verification.py
+# PURPOSE: Verifies readme quickstart verification behavior and regression
+#         expectations.
+# DEPS:    re, subprocess, sys, tempfile, pathlib.
+# ==============================================================================
+
 """Tests for README quickstart verification — Batch 9.9 + 10.0.
 
 This batch is documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,10 +23,18 @@ import tempfile
 from pathlib import Path
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 README_PATH = REPO_ROOT / "README.md"
 VERIFY_SCRIPT = REPO_ROOT / "scripts" / "verify_readme_quickstart.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

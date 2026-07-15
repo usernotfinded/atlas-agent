@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/brokers/test_unsupported_brokers_fail_closed.py
+# PURPOSE: Verifies unsupported brokers fail closed behavior and regression
+#         expectations.
+# DEPS:    sys, types, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import sys
@@ -13,6 +23,12 @@ from atlas_agent.brokers.ibkr_stub import IBKRStub
 from atlas_agent.config import AtlasConfig
 from atlas_agent.execution.order import Order
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_unsupported_broker_submit_fails_closed() -> None:
     """An invented/unknown broker should not be constructible or submit.

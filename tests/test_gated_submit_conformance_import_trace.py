@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_gated_submit_conformance_import_trace.py
+# PURPOSE: Verifies gated submit conformance import trace behavior and
+#         regression expectations.
+# DEPS:    json, subprocess, sys, pathlib, typing, pytest.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -8,6 +18,8 @@ from typing import Any
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -28,6 +40,12 @@ _FORBIDDEN_MODULES = (
     "anthropic",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_subprocess_code(code: str) -> tuple[int, str, str]:
     result = subprocess.run(

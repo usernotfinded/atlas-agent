@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_bounded_live_autonomy_readiness_cli.py
+# PURPOSE: Verifies bounded live autonomy readiness cli behavior and regression
+#         expectations.
+# DEPS:    json, os, subprocess, sys, pathlib, typing, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -15,9 +25,17 @@ from atlas_agent.agent.bounded_live_autonomy_readiness_cli import (
     main,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "bounded_live_autonomy_readiness"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _fixture_path(name: str) -> Path:
     return FIXTURES / f"{name}.json"

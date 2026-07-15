@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_dashboard_cli.py
+# PURPOSE: Verifies dashboard cli behavior and regression expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
 """CLI end-to-end tests for dashboard commands."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -11,9 +20,17 @@ from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 pytestmark = pytest.mark.slow
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture(autouse=True)
 def _isolate_dashboard_workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

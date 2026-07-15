@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_setup_wizard.py
+# PURPOSE: Verifies setup wizard behavior and regression expectations.
+# DEPS:    json, sys, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import sys
 from pathlib import Path
@@ -12,6 +21,12 @@ from atlas_agent.setup.wizard_ui import (
 )
 from atlas_agent.setup.renderer import render_wizard_screen
 from atlas_agent.setup.state import WizardState
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_wizard_hides_local_command_and_null():
     state = WizardState()

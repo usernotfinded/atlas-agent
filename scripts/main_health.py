@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/main_health.py
+# PURPOSE: Report direct-main post-push health from local git metadata.
+# DEPS:    argparse, importlib, json, re, shutil, subprocess, additional local
+#         modules.
+# ==============================================================================
+
 """Report direct-main post-push health from local git metadata."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -20,6 +30,12 @@ from typing import Callable, Iterable
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from release_metadata import load_metadata
 
+
+# ==============================================================================
+# SCRIPT IMPLEMENTATION
+# ==============================================================================
+
+# --- HELPERS AND ENTRYPOINTS ---
 
 @dataclass(frozen=True)
 class ReleaseMetadata:

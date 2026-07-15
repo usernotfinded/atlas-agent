@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_clean_install.py
+# PURPOSE: Verify clean install of the current repo without credentials or
+#         network by default.
+# DEPS:    argparse, shutil, subprocess, sys, tempfile, pathlib.
+# ==============================================================================
+
 """Verify clean install of the current repo without credentials or network by default.
 
 Default mode uses the current worktree (``--from-current-worktree``), creates a
@@ -12,6 +20,8 @@ Exit codes:
     2 - verification failure
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -21,6 +31,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -63,6 +75,12 @@ FORBIDDEN_OUTPUT_FRAGMENTS = (
 # Network tools the script must not invoke.
 NETWORK_TOOLS = ("curl", "wget", "git clone", "git fetch", "git pull")
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _error(msg: str) -> int:
     print(f"ERROR: {_redact(msg)}", file=sys.stderr)

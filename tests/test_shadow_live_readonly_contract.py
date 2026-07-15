@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_shadow_live_readonly_contract.py
+# PURPOSE: Verifies shadow live readonly contract behavior and regression
+#         expectations.
+# DEPS:    ast, json, subprocess, sys, pathlib, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import ast
@@ -11,12 +22,20 @@ import pytest
 import scripts.check_shadow_live_readonly_contract as _checker
 from scripts.check_shadow_live_readonly_contract import check_all
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SHADOW_MODULE = (
     REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_shadow_live.py"
 )
 DOC = REPO_ROOT / "docs" / "shadow-live-readonly-comparison.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_checker_passes_on_real_repo() -> None:
     result = check_all()

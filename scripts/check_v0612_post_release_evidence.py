@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_v0612_post_release_evidence.py
+# PURPOSE: Read-only v0.6.12 post-release evidence bundle checker.
+# DEPS:    argparse, json, shutil, subprocess, sys, pathlib.
+# ==============================================================================
+
 """Read-only v0.6.12 post-release evidence bundle checker.
 
 Validates the post-release evidence bundle at
@@ -31,6 +38,8 @@ those tools is treated as a warning, not an error. This checker does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -40,6 +49,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -88,6 +99,12 @@ SCANNED_DOC_PATHS = [
     TRUST_STATUS,
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_routine_lock.py
+# PURPOSE: Verifies routine lock behavior and regression expectations.
+# DEPS:    json, os, datetime, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -17,6 +26,8 @@ from atlas_agent.routines.lock import (
     unlock_routine,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 GOOD_PROFILE = (
     "# Profile\n\n"
     "## Decision temperament\n\nCautious.\n\n"
@@ -30,6 +41,12 @@ GOOD_PROFILE = (
     "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path) -> AtlasConfig:
     return AtlasConfig(
@@ -87,4 +104,3 @@ def test_lock_is_released_after_successful_run(tmp_path) -> None:
 
     assert result.status == "complete"
     assert not lock_path(tmp_path).exists()
-

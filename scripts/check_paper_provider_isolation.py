@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_paper_provider_isolation.py
+# PURPOSE: Static check for paper-mode provider isolation (CAND-024).
+# DEPS:    argparse, json, os, re, subprocess, sys, additional local modules.
+# ==============================================================================
+
 """Static check for paper-mode provider isolation (CAND-024).
 
 Deterministic, local-only, read-only. Does not:
@@ -16,6 +23,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -26,6 +35,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -184,6 +195,12 @@ SECRET_PATTERNS = [
     re.compile(r"\bBearer\s+[A-Za-z0-9._~+/=-]{10,}", re.IGNORECASE),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

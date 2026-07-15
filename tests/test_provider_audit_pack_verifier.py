@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_audit_pack_verifier.py
+# PURPOSE: Verifies provider audit pack verifier behavior and regression
+#         expectations.
+# DEPS:    json, os, stat, sys, pathlib, pytest, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import os
 import stat
@@ -12,6 +22,12 @@ from atlas_agent.providers.provider_audit_pack import (
     _CLOSED_SAFETY_SUMMARY,
     verify_provider_audit_pack,
 )
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def valid_audit_pack(tmp_path: Path) -> Path:

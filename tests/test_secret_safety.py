@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_secret_safety.py
+# PURPOSE: Verifies secret safety behavior and regression expectations.
+# DEPS:    json, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -6,6 +15,12 @@ from atlas_agent.brokers.errors import make_broker_error
 from atlas_agent.execution.audit import AuditLogger
 from atlas_agent.safety.secrets import scan_text_for_secrets
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_no_broker_logs_secrets(tmp_path) -> None:
     logger = AuditLogger(tmp_path)

@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_env_templates.py
+# PURPOSE: Validate .env.example files: empty secrets, safe defaults, no fake
+#         credentials.
+# DEPS:    sys, pathlib.
+# ==============================================================================
+
 """Validate .env.example files: empty secrets, safe defaults, no fake credentials."""
+
+# --- IMPORTS ---
 
 import sys
 from pathlib import Path
 
 # Keys whose names contain these substrings must have empty values in committed templates.
+# --- CONFIGURATION AND CONSTANTS ---
+
 _SECRET_NAME_FRAGMENTS = ["API_KEY", "SECRET", "TOKEN", "PASSWORD", "WEBHOOK"]
 
 # Explicitly blocked placeholder strings (case-insensitive exact match after strip).
@@ -68,6 +80,12 @@ _ALLOWED_NON_EMPTY = {
     "LOCAL_COMMAND",
 }
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _is_secret_key(name: str) -> bool:
     upper = name.upper()

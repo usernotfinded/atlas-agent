@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_scorecard_contract.py
+# PURPOSE: Verifies autonomous paper scorecard contract behavior and regression
+#         expectations.
+# DEPS:    json, shutil, subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Tests for scripts/check_autonomous_paper_scorecard_contract.py."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -12,10 +22,18 @@ from pathlib import Path
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKER = REPO_ROOT / "scripts" / "check_autonomous_paper_scorecard_contract.py"
 DOC = REPO_ROOT / "docs" / "autonomous-paper-scorecard.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_checker(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(

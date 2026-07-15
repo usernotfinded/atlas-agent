@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/brokers/test_resolver.py
+# PURPOSE: Verifies resolver behavior and regression expectations.
+# DEPS:    json, os, datetime, pathlib, unittest, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -11,6 +21,12 @@ import pytest
 from atlas_agent.brokers.resolver import BrokerResolver, BrokerStatus, BrokerResolution
 from atlas_agent.config import AtlasConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def base_config() -> AtlasConfig:

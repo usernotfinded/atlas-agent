@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_shadow_live_readonly.py
+# PURPOSE: Verifies shadow live readonly behavior and regression expectations.
+# DEPS:    hashlib, json, subprocess, sys, datetime, pathlib, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import hashlib
@@ -24,8 +34,16 @@ from atlas_agent.agent.autonomous_paper_shadow_live import (
     write_shadow_live_artifacts,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 _FIXED_NOW = datetime.fromisoformat("2026-06-23T12:10:00+00:00")
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_minimal_snapshot() -> dict:
     return {

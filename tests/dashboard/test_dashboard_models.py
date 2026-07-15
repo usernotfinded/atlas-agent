@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/dashboard/test_dashboard_models.py
+# PURPOSE: Verifies dashboard models behavior and regression expectations.
+# DEPS:    json, atlas_agent.
+# ==============================================================================
+
 """Tests for dashboard data layer models."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -17,6 +26,12 @@ from atlas_agent.dashboard.models import (
     DashboardStatusSummary,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_dashboard_snapshot_defaults() -> None:
     s = DashboardSnapshot(

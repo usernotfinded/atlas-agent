@@ -1,14 +1,25 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_public_repo_hygiene.py
+# PURPOSE: Verifies public repo hygiene behavior and regression expectations.
+# DEPS:    pathlib, pytest.
+# ==============================================================================
+
 """Tests for public repository hygiene files — Batch 10.8.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -53,6 +64,12 @@ _REQUIRED_SAFE_WORDING = (
     "not financial advice",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestRepoHygieneFilesExist:
     def test_security_md_exists(self) -> None:

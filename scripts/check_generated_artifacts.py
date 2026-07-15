@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_generated_artifacts.py
+# PURPOSE: Validate generated artifact hygiene from git path metadata only.
+# DEPS:    argparse, json, re, subprocess, sys, dataclasses, additional local
+#         modules.
+# ==============================================================================
+
 """Validate generated artifact hygiene from git path metadata only."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -12,6 +22,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 LOCAL_ONLY_ARTIFACT_PREFIXES = (
     "artifacts/release_evidence/",
@@ -95,6 +107,12 @@ SECRET_VALUE_PATTERNS = (
     ),
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 @dataclass(frozen=True)
 class GitResult:

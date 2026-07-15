@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_operator_approval_gate_contract.py
+# PURPOSE: Verifies operator approval gate contract behavior and regression
+#         expectations.
+# DEPS:    subprocess, sys, pathlib, typing, pytest.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import subprocess
@@ -7,9 +17,17 @@ from typing import Any
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONTRACT_SCRIPT = REPO_ROOT / "scripts" / "check_operator_approval_gate_contract.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_contract_checker_passes() -> None:
     result = subprocess.run(

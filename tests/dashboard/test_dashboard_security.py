@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/dashboard/test_dashboard_security.py
+# PURPOSE: Verifies dashboard security behavior and regression expectations.
+# DEPS:    os, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -5,6 +14,12 @@ from pathlib import Path
 from atlas_agent.config import AtlasConfig
 from atlas_agent.dashboard.collectors import collect_dashboard_snapshot
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_collect_dashboard_snapshot_redacts_environment_variables(tmp_path: Path, monkeypatch):
     # Set sensitive environment variables

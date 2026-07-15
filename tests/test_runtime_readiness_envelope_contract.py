@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_runtime_readiness_envelope_contract.py
+# PURPOSE: Verifies runtime readiness envelope contract behavior and regression
+#         expectations.
+# DEPS:    ast, contextlib, json, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import ast
@@ -13,12 +24,20 @@ import pytest
 import scripts.check_runtime_readiness_envelope_contract as _checker
 from scripts.check_runtime_readiness_envelope_contract import check_all
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ENGINE_MODULE = (
     REPO_ROOT / "src" / "atlas_agent" / "agent" / "runtime_readiness_envelope.py"
 )
 BOOTSTRAP_MODULE = REPO_ROOT / "src" / "atlas_agent" / "cli_bootstrap.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @contextlib.contextmanager
 def _mutate_doc_temporarily(extra: str) -> Generator[Path, None, None]:

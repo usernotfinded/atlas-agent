@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/notifications/test_notification_dispatcher.py
+# PURPOSE: Verifies notification dispatcher behavior and regression
+#         expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
 """Tests for notification dispatcher."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.notifications.models import (
@@ -14,6 +24,12 @@ from atlas_agent.notifications.transports import (
     SlackWebhookTransport,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_get_transport_disabled() -> None:
     config = NotificationConfig(transport=NotificationTransport.disabled)

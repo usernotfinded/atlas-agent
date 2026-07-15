@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_scorecard.py
+# PURPOSE: Verifies autonomous paper scorecard behavior and regression
+#         expectations.
+# DEPS:    json, shutil, sys, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -20,8 +30,16 @@ from atlas_agent.cli import main as cli_main
 from atlas_agent.config import AtlasConfig
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 SAMPLE_CSV = Path(__file__).resolve().parents[1] / "data" / "sample" / "ohlcv.csv"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_config(tmp_path: Path, **overrides: object) -> AtlasConfig:
     data_dir = tmp_path / "data" / "sample"

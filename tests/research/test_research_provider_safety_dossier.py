@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_provider_safety_dossier.py
+# PURPOSE: Verifies research provider safety dossier behavior and regression
+#         expectations.
+# DEPS:    json, datetime, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for provider safety dossier."""
+
+# --- IMPORTS ---
 
 import json
 from datetime import UTC, datetime
@@ -36,6 +46,12 @@ from atlas_agent.research.session import RESEARCH_ARTIFACT_SCHEMA_VERSION, Resea
 # ---------------------------------------------------------------------------
 # Chain builder helpers (inlined, same pattern as final_safety_seal test)
 # ---------------------------------------------------------------------------
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _ensure_workspace(tmp_path: Path) -> None:
     (tmp_path / "memory").mkdir(exist_ok=True)

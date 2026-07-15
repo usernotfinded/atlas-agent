@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/historical_release_checkers/check_v058_rc1_readiness.py
+# PURPOSE: v0.5.8 release readiness dry-run gate.
+# DEPS:    argparse, json, re, subprocess, sys, tomllib, additional local
+#         modules.
+# ==============================================================================
+
 """v0.5.8 release readiness dry-run gate.
 
 Deterministic local checks that answer:
@@ -18,6 +26,8 @@ Exit codes:
   2  fail
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -28,6 +38,8 @@ import sys
 import tomllib
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -101,6 +113,12 @@ SAFETY_POSTURE_PHRASES = [
     ("not production ready",),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

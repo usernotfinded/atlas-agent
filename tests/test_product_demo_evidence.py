@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_product_demo_evidence.py
+# PURPOSE: Verifies product demo evidence behavior and regression expectations.
+# DEPS:    json, os, shutil, subprocess, sys, tempfile, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -10,6 +20,8 @@ from pathlib import Path
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO_SCRIPT = ROOT / "scripts" / "demo_product_walkthrough.sh"
@@ -26,6 +38,12 @@ FORBIDDEN_IMPLEMENTATION_PATTERNS = [
     "--mode live",
 ]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_checker(bundle_dir: Path, *, json_output: bool = False) -> subprocess.CompletedProcess[str]:
     cmd = [sys.executable, str(CHECKER_SCRIPT)]

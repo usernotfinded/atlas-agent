@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_trust_center.py
+# PURPOSE: Verifies trust center behavior and regression expectations.
+# DEPS:    importlib, json, re, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the public trust center consistency checker.
 
 Docs/test/checker only. No network, credentials, provider calls, broker calls,
 tag creation, release creation, package publishing, or runtime execution changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -16,6 +26,8 @@ from types import ModuleType
 from typing import Callable
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_trust_center.py"
 TRUST_README_REL = Path("docs/trust/README.md")
@@ -23,6 +35,12 @@ TRUST_STATUS_REL = Path("docs/trust/v0.6.8-status.md")
 TRUST_README = REPO_ROOT / TRUST_README_REL
 TRUST_STATUS = REPO_ROOT / TRUST_STATUS_REL
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker() -> ModuleType:
     spec = importlib.util.spec_from_file_location("check_trust_center_for_tests", SCRIPT)

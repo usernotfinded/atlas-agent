@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_assurance_diagnostics_workflow.py
+# PURPOSE: Verifies release assurance diagnostics workflow behavior and
+#         regression expectations.
+# DEPS:    subprocess, sys, pathlib, scripts.
+# ==============================================================================
+
 """Static tests for the release assurance diagnostics workflow and its checker."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,11 +23,19 @@ from scripts.check_release_assurance_diagnostics_workflow import (
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "release-assurance.yml"
 CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_diagnostics_workflow.py"
 ARTIFACT_NAME = "release-assurance-diagnostics"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _workflow_text() -> str:
     return WORKFLOW_PATH.read_text(encoding="utf-8")

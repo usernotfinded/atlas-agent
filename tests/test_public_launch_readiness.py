@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_public_launch_readiness.py
+# PURPOSE: Verifies public launch readiness behavior and regression
+#         expectations.
+# DEPS:    importlib, json, subprocess, sys, pathlib, types, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for public launch readiness script and docs — Batch 10.9.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -15,6 +26,8 @@ from types import ModuleType
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_public_launch_readiness.py"
@@ -37,6 +50,12 @@ _FORBIDDEN_POSITIVE_CLAIMS = (
     "beats the market",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_public_docs_test_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

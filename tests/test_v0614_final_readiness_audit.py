@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0614_final_readiness_audit.py
+# PURPOSE: Verifies v0614 final readiness audit behavior and regression
+#         expectations.
+# DEPS:    hashlib, json, shutil, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import hashlib
 import json
 import shutil
@@ -8,11 +19,19 @@ from pathlib import Path
 from scripts.check_v0614_final_readiness_audit import check
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "check_v0614_final_readiness_audit.py"
 JSON_FILE = ROOT / "docs" / "releases" / "v0.6.14-final-readiness-audit.json"
 MD_FILE = ROOT / "docs" / "releases" / "v0.6.14-final-readiness-audit.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(

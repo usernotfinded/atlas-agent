@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_strategy_scorecard.py
+# PURPOSE: Verifies paper strategy scorecard behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 from pathlib import Path
@@ -8,8 +18,16 @@ from atlas_agent.backtest.scorecard import (
     write_strategy_scorecard_reports,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 FIXTURE_DIR = Path("data/sample/regimes")
 DATA_PATH = Path("data/sample/ohlcv_extended.csv")
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_paper_strategy_scorecard_schema(tmp_path):
     report = build_paper_strategy_scorecard(
@@ -64,4 +82,3 @@ def test_scorecard_demo_script():
     content = demo.read_text()
     assert "--mode live" not in content
     assert "atlas_agent.cli backtest scorecard" in content
-

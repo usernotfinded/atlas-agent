@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/agent/test_agent_loop_broker_sync.py
+# PURPOSE: Verifies agent loop broker sync behavior and regression expectations.
+# DEPS:    pytest, pathlib, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -12,6 +21,12 @@ from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition, PendingOrder
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import LLMResponse, ToolCall, ToolSpec, ModelCapabilities
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class MockProvider:
     def __init__(self, responses):

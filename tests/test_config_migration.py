@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_config_migration.py
+# PURPOSE: Verifies config migration behavior and regression expectations.
+# DEPS:    json, pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import pytest
 from pathlib import Path
 from atlas_agent.config.migrate import migrate_legacy_config
 from atlas_agent.config.paths import get_config_toml_path, get_env_atlas_path, get_legacy_config_json_path
 from atlas_agent.config import get_config
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):

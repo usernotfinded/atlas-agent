@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_catalog.py
+# PURPOSE: Verifies provider catalog behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.providers.catalog import (
@@ -11,6 +20,8 @@ from atlas_agent.providers.catalog import (
     provider_allows_custom_model,
     validate_model_for_provider,
 )
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 OPENROUTER_IDS = {
     "openai/gpt-5.5",
@@ -145,6 +156,12 @@ NVIDIA_LOCAL_EXAMPLE_IDS = {
     "deepseek-v4-pro",
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _all_catalog_model_ids() -> set[str]:
     ids: set[str] = set()

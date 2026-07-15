@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_public_launch_readiness.py
+# PURPOSE: Local static check that public-facing repo launch materials are
+#         present and safe.
+# DEPS:    argparse, json, re, subprocess, sys, pathlib.
+# ==============================================================================
+
 """Local static check that public-facing repo launch materials are present and safe.
 
 Deterministic and local. Does not:
@@ -13,6 +21,8 @@ Deterministic and local. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -22,6 +32,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -114,6 +126,12 @@ _ABSOLUTE_PATH_PREFIXES = [
     "/var/tmp/",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _redact(text: str) -> str:
     """Redact user-specific absolute paths from output."""

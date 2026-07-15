@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_provider_mock_response_review_sandbox.py
+# PURPOSE: Verifies research provider mock response review sandbox behavior and
+#         regression expectations.
+# DEPS:    json, pathlib, typing, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -34,6 +44,12 @@ from atlas_agent.research.session import (
     check_research_artifacts,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _raise_if_called(*args, **kwargs):
     raise AssertionError("Config/secrets loader must not be called")

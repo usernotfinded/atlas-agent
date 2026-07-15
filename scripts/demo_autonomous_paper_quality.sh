@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_autonomous_paper_quality.sh
+# PURPOSE: Demonstrates the autonomous paper quality workflow using safe local
+#         defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 # CAND-004 deterministic autonomous paper trading-quality gate demo
 #
 # Runs the stateful autonomous-paper loop offline to generate artifacts, then
@@ -9,7 +24,6 @@
 # Usage:
 #   bash scripts/demo_autonomous_paper_quality.sh
 #   DEMO_WORKSPACE=/path/to/empty/dir bash scripts/demo_autonomous_paper_quality.sh
-set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"

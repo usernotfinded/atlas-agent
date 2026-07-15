@@ -1,8 +1,23 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/execution/test_approval_safety.py
+# PURPOSE: Verifies approval safety behavior and regression expectations.
+# DEPS:    pytest, pathlib, atlas_agent, datetime.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 from pathlib import Path
 from atlas_agent.execution.approval import ApprovalManager, InvalidPendingOrderError
 from atlas_agent.execution.order import Order
 from datetime import datetime, UTC
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_approval_safety_requires_actor_and_rejects_auto_approve(tmp_path: Path):
     manager = ApprovalManager(pending_dir=tmp_path)

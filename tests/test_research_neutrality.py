@@ -1,11 +1,28 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_research_neutrality.py
+# PURPOSE: Verifies research neutrality behavior and regression expectations.
+# DEPS:    pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 CONTRIBUTING = ROOT / "CONTRIBUTING.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_readme_is_research_neutral() -> None:
     content = README.read_text(encoding="utf-8").lower()

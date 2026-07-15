@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/backtest/test_backtest_report_schema.py
+# PURPOSE: Verifies backtest report schema behavior and regression expectations.
+# DEPS:    json, datetime, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for backtest report schema contract (CAND-003)."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -23,6 +32,12 @@ from atlas_agent.backtest.report_schema import (
     validate_backtest_result,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _sample_result() -> BacktestResult:
     return BacktestResult(

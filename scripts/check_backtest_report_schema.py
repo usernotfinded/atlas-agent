@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_backtest_report_schema.py
+# PURPOSE: Check existing backtest reports for schema contract compliance.
+# DEPS:    argparse, json, sys, pathlib, atlas_agent.
+# ==============================================================================
+
 """Check existing backtest reports for schema contract compliance.
 
 Scans <root>/*/result.json (default: .atlas/backtests) and validates each
 against the backtest report schema contract. Exits non-zero if any report
 fails validation, or if --fail-on-legacy is set and legacy reports are found.
 """
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -18,8 +27,16 @@ from atlas_agent.backtest.report_schema import (
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 STATUS_COUNTS = {"valid": 0, "invalid": 0, "legacy": 0, "unreadable": 0}
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(

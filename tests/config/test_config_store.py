@@ -1,7 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/config/test_config_store.py
+# PURPOSE: Verifies config store behavior and regression expectations.
+# DEPS:    pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 from pathlib import Path
 from atlas_agent.config.store import set_raw_value, get_raw_value, load_raw_config
 from atlas_agent.config.paths import get_config_toml_path
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_config_store_rejects_secrets_without_exposure(monkeypatch, tmp_path):
     # Mock get_workspace_root so config writes to tmp_path

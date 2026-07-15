@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/learning/test_learning_approval.py
+# PURPOSE: Verifies learning approval behavior and regression expectations.
+# DEPS:    pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for learning suggestion approval workflow."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,6 +23,12 @@ from atlas_agent.learning.approval import (
     archive,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestApprovalWorkflow:
     def test_submit_for_review(self, tmp_path: Path) -> None:

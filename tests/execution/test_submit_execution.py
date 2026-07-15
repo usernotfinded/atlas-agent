@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/execution/test_submit_execution.py
+# PURPOSE: Verifies submit execution behavior and regression expectations.
+# DEPS:    json, datetime, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -25,6 +34,12 @@ from atlas_agent.risk.models import RiskDecision
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_order(**kwargs) -> Order:
     defaults = {

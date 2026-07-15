@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/gateway/telegram/test_auth.py
+# PURPOSE: Verifies auth behavior and regression expectations.
+# DEPS:    dataclasses, datetime, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -5,6 +14,12 @@ from datetime import UTC, datetime, timedelta
 
 from atlas_agent.gateway.telegram.auth import TelegramAuth, TelegramAuthConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @dataclass
 class FakeKeyring:

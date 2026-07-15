@@ -1,10 +1,28 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_paper_strategy_sensitivity.py
+# PURPOSE: Validates paper strategy sensitivity requirements for local and CI
+#         workflows.
+# DEPS:    json, os, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import os
 import sys
 from pathlib import Path
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parent.parent
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def check_paper_strategy_sensitivity(json_output: bool = False) -> int:
     issues = []

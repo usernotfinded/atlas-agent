@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_notifications_cli.py
+# PURPOSE: Verifies notifications cli behavior and regression expectations.
+# DEPS:    pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
 """CLI end-to-end tests for notification commands."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,6 +18,12 @@ import pytest
 from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

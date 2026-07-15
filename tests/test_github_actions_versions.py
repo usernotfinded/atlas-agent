@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_github_actions_versions.py
+# PURPOSE: Verifies github actions versions behavior and regression
+#         expectations.
+# DEPS:    importlib, json, sys, pathlib, types.
+# ==============================================================================
+
 """Tests for GitHub Actions action major policy checks."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -9,10 +19,18 @@ from pathlib import Path
 from types import ModuleType
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_github_actions_versions.py"
 DOC = REPO_ROOT / "docs" / "development" / "github-actions.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

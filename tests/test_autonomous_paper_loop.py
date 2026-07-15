@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_loop.py
+# PURPOSE: Verifies autonomous paper loop behavior and regression expectations.
+# DEPS:    json, shutil, subprocess, sys, pathlib, unittest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -20,6 +30,8 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.safety.kill_switch import KillSwitchController
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 SAMPLE_CSV = Path(__file__).resolve().parents[1] / "data" / "sample" / "ohlcv.csv"
 
 
@@ -28,6 +40,12 @@ REQUIRED_DISCIPLINE_SENTENCE = (
     "audit logging, broker sync checks, reference price requirements, or live-trading safeguards."
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _write_discipline(workspace: Path) -> Path:
     path = workspace / ".atlas" / "discipline.md"

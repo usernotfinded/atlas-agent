@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_runtime_readiness_envelope_cli.py
+# PURPOSE: Verifies runtime readiness envelope cli behavior and regression
+#         expectations.
+# DEPS:    io, json, subprocess, sys, pathlib, typing, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import io
@@ -17,8 +27,16 @@ from atlas_agent.agent.runtime_readiness_envelope_cli import (
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 _AS_OF = "2026-06-24T10:00:00Z"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _write_fixture(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")

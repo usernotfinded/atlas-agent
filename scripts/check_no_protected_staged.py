@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_no_protected_staged.py
+# PURPOSE: Fail if protected local/runtime artifacts are staged.
+# DEPS:    subprocess, sys, typing.
+# ==============================================================================
+
 """Fail if protected local/runtime artifacts are staged."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -7,6 +16,8 @@ import subprocess
 import sys
 from typing import Iterable
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 PROTECTED_PATTERNS = [
     "AUDIT_ENHANCEMENTS_2026-05-13.md",
@@ -24,6 +35,12 @@ PROTECTED_PATTERNS = [
     "__pycache__/",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 class StagedFilesError(Exception):
     """Raised when staged files cannot be read."""

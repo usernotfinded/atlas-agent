@@ -1,6 +1,21 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/release_metadata.py
+# PURPOSE: Implements repository tooling for release metadata.
+# DEPS:    json, pathlib, typing.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 from pathlib import Path
 from typing import Dict, Any, List, Optional
+
+# ==============================================================================
+# SCRIPT IMPLEMENTATION
+# ==============================================================================
+
+# --- HELPERS AND ENTRYPOINTS ---
 
 class ReleaseMetadata:
     def __init__(self, data: Dict[str, Any]):

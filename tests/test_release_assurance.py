@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_assurance.py
+# PURPOSE: Verifies release assurance behavior and regression expectations.
+# DEPS:    pytest, json, pathlib, unittest, sys, os.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 import json
 from pathlib import Path
@@ -12,6 +21,12 @@ try:
 except ImportError:
     pass
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _cmd_text(cmd):
     return " ".join(str(part) for part in cmd)

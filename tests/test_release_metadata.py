@@ -1,6 +1,21 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_metadata.py
+# PURPOSE: Verifies release metadata behavior and regression expectations.
+# DEPS:    pytest, pathlib, scripts.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 from pathlib import Path
 from scripts.release_metadata import validate_metadata
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_validate_metadata_valid(tmp_path):
     (tmp_path / "docs" / "releases").mkdir(parents=True)

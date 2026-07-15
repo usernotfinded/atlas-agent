@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_autonomous_paper_stateful_cli.py
+# PURPOSE: Verifies autonomous paper stateful cli behavior and regression
+#         expectations.
+# DEPS:    json, os, subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """CLI tests for stateful autonomous paper mode.
 
 These tests exercise ``atlas agent autonomous-paper`` with ``--state-dir``
@@ -7,6 +15,8 @@ end-to-end via subprocess. They verify that:
 - A second invocation with ``--resume`` continues the same run and advances the
   cursor instead of starting a fresh run_id.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -18,11 +28,19 @@ from pathlib import Path
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SAMPLE_DATA = REPO_ROOT / "data" / "sample" / "ohlcv.csv"
 
 pytestmark = pytest.mark.slow
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_atlas(*args: str, cwd: Path, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
     cmd = [sys.executable, "-m", "atlas_agent.cli", *args]

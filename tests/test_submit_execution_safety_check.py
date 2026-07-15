@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_submit_execution_safety_check.py
+# PURPOSE: Verifies submit execution safety check behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -5,6 +15,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent

@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_provider_request_response_pairing.py
+# PURPOSE: Verifies research provider request response pairing behavior and
+#         regression expectations.
+# DEPS:    json, pathlib, typing, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -23,6 +33,12 @@ from atlas_agent.research.provider_request_response_pairing import (
 )
 from atlas_agent.research.session import RESEARCH_ARTIFACT_SCHEMA_VERSION
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _raise_if_called(*args, **kwargs):
     raise AssertionError("Config/secrets loader must not be called")

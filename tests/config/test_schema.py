@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/config/test_schema.py
+# PURPOSE: Verifies schema behavior and regression expectations.
+# DEPS:    warnings, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import warnings
@@ -7,6 +16,12 @@ import pytest
 from atlas_agent.config import AtlasConfig
 from atlas_agent.config.schema import BrokerConfig, RiskConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_broker_config_has_enable_live_submit_default_false() -> None:
     config = BrokerConfig()

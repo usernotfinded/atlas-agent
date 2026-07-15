@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_operator_approval_gate_contract.py
+# PURPOSE: Static contract checker for CAND-008 operator approval gate.
+# DEPS:    argparse, ast, json, re, sys, pathlib.
+# ==============================================================================
+
 """Static contract checker for CAND-008 operator approval gate.
 
 Deterministic, local-only, read-only. Does not:
@@ -13,6 +20,8 @@ Exit codes:
   2 = findings or operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -22,6 +31,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -288,6 +299,12 @@ CAND008_SAFETY_CONTINUATIONS = (
     "not a ",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

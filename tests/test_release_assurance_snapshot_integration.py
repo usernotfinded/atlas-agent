@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_assurance_snapshot_integration.py
+# PURPOSE: Verifies release assurance snapshot integration behavior and
+#         regression expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest, release_assurance.
+# ==============================================================================
+
 """Integration tests for the optional reviewer trust snapshot in release assurance."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -9,6 +19,8 @@ from pathlib import Path
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RELEASE_ASSURANCE_SCRIPT = REPO_ROOT / "scripts" / "release_assurance.py"
 CHECKER_SCRIPT = (
@@ -18,6 +30,12 @@ CHECKER_SCRIPT = (
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import release_assurance  # noqa: E402
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_release_assurance(
     output_dir: Path, *extra_args: str

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_deadman.py
+# PURPOSE: Verifies deadman behavior and regression expectations.
+# DEPS:    asyncio, dataclasses, datetime, json, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import asyncio
@@ -12,6 +21,12 @@ from atlas_agent.portfolio.positions import Position
 from atlas_agent.safety.deadman import DeadmanConfig, DeadmanSwitch, write_deadman_heartbeat
 from atlas_agent.safety.kill_switch import KillSwitchController
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @dataclass
 class FixedStateDetector:

@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/agent/test_agent_loop_safety_execution.py
+# PURPOSE: Verifies agent loop safety execution behavior and regression
+#         expectations.
+# DEPS:    pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -11,6 +21,12 @@ from atlas_agent.safety.kill_switch import AdvancedKillSwitch
 from atlas_agent.safety.action_plan import SafetyActionPlanner
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import LLMResponse, ToolCall, ToolSpec, ModelCapabilities
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class MockProvider:
     def __init__(self, responses):

@@ -1,5 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_research_workflow_docs.py
+# PURPOSE: Verifies research workflow docs behavior and regression expectations.
+# DEPS:    None.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _read(path: str) -> str:
     with open(path, encoding="utf-8") as f:

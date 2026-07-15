@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0613_paper_autonomy_evidence.py
+# PURPOSE: Verifies v0613 paper autonomy evidence behavior and regression
+#         expectations.
+# DEPS:    hashlib, json, shutil, subprocess, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import hashlib
@@ -7,6 +17,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKER = ROOT / "scripts" / "check_v0613_paper_autonomy_evidence.py"
@@ -41,6 +53,12 @@ REQUIRED_COPY_FILES = {
     "docs/reviewer-checklist.md",
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def run_checker(*args: str, root: Path | None = None) -> subprocess.CompletedProcess[str]:
     command = [sys.executable, str(CHECKER)]

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_order_router.py
+# PURPOSE: Verifies order router behavior and regression expectations.
+# DEPS:    dataclasses, json, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -14,6 +23,12 @@ from atlas_agent.portfolio.positions import Position
 from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.risk.manager import RiskManager
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @dataclass
 class SpyBroker:

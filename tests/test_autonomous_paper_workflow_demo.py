@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_workflow_demo.py
+# PURPOSE: Verifies autonomous paper workflow demo behavior and regression
+#         expectations.
+# DEPS:    importlib, json, os, shutil, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the autonomous paper workflow demo checker (CAND-023).
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -19,6 +30,8 @@ from unittest.mock import patch
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_autonomous_paper_workflow_demo.py"
 DEMO_SCRIPT = ROOT / "scripts" / "demo_autonomous_paper_workflow.sh"
@@ -26,6 +39,12 @@ DEMO_DOC = ROOT / "docs" / "autonomous-paper-workflow.md"
 GOVERNANCE_DOC = ROOT / "docs" / "bounded-live-autonomy-governance.md"
 ROADMAP_DOC = ROOT / "docs" / "autonomy-roadmap.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(args: list[str] | None = None) -> subprocess.CompletedProcess[str]:
     cmd = [sys.executable, str(SCRIPT)]

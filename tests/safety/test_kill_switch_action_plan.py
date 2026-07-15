@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_kill_switch_action_plan.py
+# PURPOSE: Verifies kill switch action plan behavior and regression
+#         expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -6,6 +16,12 @@ from atlas_agent.risk.models import PortfolioSnapshot, RiskPosition
 from atlas_agent.safety.action_plan import SafetyActionPlanner
 from atlas_agent.safety.models import KillSwitchDecision
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def planner():

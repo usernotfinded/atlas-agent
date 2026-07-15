@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_docs_archive_hygiene.py
+# PURPOSE: Verifies docs archive hygiene behavior and regression expectations.
+# DEPS:    subprocess, sys, pathlib, pytest, scripts.
+# ==============================================================================
+
 """Tests for the docs archive hygiene checker."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -10,6 +19,12 @@ import pytest
 
 from scripts import check_docs_archive_hygiene as checker
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent

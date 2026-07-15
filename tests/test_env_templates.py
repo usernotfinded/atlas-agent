@@ -1,12 +1,29 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_env_templates.py
+# PURPOSE: Verifies env templates behavior and regression expectations.
+# DEPS:    subprocess, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import subprocess
 import sys
 from pathlib import Path
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).parent.parent
 CHECKER = REPO_ROOT / "scripts" / "check_env_templates.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_checker(*extra_args: str) -> subprocess.CompletedProcess:
     return subprocess.run(

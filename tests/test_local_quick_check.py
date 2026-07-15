@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_local_quick_check.py
+# PURPOSE: Verifies local quick check behavior and regression expectations.
+# DEPS:    os, subprocess, pathlib, pytest.
+# ==============================================================================
+
 """Tests for local quick check and smoke check scripts."""
+
+# --- IMPORTS ---
 
 import os
 import subprocess
@@ -6,6 +15,12 @@ from pathlib import Path
 
 import pytest
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_shell(script_path: Path, cwd: Path | None = None, env: dict | None = None, args: list[str] | None = None) -> subprocess.CompletedProcess:
     cmd = ["/bin/bash", str(script_path)]

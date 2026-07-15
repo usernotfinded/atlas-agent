@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_candidate_chain.py
+# PURPOSE: Verifies candidate chain behavior and regression expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Tests for the candidate-chain consistency checker."""
+
+# --- IMPORTS ---
 
 import json
 import subprocess
@@ -7,8 +16,16 @@ from pathlib import Path
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 CHECKER_SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "check_candidate_chain.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run(repo: Path):
     return subprocess.run(

@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_model_canonicalization.py
+# PURPOSE: Verifies model canonicalization behavior and regression expectations.
+# DEPS:    os, json, pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import json
 import pytest
 from pathlib import Path
 from atlas_agent.config.store import _atomic_write_toml, get_config_toml_path
 from atlas_agent.config import get_config, set_raw_value, unset_raw_value
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_set_model_default_writes_only_model_model(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)

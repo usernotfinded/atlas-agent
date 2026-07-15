@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/brokers/test_alpaca_submit.py
+# PURPOSE: Verifies alpaca submit behavior and regression expectations.
+# DEPS:    json, os, http, io, unittest, pytest, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -17,6 +26,12 @@ from atlas_agent.execution.order import Order, OrderResult
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _broker() -> AlpacaBroker:
     config = AtlasConfig(

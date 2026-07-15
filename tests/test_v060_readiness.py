@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v060_readiness.py
+# PURPOSE: Verifies v060 readiness behavior and regression expectations.
+# DEPS:    importlib, json, subprocess, sys, pathlib, types, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for v0.6.0 readiness checker.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -17,9 +27,17 @@ from unittest.mock import patch
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "historical_release_checkers" / "check_v060_readiness.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_script_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("check_v060_readiness", SCRIPT)

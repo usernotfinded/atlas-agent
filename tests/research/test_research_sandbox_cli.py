@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_sandbox_cli.py
+# PURPOSE: Verifies research sandbox cli behavior and regression expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -10,6 +19,12 @@ from atlas_agent.cli import main
 from atlas_agent.research.provider_call_plan import provider_call_plan_sha256
 from atlas_agent.research.provider_execution_audit_packet import provider_execution_audit_packet_sha256
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _raise_if_called(*args, **kwargs):
     raise AssertionError("Config/secrets loader must not be called")

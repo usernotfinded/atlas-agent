@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_quality_contract.py
+# PURPOSE: Verifies autonomous paper quality contract behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest, scripts.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -9,8 +19,16 @@ import pytest
 
 from scripts.check_autonomous_paper_quality_contract import check_all
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_checker_passes_on_real_repo():
     result = check_all()

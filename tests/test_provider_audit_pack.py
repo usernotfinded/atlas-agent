@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_audit_pack.py
+# PURPOSE: Verifies provider audit pack behavior and regression expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for the local-only provider audit pack command."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -16,6 +25,8 @@ from atlas_agent.providers.provider_preflight import (
     verify_preflight_evidence_bundle,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 EXPECTED_FILES = [
     "call-plan.json",
     "validation-report.json",
@@ -28,6 +39,12 @@ EXPECTED_FILES = [
     "audit-pack-manifest.json",
 ]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_audit_pack_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> Path:
     output_dir = tmp_path / "audit-pack"

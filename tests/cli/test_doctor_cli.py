@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_doctor_cli.py
+# PURPOSE: Verifies doctor cli behavior and regression expectations.
+# DEPS:    json, socket, urllib, pathlib, unittest, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -13,6 +23,8 @@ from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 FAKE_SECRETS = (
     "sk-test-should-not-appear",
     "anthropic-secret-should-not-appear",
@@ -20,6 +32,12 @@ FAKE_SECRETS = (
     "binance-secret-should-not-appear",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     config = AtlasConfig(

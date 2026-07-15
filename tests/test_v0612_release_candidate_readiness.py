@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0612_release_candidate_readiness.py
+# PURPOSE: Verifies v0612 release candidate readiness behavior and regression
+#         expectations.
+# DEPS:    importlib, json, subprocess, sys, pathlib, types, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for v0.6.12 release candidate readiness checker.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -14,9 +25,17 @@ from pathlib import Path
 from types import ModuleType
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_v0612_release_candidate_readiness.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_script_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("check_v0612_release_candidate_readiness", SCRIPT)

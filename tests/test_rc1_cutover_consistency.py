@@ -1,7 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_rc1_cutover_consistency.py
+# PURPOSE: Verifies rc1 cutover consistency behavior and regression
+#         expectations.
+# DEPS:    json, re, subprocess, sys, tomllib, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Historical v0.5.7 release record check tests.
 
 No execution code, no network calls, no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -15,6 +26,8 @@ from pathlib import Path
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_rc1_cutover.py"
 VERSION_SCRIPT = REPO_ROOT / "scripts" / "check_version_consistency.py"
@@ -22,6 +35,12 @@ VERSION_SCRIPT = REPO_ROOT / "scripts" / "check_version_consistency.py"
 HISTORICAL_STABLE_VERSION = "0.5.7"
 HISTORICAL_STABLE_TAG = "v0.5.7"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestScriptExists:
     def test_script_exists(self) -> None:

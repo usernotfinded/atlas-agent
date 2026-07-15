@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_worktree_hygiene.py
+# PURPOSE: Verifies worktree hygiene behavior and regression expectations.
+# DEPS:    subprocess, pathlib, pytest, scripts.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import subprocess
@@ -13,6 +22,12 @@ from scripts.check_no_protected_staged import (
     main,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.mark.parametrize(
     "path,expected",

@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_kernel.py
+# PURPOSE: Verifies autonomous paper kernel behavior and regression
+#         expectations.
+# DEPS:    json, datetime, pathlib, typing, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -23,8 +33,16 @@ from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.manager import RiskManager
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 SAMPLE_CSV = Path(__file__).resolve().parents[1] / "data" / "sample" / "ohlcv.csv"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_bar(**overrides: Any) -> MarketBar:
     defaults = {

@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/reports/test_report_generator.py
+# PURPOSE: Verifies report generator behavior and regression expectations.
+# DEPS:    json, tempfile, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for atlas_agent.reports.generator and sources."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -19,6 +28,12 @@ from atlas_agent.reports.sources import (
     load_system_health_summary,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestGenerateReport:
     def test_daily_report_structure(self):

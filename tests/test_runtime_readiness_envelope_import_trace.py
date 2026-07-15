@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_runtime_readiness_envelope_import_trace.py
+# PURPOSE: Verifies runtime readiness envelope import trace behavior and
+#         regression expectations.
+# DEPS:    json, subprocess, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -5,6 +15,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -25,6 +37,12 @@ _FORBIDDEN_MODULES = (
     "anthropic",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_subprocess_code(code: str) -> tuple[int, str, str]:
     result = subprocess.run(

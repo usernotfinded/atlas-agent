@@ -1,3 +1,10 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_next_planned_tag_guard.py
+# PURPOSE: Verifies next planned tag guard behavior and regression expectations.
+# DEPS:    subprocess, pytest, scripts.
+# ==============================================================================
+
 """Regression coverage for the next-planned tag guard in release-metadata checkers.
 
 Guards against the bug class found during the v0.6.21 cutover: a checker's
@@ -11,6 +18,8 @@ never drift from ``next_planned_release`` in release metadata. These tests are
 deterministic and offline: ``subprocess.run`` is mocked, so no real git tags are
 read or created.
 """
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import subprocess
@@ -25,6 +34,8 @@ from scripts import (
 
 # (checker module, guard function name) for every checker that guards the
 # next-planned release tag by shelling out to ``git tag --list``.
+# --- CONFIGURATION AND CONSTANTS ---
+
 _GUARDS = [
     (check_bounded_autonomy_governance, "_check_version_planning_only"),
     (check_autonomous_paper_workflow_demo, "_check_release_metadata"),
@@ -33,6 +44,12 @@ _GUARDS = [
 
 _SENTINEL = "v9.9.9-next-planned-sentinel"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class _FakeCompletedProcess:
     def __init__(self, stdout: str) -> None:

@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_smoke_release_tag_script.py
+# PURPOSE: Verifies smoke release tag script behavior and regression
+#         expectations.
+# DEPS:    os, subprocess, textwrap, pathlib, pytest.
+# ==============================================================================
+
 """Tests for scripts/smoke_release_tag.sh.
 
 These tests verify the smoke script's behavior using fake git/python commands
 so no network access or real cloning is required.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -14,8 +24,16 @@ from pathlib import Path
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 SCRIPT_PATH = Path("scripts/smoke_release_tag.sh")
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _write_fake_command(bin_dir: Path, name: str, body: str) -> None:
     path = bin_dir / name

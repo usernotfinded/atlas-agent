@@ -1,9 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_agent_mode.py
+# PURPOSE: Verifies agent mode behavior and regression expectations.
+# DEPS:    pytest, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 from unittest.mock import patch
 from atlas_agent.config import AtlasConfig, MarketConfig
 from atlas_agent.cli import main
 from atlas_agent.ai.discipline import write_user_discipline
 from atlas_agent.agent.result import AgentResult
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 GOOD_PROFILE = (
     "# Profile\n\n"
@@ -17,6 +28,12 @@ GOOD_PROFILE = (
     "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
     "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
 )
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def base_config(tmp_path):

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_symbol_configuration.py
+# PURPOSE: Verifies symbol configuration behavior and regression expectations.
+# DEPS:    pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -8,6 +17,12 @@ import pytest
 from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig, MarketConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_no_runtime_default_symbol_is_btc_usd() -> None:
     """AtlasConfig must not default to BTC-USD or any hardcoded product symbol."""

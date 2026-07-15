@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_heartbeat.py
+# PURPOSE: Verifies heartbeat behavior and regression expectations.
+# DEPS:    json, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -5,6 +14,12 @@ from pathlib import Path
 
 from atlas_agent.safety.heartbeat import HeartbeatManager
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_heartbeat_record_repeated(tmp_path: Path) -> None:
     mgr = HeartbeatManager(tmp_path / "heartbeat.json")

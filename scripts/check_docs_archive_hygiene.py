@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_docs_archive_hygiene.py
+# PURPOSE: Validate historical docs archive hygiene and reference integrity.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Validate historical docs archive hygiene and reference integrity.
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -10,6 +17,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -19,6 +28,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_DIR = REPO_ROOT / "docs"
@@ -108,6 +119,12 @@ HISTORICAL_EVIDENCE_PATHS = {
     "CHANGELOG.md",
 }
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _is_historical_evidence(doc: Path, repo_root: Path | None = None) -> bool:
     repo_root = repo_root or REPO_ROOT

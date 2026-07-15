@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_validate_readonly.py
+# PURPOSE: Verifies validate readonly behavior and regression expectations.
+# DEPS:    os, shutil, tempfile, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -10,6 +19,12 @@ import pytest
 from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 from atlas_agent.diagnostics.readiness import run_diagnostics
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def clean_workspace():

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_docs_v040.py
+# PURPOSE: Verifies docs v040 behavior and regression expectations.
+# DEPS:    re, pytest, pathlib, tomllib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import re
 
 import pytest
@@ -5,8 +14,16 @@ from pathlib import Path
 import tomllib
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 _RUNTIME_MARKDOWN_DIRS = {"artifacts", "memory", "reports"}
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def get_markdown_files():
     return [

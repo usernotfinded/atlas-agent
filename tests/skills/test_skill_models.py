@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/skills/test_skill_models.py
+# PURPOSE: Verifies skill models behavior and regression expectations.
+# DEPS:    json, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for skill candidate models."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -13,6 +22,12 @@ from atlas_agent.skills.models import (
     SkillAudit,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestSkillCandidateSchema:
     def test_candidate_defaults(self) -> None:

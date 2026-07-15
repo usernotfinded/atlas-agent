@@ -1,8 +1,19 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_forbidden_claims.py
+# PURPOSE: Scan docs and marketing files for forbidden safety/profit claims.
+# DEPS:    sys, pathlib.
+# ==============================================================================
+
 """Scan docs and marketing files for forbidden safety/profit claims."""
+
+# --- IMPORTS ---
 
 import sys
 from pathlib import Path
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 _FORBIDDEN_PHRASES = [
     "zero risk",
@@ -23,6 +34,12 @@ _SCAN_TARGETS = [
     ".github/pull_request_template.md",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _normalize_for_scan(line: str) -> str:
     """Return a normalized form where hyphens become spaces for phrase matching."""

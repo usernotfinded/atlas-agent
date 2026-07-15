@@ -1,4 +1,15 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_assurance_workflow_artifact.py
+# PURPOSE: Verifies release assurance workflow artifact behavior and regression
+#         expectations.
+# DEPS:    json, shutil, subprocess, sys, zipfile, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the release-assurance workflow artifact checker."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -14,11 +25,19 @@ import pytest
 from scripts.check_release_assurance_workflow_artifact import validate_artifact
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_workflow_artifact.py"
 BUILD_SCRIPT = REPO_ROOT / "scripts" / "build_release_assurance_bundle_manifest.py"
 RELEASE = "v0.6.11"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run(*args: str | Path, cwd: Path | None = None, timeout: int = 60) -> subprocess.CompletedProcess[str]:
     return subprocess.run(

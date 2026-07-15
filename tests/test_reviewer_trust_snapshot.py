@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_reviewer_trust_snapshot.py
+# PURPOSE: Verifies reviewer trust snapshot behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, tempfile, pathlib, pytest.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -8,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 BUILDER_SCRIPT = ROOT / "scripts" / "build_reviewer_trust_snapshot.py"
@@ -31,6 +43,12 @@ REQUIRED_SAFETY_INVARIANTS = {
     "no_risk_claims_absent": True,
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_builder(tmp_path: Path, *, deterministic: bool = True, extra_args: list[str] | None = None) -> Path:
     out_dir = tmp_path / "snapshot"

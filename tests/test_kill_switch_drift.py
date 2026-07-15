@@ -1,9 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_kill_switch_drift.py
+# PURPOSE: Verifies kill switch drift behavior and regression expectations.
+# DEPS:    json, pathlib, pytest.
+# ==============================================================================
+
 """Kill-switch status drift detection tests.
 
 These tests verify that documented/user-facing kill-switch status values
 do not drift from the canonical source-of-truth values defined in the
 safety module. They do not exercise runtime behavior or bypass gates.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -12,6 +21,8 @@ from pathlib import Path
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -19,6 +30,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # Canonical values from source of truth
 # ---------------------------------------------------------------------------
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _canonical_advanced_modes() -> set[str]:
     """Advanced kill-switch modes from src/atlas_agent/safety/models.py."""

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/tools/test_builtin.py
+# PURPOSE: Verifies builtin behavior and regression expectations.
+# DEPS:    pytest, typing, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 from typing import Any
 from atlas_agent.tools.registry import ToolRegistry
@@ -6,6 +15,12 @@ from atlas_agent.tools.mock_impl import MOCK_IMPLEMENTATION_NOTICE
 from atlas_agent.tools.spec import ToolSpec, ToolCall, ToolResult, ToolError
 from atlas_agent.core.types import Session
 from typing import Union
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class EmptyGuardrailChain:
     def evaluate(self, tool_call: ToolCall, session: Session) -> Union[ToolResult, ToolError, None]:

@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_paper_strategy_robustness.py
+# PURPOSE: Check the CAND-027 paper strategy robustness surface.
+# DEPS:    argparse, csv, json, os, re, sys, additional local modules.
+# ==============================================================================
+
 """Check the CAND-027 paper strategy robustness surface.
 
 Deterministic and local-only. Does not mutate files, call providers, call
@@ -9,6 +16,8 @@ Exit codes:
   1 = findings
   2 = operational error
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -21,6 +30,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _next_patch_version(version: str) -> str:
     """Return the next patch version (e.g. 0.6.24 -> 0.6.25)."""

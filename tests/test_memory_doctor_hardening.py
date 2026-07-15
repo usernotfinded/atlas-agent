@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_memory_doctor_hardening.py
+# PURPOSE: Verifies memory doctor hardening behavior and regression
+#         expectations.
+# DEPS:    json, os, time, pathlib, unittest, pytest, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -12,6 +22,12 @@ from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 from atlas_agent.memory_doctor import run_memory_doctor
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

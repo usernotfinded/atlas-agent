@@ -1,7 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_clean_install_check.py
+# PURPOSE: Verifies clean install check behavior and regression expectations.
+# DEPS:    subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Tests for scripts/check_clean_install.py.
 
 No network calls, no credentials, no broker/provider contact, no live trading.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -12,9 +21,17 @@ from pathlib import Path
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_clean_install.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(*args: str, cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(

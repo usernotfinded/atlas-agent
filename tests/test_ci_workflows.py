@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_ci_workflows.py
+# PURPOSE: Verifies ci workflows behavior and regression expectations.
+# DEPS:    pathlib, pytest.
+# ==============================================================================
+
 """Static tests for CI workflow files and ci_check.sh."""
+
+# --- IMPORTS ---
 
 from pathlib import Path
 
 import pytest
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parent.parent

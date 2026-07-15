@@ -1,13 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_changelog_consistency.py
+# PURPOSE: Verifies changelog consistency behavior and regression expectations.
+# DEPS:    pathlib, pytest.
+# ==============================================================================
+
 """CHANGELOG consistency and safety checks.
 
 No execution code, no network calls, no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 CHANGELOG = ROOT / "CHANGELOG.md"
@@ -81,6 +92,12 @@ _REQUIRED_VERSIONS = (
     "0.5.7.dev50",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def changelog_text() -> str:

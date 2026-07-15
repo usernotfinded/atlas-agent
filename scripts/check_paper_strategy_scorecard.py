@@ -1,7 +1,23 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_paper_strategy_scorecard.py
+# PURPOSE: Validates paper strategy scorecard requirements for local and CI
+#         workflows.
+# DEPS:    json, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import sys
 from pathlib import Path
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def main() -> int:
     try:

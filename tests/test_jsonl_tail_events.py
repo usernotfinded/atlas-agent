@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_jsonl_tail_events.py
+# PURPOSE: Verifies jsonl tail events behavior and regression expectations.
+# DEPS:    json, datetime, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -9,6 +18,12 @@ import pytest
 from atlas_agent.events.log import EventLogger, read_recent_events
 from atlas_agent.jsonl import tail_jsonl, tail_lines
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_tail_lines_reads_only_recent_non_empty_lines(tmp_path: Path) -> None:
     path = tmp_path / "events.jsonl"

@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_candidate_chain.py
+# PURPOSE: Candidate-chain consistency guard for Atlas Agent release docs.
+# DEPS:    argparse, dataclasses, json, re, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Candidate-chain consistency guard for Atlas Agent release docs.
 
 Deterministic, local, read-only, stdlib-only checker for release candidate-chain
@@ -7,6 +15,8 @@ files under docs/releases/.  Exit codes:
   1  operational error (missing metadata, malformed JSON, unreadable file)
   2  validation failure
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -20,6 +30,8 @@ from pathlib import Path
 from release_metadata import load_metadata, ReleaseMetadata
 
 # Filename patterns that identify candidate-chain files.
+# --- CONFIGURATION AND CONSTANTS ---
+
 _CANDIDATE_FILENAME_RE = re.compile(
     r"^(v\d+\.\d+\.\d+)-(?:candidates\.json|candidates\.md|candidate-selection\.md|plan\.md)$"
 )
@@ -95,6 +107,12 @@ NEGATIVE_INDICATORS = (
     "forbidden",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _normalize_status_for_validation(status: str) -> str:
     """Normalize a status string for set membership checks."""

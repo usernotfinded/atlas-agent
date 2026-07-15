@@ -1,9 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_candidate_chain_e2e.py
+# PURPOSE: Verifies candidate chain e2e behavior and regression expectations.
+# DEPS:    json, datetime, pathlib, typing, atlas_agent.
+# ==============================================================================
+
 """End-to-end artifact-consumption tests for the CAND-004..CAND-007 chain.
 
 These tests exercise real/full artifact shapes, not stripped fixtures, and prove
 the pipeline can run from CAND-004 through CAND-007 without symbol mismatch or
 unknown-key schema rejection.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -33,10 +42,18 @@ from atlas_agent.agent.runtime_readiness_envelope import (
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 _AS_OF = "2026-06-24T10:00:00Z"
 _SYMBOL = "AAPL"
 _RUN_ID = "run-e2e-001"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _write_json(path: Path, data: dict[str, Any]) -> None:
     path.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")

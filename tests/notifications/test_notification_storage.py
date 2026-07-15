@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/notifications/test_notification_storage.py
+# PURPOSE: Verifies notification storage behavior and regression expectations.
+# DEPS:    pathlib, atlas_agent.
+# ==============================================================================
+
 """Tests for notification local storage."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -6,6 +15,12 @@ from pathlib import Path
 from atlas_agent.notifications.models import NotificationResult, NotificationTransport
 from atlas_agent.notifications.storage import save_result, list_results, load_result
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_save_and_list_results(tmp_path: Path) -> None:
     result = NotificationResult(

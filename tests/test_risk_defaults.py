@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_risk_defaults.py
+# PURPOSE: Verifies risk defaults behavior and regression expectations.
+# DEPS:    re, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import re
@@ -11,8 +20,16 @@ from atlas_agent.risk.limits import (
     RiskLimits,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).parent.parent
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestEnvExampleSafety:
     """.env.example must disable live trading and require approval by default."""

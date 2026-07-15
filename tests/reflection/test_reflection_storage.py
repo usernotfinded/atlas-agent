@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/reflection/test_reflection_storage.py
+# PURPOSE: Verifies reflection storage behavior and regression expectations.
+# DEPS:    tempfile, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for atlas_agent.reflection.storage."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import tempfile
@@ -19,6 +28,12 @@ from atlas_agent.reflection.storage import (
     save_artifact,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _sample_artifact(path: str = "test.md") -> ReflectionArtifact:
     return ReflectionArtifact(

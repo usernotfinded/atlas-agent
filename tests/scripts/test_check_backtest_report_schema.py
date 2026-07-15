@@ -1,10 +1,28 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/scripts/test_check_backtest_report_schema.py
+# PURPOSE: Verifies check backtest report schema behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 import sys
 from pathlib import Path
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 SCRIPT = Path(__file__).parents[2] / "scripts" / "check_backtest_report_schema.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _write_report(root: Path, run_id: str, data: dict | str) -> Path:
     run_dir = root / run_id

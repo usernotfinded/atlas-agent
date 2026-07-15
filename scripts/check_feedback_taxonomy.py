@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_feedback_taxonomy.py
+# PURPOSE: Verify the local feedback label taxonomy and triage docs.
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Verify the local feedback label taxonomy and triage docs.
 
 Deterministic and local. Does not call the GitHub API, load credentials,
 access the network, or modify repo files.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,6 +22,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 LABELS_FILE = REPO_ROOT / ".github" / "labels.yml"
@@ -96,6 +107,12 @@ TEMPLATE_COMPATIBLE_CATEGORIES = [
     "cli",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _parse_labels_yml(path: Path) -> dict[str, list[dict[str, str]]]:
     """Parse the simple YAML structure used by labels.yml without PyYAML."""

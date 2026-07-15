@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/learning/test_learning_renderers.py
+# PURPOSE: Verifies learning renderers behavior and regression expectations.
+# DEPS:    json, atlas_agent.
+# ==============================================================================
+
 """Tests for learning suggestion renderers."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -6,6 +15,12 @@ import json
 from atlas_agent.learning.models import LearningSuggestion, SuggestionStatus
 from atlas_agent.learning.renderers import render_markdown, render_json_string
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestRenderers:
     def test_render_markdown_contains_title(self) -> None:

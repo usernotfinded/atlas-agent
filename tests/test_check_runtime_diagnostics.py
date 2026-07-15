@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_check_runtime_diagnostics.py
+# PURPOSE: Verifies check runtime diagnostics behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Tests for check_runtime_diagnostics.py."""
+
+# --- IMPORTS ---
 
 import json
 import subprocess
@@ -7,6 +17,12 @@ from pathlib import Path
 
 import pytest
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(*args: str) -> subprocess.CompletedProcess:
     repo_root = Path(__file__).resolve().parent.parent

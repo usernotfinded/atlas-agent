@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_configless_cli.py
+# PURPOSE: Verifies research configless cli behavior and regression
+#         expectations.
+# DEPS:    csv, json, os, pathlib, unittest, pytest, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import csv
@@ -10,6 +20,12 @@ import pytest
 
 from atlas_agent.cli import main
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _raise_if_called(*args, **kwargs):
     raise AssertionError("Config/secrets loader must not be called")

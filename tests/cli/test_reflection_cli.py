@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_reflection_cli.py
+# PURPOSE: Verifies reflection cli behavior and regression expectations.
+# DEPS:    json, subprocess, sys, tempfile, pathlib, pytest.
+# ==============================================================================
+
 """Tests for atlas reflection CLI commands."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -9,9 +18,17 @@ from pathlib import Path
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 pytestmark = pytest.mark.slow
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def atlas_cli():

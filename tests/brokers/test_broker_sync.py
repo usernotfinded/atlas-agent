@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/brokers/test_broker_sync.py
+# PURPOSE: Verifies broker sync behavior and regression expectations.
+# DEPS:    threading, time, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import threading
@@ -9,6 +18,12 @@ from atlas_agent.brokers.sync import BrokerSyncService
 from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.brokers.models import BrokerOrder
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def paper_adapter():

@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_autonomous_paper_stateful.sh
+# PURPOSE: Demonstrates the autonomous paper stateful workflow using safe local
+#         defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 # CAND-003 stateful autonomous paper demo
 #
 # Demonstrates stateful resume, a simulated fill, a risk rejection, hold
@@ -8,7 +23,6 @@
 # Usage:
 #   bash scripts/demo_autonomous_paper_stateful.sh
 #   DEMO_WORKSPACE=/path/to/empty/dir bash scripts/demo_autonomous_paper_stateful.sh
-set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"

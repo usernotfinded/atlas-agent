@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/build_reviewer_trust_snapshot.py
+# PURPOSE: Build a deterministic reviewer trust snapshot for Atlas Agent.
+# DEPS:    argparse, hashlib, json, re, sys, datetime, additional local modules.
+# ==============================================================================
+
 """Build a deterministic reviewer trust snapshot for Atlas Agent.
 
 This script produces a compact, reviewer/founder/marketplace-facing snapshot that
@@ -9,6 +16,8 @@ artifact plus a machine-readable JSON artifact.
 It is local-only, offline, and credential-free. It does not call brokers,
 providers, GitHub APIs, or load secrets.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -21,6 +30,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 METADATA_PATH = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
@@ -68,6 +79,12 @@ FORBIDDEN_CLAIMS_ABSENT = {
     "beat_the_market": True,
 }
 
+
+# ==============================================================================
+# ARTIFACT BUILD WORKFLOW
+# ==============================================================================
+
+# --- BUILD HELPERS AND ENTRYPOINTS ---
 
 def _load_json(path: Path) -> dict[str, Any]:
     with open(path, encoding="utf-8") as f:

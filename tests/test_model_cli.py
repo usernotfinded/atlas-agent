@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_model_cli.py
+# PURPOSE: Verifies model cli behavior and regression expectations.
+# DEPS:    os, getpass, shutil, tempfile, pathlib, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -10,6 +20,12 @@ import pytest
 
 from atlas_agent.cli import main
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def workspace(monkeypatch):

@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_github_actions_versions.py
+# PURPOSE: Validate GitHub Actions workflow action majors for Node 24
+#         compatibility.
+# DEPS:    argparse, json, re, sys, dataclasses, pathlib.
+# ==============================================================================
+
 """Validate GitHub Actions workflow action majors for Node 24 compatibility."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -10,6 +20,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ACTION_VERSION_POLICY = {
     "actions/checkout": "v6",
@@ -22,6 +34,12 @@ ACTION_RE = re.compile(
     r"(?P<action>actions/(?:checkout|setup-python|upload-artifact))@(?P<version>[A-Za-z0-9._-]+)"
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 @dataclass(frozen=True)
 class Finding:

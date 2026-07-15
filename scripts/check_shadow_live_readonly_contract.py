@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_shadow_live_readonly_contract.py
+# PURPOSE: Static check for the shadow-live read-only comparison contract
+#         (CAND-005).
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Static check for the shadow-live read-only comparison contract (CAND-005).
 
 Deterministic, local-only, read-only. Does not:
@@ -14,6 +22,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -22,6 +32,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -173,6 +185,12 @@ FORBIDDEN_CREDENTIAL_PATTERNS = (
     "bearer ",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

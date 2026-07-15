@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0613_post_release_hygiene.py
+# PURPOSE: Verifies v0613 post release hygiene behavior and regression
+#         expectations.
+# DEPS:    importlib, json, subprocess, sys, pathlib, types.
+# ==============================================================================
+
 """Tests for v0.6.13 post-release hygiene checker.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,9 +23,17 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_v0613_post_release_hygiene.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_script_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("check_v0613_post_release_hygiene", SCRIPT)

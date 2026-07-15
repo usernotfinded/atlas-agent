@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/gateway/telegram/test_server.py
+# PURPOSE: Verifies server behavior and regression expectations.
+# DEPS:    dataclasses, fastapi, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -11,6 +20,12 @@ from atlas_agent.gateway.telegram.config import TelegramWebhookSettings
 from atlas_agent.gateway.telegram.ratelimit import RateLimitConfig, TelegramRateLimiter
 from atlas_agent.gateway.telegram.server import create_fastapi_app
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @dataclass
 class FakeKeyring:

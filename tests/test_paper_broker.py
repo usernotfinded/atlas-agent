@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_broker.py
+# PURPOSE: Verifies paper broker behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.brokers.paper import PaperBroker
@@ -5,6 +14,12 @@ from atlas_agent.execution.order import Order
 from atlas_agent.portfolio.positions import Position
 from atlas_agent.portfolio.state import PortfolioState
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_paper_broker_works() -> None:
     state = PortfolioState(cash=1_000)

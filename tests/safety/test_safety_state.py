@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_safety_state.py
+# PURPOSE: Verifies safety state behavior and regression expectations.
+# DEPS:    json, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -6,6 +15,12 @@ from pathlib import Path
 from atlas_agent.safety.models import KillSwitchStatus
 from atlas_agent.safety.state import KillSwitchState
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_state_save_load_roundtrip(tmp_path: Path) -> None:
     mgr = KillSwitchState(tmp_path / "state.json")

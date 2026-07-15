@@ -1,9 +1,25 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_quality.py
+# PURPOSE: Verifies autonomous paper quality behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 from pathlib import Path
 
 from atlas_agent.agent.autonomous_paper_quality import build_trading_quality_gate, TradingQualityThresholdPolicy, write_trading_quality_artifacts
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _write_artifacts(tmp_path: Path, metrics: dict, decisions: list, fills: list):
     (tmp_path / "metrics.json").write_text(json.dumps(metrics), encoding="utf-8")

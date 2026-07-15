@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_report_cli.py
+# PURPOSE: Verifies report cli behavior and regression expectations.
+# DEPS:    json, subprocess, sys, tempfile, pathlib, pytest.
+# ==============================================================================
+
 """Tests for atlas report CLI commands."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -9,8 +18,16 @@ from pathlib import Path
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def atlas_cli():

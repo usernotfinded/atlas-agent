@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/build_release_evidence_bundle.py
+# PURPOSE: Build a deterministic local release evidence bundle.
+# DEPS:    argparse, json, os, subprocess, sys, datetime, additional local
+#         modules.
+# ==============================================================================
+
 """Build a deterministic local release evidence bundle.
 
 This script gathers version, git, safety, and check-command evidence into a
@@ -11,6 +19,8 @@ Usage:
     python3.11 scripts/build_release_evidence_bundle.py --skip-slow
     python3.11 scripts/build_release_evidence_bundle.py --include-quick-check
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -27,6 +37,8 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_BIN = os.environ.get("PYTHON_BIN", sys.executable)
@@ -75,6 +87,12 @@ _PROTECTED_BOUNDARIES = [
 # Helpers
 # ---------------------------------------------------------------------------
 
+
+# ==============================================================================
+# ARTIFACT BUILD WORKFLOW
+# ==============================================================================
+
+# --- BUILD HELPERS AND ENTRYPOINTS ---
 
 def _redact(text: str) -> str:
     """Redact absolute paths and credential-like strings from text."""

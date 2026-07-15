@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_paper_human_review_replay.py
+# PURPOSE: Validates paper human review replay requirements for local and CI
+#         workflows.
+# DEPS:    argparse, json, os, re, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +18,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ALLOWED_REVIEW_REPLAY_STATUSES = {
     "paper_review_replay_passed",
@@ -30,6 +42,12 @@ FORBIDDEN_DOC_CLAIMS = (
     "trade now",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()

@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_product_capability_inventory.py
+# PURPOSE: Verify the product capability inventory JSON and docs.
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Verify the product capability inventory JSON and docs.
 
 Deterministic and local. Does not call the GitHub API, load credentials,
 access the network, or modify repo files.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,6 +22,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 INVENTORY_FILE = REPO_ROOT / "tests" / "fixtures" / "product_capability_inventory.json"
@@ -113,6 +124,12 @@ SAFETY_POSTURE_PHRASES = [
     ("not production ready",),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _load_inventory() -> dict:
     with open(INVENTORY_FILE, encoding="utf-8") as f:

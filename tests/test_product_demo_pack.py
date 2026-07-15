@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_product_demo_pack.py
+# PURPOSE: Verifies product demo pack behavior and regression expectations.
+# DEPS:    json, os, shutil, subprocess, sys, tempfile, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -10,6 +20,8 @@ from pathlib import Path
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 PRODUCT_DEMO_DOC = ROOT / "docs" / "product-demo-pack.md"
@@ -67,6 +79,12 @@ REQUIRED_DOC_PHRASES = {
     ],
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.mark.parametrize("path", [PRODUCT_DEMO_DOC, MARKETPLACE_DOC, AUTONOMY_DOC])
 def test_required_doc_exists(path: Path) -> None:
@@ -260,6 +278,3 @@ def test_checker_detects_injected_forbidden_phrase() -> None:
             "guaranteed" in err.lower() or "beat the market" in err.lower()
             for err in data["errors"]
         ), data["errors"]
-
-
-

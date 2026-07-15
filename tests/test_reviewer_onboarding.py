@@ -1,8 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_reviewer_onboarding.py
+# PURPOSE: Verifies reviewer onboarding behavior and regression expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Tests for reviewer onboarding script and docs — Batch 10.10.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,6 +22,8 @@ from pathlib import Path
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_reviewer_onboarding.py"
@@ -45,6 +56,12 @@ _FORBIDDEN_FRAGMENTS = (
     "/var/tmp/",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(*args: str) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(

@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/learning/test_learning_storage.py
+# PURPOSE: Verifies learning storage behavior and regression expectations.
+# DEPS:    json, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for learning suggestion storage."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -14,6 +23,12 @@ from atlas_agent.learning.storage import (
     delete_suggestion,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestLearningStorage:
     def test_save_and_load(self, tmp_path: Path) -> None:

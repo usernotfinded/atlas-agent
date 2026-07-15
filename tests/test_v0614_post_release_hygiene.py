@@ -1,9 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0614_post_release_hygiene.py
+# PURPOSE: Verifies v0614 post release hygiene behavior and regression
+#         expectations.
+# DEPS:    hashlib, importlib, json, shutil, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the historical v0.6.14 GitHub-only post-release hygiene gate.
 
 The checker is archived under scripts/historical_release_checkers/ because it
 validates the v0.6.14 post-cutover posture. It remains syntactically correct and
 is exercised against temporary fixtures, not the current repo.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -19,9 +30,17 @@ from types import ModuleType
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "historical_release_checkers" / "check_v0614_post_release_hygiene.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_script_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("check_v0614_post_release_hygiene", SCRIPT)

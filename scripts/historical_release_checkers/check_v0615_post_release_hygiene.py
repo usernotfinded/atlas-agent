@@ -1,10 +1,19 @@
 #!/usr/bin/env python3.11
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/historical_release_checkers/check_v0615_post_release_hygiene.py
+# PURPOSE: Validate the deterministic v0.6.15 GitHub-only post-release posture.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Validate the deterministic v0.6.15 GitHub-only post-release posture.
 
 Exit codes: 0 pass, 1 findings, 2 operational error. This checker is local,
 read-only, and performs no network, provider, broker, notification, order,
 tagging, publishing, or credential operations.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -15,6 +24,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 CURRENT_PUBLIC = "v0.6.15"
 SOURCE_VERSION = "0.6.15"
@@ -92,6 +103,12 @@ POSITIVE_PYPI = [
     "available on pypi",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(root: Path, rel: str) -> str:
     return (root / rel).read_text(encoding="utf-8")

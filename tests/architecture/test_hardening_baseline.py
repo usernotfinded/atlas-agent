@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/architecture/test_hardening_baseline.py
+# PURPOSE: Verifies hardening baseline behavior and regression expectations.
+# DEPS:    pathlib, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -8,6 +17,12 @@ from atlas_agent.cli_commands import build_core_command_registry
 from atlas_agent.cli_context import CLIContext
 from atlas_agent.config import AtlasConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

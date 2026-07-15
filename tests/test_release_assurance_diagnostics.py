@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_assurance_diagnostics.py
+# PURPOSE: Verifies release assurance diagnostics behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest, scripts.
+# ==============================================================================
+
 """Tests for release-assurance failure diagnostics and redaction (CAND-011)."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -11,10 +21,18 @@ import pytest
 
 from scripts.check_release_assurance_diagnostics import check_diagnostics
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RELEASE_ASSURANCE_SCRIPT = REPO_ROOT / "scripts" / "release_assurance.py"
 CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_diagnostics.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_release_assurance(
     output_dir: Path,

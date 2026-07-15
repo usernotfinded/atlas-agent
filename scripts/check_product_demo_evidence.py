@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_product_demo_evidence.py
+# PURPOSE: Validate a product demo evidence bundle.
+# DEPS:    argparse, hashlib, json, os, re, sys, additional local modules.
+# ==============================================================================
+
 """Validate a product demo evidence bundle.
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -9,6 +16,8 @@ Exit codes:
   1 = blocking findings
   2 = operational error (e.g., missing bundle directory)
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -21,6 +30,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -167,6 +178,12 @@ NEGATIVE_CONTEXT_INDICATORS = (
     "out of scope",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

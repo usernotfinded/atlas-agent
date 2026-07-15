@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_release_assurance_snapshot_integration.py
+# PURPOSE: Validate the reviewer trust snapshot integration in release
+#         assurance.
+# DEPS:    argparse, ast, json, re, sys, pathlib, additional local modules.
+# ==============================================================================
+
 """Validate the reviewer trust snapshot integration in release assurance.
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -8,6 +16,8 @@ Exit codes:
   0 = integration check passed
   1 = blocking findings or operational error (e.g., missing script)
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -19,6 +29,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 RELEASE_ASSURANCE_SCRIPT = "scripts/release_assurance.py"
@@ -65,6 +77,12 @@ SAFE_TOKEN_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _mask_safe_tokens(text: str) -> str:
     """Replace allowed read-only token expressions with a placeholder."""

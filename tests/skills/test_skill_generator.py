@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/skills/test_skill_generator.py
+# PURPOSE: Verifies skill generator behavior and regression expectations.
+# DEPS:    pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for skill candidate generator."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -17,6 +26,12 @@ from atlas_agent.skills.generator import (
 )
 from atlas_agent.skills.models import SkillCandidateStatus
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestSkillCandidateGenerator:
     def test_generate_from_reflection(self) -> None:

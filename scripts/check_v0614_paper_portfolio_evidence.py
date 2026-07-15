@@ -1,4 +1,11 @@
 #!/usr/bin/env python3.11
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_v0614_paper_portfolio_evidence.py
+# PURPOSE: Check the v0.6.14 paper portfolio evidence bundle.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Check the v0.6.14 paper portfolio evidence bundle.
 
 This checker is deterministic and local-only. It does not mutate files, access
@@ -11,6 +18,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -19,6 +28,8 @@ import re
 import sys
 from pathlib import Path
 from typing import Any
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ARTIFACT_TYPE = "v0614_paper_portfolio_evidence"
 CURRENT_PUBLIC = "v0.6.13"
@@ -80,6 +91,12 @@ FORBIDDEN_RELEASE_CLAIMS = [
     "v0.6.14 pypi publish",
     '"pypi_published": true',
 ]
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check v0.6.14 paper portfolio evidence bundle.")

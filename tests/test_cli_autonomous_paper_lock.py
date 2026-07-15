@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_cli_autonomous_paper_lock.py
+# PURPOSE: Verifies cli autonomous paper lock behavior and regression
+#         expectations.
+# DEPS:    os, subprocess, sys, time, pathlib, pytest, additional local modules.
+# ==============================================================================
+
 """CLI smoke test for stateful autonomous-paper lock failure.
 
 Verifies that ``atlas agent autonomous-paper --state-dir <dir>`` fails closed
 with a clear, user-facing error when the state directory is already locked by
 another process.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -23,6 +33,8 @@ from tests.cli.test_autonomous_paper_stateful_cli import (
     SAMPLE_DATA,
     _init_workspace,
 )
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 _LOCK_HOLDER_SCRIPT = '''\
 import fcntl
@@ -48,6 +60,12 @@ finally:
     os.close(fd)
 '''
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _start_lock_holder(state_dir: Path, tmp_path: Path) -> tuple[subprocess.Popen, Path]:
     """Start a subprocess that holds ``state_dir`` locked until told to stop."""

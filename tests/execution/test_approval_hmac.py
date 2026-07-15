@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/execution/test_approval_hmac.py
+# PURPOSE: Verifies approval hmac behavior and regression expectations.
+# DEPS:    json, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -13,6 +22,12 @@ from atlas_agent.execution.approval import (
 )
 from atlas_agent.execution.order import Order
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_order(order_id: str = "test-1") -> Order:
     return Order(

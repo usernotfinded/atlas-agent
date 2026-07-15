@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/reports/test_report_renderers.py
+# PURPOSE: Verifies report renderers behavior and regression expectations.
+# DEPS:    json, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for atlas_agent.reports.renderers."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -19,6 +28,12 @@ from atlas_agent.reports.models import (
 )
 from atlas_agent.reports.renderers import render_json, render_json_string, render_markdown
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _sample_report() -> ReportData:
     return ReportData(

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_credentials.py
+# PURPOSE: Verifies credentials behavior and regression expectations.
+# DEPS:    os, json, pathlib, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import json
 from pathlib import Path
@@ -6,6 +15,12 @@ from unittest.mock import patch, MagicMock
 from atlas_agent.setup.state import WizardState
 from atlas_agent.setup.wizard_ui import WizardApplication
 from atlas_agent.cli import main
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_credentials_status_affects_completeness():
     state = WizardState(

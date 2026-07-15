@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_artifact_golden_contracts.py
+# PURPOSE: Verifies provider artifact golden contracts behavior and regression
+#         expectations.
+# DEPS:    hashlib, importlib, json, sys, copy, pathlib, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import hashlib
@@ -21,8 +32,16 @@ from tests.research.test_research_provider_mock_response_final_safety_seal impor
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures" / "provider_artifacts" / "final_safety_seal"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_json_fixture(name: str) -> dict[str, Any]:
     return json.loads((FIXTURE_DIR / name).read_text(encoding="utf-8"))

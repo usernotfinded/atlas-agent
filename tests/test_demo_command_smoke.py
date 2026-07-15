@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_demo_command_smoke.py
+# PURPOSE: Verifies demo command smoke behavior and regression expectations.
+# DEPS:    importlib, json, os, shutil, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for demo command smoke checker — CAND-004.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -17,6 +27,8 @@ from pathlib import Path
 from types import ModuleType
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKER_SCRIPT = REPO_ROOT / "scripts" / "check_demo_command_smoke.py"
 DEMO_SCRIPT = REPO_ROOT / "scripts" / "demo_paper_workflow.sh"
@@ -24,6 +36,12 @@ CHECK_DEMO_PROOF = REPO_ROOT / "scripts" / "check_demo_proof.py"
 CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.8-candidates.json"
 CANDIDATES_MD = REPO_ROOT / "docs" / "releases" / "v0.6.8-candidates.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

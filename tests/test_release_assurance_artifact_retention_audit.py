@@ -1,9 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_assurance_artifact_retention_audit.py
+# PURPOSE: Verifies release assurance artifact retention audit behavior and
+#         regression expectations.
+# DEPS:    json, subprocess, sys, datetime, pathlib, pytest, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the release-assurance artifact retention audit script and checker.
 
 All audit-script tests use fixture mode with a deterministic --reference-time so
 no live GitHub API calls are made. Checker tests validate the static safety
 scanner against the real workflow and synthetic unsafe variants.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -19,6 +30,8 @@ from scripts.check_release_assurance_artifact_retention_audit import (
     check,
 )
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 AUDIT_SCRIPT = REPO_ROOT / "scripts" / "audit_release_assurance_artifact_retention.py"
@@ -43,6 +56,12 @@ WATCHED_NAMES = [
     "reviewer-trust-snapshot",
 ]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _artifact(
     *,

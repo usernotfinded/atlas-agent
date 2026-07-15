@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_v0610_planning.py
+# PURPOSE: Read-only v0.6.10 planning baseline checker.
+# DEPS:    argparse, json, sys, pathlib.
+# ==============================================================================
+
 """Read-only v0.6.10 planning baseline checker.
 
 Validates that the v0.6.10 candidate planning artifacts exist, are well-formed,
@@ -19,6 +26,8 @@ Deterministic and local. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -26,6 +35,8 @@ import json
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -83,6 +94,12 @@ IMMEDIATE_CUTOVER_PHRASES = [
     "version bump to 0.6.10",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {

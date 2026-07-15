@@ -1,7 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_package_distribution_check.py
+# PURPOSE: Verifies package distribution check behavior and regression
+#         expectations.
+# DEPS:    io, subprocess, sys, tarfile, zipfile, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for scripts/check_package_distribution.py.
 
 No network calls, no credentials, no broker/provider contact, no live trading.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -14,6 +25,8 @@ from pathlib import Path
 
 import pytest
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
@@ -31,6 +44,12 @@ RUNTIME_REQUIRES_DIST = (
     "python-dotenv>=1.0",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(
     *args: str,

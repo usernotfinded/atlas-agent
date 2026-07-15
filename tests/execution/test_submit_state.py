@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/execution/test_submit_state.py
+# PURPOSE: Verifies submit state behavior and regression expectations.
+# DEPS:    json, os, uuid, datetime, pathlib, unittest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -42,6 +52,12 @@ from atlas_agent.execution.submit_state import (
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_order(**kwargs) -> Order:
     defaults = {

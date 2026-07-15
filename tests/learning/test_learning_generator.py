@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/learning/test_learning_generator.py
+# PURPOSE: Verifies learning generator behavior and regression expectations.
+# DEPS:    pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for learning suggestion generator."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,6 +21,12 @@ from atlas_agent.learning.generator import (
 )
 from atlas_agent.learning.models import LearningSuggestion, SuggestionStatus
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestGenerateFromInput:
     def test_from_existing_file(self, tmp_path: Path) -> None:

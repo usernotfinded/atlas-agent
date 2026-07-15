@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_cli_command_compatibility.py
+# PURPOSE: CLI command compatibility check — parser-only, no execution.
+# DEPS:    argparse, json, os, sys, pathlib.
+# ==============================================================================
+
 """CLI command compatibility check — parser-only, no execution.
 
 This script introspects the argparse parser built by atlas_agent.cli.build_parser
@@ -6,6 +13,8 @@ and verifies that expected top-level commands, subcommands, and research command
 are present. It does not call providers, brokers, or network endpoints, and it
 does not load credentials or modify workspace files.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -15,6 +24,12 @@ import os
 import sys
 from pathlib import Path
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _get_subparsers(parser: argparse.ArgumentParser) -> argparse._SubParsersAction | None:
     for action in parser._actions:

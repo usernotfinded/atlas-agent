@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/audit/test_shared_redaction_engine.py
+# PURPOSE: Verifies shared redaction engine behavior and regression
+#         expectations.
+# DEPS:    dataclasses, datetime, pathlib, pydantic, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,6 +22,12 @@ from atlas_agent import redaction as shared_redaction
 from atlas_agent.audit import redaction as audit_redaction
 from atlas_agent.events import EventLogger, generate_run_id
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class PayloadModel(BaseModel):
     note: str

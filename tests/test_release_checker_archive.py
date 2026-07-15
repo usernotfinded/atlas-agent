@@ -1,7 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_checker_archive.py
+# PURPOSE: Verifies release checker archive behavior and regression
+#         expectations.
+# DEPS:    pathlib.
+# ==============================================================================
+
 """Regression coverage for the historical release-checker archive."""
+
+# --- IMPORTS ---
 
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 ARCHIVE = ROOT / "scripts" / "historical_release_checkers"
@@ -33,6 +45,12 @@ HISTORICAL_CHECKERS = {
     "check_v069_release_prep.py",
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_historical_release_checkers_are_archived_not_deleted() -> None:
     archived = {path.name for path in ARCHIVE.glob("check_v*.py")}

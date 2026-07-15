@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_demo_seed_hardening.py
+# PURPOSE: Verifies demo seed hardening behavior and regression expectations.
+# DEPS:    re, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import re
@@ -10,6 +19,12 @@ from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 from atlas_agent.safety.secrets import scan_text_for_secrets
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

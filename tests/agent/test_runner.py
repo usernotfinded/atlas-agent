@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/agent/test_runner.py
+# PURPOSE: Verifies runner behavior and regression expectations.
+# DEPS:    os, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -14,6 +23,8 @@ from atlas_agent.config import AtlasConfig
 
 from atlas_agent.ai.discipline import _REQUIRED_SAFETY_SENTENCE
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 GOOD_PROFILE = (
     "# Profile\n\n"
     "## Decision temperament\n\nCautious.\n\n"
@@ -26,6 +37,12 @@ GOOD_PROFILE = (
     f"{_REQUIRED_SAFETY_SENTENCE}\n"
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def live_config(tmp_path: Path) -> AtlasConfig:

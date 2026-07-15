@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_gated_submit_conformance_contract.py
+# PURPOSE: Verifies gated submit conformance contract behavior and regression
+#         expectations.
+# DEPS:    ast, json, subprocess, sys, pathlib, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import ast
@@ -11,12 +22,20 @@ import pytest
 import scripts.check_gated_submit_conformance_contract as _checker
 from scripts.check_gated_submit_conformance_contract import check_all
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ENGINE_MODULE = (
     REPO_ROOT / "src" / "atlas_agent" / "agent" / "gated_submit_conformance.py"
 )
 DOC = REPO_ROOT / "docs" / "gated-submit-conformance.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_checker_passes_on_real_repo() -> None:
     result = check_all()

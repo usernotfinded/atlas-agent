@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_feedback_intake.py
+# PURPOSE: Verify public feedback intake templates, docs, and safety warnings.
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Verify public feedback intake templates, docs, and safety warnings.
 
 Deterministic and local. Does not call network, load credentials, or modify repo files.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -12,6 +21,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -59,6 +70,12 @@ ABSOLUTE_PATH_PATTERNS = [
     re.compile(r"/private/var/[A-Za-z0-9_/-]+"),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

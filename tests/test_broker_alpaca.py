@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_broker_alpaca.py
+# PURPOSE: Verifies broker alpaca behavior and regression expectations.
+# DEPS:    os, pytest, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import pytest
 from unittest.mock import patch
@@ -5,6 +14,12 @@ from atlas_agent.brokers.alpaca import AlpacaBroker, AlpacaBrokerAdapter
 from atlas_agent.config import AtlasConfig
 from atlas_agent.brokers.base import BrokerConfigurationError, BrokerOperationError
 from atlas_agent.execution.order import Order
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def base_config():

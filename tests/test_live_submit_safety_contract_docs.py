@@ -1,14 +1,30 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_live_submit_safety_contract_docs.py
+# PURPOSE: Verifies live submit safety contract docs behavior and regression
+#         expectations.
+# DEPS:    re, pathlib, pytest.
+# ==============================================================================
+
 """Docs-truth tests for docs/live-submit-safety-contract.md.
 
 These tests keep the live-submit safety contract aligned with the
 actual implementation without modifying runtime behavior.
 """
 
+# --- IMPORTS ---
+
 import re
 from pathlib import Path
 
 import pytest
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _read_contract() -> str:
     repo_root = Path(__file__).resolve().parent.parent

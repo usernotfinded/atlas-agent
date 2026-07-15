@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_prompt_builder_discipline.py
+# PURPOSE: Verifies prompt builder discipline behavior and regression
+#         expectations.
+# DEPS:    pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,6 +23,8 @@ from atlas_agent.ai.discipline import (
 )
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 GOOD_PROFILE = (
     "# Profile\n\n"
     "## Decision temperament\n\nCautious.\n\n"
@@ -25,6 +37,12 @@ GOOD_PROFILE = (
     f"{_REQUIRED_SAFETY_SENTENCE}\n"
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_build_system_prompt_without_user_discipline(tmp_path: Path) -> None:
     """build_system_prompt is for non-agentic contexts and may include the default template."""

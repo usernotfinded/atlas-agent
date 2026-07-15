@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_release_assurance_bundle_manifest.py
+# PURPOSE: Validate a release-assurance bundle manifest.
+# DEPS:    argparse, hashlib, json, re, sys, pathlib, additional local modules.
+# ==============================================================================
+
 """Validate a release-assurance bundle manifest.
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -10,6 +17,8 @@ Exit codes:
   2 = operational error (e.g., missing file)
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -20,6 +29,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_SCHEMA_VERSION = "atlas-release-assurance-bundle-manifest/1.0"
@@ -73,6 +84,12 @@ UNSAFE_COMMAND_PREFIXES = [
     "twine" + " upload",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read_text(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

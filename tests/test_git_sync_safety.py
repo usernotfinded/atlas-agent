@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_git_sync_safety.py
+# PURPOSE: Verifies git sync safety behavior and regression expectations.
+# DEPS:    subprocess, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import subprocess
@@ -6,6 +15,12 @@ import pytest
 
 from atlas_agent.routines.git_sync import GitSync, GitSyncError
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _git(repo, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(

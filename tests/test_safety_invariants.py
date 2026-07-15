@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_safety_invariants.py
+# PURPOSE: Verifies safety invariants behavior and regression expectations.
+# DEPS:    pathlib, atlas_agent, unittest.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -9,6 +18,12 @@ from atlas_agent.portfolio.state import PortfolioState
 from atlas_agent.execution.approval import ApprovalManager
 from atlas_agent.execution.audit import AuditLogger
 from unittest.mock import MagicMock
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_config_defaults_are_safe() -> None:
     config = AtlasConfig()

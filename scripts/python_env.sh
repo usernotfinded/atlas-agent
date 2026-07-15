@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/python_env.sh
+# PURPOSE: Provides shell tooling for python env.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 resolve_python_bin() {
     if [ -n "${PYTHON_BIN:-}" ]; then

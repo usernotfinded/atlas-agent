@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_totp.py
+# PURPOSE: Verifies totp behavior and regression expectations.
+# DEPS:    datetime, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
 
 from atlas_agent.safety.totp import generate_totp, verify_totp
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_totp_generate_and_verify() -> None:
     secret = "JBSWY3DPEHPK3PXP"

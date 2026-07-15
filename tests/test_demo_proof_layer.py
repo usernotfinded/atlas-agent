@@ -1,9 +1,20 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_demo_proof_layer.py
+# PURPOSE: Verifies demo proof layer behavior and regression expectations.
+# DEPS:    os, re, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
 import re
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO_SCRIPT = ROOT / "scripts" / "demo_paper_workflow.sh"
@@ -16,6 +27,12 @@ DEMO_SURFACES = [
     DEMO_SCRIPT,
 ]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _combined_demo_text() -> str:
     return "\n".join(path.read_text(encoding="utf-8") for path in DEMO_SURFACES)
@@ -49,12 +66,18 @@ def test_demo_script_exists_and_is_non_destructive() -> None:
         assert phrase not in text
 
 
-def test_demo_script_avoids_copy_paste_shell_comments() -> None:
-    lines = DEMO_SCRIPT.read_text(encoding="utf-8").splitlines()
-    comment_lines = [
-        line for index, line in enumerate(lines) if line.lstrip().startswith("#") and index != 0
-    ]
-    assert comment_lines == []
+def test_demo_script_uses_standardized_comment_structure() -> None:
+    text = DEMO_SCRIPT.read_text(encoding="utf-8")
+
+    # Require intentional documentation blocks so future edits cannot regress to
+    # unstructured copy-paste comments while preserving the safe shell preamble.
+    assert text.startswith("#!/usr/bin/env bash\nset -euo pipefail\n")
+    assert "# PROJECT: Atlas Agent" in text
+    assert "# FILE:    scripts/demo_paper_workflow.sh" in text
+    assert "# PURPOSE:" in text
+    assert "# DEPS:" in text
+    assert "# SCRIPT WORKFLOW" in text
+    assert "# --- ENVIRONMENT, SAFETY, AND EXECUTION ---" in text
 
 
 def test_demo_docs_and_script_avoid_unsafe_or_stale_examples() -> None:

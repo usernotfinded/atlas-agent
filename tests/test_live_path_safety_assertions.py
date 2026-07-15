@@ -1,9 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_live_path_safety_assertions.py
+# PURPOSE: Verifies live path safety assertions behavior and regression
+#         expectations.
+# DEPS:    json, pathlib, pytest.
+# ==============================================================================
+
 """Live-path safety assertions — documentation and contract tests.
 
 These tests verify that public docs, README, issue templates, and release
 docs continue to state the correct safety posture. They do not exercise
 runtime live-trading code or bypass gates.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -12,6 +22,8 @@ from pathlib import Path
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -19,6 +31,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 # README safety assertions
 # ---------------------------------------------------------------------------
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestReadmeSafetyPosture:
     def test_readme_says_live_trading_disabled_by_default(self) -> None:

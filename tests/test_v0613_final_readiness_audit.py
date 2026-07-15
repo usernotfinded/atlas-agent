@@ -1,12 +1,30 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0613_final_readiness_audit.py
+# PURPOSE: Verifies v0613 final readiness audit behavior and regression
+#         expectations.
+# DEPS:    json, shutil, pathlib, scripts.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import shutil
 from pathlib import Path
 
 from scripts.check_v0613_final_readiness_audit import check, main
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 MD_FILE = "docs/releases/v0.6.13-final-readiness-audit.md"
 JSON_FILE = "docs/releases/v0.6.13-final-readiness-audit.json"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _copy_audit_files(tmp_path: Path) -> None:
     for relative in (MD_FILE, JSON_FILE):

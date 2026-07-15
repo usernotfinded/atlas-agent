@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_assurance_bundle_manifest.py
+# PURPOSE: Verifies release assurance bundle manifest behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Tests for release-assurance bundle manifest scripts."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -9,6 +19,8 @@ from pathlib import Path
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 BUILD_SCRIPT = REPO_ROOT / "scripts" / "build_release_assurance_bundle_manifest.py"
@@ -16,6 +28,12 @@ CHECK_SCRIPT = REPO_ROOT / "scripts" / "check_release_assurance_bundle_manifest.
 RELEASE_ASSURANCE_SCRIPT = REPO_ROOT / "scripts" / "release_assurance.py"
 DEMO_SCRIPT = REPO_ROOT / "scripts" / "demo_release_assurance_snapshot_bundle.sh"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _release_fully_published(release: str) -> bool:
     """Return True only if the release tag and GitHub release are already public."""

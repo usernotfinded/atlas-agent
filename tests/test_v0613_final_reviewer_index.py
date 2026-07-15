@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0613_final_reviewer_index.py
+# PURPOSE: Verifies v0613 final reviewer index behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest, scripts.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 import sys
@@ -7,8 +17,16 @@ import pytest
 
 from scripts.check_v0613_final_reviewer_index import check
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ARTIFACT_TYPE = "v0613_final_reviewer_index_check"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def temp_repo(tmp_path: Path) -> Path:

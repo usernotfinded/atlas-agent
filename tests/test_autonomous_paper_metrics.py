@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_metrics.py
+# PURPOSE: Verifies autonomous paper metrics behavior and regression
+#         expectations.
+# DEPS:    datetime, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -10,6 +20,12 @@ from atlas_agent.agent.autonomous_paper_metrics import (
 )
 from atlas_agent.backtest.models import BacktestFill, BacktestPosition
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _dt() -> datetime:
     return datetime.now(UTC)

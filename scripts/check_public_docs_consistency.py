@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_public_docs_consistency.py
+# PURPOSE: Scan public docs for unsafe claims, stale versions, missing safety
+#         wording.
+# DEPS:    json, re, sys, pathlib.
+# ==============================================================================
+
 """Scan public docs for unsafe claims, stale versions, missing safety wording.
 
 Deterministic and local. Does not:
@@ -7,6 +15,8 @@ Deterministic and local. Does not:
 - run external commands that mutate state
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -14,6 +24,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -160,6 +172,12 @@ except ImportError:
     load_metadata = None
     ReleaseMetadata = None
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _load_release_metadata(repo_root: Path) -> ReleaseMetadata:
     if load_metadata is None or ReleaseMetadata is None:

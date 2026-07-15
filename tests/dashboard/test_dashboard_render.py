@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/dashboard/test_dashboard_render.py
+# PURPOSE: Verifies dashboard render behavior and regression expectations.
+# DEPS:    json, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -19,6 +28,12 @@ from atlas_agent.dashboard.models import (
 )
 from atlas_agent.dashboard.render import render_dashboard_html, render_dashboard_markdown
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _full_snapshot() -> DashboardSnapshot:
     return DashboardSnapshot(

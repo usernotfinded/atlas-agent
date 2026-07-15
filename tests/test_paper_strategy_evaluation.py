@@ -1,7 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_strategy_evaluation.py
+# PURPOSE: Verifies paper strategy evaluation behavior and regression
+#         expectations.
+# DEPS:    hashlib, importlib, json, os, shutil, socket, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for paper strategy evaluation (CAND-025).
 
 No real provider or broker calls.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -20,6 +31,8 @@ import pytest
 
 from atlas_agent.backtest.evaluation import build_paper_strategy_evaluation
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_paper_strategy_evaluation.py"
@@ -52,6 +65,12 @@ FORBIDDEN_DECISIONS = {
 
 ALLOWED_DECISIONS = {"paper_candidate", "needs_more_testing", "rejected"}
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _scrubbed_env() -> dict[str, str]:
     env = os.environ.copy()

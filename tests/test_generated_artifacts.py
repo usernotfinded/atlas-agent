@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_generated_artifacts.py
+# PURPOSE: Verifies generated artifacts behavior and regression expectations.
+# DEPS:    importlib, json, subprocess, sys, pathlib, types, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for generated artifact hygiene checks and policy docs."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -12,10 +22,18 @@ from types import ModuleType
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_generated_artifacts.py"
 DOC = REPO_ROOT / "docs" / "development" / "generated-artifacts.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

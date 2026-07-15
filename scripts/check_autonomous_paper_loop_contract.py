@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_autonomous_paper_loop_contract.py
+# PURPOSE: Static check for the autonomous paper decision loop contract
+#         (CAND-003).
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Static check for the autonomous paper decision loop contract (CAND-003).
 
 Deterministic, local-only, read-only. Does not:
@@ -14,6 +22,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -22,6 +32,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -155,6 +167,12 @@ CREDENTIAL_ENV_REGEX = re.compile(
     r"os\.(?:getenv|environ(?:\.get)?)\s*\[?\s*\(?\s*['\"][^'\"]*(?:ALPACA|BINANCE|CCXT|EXCHANGE|API_KEY|SECRET_KEY|SECRET|TOKEN|PASSWORD)"
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

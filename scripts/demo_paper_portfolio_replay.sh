@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_paper_portfolio_replay.sh
+# PURPOSE: Demonstrates the paper portfolio replay workflow using safe local
+#         defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 # Demo Script: Paper Portfolio Evidence Replay and Regression Gate
 # This script demonstrates the deterministic replay of portfolio evidence artifacts.

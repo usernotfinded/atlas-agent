@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_order.py
+# PURPOSE: Verifies order behavior and regression expectations.
+# DEPS:    math, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import math
@@ -6,6 +15,12 @@ import pytest
 
 from atlas_agent.execution.order import Order
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_order_notional_valid() -> None:
     order = Order(symbol="AAPL", side="buy", quantity=10, limit_price=150.0)

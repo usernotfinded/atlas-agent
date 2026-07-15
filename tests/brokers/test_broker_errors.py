@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/brokers/test_broker_errors.py
+# PURPOSE: Verifies broker errors behavior and regression expectations.
+# DEPS:    urllib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from urllib.error import URLError
@@ -11,6 +20,12 @@ from atlas_agent.brokers.errors import (
     make_broker_error,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_make_broker_error_sanitizes_configuration_exceptions() -> None:
     exc = BrokerConfigurationError(

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_timeline_cli.py
+# PURPOSE: Verifies research timeline cli behavior and regression expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -10,6 +19,12 @@ from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 from atlas_agent.research import RESEARCH_ARTIFACT_SCHEMA_VERSION
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

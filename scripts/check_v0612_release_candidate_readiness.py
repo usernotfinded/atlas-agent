@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_v0612_release_candidate_readiness.py
+# PURPOSE: Deterministic static checker for v0.6.12 release-candidate /
+#         release-prep readiness.
+# DEPS:    argparse, json, sys, pathlib.
+# ==============================================================================
+
 """Deterministic static checker for v0.6.12 release-candidate / release-prep readiness.
 
 Validates that the v0.6.12 candidate consolidation docs exist, cite every
@@ -21,6 +29,8 @@ Deterministic and local. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -28,6 +38,8 @@ import json
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -147,6 +159,12 @@ FORBIDDEN_READINESS_CLAIMS = [
     "autonomous trading readiness",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _fail(message: str) -> tuple[int, dict]:
     result = {

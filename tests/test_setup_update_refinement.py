@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_setup_update_refinement.py
+# PURPOSE: Verifies setup update refinement behavior and regression
+#         expectations.
+# DEPS:    os, json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import json
 from pathlib import Path
@@ -8,6 +18,12 @@ import pytest
 from atlas_agent.cli import main, YELLOW, RESET
 from atlas_agent.setup.state import WizardState
 from atlas_agent.update.manager import SafeUpdateManager, UpdateApplyReport
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_wizard_banner_persistence(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)

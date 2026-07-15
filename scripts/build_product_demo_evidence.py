@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/build_product_demo_evidence.py
+# PURPOSE: Build a reviewable, deterministic evidence bundle for the product
+#         demo.
+# DEPS:    argparse, hashlib, json, re, sys, datetime, additional local modules.
+# ==============================================================================
+
 """Build a reviewable, deterministic evidence bundle for the product demo.
 
 This helper is invoked by scripts/demo_product_walkthrough.sh after the demo
@@ -8,6 +16,8 @@ make network calls, submit broker orders, or enable live trading.
 It reads captured command outputs and the demo workspace, then writes a bundle
 of JSON and Markdown files plus SHA-256 checksums that a reviewer can inspect.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -20,6 +30,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -40,6 +52,12 @@ OUTPUT_FILE_NAMES = [
     ("audit", "audit.txt"),
 ]
 
+
+# ==============================================================================
+# ARTIFACT BUILD WORKFLOW
+# ==============================================================================
+
+# --- BUILD HELPERS AND ENTRYPOINTS ---
 
 def _get_atlas_version(cli_version: str | None) -> str:
     if cli_version:

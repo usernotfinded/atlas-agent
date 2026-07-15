@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_trust_center.py
+# PURPOSE: Validate the public trust center docs.
+# DEPS:    argparse, json, re, sys, tomllib, dataclasses, additional local
+#         modules.
+# ==============================================================================
+
 """Validate the public trust center docs.
 
 The check is deterministic and local. It does not load credentials, call
 providers, contact brokers, publish artifacts, create tags, or modify runtime
 state.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -21,6 +31,8 @@ from typing import Iterable
 # Provide a fallback module path injection for scripts directory imports
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from release_metadata import load_metadata
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 TRUST_README = Path("docs/trust/README.md")
 
@@ -95,6 +107,12 @@ REQUIRED_LINKS = {
         "../../.github/workflows/release-assurance.yml",
     ),
 }
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _build_required_facts(CURRENT_RELEASE: str, PACKAGE_VERSION: str) -> dict[str, tuple[tuple[str, ...], ...]]:
     return {

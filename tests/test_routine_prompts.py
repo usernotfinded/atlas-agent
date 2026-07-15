@@ -1,8 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_routine_prompts.py
+# PURPOSE: Verifies routine prompts behavior and regression expectations.
+# DEPS:    pathlib, re.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
 import re
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROUTINES = (
     "pre_market",
@@ -44,6 +55,12 @@ ENV_NAMES = (
     "LOCAL_COMMAND",
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_all_five_routine_prompts_exist() -> None:
     for routine in ROUTINES:

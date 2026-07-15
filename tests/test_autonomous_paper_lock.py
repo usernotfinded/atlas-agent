@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_lock.py
+# PURPOSE: Verifies autonomous paper lock behavior and regression expectations.
+# DEPS:    os, subprocess, sys, time, pathlib, pytest, additional local modules.
+# ==============================================================================
+
 """Unit tests for the autonomous-paper state directory lock."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -20,6 +29,8 @@ from atlas_agent.agent.autonomous_paper_lock import (
     state_directory_lock,
 )
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="fcntl is POSIX-only")
 
@@ -48,6 +59,12 @@ finally:
     lock.release()
 '''
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _start_lock_holder(state_dir: Path, tmp_path: Path) -> tuple[subprocess.Popen, Path, Path]:
     """Start a subprocess that holds ``state_dir`` locked until told to stop."""

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/release_assurance.py
+# PURPOSE: Implements repository tooling for release assurance.
+# DEPS:    argparse, os, json, re, subprocess, sys, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import argparse
 import os
 import json
@@ -10,6 +19,8 @@ import hashlib
 import tempfile
 
 # Load canonical release metadata so version baselines are not hardcoded.
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 try:
@@ -46,6 +57,12 @@ _REDACTION_PATTERNS = [
     ),
 ]
 
+
+# ==============================================================================
+# SCRIPT IMPLEMENTATION
+# ==============================================================================
+
+# --- HELPERS AND ENTRYPOINTS ---
 
 def redact_text(text: str) -> str:
     """Sanitize a string by redacting credential-like values."""

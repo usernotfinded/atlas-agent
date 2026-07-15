@@ -1,10 +1,19 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_demo_proof.py
+# PURPOSE: Deterministic demo proof checker for CAND-002 and CAND-003.
+# DEPS:    json, os, re, sys, pathlib.
+# ==============================================================================
+
 """Deterministic demo proof checker for CAND-002 and CAND-003.
 
 Validates demo documentation, artifact index consistency, safety invariants,
 script/doc alignment, canonical reviewer path, symbol consistency, and
 over-promise claims. Local-only; no credentials, network, or execution.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -18,6 +27,8 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -161,6 +172,12 @@ STALE_OVER_PROMISE_PATTERNS = [
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

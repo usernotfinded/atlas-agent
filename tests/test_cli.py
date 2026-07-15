@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_cli.py
+# PURPOSE: Verifies cli behavior and regression expectations.
+# DEPS:    json, os, subprocess, sys, datetime, pathlib, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -14,6 +24,12 @@ from atlas_agent.cli import main
 from atlas_agent.config import get_config
 from atlas_agent.execution.order import Order
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_atlas_help_works(tmp_path, monkeypatch, capsys) -> None:
     monkeypatch.setenv("HOME", str(tmp_path / "home"))

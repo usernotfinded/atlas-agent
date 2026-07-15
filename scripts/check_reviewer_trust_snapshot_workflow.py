@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_reviewer_trust_snapshot_workflow.py
+# PURPOSE: Validate the reviewer trust snapshot GitHub Actions workflow.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Validate the reviewer trust snapshot GitHub Actions workflow.
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -10,6 +17,8 @@ Exit codes:
   2 = operational error (e.g., missing workflow file)
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -19,6 +28,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "reviewer-trust-snapshot.yml"
@@ -69,6 +80,12 @@ EXECUTION_COMMAND_PATTERNS = [
     re.compile(r"\batlas\s+submit\b", re.IGNORECASE),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read_workflow(workflow_path: Path) -> str:
     if not workflow_path.exists():

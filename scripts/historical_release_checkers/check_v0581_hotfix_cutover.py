@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/historical_release_checkers/check_v0581_hotfix_cutover.py
+# PURPOSE: v0.5.8.1 hotfix cutover verification checker.
+# DEPS:    argparse, json, re, subprocess, sys, tomllib, additional local
+#         modules.
+# ==============================================================================
+
 """v0.5.8.1 hotfix cutover verification checker.
 
 Deterministic local checks that verify the repo is correctly prepared
@@ -23,6 +31,8 @@ Exit codes:
   2  fail
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -33,6 +43,8 @@ import sys
 import tomllib
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -70,6 +82,12 @@ FORBIDDEN_POSITIVE_CLAIMS = [
     "beats the market",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

@@ -1,7 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/update/test_update_safety.py
+# PURPOSE: Verifies update safety behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.update.safety import UpdateSafetyCheck, evaluate_update_safety
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class StubSafetyCheck(UpdateSafetyCheck):
     def __init__(

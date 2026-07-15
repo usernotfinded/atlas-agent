@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_portfolio_stress.py
+# PURPOSE: Verifies paper portfolio stress behavior and regression expectations.
+# DEPS:    json, os, shutil, subprocess, pathlib, atlas_agent, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import os
 import shutil
@@ -13,6 +23,8 @@ from atlas_agent.backtest.portfolio import (
 from scripts.check_paper_portfolio_stress import check_all
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 DATA_PATH = Path("data/sample/ohlcv_extended.csv")
 FORBIDDEN_LABELS = {
     "live_ready",
@@ -23,6 +35,12 @@ FORBIDDEN_LABELS = {
     "outperforms_market",
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_portfolio_stress_command_writes_schema(tmp_path):
     result = subprocess.run(

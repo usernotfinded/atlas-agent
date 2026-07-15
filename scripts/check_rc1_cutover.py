@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_rc1_cutover.py
+# PURPOSE: Verify the historical v0.5.7 stable release record and current dev
+#         posture.
+# DEPS:    argparse, json, re, subprocess, sys, tomllib, additional local
+#         modules.
+# ==============================================================================
+
 """Verify the historical v0.5.7 stable release record and current dev posture.
 
 This script ensures:
@@ -15,6 +24,8 @@ Deterministic and local. Does not:
 - load credentials
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -25,6 +36,8 @@ import sys
 import tomllib
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HISTORICAL_STABLE_VERSION = "0.5.7"
@@ -69,6 +82,12 @@ ABSOLUTE_PATH_PATTERNS = [
     r"/private/var/[A-Za-z0-9_/-]+",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

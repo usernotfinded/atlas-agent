@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_memory_index.py
+# PURPOSE: Verifies memory index behavior and regression expectations.
+# DEPS:    os, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -5,6 +14,12 @@ from pathlib import Path
 
 from atlas_agent.learning import rebuild_search_index, search_memory
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_search_memory_uses_markdown_without_index(tmp_path: Path) -> None:
     memory_dir = tmp_path / "memory"

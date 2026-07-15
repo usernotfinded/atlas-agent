@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/agent/test_agent_loop_audit.py
+# PURPOSE: Verifies agent loop audit behavior and regression expectations.
+# DEPS:    json, pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -9,6 +18,12 @@ from atlas_agent.audit.writer import AuditWriter
 from atlas_agent.core.types import Session
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import LLMResponse, ModelCapabilities
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class MockProvider:
     def __init__(self, responses):

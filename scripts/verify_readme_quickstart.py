@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/verify_readme_quickstart.py
+# PURPOSE: Verify README quickstart commands are safe, local, and offline.
+# DEPS:    re, sys, pathlib.
+# ==============================================================================
+
 """Verify README quickstart commands are safe, local, and offline.
 
 This script is deterministic and local. It does not:
@@ -8,12 +15,16 @@ This script is deterministic and local. It does not:
 - run external commands that mutate state
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 README_PATH = REPO_ROOT / "README.md"
@@ -69,6 +80,12 @@ FORBIDDEN_FRAGMENTS = (
     "/private/var/",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read_readme() -> str:
     with open(README_PATH, encoding="utf-8") as f:

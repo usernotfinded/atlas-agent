@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_cli.py
+# PURPOSE: Verifies research cli behavior and regression expectations.
+# DEPS:    json, subprocess, sys, pathlib, unittest, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -11,6 +21,12 @@ import pytest
 from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

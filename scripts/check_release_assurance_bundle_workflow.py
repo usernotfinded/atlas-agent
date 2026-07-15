@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_release_assurance_bundle_workflow.py
+# PURPOSE: Validate the release assurance bundle demo path in the GitHub Actions
+#         workflow.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Validate the release assurance bundle demo path in the GitHub Actions workflow.
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -10,6 +18,8 @@ Exit codes:
   2 = operational error (e.g., missing workflow file)
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -19,6 +29,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_WORKFLOW_PATH = REPO_ROOT / ".github" / "workflows" / "release-assurance.yml"
@@ -63,6 +75,12 @@ EXECUTION_COMMAND_PATTERNS = [
 DEMO_SCRIPT = "scripts/demo_release_assurance_snapshot_bundle.sh"
 MANIFEST_CHECK_SCRIPT = "scripts/check_release_assurance_bundle_manifest.py"
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read_workflow(workflow_path: Path) -> str:
     if not workflow_path.exists():

@@ -1,9 +1,18 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_submit_execution_safety.py
+# PURPOSE: Static safety check for the live submit execution boundary.
+# DEPS:    argparse, ast, json, sys, pathlib, typing.
+# ==============================================================================
+
 """Static safety check for the live submit execution boundary.
 
 This check is deterministic and local-only. It does not import Atlas runtime
 modules, load credentials, contact brokers, or make network calls.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -14,6 +23,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REQUIRED_DOC_GATE_IDS = [
     "explicit_live_submit_opt_in",
@@ -110,6 +121,12 @@ REQUIRED_TEST_FRAGMENTS = [
     "test_kill_switch_active_before_final_place_order_blocks_without_broker_call",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")

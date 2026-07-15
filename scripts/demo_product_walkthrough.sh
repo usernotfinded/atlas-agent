@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_product_walkthrough.sh
+# PURPOSE: Demonstrates the product walkthrough workflow using safe local
+#         defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 # Atlas Agent — Product Demo Walkthrough
 # Companion guide: docs/product-demo-pack.md

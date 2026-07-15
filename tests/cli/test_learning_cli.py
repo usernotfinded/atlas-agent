@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_learning_cli.py
+# PURPOSE: Verifies learning cli behavior and regression expectations.
+# DEPS:    pathlib, unittest, pytest, json, atlas_agent.
+# ==============================================================================
+
 """CLI end-to-end tests for learning suggestion commands."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,8 +21,16 @@ from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v058_gap_prioritization.py
+# PURPOSE: Verifies v058 gap prioritization behavior and regression
+#         expectations.
+# DEPS:    importlib, json, subprocess, sys, pathlib, types, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the v0.5.8 gap prioritization checker.
 
 These tests verify that:
@@ -13,6 +22,8 @@ These tests verify that:
 - The script source remains safe.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import importlib.util
@@ -25,9 +36,17 @@ from unittest.mock import patch
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKER_SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v058_gap_prioritization.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

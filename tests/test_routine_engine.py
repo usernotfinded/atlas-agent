@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_routine_engine.py
+# PURPOSE: Verifies routine engine behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.config import AtlasConfig, MarketConfig
@@ -5,6 +14,8 @@ from atlas_agent.execution.order import OrderResult
 from atlas_agent.research.web_research import OfflineResearchProvider
 from atlas_agent.routines.engine import run_routine
 from atlas_agent.ai.discipline import write_user_discipline
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 GOOD_PROFILE = (
     "# Profile\n\n"
@@ -19,6 +30,12 @@ GOOD_PROFILE = (
     "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path, **kwargs) -> AtlasConfig:
     return AtlasConfig(
@@ -85,4 +102,3 @@ def test_routine_engine_live_mode_creates_pending_without_execution(tmp_path) ->
 
     assert result.order_status == "pending_approval"
     assert (tmp_path / "pending" / "order-1.json").exists()
-

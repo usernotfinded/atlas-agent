@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/update_release_assurance_ci.py
+# PURPOSE: Update post-release assurance dossiers with GitHub Actions CI run
+#         IDs.
+# DEPS:    argparse, json, re, subprocess, sys, pathlib.
+# ==============================================================================
+
 """Update post-release assurance dossiers with GitHub Actions CI run IDs.
 
 Deterministic helper. Dry-run by default; pass --write to mutate files.
 Uses the authenticated gh CLI. Does not load credentials, call brokers,
 providers, or trading code.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -14,6 +24,8 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -25,6 +37,12 @@ CORE_WORKFLOWS = [
 
 CI_SECTION_HEADER = "## GitHub Actions / CI Status"
 
+
+# ==============================================================================
+# SCRIPT IMPLEMENTATION
+# ==============================================================================
+
+# --- HELPERS AND ENTRYPOINTS ---
 
 def run_gh(args: list[str]) -> str:
     """Run gh with the given args and return stdout as string."""

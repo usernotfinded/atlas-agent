@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/audit/test_audit_manifest_hardened.py
+# PURPOSE: Verifies audit manifest hardened behavior and regression
+#         expectations.
+# DEPS:    json, pytest, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -6,6 +16,12 @@ from pathlib import Path
 from atlas_agent.audit.writer import AuditWriter
 from atlas_agent.audit.verify import verify_run_manifest
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_manifest_lifecycle(tmp_path: Path):
     log_path = tmp_path / "audit.jsonl"

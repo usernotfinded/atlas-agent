@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_adapters.py
+# PURPOSE: Verifies provider adapters behavior and regression expectations.
+# DEPS:    urllib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import urllib.request
@@ -12,6 +21,12 @@ from atlas_agent.providers.local_command import LocalCommandProvider
 from atlas_agent.providers.openai_compatible import OpenAICompatibleProvider
 from atlas_agent.tools.spec import LLMResponse, ModelCapabilities, ToolDescription
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _quote_tool() -> ToolDescription:
     return ToolDescription(

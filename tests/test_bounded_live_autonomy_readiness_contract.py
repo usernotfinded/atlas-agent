@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_bounded_live_autonomy_readiness_contract.py
+# PURPOSE: Verifies bounded live autonomy readiness contract behavior and
+#         regression expectations.
+# DEPS:    json, subprocess, sys, pathlib, typing, pytest.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -8,9 +18,17 @@ from typing import Any
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONTRACT_SCRIPT = REPO_ROOT / "scripts" / "check_bounded_live_autonomy_readiness_contract.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_contract_checker_passes() -> None:
     result = subprocess.run(

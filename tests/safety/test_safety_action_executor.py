@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/safety/test_safety_action_executor.py
+# PURPOSE: Verifies safety action executor behavior and regression expectations.
+# DEPS:    pytest, pathlib, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -14,6 +23,12 @@ from atlas_agent.safety.models import SafetyAction, SafetyActionPlan, KillSwitch
 from atlas_agent.tools.registry import ToolRegistry
 from atlas_agent.tools.spec import ToolSpec, ToolResult, ToolError
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def registry():

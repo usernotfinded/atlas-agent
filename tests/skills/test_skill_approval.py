@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/skills/test_skill_approval.py
+# PURPOSE: Verifies skill approval behavior and regression expectations.
+# DEPS:    pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for skill candidate approval workflow."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -15,6 +24,12 @@ from atlas_agent.skills.approval import (
     promote_to_library,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestSkillCandidateApproval:
     def test_submit_for_review(self, tmp_path: Path) -> None:

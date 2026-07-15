@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/cli/test_brokers_cli.py
+# PURPOSE: Verifies brokers cli behavior and regression expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
 """CLI end-to-end tests for broker commands."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -10,6 +19,12 @@ import pytest
 from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

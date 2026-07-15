@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/update/test_update_cli.py
+# PURPOSE: Verifies update cli behavior and regression expectations.
+# DEPS:    os, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -5,6 +14,12 @@ from pathlib import Path
 
 from atlas_agent.cli import main
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _init_workspace(path: Path) -> None:
     original = Path.cwd()

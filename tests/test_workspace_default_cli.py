@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_workspace_default_cli.py
+# PURPOSE: Verifies workspace default cli behavior and regression expectations.
+# DEPS:    json, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -8,6 +17,12 @@ import pytest
 from atlas_agent.cli import main
 from atlas_agent.workspace import get_default_workspace
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_init_set_default_writes_safe_workspace_config(
     tmp_path: Path,

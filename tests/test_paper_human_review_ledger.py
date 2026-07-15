@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_human_review_ledger.py
+# PURPOSE: Verifies paper human review ledger behavior and regression
+#         expectations.
+# DEPS:    json, os, shutil, subprocess, pathlib, scripts, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import os
 import shutil
@@ -15,8 +26,16 @@ from atlas_agent.backtest.portfolio import (
     write_portfolio_review_ledger_reports,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 DATA_PATH = Path("data/sample/ohlcv_extended.csv")
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _build_review_pack():
     return build_paper_portfolio_review_pack(

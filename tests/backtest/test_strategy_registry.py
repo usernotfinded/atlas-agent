@@ -1,7 +1,22 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/backtest/test_strategy_registry.py
+# PURPOSE: Verifies strategy registry behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.backtest.registry import default_strategy_registry
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_default_registry_lists_builtin_buy_and_hold() -> None:
     registry = default_strategy_registry(include_entry_points=False)

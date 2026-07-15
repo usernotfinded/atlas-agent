@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_trading_guide.py
+# PURPOSE: Verifies paper trading guide behavior and regression expectations.
+# DEPS:    json, tomllib, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -7,6 +16,8 @@ from pathlib import Path
 from atlas_agent.config import AtlasConfig
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parents[1]
 GUIDE = ROOT / "docs" / "paper-trading-guide.md"
 DEMO_SCRIPT = ROOT / "scripts" / "demo_paper_workflow.sh"
@@ -15,6 +26,12 @@ EXAMPLE_CONFIG = ROOT / "examples" / "paper_trading_demo" / "config.toml"
 CANDIDATES_JSON = ROOT / "docs" / "releases" / "v0.6.11-candidates.json"
 CANDIDATES_MD = ROOT / "docs" / "releases" / "v0.6.11-candidates.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_guide_has_complete_safe_local_workflow() -> None:
     text = GUIDE.read_text(encoding="utf-8")

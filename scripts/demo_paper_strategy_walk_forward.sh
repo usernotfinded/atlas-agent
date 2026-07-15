@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_paper_strategy_walk_forward.sh
+# PURPOSE: Demonstrates the paper strategy walk forward workflow using safe
+#         local defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 export ATLAS_LIVE_TRADING_ENABLED="false"
 export ATLAS_PAPER_MODE="true"

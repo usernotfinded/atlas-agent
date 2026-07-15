@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_portfolio_replay.py
+# PURPOSE: Verifies paper portfolio replay behavior and regression expectations.
+# DEPS:    pytest, os, json, tempfile, pathlib, unittest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 import os
 import json
@@ -9,6 +19,12 @@ from atlas_agent.backtest.portfolio import (
     build_paper_portfolio_replay,
     write_portfolio_replay_reports
 )
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_build_paper_portfolio_replay_deterministic():
     data_path = "data/sample/ohlcv_extended.csv"

@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_release_assurance_diagnostics.py
+# PURPOSE: Static checker for release-assurance failure diagnostics (CAND-011).
+# DEPS:    argparse, ast, json, re, sys, pathlib, additional local modules.
+# ==============================================================================
+
 """Static checker for release-assurance failure diagnostics (CAND-011).
 
 Static, local-only, and read-only. Does not load credentials, make network calls,
@@ -10,6 +17,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -20,6 +29,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEST_FILE = REPO_ROOT / "tests" / "test_release_assurance_diagnostics.py"
@@ -45,6 +56,12 @@ REQUIRED_TEST_COVERAGE = [
     ("diagnostics JSON", re.compile(r"diagnostics.*json|diagnostics_json", re.IGNORECASE)),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read_file(path: Path) -> str:
     if not path.exists():

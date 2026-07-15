@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_strategy_robustness.py
+# PURPOSE: Verifies paper strategy robustness behavior and regression
+#         expectations.
+# DEPS:    hashlib, json, shutil, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import hashlib
 import json
 import shutil
@@ -9,6 +20,8 @@ import pytest
 
 from atlas_agent.backtest.robustness import build_paper_strategy_robustness
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "check_paper_strategy_robustness.py"
@@ -35,6 +48,12 @@ FORBIDDEN_STATUSES = {
     "outperforms_market",
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_robustness(output_dir: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(

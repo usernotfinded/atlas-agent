@@ -1,15 +1,26 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_runtime_diagnostics.py
+# PURPOSE: Read-only runtime diagnostics helper for local check scripts.
+# DEPS:    argparse, json, sys, pathlib.
+# ==============================================================================
+
 """Read-only runtime diagnostics helper for local check scripts.
 
 Prints available focused check commands, expected runtime ranges,
 and guidance for triaging long-running checks without running them.
 """
 
+# --- IMPORTS ---
+
 import argparse
 import json
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 COMMANDS = [
     {
@@ -76,6 +87,12 @@ ENV_HINTS = [
     ("ATLAS_CHECK_PYTEST_ARGS=...", "Extra arguments appended to pytest invocations"),
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _print_text() -> None:
     print("Atlas Agent — Local Check Runtime Diagnostics")

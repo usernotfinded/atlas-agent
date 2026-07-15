@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_live_broker_gates.py
+# PURPOSE: Verifies live broker gates behavior and regression expectations.
+# DEPS:    sys, types, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import sys
@@ -11,6 +20,12 @@ from atlas_agent.brokers.binance import BinanceBroker
 from atlas_agent.config import AtlasConfig
 from atlas_agent.execution.order import Order
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_live_order_without_enable_live_trading_fails() -> None:
     broker = AlpacaBroker(AtlasConfig(trading_mode="live", live_broker="alpaca"))

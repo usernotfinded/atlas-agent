@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_demo_proof_checker.py
+# PURPOSE: Verifies demo proof checker behavior and regression expectations.
+# DEPS:    importlib, json, os, subprocess, sys, tempfile, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for demo proof checker — CAND-002 and CAND-003.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -16,12 +26,20 @@ from pathlib import Path
 from types import ModuleType
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKER_SCRIPT = REPO_ROOT / "scripts" / "check_demo_proof.py"
 DEMO_SCRIPT = REPO_ROOT / "scripts" / "demo_paper_workflow.sh"
 ARTIFACT_INDEX = REPO_ROOT / "docs" / "demo-artifact-index.md"
 CANDIDATES_JSON = REPO_ROOT / "docs" / "releases" / "v0.6.8-candidates.json"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location("check_demo_proof", CHECKER_SCRIPT)

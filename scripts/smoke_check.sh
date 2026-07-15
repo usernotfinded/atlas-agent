@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/smoke_check.sh
+# PURPOSE: Runs the smoke check validation workflow.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 # Atlas Agent — Smoke Check
 # Fastest local gate for edit-loop feedback after small docs/checker changes.

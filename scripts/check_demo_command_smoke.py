@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_demo_command_smoke.py
+# PURPOSE: Lightweight static smoke checker for the canonical demo surface.
+# DEPS:    json, os, sys, pathlib.
+# ==============================================================================
+
 """Lightweight static smoke checker for the canonical demo surface.
 
 Validates that the demo script exists, is executable, is referenced in key docs,
@@ -7,6 +14,8 @@ excludes forbidden high-risk patterns. Static, read-only, no execution, no
 network, no credentials.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -14,6 +23,8 @@ import os
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -55,6 +66,12 @@ FORBIDDEN_PATTERNS = [
 
 PAPER_WORDING = ("--mode paper", "--dry-run", "paper-only")
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

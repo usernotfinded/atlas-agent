@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_package_distribution.py
+# PURPOSE: Local packaging/distribution dry-run verification.
+# DEPS:    argparse, email, re, shutil, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Local packaging/distribution dry-run verification.
 
 Performs a local-only build and metadata check. Does not:
@@ -16,6 +24,8 @@ Exit codes:
     2 - verification failure
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -30,6 +40,8 @@ import tomllib
 import zipfile
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -96,6 +108,12 @@ FORBIDDEN_METADATA_CLAIMS = [
 
 _CURRENT_TEMP_DIR: str | None = None
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _redact(text: str) -> str:
     """Redact user-specific absolute paths from output."""

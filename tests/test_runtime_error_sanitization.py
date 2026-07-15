@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_runtime_error_sanitization.py
+# PURPOSE: Verifies runtime error sanitization behavior and regression
+#         expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -15,6 +25,12 @@ from atlas_agent.runtime_errors import make_safe_runtime_error, SafeRuntimeError
 from atlas_agent.safety.kill_switch import KillSwitchController
 from atlas_agent.tools.registry import ToolRegistry
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_make_safe_runtime_error_never_leaks_raw_text() -> None:
     exc = RuntimeError("api_key=raw-secret-token token=raw-secret-token")

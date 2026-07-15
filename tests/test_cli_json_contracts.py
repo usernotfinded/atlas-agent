@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_cli_json_contracts.py
+# PURPOSE: Verifies cli json contracts behavior and regression expectations.
+# DEPS:    json, datetime, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -11,6 +20,12 @@ from atlas_agent.cli import main
 from atlas_agent.config import AtlasConfig
 from atlas_agent.events import EventLogger, generate_run_id
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/demo_release_assurance_snapshot_bundle.sh
+# PURPOSE: Demonstrates the release assurance snapshot bundle workflow using
+#         safe local defaults.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 
 # Atlas Agent — Release Assurance Bundle End-to-End Demo
 # Companion guide: docs/security/release-assurance-bundle-demo.md

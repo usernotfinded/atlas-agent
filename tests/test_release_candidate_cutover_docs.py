@@ -1,17 +1,35 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_release_candidate_cutover_docs.py
+# PURPOSE: Verifies release candidate cutover docs behavior and regression
+#         expectations.
+# DEPS:    pathlib.
+# ==============================================================================
+
 """Tests for release candidate cutover docs - Batch 10.2.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOC_PATH = REPO_ROOT / "docs" / "release-candidate-cutover.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestDocExists:
     def test_doc_exists(self) -> None:

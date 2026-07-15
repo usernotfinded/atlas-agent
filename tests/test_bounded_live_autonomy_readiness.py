@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_bounded_live_autonomy_readiness.py
+# PURPOSE: Verifies bounded live autonomy readiness behavior and regression
+#         expectations.
+# DEPS:    json, os, pathlib, typing, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -20,6 +30,12 @@ from atlas_agent.agent.bounded_live_autonomy_readiness import (
     write_bounded_live_autonomy_readiness_artifacts,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_quality_gate(run_id: str = "run-cand015-001", symbol: str = "AAPL") -> dict:
     return {

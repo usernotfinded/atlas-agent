@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_secrets.py
+# PURPOSE: Verifies secrets behavior and regression expectations.
+# DEPS:    os, pytest, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import pytest
 from unittest.mock import patch
@@ -9,6 +18,12 @@ from atlas_agent.config.secrets import (
 )
 from atlas_agent.redaction import default_redaction_engine
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_set_secret_refreshes_redaction(tmp_path, monkeypatch):
     monkeypatch.setattr(

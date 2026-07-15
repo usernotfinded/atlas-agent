@@ -1,8 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_permission_hardening.py
+# PURPOSE: Verifies permission hardening behavior and regression expectations.
+# DEPS:    os, sys, pathlib, unittest, atlas_agent, pytest.
+# ==============================================================================
+
 """Regression tests for PermissionError hardening in sandboxed environments.
 
 Verifies that config loading, workspace resolution, and secret loading
 gracefully handle unreadable user-global paths.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -19,6 +28,12 @@ import pytest
 # Config store PermissionError hardening
 # ---------------------------------------------------------------------------
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_load_raw_config_returns_empty_on_permission_error(monkeypatch, tmp_path: Path) -> None:
     """If config.toml exists but is unreadable, load_raw_config returns {}."""

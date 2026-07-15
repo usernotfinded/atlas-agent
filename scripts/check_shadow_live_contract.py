@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_shadow_live_contract.py
+# PURPOSE: Static check for the shadow-live / read-only readiness contract
+#         (CAND-001).
+# DEPS:    argparse, json, sys, pathlib.
+# ==============================================================================
+
 """Static check for the shadow-live / read-only readiness contract (CAND-001).
 
 Deterministic, local-only, read-only. Does not:
@@ -14,6 +22,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -21,6 +31,8 @@ import json
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -81,6 +93,12 @@ NEGATIVE_CONTEXT_INDICATORS = (
     "does **not**",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

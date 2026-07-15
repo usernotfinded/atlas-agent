@@ -1,8 +1,23 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_redaction.py
+# PURPOSE: Verifies redaction behavior and regression expectations.
+# DEPS:    os, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import pytest
 from atlas_agent.redaction import redact_text, refresh_redaction_secrets, default_redaction_engine
 from atlas_agent.config.secrets import set_secret
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_short_low_entropy_secret_redacted(tmp_path, monkeypatch):
     monkeypatch.setattr(

@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_evidence_report.py
+# PURPOSE: Verifies provider evidence report behavior and regression
+#         expectations.
+# DEPS:    json, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 from pathlib import Path
 import pytest
@@ -9,6 +19,12 @@ from atlas_agent.providers.provider_evidence_index import (
     _determine_finding_severity,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def create_mock_index(tmp_path: Path, artifacts=None, findings=None, safety_summary=None, valid=True, extra=None) -> Path:
     data = {

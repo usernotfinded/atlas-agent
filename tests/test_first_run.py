@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_first_run.py
+# PURPOSE: Verifies first run behavior and regression expectations.
+# DEPS:    json, collections, pathlib, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 from collections import namedtuple
 from pathlib import Path
@@ -6,8 +15,16 @@ from unittest.mock import patch
 from atlas_agent.cli import main
 from atlas_agent.setup.state import WizardState
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 _FakeLiveStatus = namedtuple("_FakeLiveStatus", ["credentials_configured", "can_submit", "message"])
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @patch("atlas_agent.setup.wizard.is_interactive")
 @patch("atlas_agent.setup.wizard.run_wizard")

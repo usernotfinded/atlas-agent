@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/historical_release_checkers/check_v060_readiness.py
+# PURPOSE: Read-only v0.6.0 readiness checker.
+# DEPS:    argparse, json, subprocess, sys, pathlib.
+# ==============================================================================
+
 """Read-only v0.6.0 readiness checker.
 
 Verifies that required docs, source modules, test files, CLI commands,
@@ -26,6 +33,8 @@ Deterministic and local. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -34,6 +43,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -120,6 +131,12 @@ PYPROJECT_PATH = REPO_ROOT / "pyproject.toml"
 INIT_PATH = REPO_ROOT / "src" / "atlas_agent" / "__init__.py"
 CLI_CONTRACT_PATH = REPO_ROOT / "tests" / "fixtures" / "cli_command_contract.json"
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _load_json(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as f:

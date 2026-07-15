@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_autonomous_paper_scorecard_contract.py
+# PURPOSE: Static check for the autonomous paper scorecard contract (CAND-002).
+# DEPS:    argparse, json, re, sys, pathlib.
+# ==============================================================================
+
 """Static check for the autonomous paper scorecard contract (CAND-002).
 
 Deterministic, local-only, read-only. Does not:
@@ -14,6 +21,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -22,6 +31,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -100,6 +111,12 @@ FORBIDDEN_MODULE_IMPORTS = (
     "atlas_agent.execution.live",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

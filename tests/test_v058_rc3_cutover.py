@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v058_rc3_cutover.py
+# PURPOSE: Verifies v058 rc3 cutover behavior and regression expectations.
+# DEPS:    json, subprocess, sys, pathlib.
+# ==============================================================================
+
 """Historical tests for the superseded v0.5.8rc3 cutover checker."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -8,9 +17,17 @@ import sys
 from pathlib import Path
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CUTOVER_SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v058_rc3_cutover.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_rc3_cutover_checker_fails_against_rc4_repo() -> None:
     result = subprocess.run(

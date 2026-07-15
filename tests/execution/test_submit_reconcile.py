@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/execution/test_submit_reconcile.py
+# PURPOSE: Verifies submit reconcile behavior and regression expectations.
+# DEPS:    json, datetime, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -22,6 +31,12 @@ from atlas_agent.execution.order import Order
 from atlas_agent.execution.submit_reconcile import run_reconcile
 from atlas_agent.execution.submit_state import SubmitStateError
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _mock_resolution(adapter=None):
     return BrokerResolution(

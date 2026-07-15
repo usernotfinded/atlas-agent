@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_provider_execution_unlock_state.py
+# PURPOSE: Verifies research provider execution unlock state behavior and
+#         regression expectations.
+# DEPS:    json, pathlib, typing, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -25,6 +35,12 @@ from atlas_agent.research.provider_execution_unlock_state import (
 from atlas_agent.research.session import RESEARCH_ARTIFACT_SCHEMA_VERSION
 from atlas_agent.research.provider_response_review_result import create_provider_response_review_result
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _raise_if_called(*args, **kwargs):
     raise AssertionError("Config/secrets loader must not be called")

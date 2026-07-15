@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/gateway/telegram/test_bot.py
+# PURPOSE: Verifies bot behavior and regression expectations.
+# DEPS:    asyncio, dataclasses, datetime, typing, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import asyncio
@@ -10,6 +19,12 @@ from atlas_agent.gateway.telegram.auth import TelegramAuth, TelegramAuthConfig
 from atlas_agent.gateway.telegram.bot import TIMEOUT_MESSAGE, TelegramBotConfig, TelegramCommandBot
 from atlas_agent.gateway.telegram.ratelimit import RateLimitConfig, TelegramRateLimiter
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @dataclass
 class FakeKeyring:

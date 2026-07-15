@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_main_health.py
+# PURPOSE: Verifies main health behavior and regression expectations.
+# DEPS:    importlib, json, sys, pathlib, types.
+# ==============================================================================
+
 """Tests for the direct-main health report."""
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -9,11 +18,19 @@ from pathlib import Path
 from types import ModuleType
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "main_health.py"
 GENERATED_ARTIFACT_CHECKER = REPO_ROOT / "scripts" / "check_generated_artifacts.py"
 DOC = REPO_ROOT / "docs" / "development" / "main-health.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker() -> ModuleType:
     spec = importlib.util.spec_from_file_location("main_health_for_tests", SCRIPT)

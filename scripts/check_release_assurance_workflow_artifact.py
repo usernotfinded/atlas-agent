@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_release_assurance_workflow_artifact.py
+# PURPOSE: Validate a downloaded GitHub Actions artifact from the
+#         release-assurance.yml optional `run_bundle_demo` path.
+# DEPS:    argparse, hashlib, json, shutil, sys, tempfile, additional local
+#         modules.
+# ==============================================================================
+
 """Validate a downloaded GitHub Actions artifact from the release-assurance.yml
 optional `run_bundle_demo` path.
 
@@ -10,6 +19,8 @@ Exit codes:
   1 = blocking findings
   2 = operational error (e.g., missing file or bad zip)
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -26,6 +37,8 @@ from typing import Any
 
 # Ensure the repository root is on sys.path so `scripts.*` imports work when this
 # script is invoked directly.
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -57,6 +70,12 @@ UNSAFE_COMMAND_EVIDENCE = [
     "twine" + " publish",
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _read_text(path: Path) -> str:
     with open(path, encoding="utf-8") as f:

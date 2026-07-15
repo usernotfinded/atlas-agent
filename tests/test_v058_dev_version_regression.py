@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v058_dev_version_regression.py
+# PURPOSE: Verifies v058 dev version regression behavior and regression
+#         expectations.
+# DEPS:    re, subprocess, sys, pathlib, pytest.
+# ==============================================================================
+
 """Regression tests for post-v0.5.8.1 development transition.
 
 Verifies the correct lifecycle model:
@@ -9,6 +17,8 @@ Verifies the correct lifecycle model:
 - historical docs can still mention 0.5.7 and 0.5.8
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import re
@@ -19,6 +29,8 @@ from pathlib import Path
 import pytest
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -26,6 +38,12 @@ ROOT = Path(__file__).resolve().parent.parent
 # Current version assertions
 # ---------------------------------------------------------------------------
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_pyproject_version_is_current_dev(release_identity: dict) -> None:
     import tomllib

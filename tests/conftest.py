@@ -1,7 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/conftest.py
+# PURPOSE: Verifies conftest behavior and regression expectations.
+# DEPS:    json, sys, pathlib, pytest, release_metadata.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import sys
 from pathlib import Path
 import pytest
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -12,6 +23,12 @@ if _SCRIPTS_DIR not in sys.path:
 
 from release_metadata import load_metadata, ReleaseMetadata
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def release_identity():

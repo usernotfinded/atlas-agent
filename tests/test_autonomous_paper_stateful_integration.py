@@ -1,9 +1,19 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_stateful_integration.py
+# PURPOSE: Verifies autonomous paper stateful integration behavior and
+#         regression expectations.
+# DEPS:    json, shutil, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Integration tests for the stateful autonomous paper runner.
 
 These tests exercise the full stateful paper workflow end-to-end, verifying
 that state persists across invocations, resumes advance the cursor, duplicate
 bars are skipped, and artifacts remain redacted and portable.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -17,8 +27,16 @@ from atlas_agent.agent.autonomous_paper import run_stateful_autonomous_paper_loo
 from atlas_agent.config import AtlasConfig
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 SAMPLE_CSV = Path(__file__).resolve().parents[1] / "data" / "sample" / "ohlcv.csv"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_config(tmp_path: Path, **overrides: object) -> AtlasConfig:
     data_dir = tmp_path / "data" / "sample"

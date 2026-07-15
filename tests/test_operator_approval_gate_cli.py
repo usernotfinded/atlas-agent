@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_operator_approval_gate_cli.py
+# PURPOSE: Verifies operator approval gate cli behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, typing, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -14,8 +25,16 @@ from atlas_agent.agent.operator_approval_gate_cli import (
     main,
 )
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _ack_digest() -> str:
     from atlas_agent.agent.operator_approval_gate import _compute_acknowledgment_digest

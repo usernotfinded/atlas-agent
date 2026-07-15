@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_interface.py
+# PURPOSE: Verifies provider interface behavior and regression expectations.
+# DEPS:    os, sys, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -10,6 +19,12 @@ from atlas_agent.providers.local_command import LocalCommandProvider
 from atlas_agent.providers.null_provider import NullProvider
 from atlas_agent.providers.openai_compatible import OpenAICompatibleProvider
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_null_provider_deterministic() -> None:
     response = NullProvider().generate(

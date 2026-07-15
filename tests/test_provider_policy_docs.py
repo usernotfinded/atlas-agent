@@ -1,14 +1,29 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_policy_docs.py
+# PURPOSE: Verifies provider policy docs behavior and regression expectations.
+# DEPS:    ast, pathlib.
+# ==============================================================================
+
 """Tests for provider policy docs — Batch 8.0.
 
 This batch is documentation/policy/test-only. No provider execution code,
 no network calls, no credentials, no provider SDKs, no broker changes.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import ast
 from pathlib import Path
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _read(path: str) -> str:
     with open(path, encoding="utf-8") as f:

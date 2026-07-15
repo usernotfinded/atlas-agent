@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_market_session.py
+# PURPOSE: Verifies market session behavior and regression expectations.
+# DEPS:    datetime, zoneinfo, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import datetime
 from zoneinfo import ZoneInfo
 from unittest.mock import patch
 
 from atlas_agent.market.calendar import MarketConfig
 from atlas_agent.market.session import MarketSessionDetector
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_market_session_open():
     detector = MarketSessionDetector()

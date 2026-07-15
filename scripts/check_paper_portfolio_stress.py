@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_paper_portfolio_stress.py
+# PURPOSE: Validates paper portfolio stress requirements for local and CI
+#         workflows.
+# DEPS:    argparse, json, os, re, sys, pathlib.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -8,6 +18,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ALLOWED_DECISIONS = {
     "paper_stress_pass",
@@ -26,6 +38,12 @@ FORBIDDEN_DOC_CLAIMS = (
     "approved for live",
 )
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()

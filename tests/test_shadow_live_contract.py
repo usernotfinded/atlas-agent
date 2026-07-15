@@ -1,8 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_shadow_live_contract.py
+# PURPOSE: Verifies shadow live contract behavior and regression expectations.
+# DEPS:    json, shutil, subprocess, sys, tempfile, pathlib.
+# ==============================================================================
+
 """Tests for the shadow-live / read-only readiness contract checker (CAND-001).
 
 Documentation/test-only. No execution code, no network calls, no credentials,
 no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -14,11 +23,19 @@ import tempfile
 from pathlib import Path
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CHECKER_SCRIPT = REPO_ROOT / "scripts" / "check_shadow_live_contract.py"
 CONTRACT_DOC = REPO_ROOT / "docs" / "shadow-live-readiness-contract.md"
 GOVERNANCE_DOC = REPO_ROOT / "docs" / "bounded-live-autonomy-governance.md"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_checker(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(

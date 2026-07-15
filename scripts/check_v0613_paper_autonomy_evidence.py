@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_v0613_paper_autonomy_evidence.py
+# PURPOSE: Check the v0.6.13 paper-autonomy evidence bundle.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Check the v0.6.13 paper-autonomy evidence bundle.
 
 This checker is deterministic and local-only. It does not mutate files, access
@@ -11,6 +18,8 @@ Exit codes:
   2 = operational error
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -20,6 +29,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ARTIFACT_TYPE = "v0613_paper_autonomy_evidence"
 CURRENT_PUBLIC = "v0.6.12"
@@ -104,6 +115,12 @@ FORBIDDEN_RELEASE_CLAIMS = [
     '"pypi_published": true',
 ]
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check v0.6.13 paper-autonomy evidence bundle.")

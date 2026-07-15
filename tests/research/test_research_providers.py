@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_research_providers.py
+# PURPOSE: Verifies research providers behavior and regression expectations.
+# DEPS:    inspect, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import inspect
@@ -14,6 +23,12 @@ from atlas_agent.research.providers import (
 )
 from atlas_agent.research.session import DeterministicResearchProvider
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestResearchContext:
     def test_default_mode_is_paper(self) -> None:

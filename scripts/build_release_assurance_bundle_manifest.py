@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/build_release_assurance_bundle_manifest.py
+# PURPOSE: Build a manifest for a release-assurance bundle pair.
+# DEPS:    argparse, hashlib, json, sys, datetime, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Build a manifest for a release-assurance bundle pair.
 
 The manifest describes a baseline release-assurance output and an opt-in
 output that includes the reviewer trust snapshot. It is local-only,
 offline, and credential-free.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -16,6 +26,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_SCHEMA_VERSION = "atlas-release-assurance-bundle-manifest/1.0"
@@ -33,6 +45,12 @@ REQUIRED_SAFETY_INVARIANTS: dict[str, bool] = {
     "no_risk_claims_absent": True,
 }
 
+
+# ==============================================================================
+# ARTIFACT BUILD WORKFLOW
+# ==============================================================================
+
+# --- BUILD HELPERS AND ENTRYPOINTS ---
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()

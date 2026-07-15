@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_portfolio_dossier.py
+# PURPOSE: Verifies paper portfolio dossier behavior and regression
+#         expectations.
+# DEPS:    json, os, shutil, subprocess, pathlib, atlas_agent, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import os
 import shutil
@@ -9,6 +20,8 @@ from atlas_agent.backtest.portfolio import (
     write_portfolio_dossier_reports,
 )
 from scripts.check_paper_portfolio_dossier import check_all
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 DATA_PATH = Path("data/sample/ohlcv_extended.csv")
 ALLOWED_DOSSIER_STATUSES = {
@@ -25,6 +38,12 @@ FORBIDDEN_LABELS = {
     "guaranteed_profit",
     "outperforms_market",
 }
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_dossier_command_writes_schema(tmp_path):
     result = subprocess.run(

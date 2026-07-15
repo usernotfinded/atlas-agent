@@ -1,4 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_evidence_index.py
+# PURPOSE: Verifies provider evidence index behavior and regression
+#         expectations.
+# DEPS:    json, os, subprocess, sys, pathlib, pytest, additional local modules.
+# ==============================================================================
+
 """Tests for provider evidence registry and audit index."""
+
+# --- IMPORTS ---
 
 import json
 import os
@@ -15,6 +25,12 @@ from atlas_agent.providers.provider_evidence_index import (
 )
 from atlas_agent.providers.provider_preflight import generate_call_plan_artifact
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_build_empty_root(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)

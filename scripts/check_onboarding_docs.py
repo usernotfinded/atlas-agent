@@ -1,10 +1,20 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_onboarding_docs.py
+# PURPOSE: Validate contributor onboarding docs.
+# DEPS:    argparse, json, re, sys, dataclasses, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Validate contributor onboarding docs.
 
 The check is deterministic and local. It does not install dependencies, load
 credentials, call providers, contact brokers, create tags, publish packages, or
 modify runtime state.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -16,6 +26,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 ONBOARDING_DOC = Path("docs/development/onboarding.md")
 SAFE_WORKFLOWS_DOC = Path("docs/development/safe-local-workflows.md")
@@ -224,6 +236,12 @@ SAFE_COMMAND_SECTIONS = {
     "What Not To Change",
 }
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 @dataclass(frozen=True)
 class Check:

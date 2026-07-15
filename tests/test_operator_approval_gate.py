@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_operator_approval_gate.py
+# PURPOSE: Verifies operator approval gate behavior and regression expectations.
+# DEPS:    hashlib, json, os, pathlib, typing, pytest, additional local modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import hashlib
@@ -22,6 +31,12 @@ from atlas_agent.agent.operator_approval_gate import (
     write_operator_approval_gate_artifacts,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _ack_digest() -> str:
     return _compute_acknowledgment_digest()

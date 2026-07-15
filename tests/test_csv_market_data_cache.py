@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_csv_market_data_cache.py
+# PURPOSE: Verifies csv market data cache behavior and regression expectations.
+# DEPS:    os, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -5,6 +14,12 @@ from pathlib import Path
 
 from atlas_agent.market_data.csv_provider import CSVMarketDataProvider
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _write_csv(path: Path, rows: str) -> None:
     path.write_text(

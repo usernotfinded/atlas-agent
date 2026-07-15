@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/backtest/test_strategy_validation.py
+# PURPOSE: Verifies strategy validation behavior and regression expectations.
+# DEPS:    csv, datetime, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import csv
@@ -7,6 +16,12 @@ from atlas_agent.backtest.data import load_market_data
 from atlas_agent.backtest.models import BacktestConfig
 from atlas_agent.backtest.validation import validate_strategy
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_validate_builtin_strategy_with_local_bars(tmp_path) -> None:
     data_path = tmp_path / "bars.csv"

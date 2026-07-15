@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/notifications/test_notification_redaction.py
+# PURPOSE: Verifies notification redaction behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
 """Tests for notification redaction."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.notifications.models import NotificationPayload, NotificationResult, NotificationTransport
@@ -9,6 +18,12 @@ from atlas_agent.notifications.redaction import (
     preview_payload,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_redact_text_leaves_plain_text() -> None:
     assert redact_text("Hello world") == "Hello world"

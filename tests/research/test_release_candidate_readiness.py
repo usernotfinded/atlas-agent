@@ -1,7 +1,17 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_release_candidate_readiness.py
+# PURPOSE: Verifies release candidate readiness behavior and regression
+#         expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for release candidate readiness report — Batch 10.1.
 
 No execution code, no network calls, no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -31,6 +41,12 @@ from atlas_agent.research.release_candidate_readiness import (
 )
 from atlas_agent.research.session import ResearchSessionError
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def workspace(tmp_path: Path) -> Path:

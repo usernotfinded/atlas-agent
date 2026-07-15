@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/audit_release_assurance_artifact_retention.py
+# PURPOSE: Read-only audit of GitHub Actions artifact retention for release
+#         assurance.
+# DEPS:    argparse, datetime, json, os, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Read-only audit of GitHub Actions artifact retention for release assurance.
 
 Queries artifact metadata (never downloading or deleting artifacts) either from
@@ -17,6 +26,8 @@ Exit codes:
   2 = operational error (subprocess failure, I/O error, etc.)
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -28,6 +39,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -47,6 +60,12 @@ GH_API_MAX_PAGES = 1000  # Guardrail; never loop indefinitely.
 REPORT_BASENAME_JSON = "release-assurance-artifact-retention-report.json"
 REPORT_BASENAME_MD = "release-assurance-artifact-retention-report.md"
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _utcnow() -> datetime.datetime:
     """Return the current UTC time with timezone awareness."""

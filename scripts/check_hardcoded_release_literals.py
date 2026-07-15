@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_hardcoded_release_literals.py
+# PURPOSE: Detect hardcoded release-identity literals in active checker scripts.
+# DEPS:    ast, re, sys, pathlib.
+# ==============================================================================
+
 """Detect hardcoded release-identity literals in active checker scripts.
 
 Release identity (source version, current public tag, next planned tag) is
@@ -14,6 +21,8 @@ Deterministic and local. Does not:
 - tag, push, publish, or mutate repository files
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import ast
@@ -21,6 +30,8 @@ import re
 import sys
 from pathlib import Path
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 METADATA_PATH = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
@@ -36,6 +47,12 @@ DOCS_CONFIG_DIRS = [
 # and are excluded from this scan.
 HISTORICAL_SCRIPT_PATTERN = ("check_v06", "check_v05")
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 class _LiteralVisitor(ast.NodeVisitor):
     def __init__(self, literals: set[str]) -> None:

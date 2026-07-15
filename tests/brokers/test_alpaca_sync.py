@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/brokers/test_alpaca_sync.py
+# PURPOSE: Verifies alpaca sync behavior and regression expectations.
+# DEPS:    os, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -18,6 +27,12 @@ from atlas_agent.config import AtlasConfig
 # ---------------------------------------------------------------------------
 # Numeric validation helpers
 # ---------------------------------------------------------------------------
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_require_finite_accepts_float() -> None:
     assert _require_finite(3.14, "x") == 3.14

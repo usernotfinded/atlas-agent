@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_risk_manager.py
+# PURPOSE: Verifies risk manager behavior and regression expectations.
+# DEPS:    atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from atlas_agent.config import AtlasConfig
@@ -5,6 +14,12 @@ from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def evaluate(symbol: str, quantity: float, price: float, config: AtlasConfig, realized_pnl_today: float = 0.0, trades_today: int = 0, leverage: float = 1.0):
     limits = RiskLimits(
@@ -241,4 +256,3 @@ def test_evaluate_order_rejects_nan_quantity_directly():
     decision = manager.evaluate_order(order, portfolio, mode="paper")
     assert not decision.allowed
     assert any(v.rule == "invalid_quantity" for v in decision.violations)
-

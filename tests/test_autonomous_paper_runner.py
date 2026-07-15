@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_autonomous_paper_runner.py
+# PURPOSE: Verifies autonomous paper runner behavior and regression
+#         expectations.
+# DEPS:    json, os, shutil, pathlib, atlas_agent, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -29,6 +40,8 @@ import subprocess
 import sys
 import time
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 SAMPLE_CSV = Path(__file__).resolve().parents[1] / "data" / "sample" / "ohlcv.csv"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -54,6 +67,12 @@ finally:
     lock.release()
 '''
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _start_lock_holder(state_dir: Path, tmp_path: Path) -> tuple[subprocess.Popen, Path]:
     helper = tmp_path / "lock_holder.py"

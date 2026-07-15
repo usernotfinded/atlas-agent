@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/smoke_reviewer_golden_path.py
+# PURPOSE: Deterministic reviewer golden-path smoke test.
+# DEPS:    argparse, json, os, shutil, subprocess, sys, additional local
+#         modules.
+# ==============================================================================
+
 """Deterministic reviewer golden-path smoke test.
 
 Creates a temporary workspace outside the repo, runs the safe onboarding
@@ -12,6 +20,8 @@ Usage:
     python3.11 scripts/smoke_reviewer_golden_path.py --keep-temp
     python3.11 scripts/smoke_reviewer_golden_path.py --skip-release-check
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -29,6 +39,8 @@ from typing import Any
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYTHON_BIN = os.environ.get("PYTHON_BIN", sys.executable)
@@ -95,6 +107,12 @@ _STEP_DIAGNOSTICS: dict[str, tuple[str, str]] = {
     ),
 }
 
+
+# ==============================================================================
+# SCRIPT IMPLEMENTATION
+# ==============================================================================
+
+# --- HELPERS AND ENTRYPOINTS ---
 
 def _get_diagnostic(command: str) -> tuple[str, str]:
     """Return (category, suggestion) for a given command string."""

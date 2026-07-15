@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_kill_switch_cli.py
+# PURPOSE: Verifies kill switch cli behavior and regression expectations.
+# DEPS:    json, pathlib, unittest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -9,6 +18,12 @@ from atlas_agent.config import AtlasConfig
 from atlas_agent.safety import read_deadman_heartbeat
 from atlas_agent.safety.totp import generate_totp
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _config(tmp_path: Path) -> AtlasConfig:
     return AtlasConfig(

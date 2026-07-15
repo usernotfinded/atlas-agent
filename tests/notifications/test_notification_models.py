@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/notifications/test_notification_models.py
+# PURPOSE: Verifies notification models behavior and regression expectations.
+# DEPS:    json, atlas_agent.
+# ==============================================================================
+
 """Tests for notification models."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -11,6 +20,12 @@ from atlas_agent.notifications.models import (
     NotificationTransport,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_notification_payload_defaults() -> None:
     p = NotificationPayload(title="Test", message="Hello")

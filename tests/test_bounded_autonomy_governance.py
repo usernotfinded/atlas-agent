@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_bounded_autonomy_governance.py
+# PURPOSE: Verifies bounded autonomy governance behavior and regression
+#         expectations.
+# DEPS:    subprocess, sys, pathlib, unittest, pytest.
+# ==============================================================================
+
 """Tests for the bounded autonomy governance checker.
 
 Documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -13,9 +23,17 @@ from unittest.mock import patch
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_bounded_autonomy_governance.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_script(args: list[str] | None = None) -> subprocess.CompletedProcess[str]:
     cmd = [sys.executable, str(SCRIPT)]

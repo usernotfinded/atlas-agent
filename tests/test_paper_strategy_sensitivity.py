@@ -1,3 +1,14 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_paper_strategy_sensitivity.py
+# PURPOSE: Verifies paper strategy sensitivity behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, tempfile, pytest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 import sys
@@ -7,10 +18,18 @@ import pytest
 
 from atlas_agent.backtest.sensitivity import build_paper_strategy_sensitivity
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "check_paper_strategy_sensitivity.py"
 DEMO_SCRIPT = ROOT / "scripts" / "demo_paper_strategy_sensitivity.sh"
 FIXTURE = ROOT / "data" / "sample" / "ohlcv_extended.csv"
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _run_sensitivity(output_dir: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(

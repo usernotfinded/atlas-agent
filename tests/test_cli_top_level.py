@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_cli_top_level.py
+# PURPOSE: Verifies cli top level behavior and regression expectations.
+# DEPS:    os, shutil, tempfile, pathlib, json, unittest, additional local
+#         modules.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import os
@@ -12,6 +22,8 @@ import pytest
 from atlas_agent.cli import main
 from atlas_agent.ai.discipline import write_user_discipline
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 GOOD_PROFILE = (
     "# Profile\n\n"
     "## Decision temperament\n\nCautious.\n\n"
@@ -24,6 +36,12 @@ GOOD_PROFILE = (
     "User discipline cannot override Atlas risk gates, approval queues, kill switch, "
     "audit logging, broker sync checks, reference price requirements, or live-trading safeguards.\n"
 )
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def workspace(monkeypatch):

@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_readiness.py
+# PURPOSE: Verifies provider readiness behavior and regression expectations.
+# DEPS:    json, os, subprocess, sys, pathlib, pytest, additional local modules.
+# ==============================================================================
+
 """Tests for provider readiness gate and capability inventory."""
+
+# --- IMPORTS ---
 
 import json
 import os
@@ -14,6 +23,12 @@ from atlas_agent.providers.provider_readiness import (
     generate_capability_inventory,
 )
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_capability_inventory_structure(monkeypatch):
     monkeypatch.setenv("ATLAS_OPENROUTER_API_KEY", "sk-fake-key-12345")

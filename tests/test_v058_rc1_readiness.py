@@ -1,3 +1,11 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v058_rc1_readiness.py
+# PURPOSE: Verifies v058 rc1 readiness behavior and regression expectations.
+# DEPS:    importlib, json, subprocess, sys, pathlib, types, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for the v0.5.8 RC1 readiness dry-run gate.
 
 These tests verify that:
@@ -13,6 +21,8 @@ These tests verify that:
 - Script source does not contain network/GitHub API calls.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import importlib.util
@@ -25,9 +35,17 @@ from unittest.mock import patch
 
 import pytest
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 READINESS_SCRIPT = REPO_ROOT / "scripts" / "historical_release_checkers" / "check_v058_rc1_readiness.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_readiness_module() -> ModuleType:
     spec = importlib.util.spec_from_file_location(

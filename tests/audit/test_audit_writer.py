@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/audit/test_audit_writer.py
+# PURPOSE: Verifies audit writer behavior and regression expectations.
+# DEPS:    json, logging, pathlib, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -6,6 +15,12 @@ from pathlib import Path
 from atlas_agent.audit.writer import AuditWriter
 from atlas_agent.audit.verify import verify_audit_log
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_writer_appends_and_chains_events(tmp_path: Path):
     path = tmp_path / "audit.jsonl"

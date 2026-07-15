@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/execution/test_submit_approved_order_dry_run.py
+# PURPOSE: Verifies submit approved order dry run behavior and regression
+#         expectations.
+# DEPS:    json, datetime, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import json
@@ -11,6 +21,12 @@ from atlas_agent.execution.approval import ApprovalManager, _compute_approval_ha
 from atlas_agent.execution.order import Order
 from atlas_agent.execution.submit_dry_run import run_submit_dry_run, DryRunReport
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _make_order(**kwargs) -> Order:
     defaults = {

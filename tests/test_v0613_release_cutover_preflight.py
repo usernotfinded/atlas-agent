@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_v0613_release_cutover_preflight.py
+# PURPOSE: Verifies v0613 release cutover preflight behavior and regression
+#         expectations.
+# DEPS:    json, subprocess, sys, pathlib, pytest, scripts.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 import subprocess
 import sys
@@ -7,8 +17,16 @@ import pytest
 
 from scripts.check_v0613_release_cutover_preflight import check
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 ARTIFACT_TYPE = "v0613_release_cutover_preflight_check"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def temp_repo(tmp_path: Path) -> Path:

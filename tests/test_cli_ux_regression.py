@@ -1,8 +1,23 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_cli_ux_regression.py
+# PURPOSE: Verifies cli ux regression behavior and regression expectations.
+# DEPS:    os, json, subprocess, pathlib, pytest.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import os
 import json
 import subprocess
 from pathlib import Path
 import pytest
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def run_cmd(cmd: str, cwd: Path) -> tuple[int, str, str]:
     result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True)

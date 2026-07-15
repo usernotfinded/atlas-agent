@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/gateway/telegram/test_sanitize.py
+# PURPOSE: Verifies sanitize behavior and regression expectations.
+# DEPS:    asyncio, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import asyncio
 
 from atlas_agent.gateway.telegram.sanitize import safe_output, sanitize_output
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def test_sanitize_output_redacts_sensitive_keys_and_tokens() -> None:
     payload = {

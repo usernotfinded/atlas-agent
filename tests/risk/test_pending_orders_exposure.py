@@ -1,3 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/risk/test_pending_orders_exposure.py
+# PURPOSE: Verifies pending orders exposure behavior and regression
+#         expectations.
+# DEPS:    pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import pytest
@@ -5,6 +15,12 @@ from atlas_agent.risk.manager import RiskManager
 from atlas_agent.risk.limits import RiskLimits
 from atlas_agent.risk.models import OrderRiskInput, PortfolioSnapshot, RiskPosition, PendingOrder
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 @pytest.fixture
 def empty_portfolio():

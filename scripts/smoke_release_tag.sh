@@ -1,10 +1,23 @@
 #!/usr/bin/env bash
+set -euo pipefail
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/smoke_release_tag.sh
+# PURPOSE: Provides shell tooling for smoke release tag.
+# DEPS:    Bash, local Atlas Agent commands and scripts.
+# ==============================================================================
+
+# ==============================================================================
+# SCRIPT WORKFLOW
+# ==============================================================================
+
+# --- ENVIRONMENT, SAFETY, AND EXECUTION ---
+
 # Release tag smoke test: verify a pushed tag from a clean clone.
 # Usage: ./scripts/smoke_release_tag.sh <tag> [--repo <url>] [--full]
 # Example: ./scripts/smoke_release_tag.sh v0.5.7.dev2
 # Example: ./scripts/smoke_release_tag.sh v0.5.7.dev2 --repo https://github.com/usernotfinded/atlas-agent.git --full
 
-set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 

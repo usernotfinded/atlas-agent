@@ -1,7 +1,16 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_template_packaging.py
+# PURPOSE: Verifies template packaging behavior and regression expectations.
+# DEPS:    importlib, pathlib, pytest.
+# ==============================================================================
+
 """Verify template packaging parity and safety.
 
 No network calls, no credentials, no broker/provider contact, no live trading.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -9,6 +18,8 @@ from importlib import resources
 from pathlib import Path
 
 import pytest
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PKG_TEMPLATE = REPO_ROOT / "src" / "atlas_agent" / "templates" / "routine-trader"
@@ -20,6 +31,12 @@ SAFE_EXCLUSIONS = {
     REPO_ROOT / "src" / "atlas_agent" / "templates" / "routine-trader" / "routines" / "schedules" / "github-actions.yml",
 }
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _relative_files(directory: Path) -> set[str]:
     if not directory.exists():

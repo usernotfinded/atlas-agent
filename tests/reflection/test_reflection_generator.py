@@ -1,4 +1,13 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/reflection/test_reflection_generator.py
+# PURPOSE: Verifies reflection generator behavior and regression expectations.
+# DEPS:    tempfile, pathlib, pytest, atlas_agent.
+# ==============================================================================
+
 """Tests for atlas_agent.reflection.generator."""
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import tempfile
@@ -9,6 +18,12 @@ import pytest
 from atlas_agent.reflection.generator import generate_reflection
 from atlas_agent.reflection.models import ReflectionStatus
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 class TestGenerateReflection:
     def test_from_existing_file(self):

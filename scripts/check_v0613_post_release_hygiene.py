@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_v0613_post_release_hygiene.py
+# PURPOSE: Deterministic v0.6.13 post-release hygiene checker.
+# DEPS:    argparse, json, re, sys, pathlib, typing.
+# ==============================================================================
+
 """Deterministic v0.6.13 post-release hygiene checker.
 
 Validates that after the v0.6.13 public release:
@@ -30,6 +37,8 @@ Deterministic and local. Does not:
 - call brokers/providers
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 import argparse
@@ -39,6 +48,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
+# --- CONFIGURATION AND CONSTANTS ---
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -60,6 +71,12 @@ CURRENT_PUBLIC = "v0.6.13"
 SOURCE_VERSION = "0.6.13"
 NEXT_PLANNED = "v0.6.14"
 
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def _version_key(value: str) -> tuple[int, ...]:
     """Parse a tag or version string into a numeric tuple for ordering."""

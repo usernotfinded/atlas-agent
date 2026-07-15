@@ -1,8 +1,23 @@
 #!/usr/bin/env python3.11
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    scripts/check_release_metadata.py
+# PURPOSE: Validates release metadata requirements for local and CI workflows.
+# DEPS:    sys, tomllib, pathlib, release_metadata.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import sys
 import tomllib
 from pathlib import Path
 from release_metadata import load_metadata, validate_metadata
+
+# ==============================================================================
+# VALIDATION WORKFLOW
+# ==============================================================================
+
+# --- VALIDATION HELPERS AND ENTRYPOINTS ---
 
 def main():
     repo_root = Path(__file__).resolve().parent.parent

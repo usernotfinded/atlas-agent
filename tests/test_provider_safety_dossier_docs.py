@@ -1,16 +1,34 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_safety_dossier_docs.py
+# PURPOSE: Verifies provider safety dossier docs behavior and regression
+#         expectations.
+# DEPS:    pathlib.
+# ==============================================================================
+
 """Documentation guard tests for the Public Safety Proof Pack — Batch 9.8.
 
 This batch is documentation/test-only. No execution code, no network calls,
 no credentials, no provider SDKs, no broker changes.
 """
 
+# --- IMPORTS ---
+
 from __future__ import annotations
 
 from pathlib import Path
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _read(path: str) -> str:
     full = REPO_ROOT / path

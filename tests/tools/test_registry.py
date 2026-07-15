@@ -1,9 +1,24 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/tools/test_registry.py
+# PURPOSE: Verifies registry behavior and regression expectations.
+# DEPS:    pytest, typing, atlas_agent, time.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import pytest
 from typing import Union
 from atlas_agent.tools.registry import ToolRegistry, CONTEXT_WINDOW_FULL_DESC_THRESHOLD
 from atlas_agent.tools.spec import ToolSpec, ModelCapabilities, ToolCall, ToolError, ToolResult, RateLimit, generate_input_schema
 from atlas_agent.core.types import Session
 import time
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def sample_func(req_arg: str, opt_arg: int = 5) -> str:
     return f"{req_arg}_{opt_arg}"

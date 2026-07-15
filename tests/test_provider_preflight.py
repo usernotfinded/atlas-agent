@@ -1,3 +1,12 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_provider_preflight.py
+# PURPOSE: Verifies provider preflight behavior and regression expectations.
+# DEPS:    json, pathlib, unittest, pytest, atlas_agent.
+# ==============================================================================
+
+# --- IMPORTS ---
+
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -6,6 +15,12 @@ import pytest
 
 from atlas_agent.cli import main
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _write_valid_call_plan(path: Path) -> dict:
     from atlas_agent.providers.provider_preflight import generate_call_plan_artifact

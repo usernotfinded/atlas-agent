@@ -1,7 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/research/test_release_candidate_cutover_dry_run.py
+# PURPOSE: Verifies release candidate cutover dry run behavior and regression
+#         expectations.
+# DEPS:    json, re, pathlib, typing, unittest, pytest, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for release candidate cutover dry run - Batch 10.2.
 
 No execution code, no network calls, no credentials, no provider SDKs, no broker changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -35,11 +46,19 @@ from atlas_agent.research.release_candidate_cutover import (
 from atlas_agent.research.session import ResearchSessionError
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 _CURRENT_DEV_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\.dev\d+$")
 _CURRENT_RC_RE = re.compile(r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)rc[1-9]\d*$")
 _CURRENT_STABLE_RE = re.compile(r"^\d+\.\d+\.\d+(?:\.\d+)?$")
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _current_version_state(
     version: str = __version__,

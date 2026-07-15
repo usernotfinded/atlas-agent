@@ -1,8 +1,18 @@
+# ==============================================================================
+# PROJECT: Atlas Agent
+# FILE:    tests/test_onboarding_docs.py
+# PURPOSE: Verifies onboarding docs behavior and regression expectations.
+# DEPS:    importlib, json, re, subprocess, sys, pathlib, additional local
+#         modules.
+# ==============================================================================
+
 """Tests for contributor onboarding documentation consistency.
 
 Docs/checker only. No network, credentials, provider calls, broker calls, tag
 creation, release creation, package publishing, or runtime execution changes.
 """
+
+# --- IMPORTS ---
 
 from __future__ import annotations
 
@@ -16,9 +26,17 @@ from types import ModuleType
 from typing import Callable
 
 
+# --- CONFIGURATION AND CONSTANTS ---
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_onboarding_docs.py"
 
+
+# ==============================================================================
+# TEST SUITE
+# ==============================================================================
+
+# --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _load_checker() -> ModuleType:
     spec = importlib.util.spec_from_file_location("check_onboarding_docs_for_tests", SCRIPT)
