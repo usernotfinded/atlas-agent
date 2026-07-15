@@ -125,7 +125,7 @@ submit, or order approval.
 
 ## Git Workflow
 
-Atlas Agent maintenance work follows `AGENTS.md`: **work directly on `main`**.
+Atlas Agent maintenance work follows `CONTRIBUTING.md`: **work directly on `main`**.
 Keep the diff focused on the task, stage only intended files, and do not merge
 until checks pass. For contributor work that is not direct-main maintenance,
 use a feature branch and open a draft PR for review.
