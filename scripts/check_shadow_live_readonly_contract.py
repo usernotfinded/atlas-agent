@@ -187,6 +187,20 @@ FORBIDDEN_CREDENTIAL_PATTERNS = (
 
 
 # ==============================================================================
+# PATH HELPERS
+# ==============================================================================
+
+def _rel(path: Path) -> Path:
+    """Return a safe diagnostic path for repository or temporary fixtures."""
+    try:
+        return path.relative_to(REPO_ROOT)
+    except ValueError:
+        # Tests inspect mutated copies outside the repository; diagnostics must
+        # remain useful without exposing the host's absolute temporary path.
+        return Path("<temp>") / path.name
+
+
+# ==============================================================================
 # VALIDATION WORKFLOW
 # ==============================================================================
 
@@ -212,7 +226,7 @@ def _check_required_files() -> list[str]:
     errors: list[str] = []
     for path in REQUIRED_FILES:
         if not path.exists():
-            errors.append(f"Required file missing: {path.relative_to(REPO_ROOT)}")
+            errors.append(f"Required file missing: {_rel(path)}")
     return errors
 
 
@@ -224,7 +238,7 @@ def _check_required_statuses() -> list[str]:
     for status in REQUIRED_STATUSES:
         if f'"{status}"' not in text:
             errors.append(
-                f"[{SHADOW_MODULE.relative_to(REPO_ROOT)}] Missing status: {status}"
+                f"[{_rel(SHADOW_MODULE)}] Missing status: {status}"
             )
     return errors
 
@@ -237,7 +251,7 @@ def _check_required_artifact_names() -> list[str]:
     for name in REQUIRED_ARTIFACT_NAMES:
         if name not in text:
             errors.append(
-                f"[{SHADOW_MODULE.relative_to(REPO_ROOT)}] Missing artifact name: {name}"
+                f"[{_rel(SHADOW_MODULE)}] Missing artifact name: {name}"
             )
     return errors
 
@@ -247,7 +261,7 @@ def _check_required_doc_phrases() -> list[str]:
     if not DOC.exists():
         return errors
     text = _read(DOC).lower()
-    rel = DOC.relative_to(REPO_ROOT)
+    rel = _rel(DOC)
     for phrase in REQUIRED_DOC_PHRASES:
         if phrase.lower() not in text:
             errors.append(f"[{rel}] Missing required phrase: {phrase}")
@@ -283,7 +297,7 @@ def _check_forbidden_doc_claims() -> list[str]:
     docs_to_check = [p for p in (DOC, GOVERNANCE_DOC, READINESS_DOC) if p.exists()]
     for path in docs_to_check:
         text = _read(path).lower()
-        rel = path.relative_to(REPO_ROOT)
+        rel = _rel(path)
         for phrase in FORBIDDEN_DOC_PHRASES:
             start = text.find(phrase)
             while start != -1:
@@ -302,7 +316,7 @@ def _check_cross_references() -> list[str]:
     if not DOC.exists():
         return errors
     text = _read(DOC)
-    rel = DOC.relative_to(REPO_ROOT)
+    rel = _rel(DOC)
     for link in (
         "bounded-live-autonomy-governance.md",
         "shadow-live-readiness-contract.md",
@@ -318,7 +332,7 @@ def _check_cli_wiring() -> list[str]:
         return errors
     text = _read(CLI_MODULE)
     try:
-        rel = CLI_MODULE.relative_to(REPO_ROOT)
+        rel = _rel(CLI_MODULE)
     except ValueError:
         rel = str(CLI_MODULE)
     if '"shadow-live"' not in text:
@@ -354,7 +368,7 @@ def _check_module_safety() -> list[str]:
     if not SHADOW_MODULE.exists():
         return errors
     text = _read(SHADOW_MODULE)
-    rel = SHADOW_MODULE.relative_to(REPO_ROOT)
+    rel = _rel(SHADOW_MODULE)
 
     # Strip out the pattern tuple definitions in this checker if they were ever
     # copied into the module (defensive: they are not, but the scan should not

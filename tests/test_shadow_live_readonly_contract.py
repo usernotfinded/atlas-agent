@@ -55,32 +55,30 @@ def test_checker_json_output() -> None:
     assert data["errors"] == []
 
 
-def test_checker_fails_when_forbidden_doc_claim_present(tmp_path: Path) -> None:
-    doc_path = DOC
-    original_text = doc_path.read_text(encoding="utf-8")
-    try:
-        doc_path.write_text(
-            original_text + "\nThis strategy is guaranteed profit.\n",
-            encoding="utf-8",
-        )
-        result = check_all()
-        assert not result["passed"]
-    finally:
-        doc_path.write_text(original_text, encoding="utf-8")
+def test_checker_fails_when_forbidden_doc_claim_present(
+    mutated_copy, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    temp_doc = mutated_copy(
+        DOC,
+        append="\nThis strategy is guaranteed profit.\n",
+    )
+    monkeypatch.setattr(_checker, "DOC", temp_doc)
+
+    result = check_all()
+    assert not result["passed"]
 
 
-def test_checker_fails_on_forbidden_import() -> None:
-    module = SHADOW_MODULE
-    original_text = module.read_text(encoding="utf-8")
-    try:
-        module.write_text(
-            original_text + "\nfrom atlas_agent.brokers.alpaca import AlpacaBroker\n",
-            encoding="utf-8",
-        )
-        result = check_all()
-        assert not result["passed"]
-    finally:
-        module.write_text(original_text, encoding="utf-8")
+def test_checker_fails_on_forbidden_import(
+    mutated_copy, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    temp_module = mutated_copy(
+        SHADOW_MODULE,
+        append="\nfrom atlas_agent.brokers.alpaca import AlpacaBroker\n",
+    )
+    monkeypatch.setattr(_checker, "SHADOW_MODULE", temp_module)
+
+    result = check_all()
+    assert not result["passed"]
 
 
 @pytest.mark.parametrize(
@@ -93,15 +91,14 @@ def test_checker_fails_on_forbidden_import() -> None:
         "api_key = 'leaked'",
     ],
 )
-def test_checker_fails_on_forbidden_pattern(pattern: str) -> None:
-    module = SHADOW_MODULE
-    original_text = module.read_text(encoding="utf-8")
-    try:
-        module.write_text(original_text + "\n" + pattern + "\n", encoding="utf-8")
-        result = check_all()
-        assert not result["passed"], f"Expected failure for pattern: {pattern}"
-    finally:
-        module.write_text(original_text, encoding="utf-8")
+def test_checker_fails_on_forbidden_pattern(
+    pattern: str, mutated_copy, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    temp_module = mutated_copy(SHADOW_MODULE, append=f"\n{pattern}\n")
+    monkeypatch.setattr(_checker, "SHADOW_MODULE", temp_module)
+
+    result = check_all()
+    assert not result["passed"], f"Expected failure for pattern: {pattern}"
 
 
 def test_checker_imports_no_network_or_credentials() -> None:

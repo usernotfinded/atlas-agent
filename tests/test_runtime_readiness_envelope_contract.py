@@ -3,8 +3,7 @@
 # FILE:    tests/test_runtime_readiness_envelope_contract.py
 # PURPOSE: Verifies runtime readiness envelope contract behavior and regression
 #         expectations.
-# DEPS:    ast, contextlib, json, subprocess, sys, pathlib, additional local
-#         modules.
+# DEPS:    ast, json, subprocess, sys, pathlib, pytest, additional local modules.
 # ==============================================================================
 
 # --- IMPORTS ---
@@ -12,12 +11,10 @@
 from __future__ import annotations
 
 import ast
-import contextlib
 import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Generator
 
 import pytest
 
@@ -38,18 +35,6 @@ BOOTSTRAP_MODULE = REPO_ROOT / "src" / "atlas_agent" / "cli_bootstrap.py"
 # ==============================================================================
 
 # --- TEST FIXTURES, HELPERS, AND CASES ---
-
-@contextlib.contextmanager
-def _mutate_doc_temporarily(extra: str) -> Generator[Path, None, None]:
-    """Temporarily append ``extra`` to the checker doc and restore it on exit."""
-    doc_path = _checker.DOC
-    original_text = doc_path.read_text(encoding="utf-8")
-    try:
-        doc_path.write_text(original_text + extra, encoding="utf-8")
-        yield doc_path
-    finally:
-        doc_path.write_text(original_text, encoding="utf-8")
-
 
 def test_checker_passes_on_real_repo() -> None:
     result = check_all()
@@ -84,15 +69,18 @@ def test_checker_fails_when_forbidden_doc_claim_present(tmp_path: Path) -> None:
         _checker.DOC = original_doc
 
 
-def test_checker_cli_returns_two_on_failure() -> None:
-    with _mutate_doc_temporarily("\nThis feature is guaranteed profit.\n"):
-        proc = subprocess.run(
-            [sys.executable, "scripts/check_runtime_readiness_envelope_contract.py"],
-            cwd=REPO_ROOT,
-            capture_output=True,
-            text=True,
-        )
-        assert proc.returncode == 2, proc.stdout + proc.stderr
+def test_checker_cli_returns_two_on_failure(
+    mutated_copy, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    temp_doc = mutated_copy(
+        _checker.DOC,
+        append="\nThis feature is guaranteed profit.\n",
+    )
+    monkeypatch.setattr(_checker, "DOC", temp_doc)
+    monkeypatch.setattr(sys, "argv", ["check_runtime_readiness_envelope_contract.py"])
+
+    assert _checker.main() == 2
+    assert "FAILED" in capsys.readouterr().out
 
 
 def test_checker_fails_on_forbidden_import(tmp_path: Path) -> None:

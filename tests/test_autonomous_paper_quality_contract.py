@@ -17,6 +17,7 @@ from pathlib import Path
 
 import pytest
 
+import scripts.check_autonomous_paper_quality_contract as _checker
 from scripts.check_autonomous_paper_quality_contract import check_all
 
 # --- CONFIGURATION AND CONSTANTS ---
@@ -48,26 +49,29 @@ def test_checker_json_output():
     assert data["errors"] == []
 
 
-def test_checker_fails_when_forbidden_phrase_present(tmp_path: Path):
+def test_checker_fails_when_forbidden_phrase_present(
+    mutated_copy, monkeypatch: pytest.MonkeyPatch
+):
     doc_path = REPO_ROOT / "docs" / "autonomous-paper-quality-gate.md"
-    original_text = doc_path.read_text(encoding="utf-8")
-    try:
-        doc_path.write_text(original_text + "\nThis strategy is guaranteed profit.\n", encoding="utf-8")
-        result = check_all()
-        assert not result["passed"]
-    finally:
-        doc_path.write_text(original_text, encoding="utf-8")
+    temp_doc = mutated_copy(
+        doc_path,
+        append="\nThis strategy is guaranteed profit.\n",
+    )
+    monkeypatch.setattr(_checker, "DOC", temp_doc)
+
+    result = check_all()
+    assert not result["passed"]
 
 
-def test_checker_fails_on_forbidden_import(tmp_path: Path):
+def test_checker_fails_on_forbidden_import(
+    mutated_copy, monkeypatch: pytest.MonkeyPatch
+):
     module = REPO_ROOT / "src" / "atlas_agent" / "agent" / "autonomous_paper_quality.py"
-    original_text = module.read_text(encoding="utf-8")
-    try:
-        module.write_text(original_text + "\nimport atlas_agent.brokers\n", encoding="utf-8")
-        result = check_all()
-        assert not result["passed"]
-    finally:
-        module.write_text(original_text, encoding="utf-8")
+    temp_module = mutated_copy(module, append="\nimport atlas_agent.brokers\n")
+    monkeypatch.setattr(_checker, "MODULES", [temp_module])
+
+    result = check_all()
+    assert not result["passed"]
 
 
 def test_checker_imports_no_network_or_credentials():

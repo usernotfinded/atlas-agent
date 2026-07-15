@@ -8,6 +8,7 @@
 # --- IMPORTS ---
 
 import re
+from functools import lru_cache
 
 import pytest
 from pathlib import Path
@@ -41,23 +42,18 @@ _FORBIDDEN_EXAMPLE_DOCS = {
 }
 
 
-@pytest.mark.parametrize("file_path", get_markdown_files())
-def test_no_forbidden_terms(file_path):
-    # Skip reports and memory files which might contain legacy data or logs
-    if "reports/" in str(file_path) or "memory/" in str(file_path):
-        return
+@pytest.fixture(scope="module")
+def markdown_documents() -> dict[Path, str]:
+    """Read each stable markdown document once for all repository-wide scans."""
+    return {
+        path: path.read_text(encoding="utf-8")
+        for path in get_markdown_files()
+        if path.exists()
+    }
 
-    # Skip files that were removed after collection (e.g., generated evidence bundles).
-    if not file_path.exists():
-        pytest.skip(f"File no longer exists: {file_path}")
 
-    # Skip CAND-012 docs that contain clearly labeled forbidden-phrase examples.
-    if str(file_path) in _FORBIDDEN_EXAMPLE_DOCS:
-        return
-
-    content = file_path.read_text(encoding="utf-8").lower()
-    
-    forbidden = [
+def test_no_forbidden_terms(markdown_documents: dict[Path, str]) -> None:
+    forbidden = (
         "hermes",
         "tamper-proof",
         "encrypted workspace",
@@ -73,11 +69,23 @@ def test_no_forbidden_terms(file_path):
         "best broker",
         "recommended broker",
         "magic ai trading bot",
-        "autonomous profit system"
-    ]
-    
-    for term in forbidden:
-        assert term not in content, f"Forbidden term '{term}' found in {file_path}"
+        "autonomous profit system",
+    )
+    violations = []
+
+    for file_path, content in markdown_documents.items():
+        if str(file_path) in _FORBIDDEN_EXAMPLE_DOCS:
+            continue
+        lower_content = content.lower()
+        violations.extend(
+            f"Forbidden term '{term}' found in {file_path}"
+            for term in forbidden
+            if term in lower_content
+        )
+
+    # Aggregate failures to retain per-file diagnostics without one pytest item
+    # per document, which previously duplicated collection and scheduling work.
+    assert violations == [], "\n".join(violations)
 
 def _project_version() -> str:
     with Path("pyproject.toml").open("rb") as f:
@@ -118,36 +126,28 @@ def test_readme_contains_v030_essentials(release_identity: dict):
     for item in essentials:
         assert item.lower() in readme.lower(), f"Essential term '{item}' missing from README.md"
 
-def test_no_stale_v02_references():
-    for file_path in get_markdown_files():
-        if "reports/" in str(file_path) or "memory/" in str(file_path):
-            continue
-        content = file_path.read_text(encoding="utf-8")
+def test_no_stale_v02_references(markdown_documents: dict[Path, str]):
+    for file_path, content in markdown_documents.items():
         assert "Current Status (v0.2" not in content, f"Stale status reference found in {file_path}"
 
-def test_no_stale_v054_references():
+def test_no_stale_v054_references(markdown_documents: dict[Path, str]):
     # Skip historical/audit files that intentionally reference past versions
     skip_patterns = ("changelog", "audit_enhancements", "history", "release-notes")
-    for file_path in get_markdown_files():
+    for file_path, content in markdown_documents.items():
         path_lower = str(file_path).lower()
-        if "reports/" in path_lower or "memory/" in path_lower:
-            continue
         if any(skip in path_lower for skip in skip_patterns):
             continue
-        content = file_path.read_text(encoding="utf-8")
         assert "v0.5.4" not in content, f"Stale v0.5.4 reference found in {file_path}"
 
 
-def test_no_forbidden_live_maturity_terms():
+def test_no_forbidden_live_maturity_terms(markdown_documents: dict[Path, str]):
     extra_forbidden = [
         "fully supported live broker",
         "autonomous trading bot",
         "production-grade live trading",
     ]
-    for file_path in get_markdown_files():
-        if "reports/" in str(file_path) or "memory/" in str(file_path):
-            continue
-        content = file_path.read_text(encoding="utf-8").lower()
+    for file_path, document in markdown_documents.items():
+        content = document.lower()
         for term in extra_forbidden:
             assert term not in content, f"Forbidden maturity term '{term}' found in {file_path}"
 
@@ -174,13 +174,10 @@ def test_live_alpaca_demo_uses_canonical_env_names():
     assert "APCA_API_SECRET_KEY=" not in demo_doc, "live_alpaca_demo must not use stale APCA_API_SECRET_KEY"
 
 
-def test_no_realistic_keys_in_docs():
+def test_no_realistic_keys_in_docs(markdown_documents: dict[Path, str]):
     # Very simple check for common key patterns
     key_patterns = ["sk-", "AKIA"]
-    for file_path in get_markdown_files():
-        if "reports/" in str(file_path) or "memory/" in str(file_path):
-            continue
-        content = file_path.read_text(encoding="utf-8")
+    for file_path, content in markdown_documents.items():
         for pattern in key_patterns:
             # We allow patterns like YOUR_ALPACA_KEY
             # But not realistic looking ones
@@ -194,6 +191,7 @@ def test_no_realistic_keys_in_docs():
 # Broker Foundation 3.4 docs-truth tests
 # ---------------------------------------------------------------------------
 
+@lru_cache(maxsize=1)
 def _docs_text() -> str:
     """Combined text of all docs/ markdown files."""
     texts = []

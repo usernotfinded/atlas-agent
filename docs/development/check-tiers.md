@@ -56,15 +56,10 @@ while skipping low-value or subprocess-heavy work.
 - `verify_readme_quickstart.py`
 - Feedback intake/taxonomy, reviewer outreach, product capability inventory
 - `git diff --cached --check`
-- Focused pytest subset covering:
-  - Core unit tests (`tests/agent/`, `tests/audit/`, `tests/backtest/`,
-    `tests/brokers/`, `tests/cli/`, `tests/config/`, `tests/dashboard/`,
-    `tests/execution/`, `tests/e2e/`, `tests/gateway/`, `tests/learning/`,
-    `tests/memory/`, `tests/notifications/`, `tests/reflection/`,
-    `tests/reports/`, `tests/risk/`, `tests/safety/`, `tests/skills/`,
-    `tests/tools/`, `tests/update/`)
-  - Fast research CLI tests
-  - Fast script/checker tests (trust center, onboarding, public docs, etc.)
+- Tests classified as `quick`. Tests under domain directories such as
+  `tests/agent/`, `tests/execution/`, and `tests/risk/` join automatically;
+  exceptional root-level tests can declare `@pytest.mark.quick`. Contributors
+  do not maintain a shell-script path allowlist.
 
 **Skips:**
 - Historical release checker tests (`test_v058_*.py`, `test_v06[0-5]_*.py`)
@@ -82,6 +77,20 @@ while skipping low-value or subprocess-heavy work.
   stable release decision, reviewer onboarding)
 - Tests marked `slow`, which are subprocess-heavy integration tests retained
   in the complete pytest suite and CI core-functional job
+
+### Adding Tests Without Runner Maintenance
+
+- Put fast tests in the matching domain directory (for example,
+  `tests/risk/` or `tests/execution/`). They join the quick tier automatically.
+- Mark an exceptional fast root-level test with `@pytest.mark.quick`.
+- Mark subprocess-heavy integration coverage with `@pytest.mark.slow`.
+- Use shared fixtures from `tests/conftest.py`; `mutated_copy` exists for
+  checker fault injection so tests never edit live repository files.
+- Test observable behavior and stable safety contracts. Avoid copying entire
+  implementations or maintaining shell-script test-path lists.
+
+Plain `pytest` remains the full gate, so tier classification changes local
+feedback speed without removing coverage.
 
 ## Dev Check
 
@@ -148,9 +157,13 @@ ATLAS_CHECK_PYTEST_ARGS="-n auto" ./scripts/local_quick_check.sh
 The default serial execution is chosen to keep Macs cool during normal
 development. CI runs the full suite in GitHub Actions workers.
 
-The `slow` marker identifies subprocess-heavy CLI, end-to-end, and gate
-integration tests. `local_quick_check.sh` deselects that marker for its focused
-loop; `python -m pytest` still runs every marked test.
+The `quick` marker identifies deterministic edit-loop coverage. Tests in domain
+directories receive it automatically. The `slow` marker identifies
+subprocess-heavy CLI, end-to-end, and gate integration tests.
+`tests/conftest.py` centralizes legacy integration and historical path
+classification; new exceptional tests may declare either marker at their
+source. `local_quick_check.sh` selects `quick`, while plain `python -m pytest`
+still runs every test in both tiers.
 
 ## Historical Tests
 

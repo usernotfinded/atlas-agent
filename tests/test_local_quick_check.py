@@ -41,14 +41,40 @@ def _script_path(name: str) -> Path:
     return repo_root / "scripts" / name
 
 
-@pytest.fixture(scope="module")
-def smoke_check_result() -> subprocess.CompletedProcess:
-    return _run_shell(_script_path("smoke_check.sh"))
+def _fake_python_environment(tmp_path: Path) -> tuple[dict[str, str], Path]:
+    """Return an environment that records Python commands without rerunning tests.
+
+    The checker scripts themselves have dedicated tests elsewhere in the suite.
+    These wrapper tests only need to prove orchestration and argument forwarding,
+    so launching the entire nested pytest subset would duplicate coverage.
+    """
+    log_path = tmp_path / "python-commands.log"
+    fake_python = tmp_path / "fake-python"
+    fake_python.write_text(
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        'printf "%s\\n" "$*" >> "$FAKE_PYTHON_LOG"\n'
+        "exit 0\n",
+        encoding="utf-8",
+    )
+    fake_python.chmod(0o755)
+
+    env = os.environ.copy()
+    env["PYTHON_BIN"] = str(fake_python)
+    env["FAKE_PYTHON_LOG"] = str(log_path)
+    return env, log_path
 
 
 @pytest.fixture(scope="module")
-def local_quick_check_result() -> subprocess.CompletedProcess:
-    return _run_shell(_script_path("local_quick_check.sh"))
+def smoke_check_result(tmp_path_factory: pytest.TempPathFactory) -> subprocess.CompletedProcess:
+    env, _ = _fake_python_environment(tmp_path_factory.mktemp("smoke-check"))
+    return _run_shell(_script_path("smoke_check.sh"), env=env)
+
+
+@pytest.fixture(scope="module")
+def local_quick_check_result(tmp_path_factory: pytest.TempPathFactory) -> subprocess.CompletedProcess:
+    env, _ = _fake_python_environment(tmp_path_factory.mktemp("local-quick-check"))
+    return _run_shell(_script_path("local_quick_check.sh"), env=env)
 
 
 class TestSmokeCheckSh:
@@ -107,13 +133,16 @@ class TestSmokeCheckSh:
         assert "All smoke checks passed" in result.stdout
 
     @pytest.mark.slow
-    def test_respects_fail_fast_env(self) -> None:
-        env = os.environ.copy()
+    def test_respects_fail_fast_env(self, tmp_path: Path) -> None:
+        env, log_path = _fake_python_environment(tmp_path)
         env["ATLAS_CHECK_FAIL_FAST"] = "1"
-        env["ATLAS_CHECK_PYTEST_ARGS"] = "--collect-only"
         result = _run_shell(_script_path("smoke_check.sh"), env=env)
         assert result.returncode == 0, f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         assert "All smoke checks passed" in result.stdout
+        assert any(
+            "-m pytest" in command and "-x" in command
+            for command in log_path.read_text(encoding="utf-8").splitlines()
+        )
 
     def test_prints_reminder_about_full_gate(self, smoke_check_result) -> None:
         result = smoke_check_result
@@ -183,7 +212,7 @@ class TestLocalQuickCheckSh:
 
     def test_skips_slow_integration_tests(self) -> None:
         text = _script_path("local_quick_check.sh").read_text(encoding="utf-8")
-        assert '-m "not slow"' in text
+        assert '-m "quick"' in text
         assert "test_demo_research_workflow_script.py" not in text
         assert "test_package_distribution_check.py" not in text
         assert "test_clean_install_check.py" not in text
@@ -199,35 +228,37 @@ class TestLocalQuickCheckSh:
         assert "All local quick checks passed" in result.stdout
 
     @pytest.mark.slow
-    def test_respects_fail_fast_env(self) -> None:
-        env = os.environ.copy()
+    def test_respects_fail_fast_env(self, tmp_path: Path) -> None:
+        env, log_path = _fake_python_environment(tmp_path)
         env["ATLAS_CHECK_FAIL_FAST"] = "1"
-        env["ATLAS_CHECK_PYTEST_ARGS"] = "--collect-only"
         result = _run_shell(_script_path("local_quick_check.sh"), env=env)
         assert result.returncode == 0, f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         assert "All local quick checks passed" in result.stdout
+        assert any(
+            "-m pytest" in command and "-x" in command
+            for command in log_path.read_text(encoding="utf-8").splitlines()
+        )
 
     @pytest.mark.slow
-    def test_respects_last_failed_env(self) -> None:
-        env = os.environ.copy()
+    def test_respects_last_failed_env(self, tmp_path: Path) -> None:
+        env, log_path = _fake_python_environment(tmp_path)
         env["ATLAS_CHECK_LAST_FAILED"] = "1"
-        env["ATLAS_CHECK_PYTEST_ARGS"] = "--collect-only"
         result = _run_shell(_script_path("local_quick_check.sh"), env=env)
         assert result.returncode == 0, f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         assert "All local quick checks passed" in result.stdout
+        assert any(
+            "-m pytest" in command and "--lf" in command
+            for command in log_path.read_text(encoding="utf-8").splitlines()
+        )
 
     def test_prints_reminder_about_full_gate(self, local_quick_check_result) -> None:
         result = local_quick_check_result
         assert "release_check.sh --full" in result.stdout
 
-    def test_includes_core_unit_test_directories(self) -> None:
+    def test_automatically_collects_the_test_suite(self) -> None:
         text = _script_path("local_quick_check.sh").read_text(encoding="utf-8")
-        assert "tests/agent/" in text
-        assert "tests/audit/" in text
-        assert "tests/backtest/" in text
-        assert "tests/brokers/" in text
-        assert "tests/cli/" in text
-        assert "tests/config/" in text
-        assert "tests/execution/" in text
-        assert "tests/risk/" in text
-        assert "tests/safety/" in text
+        assert '-m pytest tests -m "quick"' in text
+        # A single collection root ensures newly added normal tests run without
+        # requiring contributors to maintain a shell-script path allowlist.
+        assert "tests/agent/" not in text
+        assert "tests/research/test_research_cli.py" not in text

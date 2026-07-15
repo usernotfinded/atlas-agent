@@ -126,65 +126,11 @@ _run "17. demo command smoke validation" \
 _run "18. git diff --cached --check" \
     git diff --cached --check
 
-# --- Tier 3: focused pytest subset ---
-# Includes core unit tests and fast script tests.
-# Subprocess-heavy tests marked "slow" remain in full pytest and CI.
-# Excludes:
-#   - slow subprocess-heavy integration tests (demo workflow, clean install, package build)
-#   - historical release checker tests (v0.5.8, v0.6.0–v0.6.6)
-#   - slow research sandbox/dossier tests
-_run "18. focused pytest subset" \
-    "$PYTHON_BIN" -m pytest \
-        tests/agent/ \
-        tests/architecture/ \
-        tests/audit/ \
-        tests/backtest/ \
-        tests/brokers/ \
-        tests/cli/ \
-        tests/config/ \
-        tests/dashboard/ \
-        tests/execution/ \
-        tests/e2e/ \
-        tests/gateway/ \
-        tests/learning/ \
-        tests/notifications/ \
-        tests/reflection/ \
-        tests/reports/ \
-        tests/risk/ \
-        tests/safety/ \
-        tests/skills/ \
-        tests/tools/ \
-        tests/update/ \
-        tests/research/test_research_cli.py \
-        tests/research/test_research_configless_cli.py \
-        tests/research/test_research_schema_version.py \
-        tests/research/test_research_session.py \
-        tests/research/test_research_providers.py \
-        tests/research/test_research_check_artifacts_cli.py \
-        tests/research/test_research_plan_cli.py \
-        tests/research/test_research_prompt_cli.py \
-        tests/test_generated_artifacts.py \
-        tests/test_github_actions_versions.py \
-        tests/test_trust_center.py \
-        tests/test_onboarding_docs.py \
-        tests/test_public_docs_consistency.py \
-        tests/test_public_launch_readiness.py \
-        tests/test_main_health.py \
-        tests/test_release_check_scripts.py \
-        tests/test_readme_quickstart_verification.py \
-        tests/test_changelog_consistency.py \
-        tests/test_ci_workflows.py \
-        tests/test_check_v0610_release_prep.py \
-        tests/test_check_v0611_planning.py \
-        tests/test_submit_execution_safety_check.py \
-        tests/test_cli_smoke.py \
-        tests/test_feedback_intake.py \
-        tests/test_feedback_taxonomy.py \
-        tests/test_reviewer_outreach.py \
-        tests/test_product_capability_inventory.py \
-        tests/test_demo_command_smoke.py \
-        -m "not slow" \
-        -q \
+# --- Tier 3: automatically classified quick tests ---
+# Tests in domain directories join this tier automatically. Legacy root-level
+# coverage is classified centrally, and exceptional tests can declare `quick`.
+_run "18. automatically classified quick tests" \
+    "$PYTHON_BIN" -m pytest tests -m "quick" -q \
         "${PYTEST_EXTRA_ARGS[@]+"${PYTEST_EXTRA_ARGS[@]}"}"
 
 echo ""

@@ -69,5 +69,6 @@ where = ["src"]
 testpaths = ["tests"]
 pythonpath = [".", "src"]
 markers = [
+  "quick: deterministic tests included in the local edit-loop gate",
   "slow: subprocess-heavy integration coverage retained for full pytest and CI",
 ]
