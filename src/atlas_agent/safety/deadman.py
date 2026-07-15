@@ -236,6 +236,9 @@ class DeadmanSwitch:
         self._last_heartbeat_source = "startup"
         self._triggered = False
         self._lock = threading.RLock()
+        # Holds strong references to fire-and-forget audit tasks scheduled from a sync
+        # path onto a running loop, so they are not garbage-collected before they run.
+        self._pending_audit_tasks: set[asyncio.Task[Any]] = set()
 
     # --- Heartbeat recording ---
 
@@ -445,10 +448,37 @@ class DeadmanSwitch:
             return
         try:
             result = self.audit_hook(event_type, actor, payload)
-            if inspect.isawaitable(result):
-                return
         except Exception:
             return
+        # AuditHook is allowed to be async: its return type is Any and every other call
+        # site (_call_audit_async, _notify_all, _call_trigger_hook) awaits an awaitable
+        # result. This method runs in synchronous contexts and cannot simply await, but
+        # it must still run the coroutine. The old code returned here, which both lost
+        # the audit event and leaked the coroutine unawaited.
+        if inspect.isawaitable(result):
+            self._run_awaitable_from_sync(result)
+
+    def _run_awaitable_from_sync(self, awaitable: Awaitable[Any]) -> None:
+        async def _runner() -> None:
+            try:
+                await awaitable
+            except Exception:
+                return
+
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            # No loop on this thread: drive the audit hook to completion.
+            try:
+                asyncio.run(_runner())
+            except Exception:
+                return
+        else:
+            # A loop is already running here (e.g. tick() drives us): schedule the hook
+            # on it and hold a reference until it finishes so it is not collected early.
+            task = loop.create_task(_runner())
+            self._pending_audit_tasks.add(task)
+            task.add_done_callback(self._pending_audit_tasks.discard)
 
     async def _call_trigger_hook(self, payload: dict[str, Any]) -> None:
         if self.trigger_hook is None:
