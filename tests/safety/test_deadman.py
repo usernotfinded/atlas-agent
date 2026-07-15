@@ -307,6 +307,44 @@ def test_deadman_external_heartbeat_emits_audit_hook(tmp_path) -> None:
     assert any(event[0] == "deadman_heartbeat_external" for event in audit_events)
 
 
+def test_deadman_sync_path_runs_async_audit_hook(tmp_path) -> None:
+    # AuditHook's return type is Any and the async call paths await awaitable hooks, so
+    # an async hook is a supported input. The synchronous emission path (status() ->
+    # _refresh_from_external_heartbeat -> _call_audit_sync) must run it too, not create
+    # the coroutine and drop it unawaited.
+    clock = FakeClock(datetime(2026, 1, 1, 12, 0, tzinfo=UTC))
+    controller = KillSwitchController(
+        state_path=tmp_path / "kill-switch-state.json",
+        enabled_flag_path=tmp_path / "kill-switch.enabled",
+        lock_path=tmp_path / "kill-switch.lock",
+    )
+    heartbeat_path = tmp_path / "memory" / "deadman_heartbeat.json"
+    audit_events: list[tuple[str, str, dict[str, object]]] = []
+
+    async def audit_hook(event_type: str, actor: str, payload: dict[str, object]) -> None:
+        audit_events.append((event_type, actor, payload))
+
+    deadman = DeadmanSwitch(
+        kill_switch=controller,
+        config=DeadmanConfig(timeout_minutes=5, action="soft", check_interval_seconds=0.01),
+        market_detector=FixedStateDetector("open"),
+        now_func=clock.now,
+        heartbeat_path=heartbeat_path,
+        audit_hook=audit_hook,
+    )
+
+    clock.advance(10)
+    write_deadman_heartbeat(
+        heartbeat_path,
+        source="external",
+        actor="user:55",
+        now=clock.now(),
+    )
+    _ = deadman.status()
+
+    assert any(event[0] == "deadman_heartbeat_external" for event in audit_events)
+
+
 def test_deadman_flatten_propagates_strategy_and_bps_to_broker(tmp_path) -> None:
     deadman, controller, clock, _ = make_deadman(
         tmp_path,

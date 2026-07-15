@@ -9,6 +9,8 @@
 # --- IMPORTS ---
 from __future__ import annotations
 
+import math
+
 
 # ==============================================================================
 # SIZING STRATEGIES
@@ -30,9 +32,12 @@ def fixed_notional_quantity(notional: float, price: float) -> float:
     """
     # Explicit guards rather than letting a divide-by-zero or a negative quantity
     # propagate: a bad size here becomes a bad order at the broker, so we fail
-    # loudly as early as possible.
-    if notional <= 0:
-        raise ValueError("notional must be positive")
-    if price <= 0:
-        raise ValueError("price must be positive")
+    # loudly as early as possible. Non-finite values are checked FIRST, because NaN
+    # passes every ordinary comparison (`nan <= 0` is False) and would otherwise slip
+    # through the positivity guard and return a NaN quantity — the exact hazard that
+    # order_router and RiskManager reject at their own doors.
+    if not math.isfinite(notional) or notional <= 0:
+        raise ValueError("notional must be a positive finite number")
+    if not math.isfinite(price) or price <= 0:
+        raise ValueError("price must be a positive finite number")
     return notional / price
