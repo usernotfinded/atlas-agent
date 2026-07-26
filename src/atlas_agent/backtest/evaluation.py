@@ -59,13 +59,20 @@ def build_paper_strategy_evaluation(
     data_path: str | Path,
     symbol: str,
     strategies: Iterable[str] | None = None,
+    parameters: dict[str, dict[str, Any]] | None = None,
     initial_equity: float = 10000.0,
     slippage_bps: float = 0.0,
     commission_bps: float = 0.0,
     start_date: str | None = None,
     end_date: str | None = None,
 ) -> dict[str, Any]:
-    """Evaluate strategies through the deterministic paper backtest engine."""
+    """Evaluate strategies through the deterministic paper backtest engine.
+
+    ``parameters`` maps a strategy id to its parameter overrides; a strategy with
+    no entry runs on its own defaults. The engine still coerces and range-checks
+    every value, so an override cannot widen what the strategy accepts.
+    """
+    overrides = parameters or {}
     data_source = str(data_path)
     strategy_ids = list(strategies) if strategies is not None else parse_strategy_list(None)
     bars = load_market_data(data_source, symbol, start_date=start_date, end_date=end_date)
@@ -83,6 +90,7 @@ def build_paper_strategy_evaluation(
                 strategy_id=strategy_id,
                 data_source=data_source,
                 symbol=symbol,
+                parameters=overrides.get(strategy_id),
                 sample_row_count=len(bars),
                 initial_equity=initial_equity,
                 slippage_bps=slippage_bps,
@@ -213,6 +221,7 @@ def _evaluate_one_strategy(
     data_source: str,
     symbol: str,
     sample_row_count: int,
+    parameters: dict[str, Any] | None = None,
     initial_equity: float,
     slippage_bps: float,
     commission_bps: float,
@@ -229,6 +238,7 @@ def _evaluate_one_strategy(
         start_date=start_date,
         end_date=end_date,
         strategy_mode=strategy_id,
+        strategy_parameters=parameters or {},
         benchmark_mode="buy_and_hold",
         risk_enabled=True,
         kill_switch_state=False,

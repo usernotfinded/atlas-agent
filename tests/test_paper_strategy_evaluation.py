@@ -392,3 +392,85 @@ class TestCheckerFailures:
         result = _run_isolated_checker(tmp)
         assert result.returncode == 1
         assert "current_public_release" in result.stdout
+
+
+def _write_crossing_series(path: Path) -> Path:
+    """Write a series whose moving averages cross in both directions."""
+    prices = [100, 98, 96, 94, 96, 100, 104, 108, 110, 108,
+              104, 100, 96, 94, 96, 100, 105, 110, 114, 118]
+    rows = ["date,symbol,open,high,low,close,volume"]
+    for index, price in enumerate(prices, start=1):
+        rows.append(f"2026-04-{index:02d},ZIG,{price},{price + 1},{price - 1},{price},1000")
+    path.write_text("\n".join(rows) + "\n", encoding="utf-8")
+    return path
+
+
+class TestStrategyParameterOverrides:
+    """Overrides must reach the engine while the risk gate still applies."""
+
+    def test_override_changes_the_evaluated_run(self, tmp_path: Path) -> None:
+        data_path = _write_crossing_series(tmp_path / "crossing.csv")
+
+        baseline = build_paper_strategy_evaluation(
+            data_path=data_path,
+            symbol="ZIG",
+            strategies=["moving_average_cross"],
+        )
+        # The default allocates all equity, so every order trips a risk limit.
+        # A smaller allocation is the only difference between the two runs.
+        overridden = build_paper_strategy_evaluation(
+            data_path=data_path,
+            symbol="ZIG",
+            strategies=["moving_average_cross"],
+            parameters={"moving_average_cross": {"position_pct": 0.05}},
+        )
+
+        assert baseline["strategies"][0]["metrics"]["exposure_time_pct"] == 0.0
+        assert overridden["strategies"][0]["metrics"]["exposure_time_pct"] > 0.0
+
+    def test_risk_gate_still_blocks_an_oversized_allocation(self, tmp_path: Path) -> None:
+        data_path = _write_crossing_series(tmp_path / "crossing.csv")
+
+        report = build_paper_strategy_evaluation(
+            data_path=data_path,
+            symbol="ZIG",
+            strategies=["moving_average_cross"],
+            parameters={"moving_average_cross": {"position_pct": 1.0}},
+        )
+
+        entry = report["strategies"][0]
+        assert entry["safety_blocker_count"] > 0
+        assert entry["risk_manager_enabled"] is True
+
+    def test_a_strategy_without_an_override_keeps_its_defaults(self, tmp_path: Path) -> None:
+        data_path = _write_crossing_series(tmp_path / "crossing.csv")
+
+        baseline = build_paper_strategy_evaluation(
+            data_path=data_path,
+            symbol="ZIG",
+            strategies=["buy_and_hold", "moving_average_cross"],
+        )
+        partial = build_paper_strategy_evaluation(
+            data_path=data_path,
+            symbol="ZIG",
+            strategies=["buy_and_hold", "moving_average_cross"],
+            parameters={"moving_average_cross": {"position_pct": 0.05}},
+        )
+
+        assert baseline["strategies"][0]["name"] == "buy_and_hold"
+        assert baseline["strategies"][0]["metrics"] == partial["strategies"][0]["metrics"]
+
+    def test_out_of_range_override_fails_one_entry_without_aborting(self, tmp_path: Path) -> None:
+        data_path = _write_crossing_series(tmp_path / "crossing.csv")
+
+        report = build_paper_strategy_evaluation(
+            data_path=data_path,
+            symbol="ZIG",
+            strategies=["moving_average_cross", "buy_and_hold"],
+            parameters={"moving_average_cross": {"short_window": 0}},
+        )
+
+        failed = report["strategies"][0]
+        assert failed["name"] == "moving_average_cross"
+        assert failed["status"] != "evaluated"
+        assert report["strategies"][1]["status"] == "evaluated"
