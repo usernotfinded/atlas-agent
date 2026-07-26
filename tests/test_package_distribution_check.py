@@ -324,13 +324,7 @@ class TestOutputRedaction:
         assert "/var/tmp/" not in result.stdout
 
     def test_redaction_of_forbidden_paths(self, monkeypatch) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_test", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_test"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_test")
         monkeypatch.setattr(cpd, "_CURRENT_TEMP_DIR", "/var/folders/abc/T/tmp123")
         sample = (
             "Error in /Users/testuser/Desktop/repo "
@@ -355,13 +349,7 @@ class TestOutputRedaction:
 
 class TestWheelMetadataParser:
     def test_parses_correct_wheel(self, tmp_path: Path, release_identity: dict) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_wheel", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_wheel"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_wheel")
 
         current_version = release_identity["source_version"]
         wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
@@ -371,14 +359,7 @@ class TestWheelMetadataParser:
         assert errors == []
 
     def test_requires_pydantic_in_wheel_metadata(self, tmp_path: Path, release_identity: dict) -> None:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_wheel_pydantic", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_wheel_pydantic"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_wheel_pydantic")
 
         current_version = release_identity["source_version"]
         wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
@@ -398,13 +379,7 @@ class TestWheelMetadataParser:
         assert any("Requires-Dist: pydantic" in e for e in errors)
 
     def test_rejects_wrong_version(self, tmp_path: Path) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_wheel2", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_wheel2"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_wheel2")
 
         wheel_path = tmp_path / "atlas_agent-0.5.7rc7-py3-none-any.whl"
         _make_fake_wheel(wheel_path, name="atlas_agent", version="0.5.7rc3")
@@ -413,13 +388,7 @@ class TestWheelMetadataParser:
         assert any("0.5.7rc3" in e for e in errors)
 
     def test_rejects_missing_entry_point(self, tmp_path: Path) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_wheel3", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_wheel3"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_wheel3")
 
         wheel_path = tmp_path / "atlas_agent-0.5.7rc3-py3-none-any.whl"
         with zipfile.ZipFile(wheel_path, "w") as zf:
@@ -435,13 +404,7 @@ class TestWheelMetadataParser:
         assert any("entry_points" in e.lower() for e in errors)
 
     def test_rejects_forbidden_claim_in_metadata(self, tmp_path: Path) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_wheel4", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_wheel4"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_wheel4")
 
         wheel_path = tmp_path / "atlas_agent-0.5.7rc3-py3-none-any.whl"
         with zipfile.ZipFile(wheel_path, "w") as zf:
@@ -463,13 +426,7 @@ class TestWheelMetadataParser:
 
 class TestWheelTemplateParser:
     def test_parses_wheel_templates(self, tmp_path: Path, release_identity: dict) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_wheel_templates", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_wheel_templates"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_wheel_templates")
 
         current_version = release_identity["source_version"]
         wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
@@ -480,13 +437,7 @@ class TestWheelTemplateParser:
         assert ok, f"Unexpected errors: {errors}"
 
     def test_rejects_wheel_missing_templates(self, tmp_path: Path, release_identity: dict) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_wheel_templates_missing", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_wheel_templates_missing"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_wheel_templates_missing")
 
         current_version = release_identity["source_version"]
         wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
@@ -503,14 +454,7 @@ class TestWheelInstallPhases:
         tmp_path: Path,
         release_identity: dict,
     ) -> None:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_no_deps_install", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_no_deps_install"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_no_deps_install")
 
         current_version = release_identity["source_version"]
         wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
@@ -542,14 +486,7 @@ class TestWheelInstallPhases:
         tmp_path: Path,
         release_identity: dict,
     ) -> None:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_runtime_unavailable", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_runtime_unavailable"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_runtime_unavailable")
 
         current_version = release_identity["source_version"]
         wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
@@ -588,14 +525,7 @@ class TestWheelInstallPhases:
         tmp_path: Path,
         release_identity: dict,
     ) -> None:
-        import importlib.util
-
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_runtime_metadata_missing", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_runtime_metadata_missing"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_runtime_metadata_missing")
 
         current_version = release_identity["source_version"]
         wheel_path = tmp_path / f"atlas_agent-{current_version}-py3-none-any.whl"
@@ -637,13 +567,7 @@ class TestWheelInstallPhases:
 
 class TestSdistMetadataParser:
     def test_parses_correct_sdist(self, tmp_path: Path, release_identity: dict) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_sdist", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_sdist"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_sdist")
 
         current_version = release_identity["source_version"]
         sdist_path = tmp_path / f"atlas-agent-{current_version}.tar.gz"
@@ -653,13 +577,7 @@ class TestSdistMetadataParser:
         assert errors == []
 
     def test_rejects_wrong_version(self, tmp_path: Path) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_sdist2", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_sdist2"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_sdist2")
 
         sdist_path = tmp_path / "atlas-agent-0.5.7rc7.tar.gz"
         _make_fake_sdist(sdist_path, name="atlas-agent", version="0.5.7rc3")
@@ -668,13 +586,7 @@ class TestSdistMetadataParser:
         assert any("0.5.7rc3" in e for e in errors)
 
     def test_rejects_forbidden_claim_in_pkg_info(self, tmp_path: Path) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_sdist3", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_sdist3"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_sdist3")
 
         sdist_path = tmp_path / "atlas-agent-0.5.7rc3.tar.gz"
         pkg_info = (
@@ -695,13 +607,7 @@ class TestSdistMetadataParser:
 
 class TestSdistTemplateParser:
     def test_parses_sdist_templates(self, tmp_path: Path, release_identity: dict) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_sdist_templates", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_sdist_templates"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_sdist_templates")
 
         current_version = release_identity["source_version"]
         sdist_path = tmp_path / f"atlas-agent-{current_version}.tar.gz"
@@ -715,13 +621,7 @@ class TestSdistTemplateParser:
         assert ok, f"Unexpected errors: {errors}"
 
     def test_rejects_sdist_missing_templates(self, tmp_path: Path, release_identity: dict) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_sdist_templates_missing", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_sdist_templates_missing"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_sdist_templates_missing")
 
         current_version = release_identity["source_version"]
         sdist_path = tmp_path / f"atlas-agent-{current_version}.tar.gz"
@@ -738,13 +638,7 @@ class TestSdistTemplateParser:
 
 class TestArtifactFilenameChecks:
     def test_find_artifacts_is_deterministic(self, tmp_path: Path) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_find_artifacts", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_find_artifacts"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_find_artifacts")
 
         (tmp_path / "z-last.whl").write_text("", encoding="utf-8")
         (tmp_path / "a-first.whl").write_text("", encoding="utf-8")
@@ -757,13 +651,7 @@ class TestArtifactFilenameChecks:
         assert sdist == tmp_path / "a-first.tar.gz"
 
     def test_correct_filenames_pass(self, release_identity: dict) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_fn", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_fn"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_fn")
 
         current_version = release_identity["source_version"]
         wheel = Path(f"atlas_agent-{current_version}-py3-none-any.whl")
@@ -772,13 +660,7 @@ class TestArtifactFilenameChecks:
         assert errors == []
 
     def test_wrong_version_fails(self) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_fn2", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_fn2"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_fn2")
 
         wheel = Path("atlas_agent-0.5.6-py3-none-any.whl")
         sdist = Path("atlas-agent-0.5.6.tar.gz")
@@ -786,13 +668,7 @@ class TestArtifactFilenameChecks:
         assert len(errors) == 2
 
     def test_package_artifact_path_matches_egg_info_contents(self) -> None:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_artifact_path", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_artifact_path"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_artifact_path")
 
         assert cpd._is_package_artifact_path("dist/atlas_agent.whl")
         assert cpd._is_package_artifact_path("build/lib/module.py")
@@ -858,15 +734,9 @@ class TestFailedBuildRedaction:
         Assert the final output/report does NOT contain raw absolute paths
         and instead contains safe placeholders (<temp>, ~, <repo>, <users>).
         """
-        import importlib.util
         import tempfile as _tempfile_module
 
-        spec = importlib.util.spec_from_file_location(
-            "check_package_distribution_failure", str(SCRIPT)
-        )
-        cpd = importlib.util.module_from_spec(spec)
-        sys.modules["check_package_distribution_failure"] = cpd
-        spec.loader.exec_module(cpd)
+        cpd = _load_script_module("check_package_distribution_failure")
 
         fake_output = tmp_path / "atlas-dist-check-test"
         fake_output.mkdir()

@@ -2,7 +2,7 @@
 # PROJECT: Atlas Agent
 # FILE:    tests/conftest.py
 # PURPOSE: Provides shared fixtures and automatic test-tier classification.
-# DEPS:    json, subprocess, sys, collections.abc, pathlib, pytest,
+# DEPS:    json, subprocess, sys, collections.abc, functools, pathlib, pytest,
 #         release_metadata.
 # ==============================================================================
 
@@ -12,6 +12,7 @@ import json
 import subprocess
 import sys
 from collections.abc import Callable
+from functools import lru_cache
 from pathlib import Path
 import pytest
 
@@ -166,6 +167,7 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 
 # --- TEST FIXTURES, HELPERS, AND CASES ---
 
+@lru_cache(maxsize=1)
 def checkout_has_release_tags() -> bool:
     """Report whether this checkout carries any git tags at all.
 
@@ -173,6 +175,9 @@ def checkout_has_release_tags() -> bool:
     tags-omitted clone simply does not have. CI fetches every tag, so the guard
     only relaxes where the history is genuinely absent — a specific tag missing
     from a fully tagged checkout still fails.
+
+    Cached: the shape of the checkout does not change mid-session, and the
+    uncached form spawns one `git tag` process per guarded test.
     """
     result = subprocess.run(
         ["git", "tag", "--list"],

@@ -14,14 +14,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from atlas_agent.backtest.registry import describe_strategy, list_strategies
+from atlas_agent.backtest.registry import default_strategy_registry
 from atlas_agent.backtest.strategy import (
     StrategyParameterValidationError,
     coerce_strategy_parameters,
 )
 from atlas_agent.research.session import (
     RESEARCH_ARTIFACT_SCHEMA_VERSION,
-    InvalidResearchSymbolError,
     ResearchSessionError,
     find_research_artifact_by_run_id,
     load_research_artifact,
@@ -120,7 +119,11 @@ def _evaluate_requested_strategies(
     specs, so an artifact cannot introduce an unregistered strategy or a value
     the strategy would refuse from the CLI.
     """
-    known_ids = {item.strategy_id for item in list_strategies()}
+    # One registry build covers both the membership test and the metadata.
+    # Going through the module-level helpers instead would rebuild the registry
+    # — and rescan entry points — once per requested strategy.
+    registry = default_strategy_registry()
+    known = {item.strategy_id: item for item in registry.list_metadata()}
     accepted: list[dict[str, Any]] = []
     rejected: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -140,7 +143,8 @@ def _evaluate_requested_strategies(
             continue
         seen.add(strategy_id)
 
-        if strategy_id not in known_ids:
+        metadata = known.get(strategy_id)
+        if metadata is None:
             rejected.append(
                 _rejection(
                     strategy_id,
@@ -150,7 +154,6 @@ def _evaluate_requested_strategies(
             )
             continue
 
-        metadata = describe_strategy(strategy_id)
         supplied = _resolve_parameters(hypothesis, strategy_id)
         if supplied is not None and not isinstance(supplied, dict):
             rejected.append(
@@ -199,10 +202,9 @@ def build_backtest_proposal(workspace_path: Path, run_id: str) -> dict[str, Any]
     raw_symbol = artifact.get("symbol")
     if not isinstance(raw_symbol, str):
         raise ResearchSessionError("artifact_malformed")
-    try:
-        symbol = sanitize_symbol(raw_symbol)
-    except InvalidResearchSymbolError as exc:
-        raise ResearchSessionError("invalid_research_symbol") from exc
+    # InvalidResearchSymbolError is itself a ResearchSessionError; re-wrapping it
+    # would only hide the specific type callers already handle.
+    symbol = sanitize_symbol(raw_symbol)
 
     hypothesis, notes = _extract_hypothesis(artifact)
 
@@ -214,16 +216,16 @@ def build_backtest_proposal(workspace_path: Path, run_id: str) -> dict[str, Any]
         requested, request_notes = _requested_strategy_ids(hypothesis)
         notes.extend(request_notes)
         accepted, rejected = _evaluate_requested_strategies(hypothesis, requested)
-        if not requested:
-            status = STATUS_HYPOTHESIS_MALFORMED if request_notes else STATUS_NO_HYPOTHESIS
-        elif accepted:
+        if accepted:
             status = STATUS_PROPOSED
-        else:
+        elif rejected or request_notes:
+            # Something was stated, and none of it survived validation.
             status = STATUS_HYPOTHESIS_MALFORMED
+        else:
+            status = STATUS_NO_HYPOTHESIS
 
-    rationale = ""
-    if hypothesis is not None and isinstance(hypothesis.get("rationale"), str):
-        rationale = hypothesis["rationale"]
+    raw_rationale = hypothesis.get("rationale") if hypothesis else None
+    rationale = raw_rationale if isinstance(raw_rationale, str) else ""
 
     return {
         "artifact_type": PROPOSAL_ARTIFACT_TYPE,

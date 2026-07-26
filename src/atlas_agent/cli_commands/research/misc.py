@@ -1517,20 +1517,17 @@ def handle_backtest_proposal(context: CLIContext) -> int | None:
             print(f"  Source Run ID: {proposal['source_run_id']}")
             print(f"  Status: {proposal['status']}")
             accepted = proposal["accepted_strategies"]
-            if accepted:
-                print(f"  Accepted strategies: {len(accepted)}")
-                for entry in accepted:
-                    rendered = ", ".join(
-                        f"{name}={value}" for name, value in sorted(entry["parameters"].items())
-                    )
-                    print(f"    - {entry['strategy_id']} ({rendered})" if rendered else f"    - {entry['strategy_id']}")
-            else:
-                print("  Accepted strategies: 0")
+            print(f"  Accepted strategies: {len(accepted)}")
+            for entry in accepted:
+                rendered = ", ".join(
+                    f"{name}={value}" for name, value in sorted(entry["parameters"].items())
+                )
+                suffix = f" ({rendered})" if rendered else ""
+                print(f"    - {entry['strategy_id']}{suffix}")
             rejected = proposal["rejected_strategies"]
-            if rejected:
-                print(f"  Rejected strategies: {len(rejected)}")
-                for entry in rejected:
-                    print(f"    - {entry['strategy_id']}: {entry['reason']}")
+            print(f"  Rejected strategies: {len(rejected)}")
+            for entry in rejected:
+                print(f"    - {entry['strategy_id']}: {entry['reason']}")
             for note in proposal["notes"]:
                 print(f"  Note: {note}")
             print("  This proposal is not financial advice and authorizes no trading.")
