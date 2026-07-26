@@ -4,7 +4,7 @@
 # FILE:    scripts/update_release_assurance_ci.py
 # PURPOSE: Update post-release assurance dossiers with GitHub Actions CI run
 #         IDs.
-# DEPS:    argparse, json, re, subprocess, sys, pathlib.
+# DEPS:    argparse, json, re, shutil, subprocess, sys, pathlib.
 # ==============================================================================
 
 """Update post-release assurance dossiers with GitHub Actions CI run IDs.
@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -176,6 +177,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Actually update the files (default is dry-run)",
     )
     args = parser.parse_args(argv)
+
+    # Checked before the first lookup: an absent CLI would otherwise surface as
+    # an unhandled FileNotFoundError, or be mistaken for a missing release.
+    if shutil.which("gh") is None:
+        print(
+            "GitHub CLI (gh) is not available. Install and authenticate it to "
+            "record CI run IDs.",
+            file=sys.stderr,
+        )
+        return 1
 
     if not release_exists(args.tag):
         print(f"GitHub Release {args.tag} not found.", file=sys.stderr)

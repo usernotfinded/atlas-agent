@@ -149,6 +149,10 @@ def test_main_dry_run_does_not_mutate(tmp_path, monkeypatch):
             }
         ]
 
+    # The stubs stand in for a working gh, so the CLI must look present too.
+    monkeypatch.setattr(
+        "scripts.update_release_assurance_ci.shutil.which", lambda name: "/usr/bin/gh"
+    )
     monkeypatch.setattr(
         "scripts.update_release_assurance_ci.release_exists", fake_release_exists
     )
@@ -165,8 +169,27 @@ def test_main_dry_run_does_not_mutate(tmp_path, monkeypatch):
 
 def test_main_missing_release(monkeypatch):
     monkeypatch.setattr(
+        "scripts.update_release_assurance_ci.shutil.which", lambda name: "/usr/bin/gh"
+    )
+    monkeypatch.setattr(
         "scripts.update_release_assurance_ci.release_exists", lambda tag: False
     )
     from scripts.update_release_assurance_ci import main
 
     assert main(["--tag", "v0.6.99", "--md", "x.md", "--json", "x.json"]) == 1
+
+
+def test_main_reports_missing_github_cli(monkeypatch, capsys):
+    """A missing gh must be named as such, not reported as a missing release."""
+    monkeypatch.setattr("scripts.update_release_assurance_ci.shutil.which", lambda name: None)
+
+    def _unreachable(tag):
+        raise AssertionError("release lookup must not run without the GitHub CLI")
+
+    monkeypatch.setattr(
+        "scripts.update_release_assurance_ci.release_exists", _unreachable
+    )
+    from scripts.update_release_assurance_ci import main
+
+    assert main(["--tag", "v0.6.23", "--md", "x.md", "--json", "x.json"]) == 1
+    assert "GitHub CLI (gh) is not available" in capsys.readouterr().err

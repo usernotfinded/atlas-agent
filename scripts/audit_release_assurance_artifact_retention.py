@@ -4,8 +4,8 @@
 # FILE:    scripts/audit_release_assurance_artifact_retention.py
 # PURPOSE: Read-only audit of GitHub Actions artifact retention for release
 #         assurance.
-# DEPS:    argparse, datetime, json, os, subprocess, sys, additional local
-#         modules.
+# DEPS:    argparse, datetime, json, os, shutil, subprocess, sys, additional
+#         local modules.
 # ==============================================================================
 
 """Read-only audit of GitHub Actions artifact retention for release assurance.
@@ -34,6 +34,7 @@ import argparse
 import datetime
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -122,6 +123,14 @@ def _load_fixture_json(path: Path) -> dict[str, Any]:
 def _fetch_artifacts_page(owner: str, repo: str, page: int) -> dict[str, Any]:
     """Fetch a single page of artifact metadata via ``gh api``."""
     url = f"repos/{owner}/{repo}/actions/artifacts?per_page={GH_API_PER_PAGE}&page={page}"
+    # An absent GitHub CLI is an operational limit, not a malformed request.
+    # Without this the raw FileNotFoundError is classified as a validation error
+    # about the fixture input, which describes neither the cause nor the fix.
+    if shutil.which("gh") is None:
+        raise RuntimeError(
+            "GitHub CLI (gh) is not available; install it to run a live audit, "
+            "or pass --input-json to audit a local fixture instead."
+        )
     result = subprocess.run(
         ["gh", "api", url],
         capture_output=True,

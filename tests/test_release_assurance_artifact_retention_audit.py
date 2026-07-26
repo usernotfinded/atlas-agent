@@ -3,8 +3,8 @@
 # FILE:    tests/test_release_assurance_artifact_retention_audit.py
 # PURPOSE: Verifies release assurance artifact retention audit behavior and
 #         regression expectations.
-# DEPS:    json, subprocess, sys, datetime, pathlib, pytest, additional local
-#         modules.
+# DEPS:    json, os, subprocess, sys, datetime, pathlib, unittest, pytest,
+#         additional local modules.
 # ==============================================================================
 
 """Tests for the release-assurance artifact retention audit script and checker.
@@ -19,12 +19,16 @@ scanner against the real workflow and synthetic unsafe variants.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
+
+import scripts.audit_release_assurance_artifact_retention as audit_module
 
 from scripts.check_release_assurance_artifact_retention_audit import (
     check,
@@ -370,6 +374,42 @@ class TestAuditScriptFixtureMode:
         )
         assert result.returncode != 0
         assert "validation" in (result.stdout + result.stderr).lower()
+
+
+class TestAuditScriptLiveMode:
+    """Live mode with no GitHub CLI present, so no request is ever issued."""
+
+    def test_live_mode_without_gh_reports_operational_error(self, tmp_path: Path) -> None:
+        """A missing GitHub CLI is an operational error, not a validation error."""
+        empty_bin = tmp_path / "empty-bin"
+        empty_bin.mkdir()
+        output_dir = tmp_path / "out"
+
+        env = {**os.environ, "PATH": str(empty_bin)}
+        result = subprocess.run(
+            [sys.executable, str(AUDIT_SCRIPT), "--output-dir", str(output_dir)],
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+            env=env,
+            timeout=60,
+        )
+
+        assert result.returncode == 2, result.stdout + result.stderr
+        combined = result.stdout + result.stderr
+        assert "Operational error" in combined
+        assert "GitHub CLI (gh) is not available" in combined
+        assert "--input-json" in combined
+
+    def test_fetch_page_names_the_fixture_alternative_when_gh_is_absent(self) -> None:
+        """The failure must point at the offline path the script already supports."""
+        with patch.object(audit_module.shutil, "which", return_value=None):
+            with pytest.raises(RuntimeError) as excinfo:
+                audit_module._fetch_artifacts_page("owner", "repo", 1)
+
+        message = str(excinfo.value)
+        assert "GitHub CLI (gh) is not available" in message
+        assert "--input-json" in message
 
 
 class TestChecker:
