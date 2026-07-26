@@ -76,25 +76,22 @@ class TestCheckerPreRelease:
     """Default (pre-release) mode expects no v0.6.0 tag."""
 
     def test_default_mode_detects_existing_tag(self, require_release_tags) -> None:
+        # A tagged checkout always carries v0.6.0, so pre-release mode must
+        # report the tag as already present. The fixture skips the case where
+        # the checkout has no tags to read at all.
         result = _run_script()
-        # If the v0.6.0 tag exists locally, default mode must fail.
-        # In a CI environment without the tag this would pass; here we assert
-        # the behavior is consistent with local state.
-        if "v0.6.0 tag already exists" in result.stdout:
-            assert result.returncode == 1
-            assert "FAIL" in result.stdout
-        else:
-            assert result.returncode == 0
-            assert "PASS" in result.stdout
+
+        assert "v0.6.0 tag already exists" in result.stdout
+        assert result.returncode == 1
+        assert "FAIL" in result.stdout
 
     def test_default_json_detects_existing_tag(self, require_release_tags) -> None:
         result = _run_script("--json")
         data = json.loads(result.stdout)
+
         assert data.get("mode") == "pre_release"
-        if "v0.6.0 tag already exists" in str(data.get("errors", [])):
-            assert data["valid"] is False
-        else:
-            assert data["valid"] is True
+        assert "v0.6.0 tag already exists" in str(data.get("errors", []))
+        assert data["valid"] is False
 
 
 class TestCheckerPostRelease:
