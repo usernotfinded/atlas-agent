@@ -3,7 +3,7 @@
 # FILE:    tests/test_bounded_autonomy_governance.py
 # PURPOSE: Verifies bounded autonomy governance behavior and regression
 #         expectations.
-# DEPS:    subprocess, sys, pathlib, unittest, pytest.
+# DEPS:    os, subprocess, sys, pathlib, unittest, pytest.
 # ==============================================================================
 
 """Tests for the bounded autonomy governance checker.
@@ -16,6 +16,7 @@ no credentials, no provider SDKs, no broker changes.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -166,13 +167,53 @@ def test_public_autonomy_claims_allow_negative_context(tmp_path: Path) -> None:
         assert errors == []
 
 
+def _init_repo_with_tags(path: Path, tags: list[str]) -> Path:
+    """Create a throwaway git repository carrying exactly the requested tags.
+
+    The tag lookup under test reads real git state, so the assertions must not
+    depend on which tags the ambient checkout happens to have fetched.
+    """
+    path.mkdir(parents=True, exist_ok=True)
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "Atlas Test",
+        "GIT_AUTHOR_EMAIL": "test@example.invalid",
+        "GIT_COMMITTER_NAME": "Atlas Test",
+        "GIT_COMMITTER_EMAIL": "test@example.invalid",
+    }
+    commands = [
+        ["git", "init", "--quiet"],
+        ["git", "commit", "--allow-empty", "--quiet", "-m", "base"],
+        *[["git", "tag", tag] for tag in tags],
+    ]
+    for cmd in commands:
+        subprocess.run(cmd, cwd=path, env=env, check=True, capture_output=True, text=True)
+    return path
+
+
 def test_version_planning_only_flags_bad_version(tmp_path: Path) -> None:
     """If the next planned tag already exists locally, the checker must fail."""
     from scripts import check_bounded_autonomy_governance as checker
 
+    repo = _init_repo_with_tags(tmp_path / "tagged", ["v0.6.24"])
+
     with patch.object(checker, "PACKAGE_VERSION", "0.6.24"), \
          patch.object(checker, "CURRENT_PUBLIC_TAG", "v0.6.24"), \
-         patch.object(checker, "NEXT_PLANNED_TAG", "v0.6.24"):
+         patch.object(checker, "NEXT_PLANNED_TAG", "v0.6.24"), \
+         patch.object(checker, "REPO_ROOT", repo):
         errors = checker._check_version_planning_only()
         assert errors
         assert any("already exists" in e for e in errors)
+
+
+def test_version_planning_only_passes_when_next_tag_is_unused(tmp_path: Path) -> None:
+    """A next planned tag that is not tagged locally yet must pass."""
+    from scripts import check_bounded_autonomy_governance as checker
+
+    repo = _init_repo_with_tags(tmp_path / "untagged", ["v0.6.24"])
+
+    with patch.object(checker, "PACKAGE_VERSION", "0.6.24"), \
+         patch.object(checker, "CURRENT_PUBLIC_TAG", "v0.6.24"), \
+         patch.object(checker, "NEXT_PLANNED_TAG", "v0.6.25"), \
+         patch.object(checker, "REPO_ROOT", repo):
+        assert checker._check_version_planning_only() == []

@@ -49,12 +49,15 @@ def _run_shell(script_path: Path, cwd: Path | None = None, env: dict | None = No
 
 
 def _write_fake_python(path: Path, marker_name: str, *, validate_exit: int = 0, validate_message: str = "") -> None:
+    # The stub resolves bash by absolute path and uses builtins only (no `touch`/
+    # `cat`) so interpreter-resolution tests can run with a PATH that contains
+    # nothing but the fake interpreters.
     path.write_text(
-        '#!/usr/bin/env bash\n'
+        '#!/bin/bash\n'
         'set -euo pipefail\n'
         'if [[ "${1:-}" == "-" ]]; then\n'
-        f'    touch "$MARKER_DIR/{marker_name}"\n'
-        '    cat >/dev/null\n'
+        f'    : >"$MARKER_DIR/{marker_name}"\n'
+        '    while IFS= read -r _discarded || [[ -n "${_discarded:-}" ]]; do :; done\n'
         f'    if [[ "{validate_message}" != "" ]]; then\n'
         f'        printf "%s\\n" "{validate_message}" >&2\n'
         '    fi\n'
@@ -104,7 +107,9 @@ class TestPythonEnvSh:
 
         env = os.environ.copy()
         env["MARKER_DIR"] = str(marker_dir)
-        env["PATH"] = f"{bin_dir}:/bin:/usr/bin"
+        # PATH holds only the fake interpreters so a real system python3.11
+        # cannot satisfy the lookup under test.
+        env["PATH"] = str(bin_dir)
         env["PYTHON_BIN"] = str(custom_python)
 
         result = self._run_helper(tmp_path, env)
@@ -124,7 +129,9 @@ class TestPythonEnvSh:
 
         env = os.environ.copy()
         env["MARKER_DIR"] = str(marker_dir)
-        env["PATH"] = f"{bin_dir}:/bin:/usr/bin"
+        # PATH holds only the fake interpreters so a real system python3.11
+        # cannot satisfy the lookup under test.
+        env["PATH"] = str(bin_dir)
         env.pop("PYTHON_BIN", None)
 
         result = self._run_helper(tmp_path, env)
@@ -143,7 +150,9 @@ class TestPythonEnvSh:
 
         env = os.environ.copy()
         env["MARKER_DIR"] = str(marker_dir)
-        env["PATH"] = f"{bin_dir}:/bin:/usr/bin"
+        # PATH holds only the fake interpreters so a real system python3.11
+        # cannot satisfy the lookup under test.
+        env["PATH"] = str(bin_dir)
         env.pop("PYTHON_BIN", None)
 
         result = self._run_helper(tmp_path, env)
@@ -166,7 +175,9 @@ class TestPythonEnvSh:
 
         env = os.environ.copy()
         env["MARKER_DIR"] = str(marker_dir)
-        env["PATH"] = f"{bin_dir}:/bin:/usr/bin"
+        # PATH holds only the fake interpreters so a real system python3.11
+        # cannot satisfy the lookup under test.
+        env["PATH"] = str(bin_dir)
         env.pop("PYTHON_BIN", None)
 
         result = self._run_helper(tmp_path, env)

@@ -31,6 +31,10 @@ except ImportError:
 _metadata_path = REPO_ROOT / "docs" / "releases" / "release-metadata.json"
 _meta = ReleaseMetadata(load_metadata(_metadata_path))
 
+# Shell convention for "command not found", reported when an optional
+# executable is missing from PATH.
+MISSING_EXECUTABLE_RETURNCODE = 127
+
 # Redaction patterns for credential-like values in diagnostic output.
 # These intentionally match values, not safe phrases like "secret regression coverage".
 _REDACTION_PATTERNS = [
@@ -164,6 +168,13 @@ def run_cmd(
         if check:
             raise
         return (e.stdout or "").strip(), e.returncode, (e.stderr or "").strip()
+    except FileNotFoundError:
+        # Optional tooling (for example the GitHub CLI) is not installed
+        # everywhere. A best-effort probe records the miss as a failed command
+        # so the assurance pack is still produced instead of aborting.
+        if check:
+            raise
+        return "", MISSING_EXECUTABLE_RETURNCODE, f"executable not found: {cmd[0]}"
 
 
 def main():

@@ -460,3 +460,20 @@ def test_protected_boundaries_remediation_renders_brace_path_without_key_error()
         "protected_boundaries_clean", version="v0.6.21", clean_version="0.6.21"
     )
     assert "src/atlas_agent/{config,brokers,execution,safety,risk}" in remediation
+
+
+def test_run_cmd_reports_missing_executable_instead_of_raising() -> None:
+    """Regression: a missing optional CLI must not abort the assurance pack."""
+    stdout, returncode, stderr = release_assurance.run_cmd(
+        ["atlas-nonexistent-binary", "--version"], check=False
+    )
+
+    assert stdout == ""
+    assert returncode == release_assurance.MISSING_EXECUTABLE_RETURNCODE
+    assert "executable not found: atlas-nonexistent-binary" in stderr
+
+
+def test_run_cmd_still_raises_for_missing_executable_when_checked() -> None:
+    """A checked command keeps failing closed when its executable is missing."""
+    with pytest.raises(FileNotFoundError):
+        release_assurance.run_cmd(["atlas-nonexistent-binary", "--version"], check=True)
