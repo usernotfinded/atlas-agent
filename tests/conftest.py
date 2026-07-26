@@ -2,12 +2,14 @@
 # PROJECT: Atlas Agent
 # FILE:    tests/conftest.py
 # PURPOSE: Provides shared fixtures and automatic test-tier classification.
-# DEPS:    json, sys, collections.abc, pathlib, pytest, release_metadata.
+# DEPS:    json, subprocess, sys, collections.abc, pathlib, pytest,
+#         release_metadata.
 # ==============================================================================
 
 # --- IMPORTS ---
 
 import json
+import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -163,6 +165,34 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 # ==============================================================================
 
 # --- TEST FIXTURES, HELPERS, AND CASES ---
+
+def checkout_has_release_tags() -> bool:
+    """Report whether this checkout carries any git tags at all.
+
+    Release-history assertions read real tag objects, which a shallow or
+    tags-omitted clone simply does not have. CI fetches every tag, so the guard
+    only relaxes where the history is genuinely absent — a specific tag missing
+    from a fully tagged checkout still fails.
+    """
+    result = subprocess.run(
+        ["git", "tag", "--list"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return bool(result.stdout.strip())
+
+
+@pytest.fixture
+def require_release_tags() -> None:
+    """Skip a release-history test when the checkout carries no git tags."""
+    if not checkout_has_release_tags():
+        pytest.skip(
+            "checkout has no git tags; release-history checks need a fully tagged clone "
+            "(git fetch --force --tags origin)"
+        )
+
 
 @pytest.fixture
 def release_identity():

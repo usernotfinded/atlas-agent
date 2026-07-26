@@ -66,7 +66,7 @@ READINESS_MOD = _load_readiness_module()
 # ---------------------------------------------------------------------------
 
 
-def test_readiness_script_passes() -> None:
+def test_readiness_script_passes(require_release_tags) -> None:
     result = subprocess.run(
         [sys.executable, str(READINESS_SCRIPT)],
         capture_output=True,
@@ -77,7 +77,7 @@ def test_readiness_script_passes() -> None:
     assert "PASSED" in result.stdout
 
 
-def test_readiness_script_json_output() -> None:
+def test_readiness_script_json_output(require_release_tags) -> None:
     result = subprocess.run(
         [sys.executable, str(READINESS_SCRIPT), "--json"],
         capture_output=True,

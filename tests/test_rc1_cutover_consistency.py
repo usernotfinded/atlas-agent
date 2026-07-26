@@ -48,7 +48,7 @@ class TestScriptExists:
 
 
 class TestScriptPassesOnCurrentRepo:
-    def test_script_passes(self) -> None:
+    def test_script_passes(self, require_release_tags) -> None:
         result = subprocess.run(
             [sys.executable, str(SCRIPT)],
             capture_output=True,
@@ -69,7 +69,7 @@ class TestScriptPassesOnCurrentRepo:
             f"Version consistency script failed:\n{result.stdout}\n{result.stderr}"
         )
 
-    def test_json_output(self, release_identity: dict) -> None:
+    def test_json_output(self, release_identity: dict, require_release_tags) -> None:
         result = subprocess.run(
             [sys.executable, str(SCRIPT), "--json"],
             capture_output=True,
@@ -102,7 +102,7 @@ class TestCurrentDevVersion:
 
 
 class TestHistoricalStableTag:
-    def test_historical_tag_pyproject_version(self) -> None:
+    def test_historical_tag_pyproject_version(self, require_release_tags) -> None:
         result = subprocess.run(
             ["git", "show", f"{HISTORICAL_STABLE_TAG}:pyproject.toml"],
             cwd=REPO_ROOT,
@@ -113,7 +113,7 @@ class TestHistoricalStableTag:
         data = tomllib.loads(result.stdout)
         assert data.get("project", {}).get("version") == HISTORICAL_STABLE_VERSION
 
-    def test_historical_tag_init_version(self) -> None:
+    def test_historical_tag_init_version(self, require_release_tags) -> None:
         result = subprocess.run(
             ["git", "show", f"{HISTORICAL_STABLE_TAG}:src/atlas_agent/__init__.py"],
             cwd=REPO_ROOT,

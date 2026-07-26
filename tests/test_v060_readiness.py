@@ -75,7 +75,7 @@ class TestScriptAndDocsExist:
 class TestCheckerPreRelease:
     """Default (pre-release) mode expects no v0.6.0 tag."""
 
-    def test_default_mode_detects_existing_tag(self) -> None:
+    def test_default_mode_detects_existing_tag(self, require_release_tags) -> None:
         result = _run_script()
         # If the v0.6.0 tag exists locally, default mode must fail.
         # In a CI environment without the tag this would pass; here we assert
@@ -87,7 +87,7 @@ class TestCheckerPreRelease:
             assert result.returncode == 0
             assert "PASS" in result.stdout
 
-    def test_default_json_detects_existing_tag(self) -> None:
+    def test_default_json_detects_existing_tag(self, require_release_tags) -> None:
         result = _run_script("--json")
         data = json.loads(result.stdout)
         assert data.get("mode") == "pre_release"

@@ -31,6 +31,18 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = REPO_ROOT / "scripts" / "check_package_distribution.py"
 
+
+def _load_script_module(name: str):
+    """Import the checker script under its own module name."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(name, str(SCRIPT))
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 PACKAGE_VERSION = "0.5.7rc7"
 PUBLIC_TAG = "v0.5.8-rc7"
 
@@ -795,10 +807,24 @@ class TestArtifactFilenameChecks:
 
 
 class TestRealBuild:
+    @staticmethod
+    def _skip_if_toolchain_cannot_build(result) -> None:
+        """Skip when the host toolchain, not the package, blocks the build.
+
+        These cases assert on a real build, so they can only run where the
+        interpreter is able to produce a wheel at all.
+        """
+        combined = result.stdout + result.stderr
+        if result.returncode == 0:
+            return
+        if "build missing" in combined.lower():
+            pytest.skip("build module not available")
+        if _load_script_module("check_package_distribution_skip_guard")._is_unusable_ambient_backend(combined):
+            pytest.skip("ambient build backend cannot produce a wheel without isolation")
+
     def test_real_build_passes(self, release_identity: dict) -> None:
         result = _run_script()
-        if result.returncode == 2 and "build missing" in (result.stdout + result.stderr).lower():
-            pytest.skip("build module not available")
+        self._skip_if_toolchain_cannot_build(result)
         assert result.returncode == 0, (
             f"Package distribution check failed:\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}"
         )
@@ -810,8 +836,7 @@ class TestRealBuild:
 
     def test_real_build_output_has_no_absolute_paths(self) -> None:
         result = _run_script()
-        if result.returncode != 0 and "build missing" in (result.stdout + result.stderr).lower():
-            pytest.skip("build module not available")
+        self._skip_if_toolchain_cannot_build(result)
         assert result.returncode == 0
         combined = result.stdout + result.stderr
         assert "/Users/" not in combined, f"Leaked /Users/ in output:\n{combined}"

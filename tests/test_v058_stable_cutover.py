@@ -183,7 +183,7 @@ def test_staged_generated_evidence_artifact_fails() -> None:
     assert any("Generated evidence artifact staged" in e for e in result["errors"])
 
 
-def test_historical_v057_record_required() -> None:
+def test_historical_v057_record_required(require_release_tags) -> None:
     result = CUTOVER_MOD._check_historical_tag()
     # This should pass because v0.5.7 tag exists in the repo
     assert result == [], f"Historical v0.5.7 check failed: {result}"

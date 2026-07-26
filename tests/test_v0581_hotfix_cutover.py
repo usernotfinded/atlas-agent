@@ -69,7 +69,7 @@ CUTOVER_MOD = _load_cutover_module()
 # ---------------------------------------------------------------------------
 
 
-def test_cutover_script_passes() -> None:
+def test_cutover_script_passes(require_release_tags) -> None:
     result = subprocess.run(
         [sys.executable, str(CUTOVER_SCRIPT)],
         capture_output=True,
@@ -80,7 +80,7 @@ def test_cutover_script_passes() -> None:
     assert "PASSED" in result.stdout
 
 
-def test_cutover_script_json_output() -> None:
+def test_cutover_script_json_output(require_release_tags) -> None:
     result = subprocess.run(
         [sys.executable, str(CUTOVER_SCRIPT), "--json"],
         capture_output=True,
@@ -177,7 +177,7 @@ def test_staged_generated_evidence_artifact_fails() -> None:
     assert any("Generated evidence artifact staged" in e for e in result["errors"])
 
 
-def test_historical_v058_record_required() -> None:
+def test_historical_v058_record_required(require_release_tags) -> None:
     result = CUTOVER_MOD._check_historical_tag()
     # This should pass because v0.5.8 tag exists in the repo
     assert result == [], f"Historical v0.5.8 check failed: {result}"

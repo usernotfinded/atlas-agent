@@ -58,6 +58,22 @@ _meta = ReleaseMetadata(load_metadata(_metadata_path))
 
 EXPECTED_PACKAGE_VERSION = _meta.source_version
 EXPECTED_PUBLIC_TAG = _meta.current_public_release
+
+# Failure signatures of a build backend that cannot produce a wheel regardless of
+# the project being built. `install_layout` is a Debian/Ubuntu setuptools patch
+# that breaks the wheel command when the ambient interpreter is reused.
+AMBIENT_BACKEND_FAILURE_SIGNATURES = (
+    "AttributeError: install_layout",
+    "ModuleNotFoundError: No module named 'setuptools'",
+    "Backend 'setuptools.build_meta' is not available",
+)
+AMBIENT_BACKEND_REMEDIATION = (
+    "The interpreter's own setuptools cannot build a wheel, so the no-network "
+    "build could not run. This is a toolchain limitation, not a packaging "
+    "defect. Re-run with --allow-network-build to build in an isolated "
+    "environment, or run the check from a virtualenv with a working setuptools."
+)
+
 EXPECTED_NAME = "atlas-agent"
 EXPECTED_NORMALIZED_NAME = "atlas_agent"
 EXPECTED_TEMPLATE_FILES = (
@@ -212,6 +228,17 @@ def _check_twine_available() -> tuple[bool, str]:
     return True, ""
 
 
+def _is_unusable_ambient_backend(output: str) -> bool:
+    """Report whether a build failure came from the interpreter's own setuptools.
+
+    A no-isolation build reuses whatever setuptools the interpreter already has.
+    Distribution-patched copies (notably the Debian/Ubuntu system Python) can be
+    unable to build a wheel at all, which fails before any project code runs and
+    says nothing about this package.
+    """
+    return any(signature in output for signature in AMBIENT_BACKEND_FAILURE_SIGNATURES)
+
+
 def _build_artifacts(output_dir: Path, no_isolation: bool = True) -> tuple[bool, str]:
     cmd = [
         sys.executable,
@@ -231,7 +258,10 @@ def _build_artifacts(output_dir: Path, no_isolation: bool = True) -> tuple[bool,
         # Redact before returning so callers print safe text only
         redacted_stdout = _redact(stdout)
         redacted_stderr = _redact(stderr)
-        return False, f"Build failed:\n{redacted_stdout}\n{redacted_stderr}"
+        message = f"Build failed:\n{redacted_stdout}\n{redacted_stderr}"
+        if no_isolation and _is_unusable_ambient_backend(stdout + stderr):
+            message += f"\n{AMBIENT_BACKEND_REMEDIATION}"
+        return False, message
     return True, ""
 
 

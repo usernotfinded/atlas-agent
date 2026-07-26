@@ -60,7 +60,7 @@ def test_init_version_is_current_dev(release_identity: dict) -> None:
     assert m.group(1) == release_identity["source_version"]
 
 
-def test_public_stable_v058_tag_exists() -> None:
+def test_public_stable_v058_tag_exists(require_release_tags) -> None:
     result = subprocess.run(
         ["git", "show", "v0.5.8:src/atlas_agent/__init__.py"],
         cwd=ROOT,
@@ -84,7 +84,7 @@ def test_public_stable_v0581_release_note_exists() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_historical_v057_tag_exists() -> None:
+def test_historical_v057_tag_exists(require_release_tags) -> None:
     result = subprocess.run(
         ["git", "show", "v0.5.7:src/atlas_agent/__init__.py"],
         cwd=ROOT,

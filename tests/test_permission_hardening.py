@@ -2,7 +2,7 @@
 # PROJECT: Atlas Agent
 # FILE:    tests/test_permission_hardening.py
 # PURPOSE: Verifies permission hardening behavior and regression expectations.
-# DEPS:    os, sys, pathlib, unittest, atlas_agent, pytest.
+# DEPS:    builtins, os, sys, pathlib, unittest, atlas_agent, pytest.
 # ==============================================================================
 
 """Regression tests for PermissionError hardening in sandboxed environments.
@@ -15,6 +15,7 @@ gracefully handle unreadable user-global paths.
 
 from __future__ import annotations
 
+import builtins
 import os
 import sys
 from pathlib import Path
@@ -40,16 +41,23 @@ def test_load_raw_config_returns_empty_on_permission_error(monkeypatch, tmp_path
     from atlas_agent.config.store import load_raw_config
     from atlas_agent.config.paths import get_config_toml_path
 
-    # Point config to a temp file that we will make unreadable
     config_file = tmp_path / "config.toml"
     config_file.write_text("[market]\nsymbol = 'AAPL'\n", encoding="utf-8")
-    config_file.chmod(0o000)
 
-    with patch("atlas_agent.config.store.get_config_toml_path", return_value=config_file):
+    # The denial is raised from the open() call rather than set with chmod:
+    # permission bits do not stop a root test runner, which would let the case
+    # pass without ever reaching the branch under test.
+    real_open = builtins.open
+
+    def _deny_config_file(file, *args, **kwargs):
+        if Path(file) == config_file:
+            raise PermissionError("Permission denied")
+        return real_open(file, *args, **kwargs)
+
+    with patch("atlas_agent.config.store.get_config_toml_path", return_value=config_file), \
+         patch("builtins.open", _deny_config_file):
         result = load_raw_config()
         assert result == {}, f"Expected empty dict on PermissionError, got {result}"
-
-    config_file.chmod(0o644)
 
 
 def test_load_raw_config_reads_when_readable(tmp_path: Path) -> None:
@@ -75,13 +83,21 @@ def test_load_atlas_secrets_skips_on_permission_error(monkeypatch, tmp_path: Pat
 
     env_file = tmp_path / ".env.atlas"
     env_file.write_text("OPENAI_API_KEY=sk-test\n", encoding="utf-8")
-    env_file.chmod(0o000)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
-    with patch("atlas_agent.config.secrets.get_env_atlas_path", return_value=env_file):
+    # The reader is denied directly instead of via chmod, which a root test
+    # runner ignores. Otherwise the file loads normally and the case passes
+    # without exercising the PermissionError branch at all.
+    def _deny_read(*args, **kwargs):
+        raise PermissionError("Permission denied")
+
+    with patch("atlas_agent.config.secrets.get_env_atlas_path", return_value=env_file), \
+         patch("atlas_agent.config.secrets.load_dotenv", _deny_read):
         # Must not raise
         load_atlas_secrets()
 
-    env_file.chmod(0o600)
+    # An unreadable secrets file must leave the environment untouched.
+    assert "OPENAI_API_KEY" not in os.environ
 
 
 # ---------------------------------------------------------------------------
