@@ -1454,7 +1454,92 @@ def handle_import_provider_response(context: CLIContext) -> int | None:
 
 
 
+def handle_backtest_proposal(context: CLIContext) -> int | None:
+    args = context.args
+    import json
+    from atlas_agent.research.errors import safe_research_session_error
+
+    if args.command == "research" and args.research_command == "backtest-proposal":
+        try:
+            from atlas_agent.research.backtest_bridge import build_backtest_proposal
+            from atlas_agent.research.session import (
+                InvalidResearchSymbolError,
+                ResearchSessionError,
+                UnsupportedArtifactSchemaError,
+            )
+            from atlas_agent.workspace import resolve_workspace_path
+
+            ws = resolve_workspace_path()
+            if ws is None:
+                if args.json:
+                    print(json.dumps({"ok": False, "status": "no_workspace"}, indent=2, sort_keys=True))
+                else:
+                    print("research backtest-proposal skipped safely: no workspace found")
+                return 1
+            proposal = build_backtest_proposal(ws, args.run_id)
+        except InvalidResearchSymbolError:
+            if args.json:
+                _research_error_json("invalid_research_symbol", "Invalid research symbol.")
+            else:
+                _research_error_text("research backtest-proposal", "invalid research symbol")
+            return 1
+        except UnsupportedArtifactSchemaError:
+            if args.json:
+                _research_error_json("unsupported_research_artifact_schema", "Unsupported research artifact schema.")
+            else:
+                _research_error_text("research backtest-proposal", "unsupported research artifact schema")
+            return 1
+        except ResearchSessionError as exc:
+            status, message = safe_research_session_error(exc)
+            if args.json:
+                _research_error_json(status, message)
+            else:
+                _research_error_text("research backtest-proposal", message.lower().rstrip("."))
+            return 1
+        except Exception:
+            if args.json:
+                _research_error_json("research_error", "Research command failed.")
+            else:
+                _research_error_text("research backtest-proposal", "research command failed")
+            return 1
+
+        if args.json:
+            out = {
+                "ok": True,
+                "status": "backtest_proposal_built",
+                "proposal": proposal,
+            }
+            print(json.dumps(out, indent=2, sort_keys=True))
+        else:
+            print("Backtest proposal (paper-only, no orders, no approvals)")
+            print(f"  Symbol: {proposal['symbol']}")
+            print(f"  Mode: {proposal['mode']}")
+            print(f"  Source Run ID: {proposal['source_run_id']}")
+            print(f"  Status: {proposal['status']}")
+            accepted = proposal["accepted_strategies"]
+            if accepted:
+                print(f"  Accepted strategies: {len(accepted)}")
+                for entry in accepted:
+                    rendered = ", ".join(
+                        f"{name}={value}" for name, value in sorted(entry["parameters"].items())
+                    )
+                    print(f"    - {entry['strategy_id']} ({rendered})" if rendered else f"    - {entry['strategy_id']}")
+            else:
+                print("  Accepted strategies: 0")
+            rejected = proposal["rejected_strategies"]
+            if rejected:
+                print(f"  Rejected strategies: {len(rejected)}")
+                for entry in rejected:
+                    print(f"    - {entry['strategy_id']}: {entry['reason']}")
+            for note in proposal["notes"]:
+                print(f"  Note: {note}")
+            print("  This proposal is not financial advice and authorizes no trading.")
+        return 0
+    return None
+
+
 HANDLERS = {
+    "backtest-proposal": handle_backtest_proposal,
     "check-artifacts": handle_check_artifacts,
     "dossier": handle_dossier,
     "evaluate": handle_evaluate,

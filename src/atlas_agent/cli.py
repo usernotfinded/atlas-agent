@@ -1334,6 +1334,19 @@ Safety First:
         help="Research provider. Only 'deterministic' is supported. Default: deterministic.",
     )
 
+    research_backtest_proposal = research_sub.add_parser(
+        "backtest-proposal",
+        help="Derive a paper-only backtest proposal from a research artifact. Does not submit orders.",
+        description=(
+            "Derive a paper-only backtest proposal from one local research artifact. "
+            "Read-only. Does not create artifacts, pending orders, or approvals."
+        ),
+    )
+    research_backtest_proposal.add_argument("run_id", help="Source research artifact run_id.")
+    research_backtest_proposal.add_argument(
+        "--json", action="store_true", help="Emit safe JSON envelope."
+    )
+
     research_summary = research_sub.add_parser(
         "summary",
         help="Summarize local research artifacts and paper plans. Read-only. Does not submit orders.",

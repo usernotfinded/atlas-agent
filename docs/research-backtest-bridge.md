@@ -60,6 +60,33 @@ manufacture a hypothesis the analysis never stated.
 An artifact with no such block yields a proposal with status `no_hypothesis`,
 an empty strategy list, and a note explaining the absence.
 
+## Building a proposal
+
+```bash
+atlas research backtest-proposal <run_id>
+atlas research backtest-proposal <run_id> --json
+```
+
+The command reads the named artifact and prints what it derived — accepted
+strategies with their resolved parameters, rejected entries with the reason, and
+any notes about fields it refused to honour. It exits non-zero only when the
+artifact cannot be read; an artifact that proposes nothing is a valid answer, not
+an error.
+
+```
+Backtest proposal (paper-only, no orders, no approvals)
+  Symbol: AAPL
+  Mode: paper
+  Source Run ID: run-demo
+  Status: proposed
+  Accepted strategies: 1
+    - moving_average_cross (exit_on_cross=True, long_window=8, position_pct=1.0, short_window=3)
+  Rejected strategies: 1
+    - not_a_strategy: Strategy is not registered; the bridge never invents one.
+  Note: Ignoring unsupported hypothesis field(s): mode
+  This proposal is not financial advice and authorizes no trading.
+```
+
 ## Proposal status values
 
 | Status | Meaning |

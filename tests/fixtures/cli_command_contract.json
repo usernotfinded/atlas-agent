@@ -63,6 +63,7 @@
       "submit"
     ],
     "research": [
+      "backtest-proposal",
       "check-artifacts",
       "dossier",
       "evaluate",
