@@ -9,10 +9,15 @@ balance of speed and coverage for each situation.
 |---|---|---|---|
 | Smoke | `scripts/smoke_check.sh` | < 10 s | After small docs/checker edits |
 | Local Quick | `scripts/local_quick_check.sh` | ~30–45 s | Before committing |
-| Dev | `scripts/dev_check.sh` | ~55–90 s | Before opening/updating a PR |
+| Dev | `scripts/dev_check.sh` | ~150–200 s | Before opening/updating a PR |
 | CI | `scripts/ci_check.sh` | ~60–180 s | When docs/checks/CI/packaging change |
-| Release Quick | `scripts/release_check.sh --quick` | ~55–90 s | Release-adjacent quick safety check |
+| Release Quick | `scripts/release_check.sh --quick` | ~150–200 s | Release-adjacent quick safety check |
 | Release Full | `scripts/release_check.sh --full` | ~120–600 s | Before push/tag |
+
+Times are measured on a developer machine with the `dev` extra installed. The
+dev tier distributes its three slowest steps across cores, so its figure scales
+with core count and is slower on a single-core runner. Without `pytest-xdist`
+those steps run serially and the tier takes roughly twice as long.
 
 ## Smoke Check
 
