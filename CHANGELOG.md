@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Implemented the `v0.6.2` roadmap line: a read-only bridge from local research
+  artifacts to paper-only backtest proposals
+  (`atlas_agent.research.backtest_bridge.build_backtest_proposal`, exposed as
+  `atlas research backtest-proposal <run_id>`). A research artifact is untrusted
+  input, so it may influence only the symbol (sanitized), the strategy selection
+  (must already be registered), and strategy parameters (coerced and range-checked
+  by the strategy's own specs); any other field in the hypothesis block is
+  reported as unsupported rather than silently applied. Prose is never parsed for
+  a hypothesis, so an artifact without a structured `metadata.backtest_hypothesis`
+  block proposes nothing and says why. The bridge creates no pending orders or
+  approvals and makes no provider or broker call. See
+  `docs/research-backtest-bridge.md`.
+- Completed the remaining `v0.6.5` release criteria for the strategy comparison
+  workspace. Each entry of a `atlas backtest compare` report now carries the
+  benchmark it was measured against, including excess return over that benchmark,
+  and its own run diagnostics (run id, status, blocked-order count, strategy
+  validation record). Added `--strategy-parameters` for per-strategy overrides,
+  which fails closed on malformed JSON instead of falling back to defaults.
+  Failed entries keep the same key set as evaluated ones.
+
+### Changed
+
+- `build_paper_strategy_evaluation` accepts an optional per-strategy `parameters`
+  mapping; it previously discarded parameters entirely. Overrides remain subject
+  to strategy parameter validation and to every risk gate at the engine.
+- The dev gate distributes its three slowest steps across cores when
+  `pytest-xdist` is importable, taking `./scripts/release_check.sh --quick` from
+  356 s to 165 s on this checkout with identical pass counts. Steps measured not
+  to benefit stay serial, and a checkout without the `dev` extra keeps the
+  previous serial behavior.
+- Corrected the dev and release-quick rows of `docs/development/check-tiers.md`,
+  which listed `~55-90 s` for a tier that measured 356 s before the change and
+  165 s after.
+
+### Fixed
+
+- `scripts/release_assurance.py` aborted assurance-pack generation with an
+  unhandled `FileNotFoundError` when an optional CLI such as `gh` was absent;
+  a best-effort probe now records the miss as a failed check.
+- `scripts/audit_release_assurance_artifact_retention.py` reported a missing
+  GitHub CLI as a validation error about fixture input the caller never passed;
+  it is now classified as operational and names the `--input-json` alternative.
+- `scripts/update_release_assurance_ci.py` had no guard for a missing GitHub CLI,
+  producing an unhandled traceback that a broad catch would have read as a
+  missing release.
+- `scripts/check_package_distribution.py` surfaced a raw `AttributeError:
+  install_layout` when the interpreter's own setuptools could not build a wheel,
+  without pointing at the `--allow-network-build` flag that resolves it.
+- Test-suite portability: interpreter-resolution tests no longer let a system
+  `python3.11` satisfy a lookup that was meant to be missing; permission-hardening
+  tests raise `PermissionError` from the reader instead of relying on `chmod`,
+  which a root test runner ignores; and release-history assertions skip through a
+  `require_release_tags` fixture when a checkout carries no git tags at all, while
+  still failing when an individual tag is missing from a fully tagged clone.
+
 ## [0.6.26] - 2026-07-13
 
 ### Added
