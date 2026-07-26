@@ -47,6 +47,7 @@ from atlas_agent.backtest import (
     load_market_data,
     build_paper_strategy_evaluation,
     parse_strategy_list,
+    parse_strategy_parameters,
     render_json_report,
     render_markdown_report,
     write_strategy_evaluation_reports,
@@ -446,6 +447,15 @@ Safety First:
         "--strategies",
         default=None,
         help="Comma-separated strategy IDs. Defaults to all registered backtest strategies.",
+    )
+    backtest_compare.add_argument(
+        "--strategy-parameters",
+        default=None,
+        help=(
+            "JSON object mapping a strategy ID to its parameter overrides, e.g. "
+            "'{\"moving_average_cross\": {\"short_window\": 3}}'. "
+            "Strategies without an entry run on their own defaults."
+        ),
     )
     backtest_compare.add_argument("--output-dir", required=True)
     backtest_compare.add_argument("--initial-equity", type=float, default=10000.0)
@@ -4493,10 +4503,14 @@ def main(argv: list[str] | None = None) -> int:
         if args.backtest_command == "compare":
             try:
                 strategy_ids = parse_strategy_list(getattr(args, "strategies", None))
+                strategy_parameters = parse_strategy_parameters(
+                    getattr(args, "strategy_parameters", None)
+                )
                 report = build_paper_strategy_evaluation(
                     data_path=getattr(args, "data"),
                     symbol=getattr(args, "symbol"),
                     strategies=strategy_ids,
+                    parameters=strategy_parameters,
                     initial_equity=getattr(args, "initial_equity", 10000.0),
                     slippage_bps=getattr(args, "slippage_bps", 0.0),
                     commission_bps=getattr(args, "commission_bps", 0.0),

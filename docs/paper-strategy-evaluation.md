@@ -49,6 +49,43 @@ The JSON artifact has `artifact_type: paper_strategy_evaluation`, `mode: paper`,
 `provider_required: false`, `broker_required: false`, `network_required: false`,
 and `live_readiness: false`.
 
+## What each strategy entry reports
+
+Every entry carries the same keys whether the run was evaluated or failed, so a
+reader never has to branch on status:
+
+| Key | Meaning |
+|---|---|
+| `parameters` | The parameters the run actually used, including defaults. |
+| `metrics` | Return, drawdown, win rate, trade count, and related figures. |
+| `benchmark` | The benchmark the run was measured against, plus `excess_return_pct`. |
+| `paper_gate` | The follow-up decision and its reason. |
+| `safety_blockers` | Risk-gate rejections recorded during the run. |
+| `diagnostics` | Run id, status, blocked-order count, and the strategy validation record. |
+
+`excess_return_pct` is the strategy's return minus the benchmark's. A ranking
+without it can say which strategy placed first among those compared, but not
+whether any of them beat simply holding the asset.
+
+## Strategy parameters
+
+Strategies run on their own defaults unless overridden:
+
+```bash
+atlas backtest compare \
+  --data data/sample/ohlcv.csv \
+  --symbol DEMO-SYMBOL \
+  --strategies moving_average_cross \
+  --strategy-parameters '{"moving_average_cross": {"short_window": 2, "long_window": 6}}' \
+  --output-dir "$OUTPUT_DIR"
+```
+
+Malformed input fails the command rather than falling back to defaults: a
+comparison that quietly ignored the requested parameters would report a run
+nobody asked for. Overrides that parse are still coerced and range-checked by
+each strategy's own parameter specs, and the risk gate applies unchanged — an
+allocation above a notional or exposure limit is blocked at the engine.
+
 ## Paper gate decisions
 
 Allowed paper gate decisions are:

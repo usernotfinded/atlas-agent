@@ -29,7 +29,11 @@ from types import ModuleType
 
 import pytest
 
-from atlas_agent.backtest.evaluation import build_paper_strategy_evaluation
+from atlas_agent.backtest.evaluation import (
+    build_paper_strategy_evaluation,
+    parse_strategy_parameters,
+    render_strategy_evaluation_markdown,
+)
 
 
 # --- CONFIGURATION AND CONSTANTS ---
@@ -474,3 +478,152 @@ class TestStrategyParameterOverrides:
         assert failed["name"] == "moving_average_cross"
         assert failed["status"] != "evaluated"
         assert report["strategies"][1]["status"] == "evaluated"
+
+
+class TestComparisonCarriesBenchmarkAndDiagnostics:
+    """A comparison must say what each run was measured against, and why."""
+
+    def test_each_entry_reports_its_benchmark(self) -> None:
+        report = build_paper_strategy_evaluation(
+            data_path=ROOT / "data" / "sample" / "ohlcv.csv",
+            symbol="DEMO-SYMBOL",
+            strategies=["buy_and_hold", "moving_average_cross"],
+        )
+
+        for item in report["strategies"]:
+            benchmark = item["benchmark"]
+            assert benchmark["benchmark_id"] == "buy_and_hold"
+            assert benchmark["return_pct"] is not None
+            # Excess return is what makes the comparison meaningful: a ranking
+            # without it cannot say whether a strategy beat holding the asset.
+            expected = item["metrics"]["total_return_pct"] - benchmark["return_pct"]
+            assert benchmark["excess_return_pct"] == pytest.approx(expected)
+
+    def test_each_entry_preserves_its_run_diagnostics(self) -> None:
+        report = build_paper_strategy_evaluation(
+            data_path=ROOT / "data" / "sample" / "ohlcv.csv",
+            symbol="DEMO-SYMBOL",
+            strategies=["moving_average_cross"],
+        )
+
+        diagnostics = report["strategies"][0]["diagnostics"]
+        assert diagnostics["run_id"]
+        assert diagnostics["status"] == "completed"
+        assert diagnostics["strategy_validation"]["strategy_id"] == "moving_average_cross"
+        assert diagnostics["strategy_validation"]["status"] == "valid"
+
+    def test_entries_report_the_parameters_they_ran_with(self) -> None:
+        report = build_paper_strategy_evaluation(
+            data_path=ROOT / "data" / "sample" / "ohlcv.csv",
+            symbol="DEMO-SYMBOL",
+            strategies=["moving_average_cross"],
+            parameters={"moving_average_cross": {"short_window": 2, "long_window": 6}},
+        )
+
+        assert report["strategies"][0]["parameters"] == {
+            "short_window": 2,
+            "long_window": 6,
+        }
+
+    def test_failed_entry_keeps_the_same_shape(self) -> None:
+        """A reader must not have to branch on status to read an entry."""
+        report = build_paper_strategy_evaluation(
+            data_path=ROOT / "data" / "sample" / "ohlcv.csv",
+            symbol="DEMO-SYMBOL",
+            strategies=["moving_average_cross", "buy_and_hold"],
+            parameters={"moving_average_cross": {"short_window": 0}},
+        )
+
+        failed, evaluated = report["strategies"]
+        assert failed["status"] == "failed"
+        assert set(evaluated) - set(failed) == set()
+        # The rejected parameter is echoed, because it is why the run failed.
+        assert failed["parameters"] == {"short_window": 0}
+        assert failed["benchmark"]["return_pct"] is None
+
+    def test_markdown_shows_the_benchmark_columns(self, tmp_path: Path) -> None:
+        report = build_paper_strategy_evaluation(
+            data_path=ROOT / "data" / "sample" / "ohlcv.csv",
+            symbol="DEMO-SYMBOL",
+            strategies=["buy_and_hold"],
+        )
+        markdown = render_strategy_evaluation_markdown(report)
+
+        assert "Benchmark %" in markdown
+        assert "Excess %" in markdown
+
+
+class TestStrategyParametersFlag:
+    """`--strategy-parameters` must reach the run or fail loudly."""
+
+    def _run_compare_with_parameters(
+        self, output_dir: Path, raw: str
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "atlas_agent.cli",
+                "backtest",
+                "compare",
+                "--data",
+                "data/sample/ohlcv.csv",
+                "--symbol",
+                "DEMO-SYMBOL",
+                "--strategies",
+                "moving_average_cross",
+                "--strategy-parameters",
+                raw,
+                "--output-dir",
+                str(output_dir),
+            ],
+            cwd=ROOT,
+            env=_scrubbed_env(),
+            capture_output=True,
+            text=True,
+        )
+
+    def test_flag_reaches_the_evaluated_run(self, tmp_path: Path) -> None:
+        result = self._run_compare_with_parameters(
+            tmp_path / "out",
+            '{"moving_average_cross": {"short_window": 2, "long_window": 6}}',
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+
+        data = json.loads((tmp_path / "out" / "strategy-evaluation.json").read_text())
+        assert data["strategies"][0]["parameters"] == {
+            "short_window": 2,
+            "long_window": 6,
+        }
+
+    def test_malformed_json_fails_instead_of_running_on_defaults(
+        self, tmp_path: Path
+    ) -> None:
+        """Silently ignoring the override would report a run nobody asked for."""
+        result = self._run_compare_with_parameters(tmp_path / "out", "{not json")
+
+        assert result.returncode != 0
+        assert "not valid JSON" in result.stdout + result.stderr
+        assert not (tmp_path / "out" / "strategy-evaluation.json").exists()
+
+    def test_non_object_entry_is_rejected(self, tmp_path: Path) -> None:
+        result = self._run_compare_with_parameters(
+            tmp_path / "out", '{"moving_average_cross": [2, 6]}'
+        )
+
+        assert result.returncode != 0
+        assert "must be a JSON object" in result.stdout + result.stderr
+
+
+class TestParseStrategyParameters:
+    def test_none_means_no_overrides(self) -> None:
+        assert parse_strategy_parameters(None) is None
+
+    def test_valid_mapping_is_returned(self) -> None:
+        assert parse_strategy_parameters('{"buy_and_hold": {"position_pct": 0.5}}') == {
+            "buy_and_hold": {"position_pct": 0.5}
+        }
+
+    def test_top_level_must_be_an_object(self) -> None:
+        with pytest.raises(ValueError, match="must be a JSON object"):
+            parse_strategy_parameters('["buy_and_hold"]')

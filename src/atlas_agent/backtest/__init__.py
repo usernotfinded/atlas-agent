@@ -32,6 +32,7 @@ from atlas_agent.backtest.evaluation import (
     ALLOWED_PAPER_DECISIONS,
     build_paper_strategy_evaluation,
     parse_strategy_list,
+    parse_strategy_parameters,
     render_strategy_evaluation_markdown,
     write_strategy_evaluation_reports,
 )
@@ -91,6 +92,7 @@ __all__ = [
     "ALLOWED_PAPER_DECISIONS",
     "build_paper_strategy_evaluation",
     "parse_strategy_list",
+    "parse_strategy_parameters",
     "render_strategy_evaluation_markdown",
     "write_strategy_evaluation_reports",
     "ALLOWED_WALK_FORWARD_STATUSES",

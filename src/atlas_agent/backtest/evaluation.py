@@ -54,6 +54,29 @@ def parse_strategy_list(raw: str | None) -> list[str]:
     return items
 
 
+def parse_strategy_parameters(raw: str | None) -> dict[str, dict[str, Any]] | None:
+    """Parse a JSON strategy-to-parameters mapping from the command line.
+
+    Fails closed on anything that is not an object of objects, so a malformed
+    override is reported instead of being silently dropped and running the
+    comparison on defaults the caller did not ask for.
+    """
+    if raw is None:
+        return None
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"--strategy-parameters is not valid JSON: {exc}") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError("--strategy-parameters must be a JSON object.")
+    for strategy_id, values in parsed.items():
+        if not isinstance(values, dict):
+            raise ValueError(
+                f"--strategy-parameters entry for {strategy_id!r} must be a JSON object."
+            )
+    return parsed
+
+
 def build_paper_strategy_evaluation(
     *,
     data_path: str | Path,
@@ -169,17 +192,20 @@ def render_strategy_evaluation_markdown(report: dict[str, Any]) -> str:
         "",
         "## Strategy Matrix",
         "",
-        "| Strategy | Status | Return % | Max Drawdown % | Win Rate | Trades | Paper Gate |",
-        "| --- | --- | ---: | ---: | ---: | ---: | --- |",
+        "| Strategy | Status | Return % | Benchmark % | Excess % | Max Drawdown % | Win Rate | Trades | Paper Gate |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |",
     ]
     for item in report["strategies"]:
         metrics = item.get("metrics", {})
+        benchmark = item.get("benchmark", {})
         win_rate = metrics.get("win_rate")
         lines.append(
-            "| {name} | {status} | {ret} | {dd} | {win} | {trades} | {gate} |".format(
+            "| {name} | {status} | {ret} | {bench} | {excess} | {dd} | {win} | {trades} | {gate} |".format(
                 name=item["name"],
                 status=item["status"],
                 ret=_format_pct(metrics.get("total_return_pct")),
+                bench=_format_pct(benchmark.get("return_pct")),
+                excess=_format_pct(benchmark.get("excess_return_pct")),
                 dd=_format_pct(metrics.get("max_drawdown_pct")),
                 win=_format_ratio(win_rate),
                 trades=metrics.get("trade_count", "n/a"),
@@ -246,7 +272,9 @@ def _evaluate_one_strategy(
     try:
         result = BacktestEngine(config).run()
     except Exception as exc:
-        return _failed_entry(strategy_id=strategy_id, error=str(exc))
+        return _failed_entry(
+            strategy_id=strategy_id, error=str(exc), parameters=parameters
+        )
 
     metrics = _metrics_payload(result)
     safety_blockers = _safety_blockers(result)
@@ -261,7 +289,9 @@ def _evaluate_one_strategy(
         "name": strategy_id,
         "display_name": metadata.get("name", strategy_id),
         "status": "evaluated",
+        "parameters": dict(result.config.strategy_parameters),
         "metrics": metrics,
+        "benchmark": _benchmark_payload(result),
         "paper_gate": paper_gate,
         "live_ready": False,
         "risk_manager_enabled": result.config.risk_enabled,
@@ -271,14 +301,61 @@ def _evaluate_one_strategy(
         "network_required": False,
         "safety_blocker_count": len(safety_blockers),
         "safety_blockers": safety_blockers,
+        "diagnostics": _run_diagnostics(result),
     }
 
 
-def _failed_entry(*, strategy_id: str, error: str) -> dict[str, Any]:
+def _benchmark_payload(result: BacktestResult) -> dict[str, Any]:
+    """Report the benchmark each strategy was measured against.
+
+    A comparison without the benchmark says which strategy ranked highest but
+    not whether any of them beat holding the asset.
+    """
+    benchmark = result.benchmark or {}
+    benchmark_return_pct = _clean_number(benchmark.get("return_pct"))
+    strategy_return_pct = _clean_number(result.metrics.total_return_pct)
+    excess_return_pct: float | int | None = None
+    if benchmark_return_pct is not None and strategy_return_pct is not None:
+        excess_return_pct = strategy_return_pct - benchmark_return_pct
+    return {
+        "benchmark_id": benchmark.get("benchmark_id"),
+        "name": benchmark.get("name"),
+        "symbol": benchmark.get("symbol"),
+        "return_pct": benchmark_return_pct,
+        "excess_return_pct": excess_return_pct,
+    }
+
+
+def _run_diagnostics(result: BacktestResult) -> dict[str, Any]:
+    """Carry each run's own diagnostics into the comparison.
+
+    Blocked orders are already summarized as safety blockers, but the strategy
+    validation record only exists here; dropping it would leave a comparison
+    unable to explain why one entry behaved differently from another.
+    """
+    diagnostics = result.diagnostics or {}
+    return {
+        "run_id": result.run_id,
+        "status": result.status,
+        "blocked_order_count": len(diagnostics.get("blocked_orders", [])),
+        "strategy_validation": diagnostics.get("strategy_validation", {}),
+    }
+
+
+def _failed_entry(
+    *, strategy_id: str, error: str, parameters: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Build an entry for a run that never produced a result.
+
+    It carries the same keys as an evaluated entry so a reader never has to
+    branch on status, and it echoes the requested parameters — a rejected
+    parameter is usually the reason the run failed.
+    """
     return {
         "name": strategy_id,
         "display_name": strategy_id,
         "status": "failed",
+        "parameters": dict(parameters or {}),
         "metrics": {
             "total_return": None,
             "max_drawdown": None,
@@ -300,6 +377,19 @@ def _failed_entry(*, strategy_id: str, error: str) -> dict[str, Any]:
         "network_required": False,
         "safety_blocker_count": 0,
         "safety_blockers": [],
+        "benchmark": {
+            "benchmark_id": None,
+            "name": None,
+            "symbol": None,
+            "return_pct": None,
+            "excess_return_pct": None,
+        },
+        "diagnostics": {
+            "run_id": None,
+            "status": "failed",
+            "blocked_order_count": 0,
+            "strategy_validation": {},
+        },
         "error": error,
     }
 
