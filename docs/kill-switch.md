@@ -60,7 +60,9 @@ DEADMAN_ACTION=soft                 # soft|cancel|flatten
 DEADMAN_AUTO_RESET=true             # reset timer on user interaction
 ```
 
-The system "fails closed": if the heartbeat is not updated within the timeout, the configured safety action is automatically triggered.
+The system "fails closed": if the heartbeat is not updated within the timeout, the configured safety action is automatically triggered. A heartbeat file that is present but unreadable also counts as expired, because an agent that cannot prove it is alive must not keep trading.
+
+One case is deliberately excluded: a heartbeat file that does not exist at all reads as fresh rather than expired, so a first run does not trip the deadman before the agent has started. `HeartbeatManager` cannot distinguish "never recorded" from "recorded and then deleted", so removing the file has the same effect as never having written one. The agent runner records a heartbeat at the start of every cycle, so the order path always evaluates against a file that exists.
 
 ## Operational Drill (Recommended)
 
