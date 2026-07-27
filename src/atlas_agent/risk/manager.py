@@ -30,6 +30,26 @@ from atlas_agent.risk.models import (
 # RISK MANAGER
 # ==============================================================================
 
+def _first_non_finite_portfolio_value(
+    portfolio: PortfolioSnapshot,
+) -> tuple[str, Any] | None:
+    """Return the first portfolio figure the limit checks cannot use, if any.
+
+    Only the values that feed a limit are checked. A non-finite figure elsewhere
+    in the snapshot is not this gate's business, and blocking on it would reject
+    orders for a reason unrelated to risk.
+    """
+    for field in ("equity", "total_exposure"):
+        value = getattr(portfolio, field, None)
+        if not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value):
+            return field, value
+    for position in portfolio.positions:
+        notional = getattr(position, "notional", None)
+        if not isinstance(notional, (int, float)) or isinstance(notional, bool) or not math.isfinite(notional):
+            return f"position notional for {position.symbol}", notional
+    return None
+
+
 class RiskManager:
 
     # --------------------------------------------------------------------------
@@ -295,6 +315,28 @@ class RiskManager:
                     message="order price must be a positive finite number",
                     limit_value="positive finite",
                     actual_value=order.price,
+                )],
+                classification="unknown",
+                diagnostics={},
+            )
+
+        # The same reasoning applies to the portfolio side, and it matters more:
+        # the percentage limits derive their ceiling from equity, so a non-finite
+        # equity makes `projected > ceiling` false and the limit silently stops
+        # rejecting anything. An order inside the absolute notional caps then
+        # passes the gate with no violations at all.
+        portfolio_value_error = _first_non_finite_portfolio_value(portfolio)
+        if portfolio_value_error is not None:
+            field, value = portfolio_value_error
+            return RiskDecision(
+                allowed=False,
+                status="blocked",
+                reason=f"portfolio {field} must be a finite number",
+                violations=[RiskViolation(
+                    rule="invalid_portfolio_state",
+                    message=f"portfolio {field} must be a finite number",
+                    limit_value="finite",
+                    actual_value=value,
                 )],
                 classification="unknown",
                 diagnostics={},
