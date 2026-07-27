@@ -77,3 +77,5 @@ If the chain is broken, Atlas reports the failure and the exit code is `2`.
 ## Limitations
 
 The audit system is **tamper-evident**; it detects modification after the fact but cannot stop a malicious actor with filesystem access from deleting the entire `audit/` directory.
+
+Redaction is value- and pattern-based, not clairvoyant. Event payloads are scrubbed of known secrets in any position, of values under key names that read as sensitive, and of recognisable forms such as bearer tokens, authorization headers, and `NAME=value` assignments. A credential with no recognisable shape, written under a key that does not look sensitive, is invisible to the scrubber unless it was registered through `refresh_redaction_secrets`. Redaction is a safety net for mistakes, not a licence to put credentials in a payload.
