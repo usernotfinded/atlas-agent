@@ -1,6 +1,6 @@
 # ==============================================================================
 # PROJECT: Atlas Agent
-# FILE:    tests/risk/test_risk_manager.py
+# FILE:    tests/risk/test_risk_manager_portfolio_state.py
 # PURPOSE: Verifies the risk gate rejects unusable portfolio state instead of
 #         evaluating limits against it.
 # DEPS:    atlas_agent.
