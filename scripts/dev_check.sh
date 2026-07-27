@@ -677,6 +677,18 @@ TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
 echo "  → elapsed: ${SECONDS}s"
 
 echo ""
+echo "20b. architectural boundary tests"
+# These guard boundaries rather than behaviour: which layers may import
+# execution code, which modules may reach a broker, and which paths must stay
+# untracked. A violation is a new edge someone added, so the gate is where it
+# should surface — waiting for the nightly full suite means the bypass lives in
+# main until then. Four seconds against a gate that runs in under three minutes.
+SECONDS=0
+"$PYTHON_BIN" -m pytest tests/architecture -q "${PYTEST_EXTRA_ARGS[@]}"
+TOTAL_ELAPSED=$((TOTAL_ELAPSED + SECONDS))
+echo "  → elapsed: ${SECONDS}s"
+
+echo ""
 echo "21. git diff --cached --check"
 SECONDS=0
 git diff --cached --check
