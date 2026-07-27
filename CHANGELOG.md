@@ -28,6 +28,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   validation record). Added `--strategy-parameters` for per-strategy overrides,
   which fails closed on malformed JSON instead of falling back to defaults.
   Failed entries keep the same key set as evaluated ones.
+- Structural tests for boundaries the documentation asserted but nothing
+  enforced: no module under `providers/`, `research/`, or `ai/` may import
+  `execution/` or `brokers/`; only three named modules may call a broker's
+  `place_order`; and the paths that hold real credentials must stay ignored by
+  git and absent from the tracked tree. Each covers its layer rather than a list
+  of files, so new code is included without editing the test.
+- Exhaustive coverage of the live-submit gate chain. `can_submit` is one
+  property over nine gates, so all 2^9 ways of breaking a subset are checked,
+  including that the reported reason belongs to the earliest broken gate — which
+  puts evaluation order under test.
+- `docs/development/safety-invariant-audit-followups.md`, recording the six
+  findings whose resolution is a maintainer's decision rather than a fix, with
+  what deciding either way would involve.
 
 ### Changed
 
@@ -45,6 +58,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `RiskManager.evaluate_order` accepted a non-finite portfolio figure and then
+  compared against it. Both percentage exposure limits take their ceiling from
+  equity, so `equity = NaN` made `projected > ceiling` false and the limits
+  stopped rejecting; an order inside the absolute notional caps passed with no
+  violations at all. Unusable portfolio state is now refused in phase 1, matching
+  the check the order fields already had.
+- `BrokerResolver` answered `live_submit_ready` for brokers the support registry
+  marks disabled or not live-submit capable, because it consulted a hardcoded
+  broker set instead of the registry while `guard_submit`, written for exactly
+  that question, was never called. Live execution is separately restricted to
+  one broker, so this was a wrong status report rather than an open path.
+- `build_paper_portfolio_review_pack` accepted `proposal`, `stress`,
+  `monitoring`, and `recheck` and discarded all four, returning a pack built
+  from freshly recomputed evidence while its digests described that other set.
+- `_check_allocation_drift` reported how far the portfolio moved rather than how
+  far holdings drifted from their target weights; the two can point opposite
+  ways. The parameter it never read is gone and the docs now state what is
+  measured.
+- A failure to flag an order for reconciliation left no trace while the report
+  returned to the operator still said reconciliation was required.
 - `scripts/release_assurance.py` aborted assurance-pack generation with an
   unhandled `FileNotFoundError` when an optional CLI such as `gh` was absent;
   a best-effort probe now records the miss as a failed check.
