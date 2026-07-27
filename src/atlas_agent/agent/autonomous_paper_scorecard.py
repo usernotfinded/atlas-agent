@@ -468,7 +468,6 @@ def _check_artifact_completeness(
 
 
 def _determine_promotion_state(
-    manifest: dict[str, Any] | None,
     dimensions: dict[str, dict[str, Any]],
     blockers: list[str],
 ) -> tuple[str, list[str]]:
@@ -613,7 +612,7 @@ def build_autonomous_paper_scorecard(
     }
 
     blockers = [d["reason"] for d in dimensions.values() if not d["passed"]]
-    state, final_blockers = _determine_promotion_state(effective_manifest, dimensions, blockers)
+    state, final_blockers = _determine_promotion_state(dimensions, blockers)
 
     # A provided replay is a verification contract; mismatches are treated as blocking
     # because they indicate the artifact is not reproducible.

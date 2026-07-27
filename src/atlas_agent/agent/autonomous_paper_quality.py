@@ -243,7 +243,6 @@ def _dimension(name: str, passed: bool, score: float, reason: str) -> dict[str, 
 def _compute_benchmark(
     *,
     data_path: str | Path | None,
-    starting_cash: float,
     decisions: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Compute a deterministic buy-and-hold benchmark if data is available."""
@@ -323,7 +322,6 @@ def _recompute_and_compare_metrics(
     metrics: dict[str, Any],
     fills: list[dict[str, Any]],
     state: dict[str, Any] | None,
-    decisions: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """Recompute metrics from fills/state and compare to provided metrics."""
     if not fills:
@@ -887,7 +885,6 @@ def build_trading_quality_gate(
 
     benchmark = _compute_benchmark(
         data_path=data_path,
-        starting_cash=_safe_float(metrics.get("starting_cash"), 1.0),
         decisions=decisions,
     )
     if benchmark.get("available") and _is_finite(metrics.get("total_return_pct")):
@@ -900,7 +897,6 @@ def build_trading_quality_gate(
         metrics=metrics,
         fills=fills,
         state=state,
-        decisions=decisions,
     )
 
     dimensions = _evaluate_dimensions(

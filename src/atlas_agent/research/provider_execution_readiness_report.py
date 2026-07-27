@@ -331,7 +331,6 @@ def _build_no_action_attestations() -> dict[str, bool]:
 
 
 def _compute_readiness_score(
-    artifact_chain: list[dict[str, Any]],
     chain_diagnostics: dict[str, Any],
     hash_diagnostics: dict[str, Any],
     safety_gate_summary: dict[str, Any],
@@ -447,7 +446,7 @@ def build_provider_execution_readiness_report_dict(
 
     # Compute readiness score (boolean_error=None, forbidden_found=False at creation)
     readiness_score = _compute_readiness_score(
-        artifact_chain, chain_diagnostics, hash_diagnostics,
+        chain_diagnostics, hash_diagnostics,
         safety_gate_summary, boolean_error=None, forbidden_found=False,
     )
     readiness_status = _map_score_to_readiness_status(readiness_score, chain_health)
