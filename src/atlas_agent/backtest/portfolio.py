@@ -838,7 +838,6 @@ def _simulate_monitoring_windows(
         events.append(_check_allocation_drift(
             window=window_idx,
             window_returns=window_returns,
-            allocations=allocations,
             recheck_threshold=recheck_threshold,
         ))
 
@@ -872,10 +871,18 @@ def _check_allocation_drift(
     *,
     window: int,
     window_returns: list[float],
-    allocations: list[dict[str, Any]],
     recheck_threshold: float,
 ) -> dict[str, Any]:
-    """Check whether simulated allocation drift exceeds the recheck threshold."""
+    """Flag windows whose compounded portfolio return exceeds the threshold.
+
+    This measures how far the portfolio moved over the window, not how far the
+    holdings drifted from their target weights. True allocation drift needs a
+    per-strategy return series, and this layer only receives one portfolio-level
+    series, so the allocations cannot inform the result and are not accepted.
+
+    The `allocation_drift` trigger key is kept as-is because it is part of the
+    published monitoring artifact vocabulary.
+    """
     cumulative = 1.0
     for r in window_returns:
         cumulative *= max(0.0, 1.0 + r)

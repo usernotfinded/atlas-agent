@@ -28,8 +28,11 @@ or autonomous live trading.
 
 ## Monitoring Triggers
 
-- `allocation_drift`: simulated allocation drift exceeds the recheck threshold
-  over a monitoring window
+- `allocation_drift`: the compounded simulated return over a monitoring window
+  exceeds the recheck threshold. This measures how far the portfolio moved, not
+  how far the holdings drifted from their target weights — the simulation works
+  from one portfolio-level return series, so per-strategy drift is not available
+  to it
 - `cash_reserve_breach`: cash reserve weight falls below the minimum
 - `drawdown_breach`: simulated portfolio drawdown exceeds the paper guardrail
 - `stress_watchlist`: stress report status is watchlist or needs-more-testing

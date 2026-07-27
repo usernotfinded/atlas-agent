@@ -378,3 +378,37 @@ def _snapshot(root: Path) -> dict[str, str]:
         for path in sorted(root.rglob("*"))
         if path.is_file()
     }
+
+
+def test_allocation_drift_reflects_portfolio_movement_not_weights():
+    """Pin what the trigger actually measures, so the name cannot mislead.
+
+    The check works from a portfolio-level return series, so it cannot see the
+    holdings drifting apart. This records that limit rather than implying the
+    weights were examined.
+    """
+    from atlas_agent.backtest.portfolio import _check_allocation_drift
+
+    flat = _check_allocation_drift(
+        window=1,
+        window_returns=[0.0, 0.0, 0.0],
+        recheck_threshold=0.05,
+    )
+    assert flat["status"] == "paper_monitor_ok"
+
+    moved = _check_allocation_drift(
+        window=1,
+        window_returns=[0.05, 0.05, 0.05],
+        recheck_threshold=0.05,
+    )
+    assert moved["status"] in {"needs_recheck", "paper_monitor_watchlist"}
+    assert moved["trigger"] == "allocation_drift"
+
+    # A window that ends flat after moving in both directions reads as "ok",
+    # even though real allocation drift would be at its largest there.
+    round_trip = _check_allocation_drift(
+        window=1,
+        window_returns=[0.5, -1 / 3],
+        recheck_threshold=0.05,
+    )
+    assert round_trip["status"] == "paper_monitor_ok"
