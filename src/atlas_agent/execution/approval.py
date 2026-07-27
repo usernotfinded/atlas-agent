@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Any
 
 from atlas_agent.execution.order import Order
+from atlas_agent.safety.atomic_write import atomic_write_json
 
 
 # --- CONFIGURATIONS & CONSTANTS ---
@@ -117,7 +118,7 @@ class ApprovalManager:
             secret_key=self._secret_key,
         )
         path = self.path_for(order.id)
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        atomic_write_json(path, payload, indent=2, sort_keys=True)
         return path
 
     # --- Recording an approval ---
@@ -167,7 +168,7 @@ class ApprovalManager:
             expires_at=payload["expires_at"],
             secret_key=self._secret_key,
         )
-        path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        atomic_write_json(path, payload, indent=2, sort_keys=True)
         return path
 
     # --- Checking an approval (the gate the router calls) ---

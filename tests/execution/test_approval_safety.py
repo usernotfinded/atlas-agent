@@ -19,6 +19,20 @@ from datetime import datetime, UTC
 
 # --- TEST FIXTURES, HELPERS, AND CASES ---
 
+
+def _order(order_id: str = "order-atomic") -> Order:
+    return Order(
+        id=order_id,
+        symbol="AAPL",
+        side="buy",
+        quantity=10,
+        order_type="market",
+        confidence=0.9,
+        leverage=1.0,
+        source="test",
+        created_at=datetime.now(UTC),
+    )
+
 def test_approval_safety_requires_actor_and_rejects_auto_approve(tmp_path: Path):
     manager = ApprovalManager(pending_dir=tmp_path)
     order = Order(
@@ -59,3 +73,46 @@ def test_approval_safety_requires_actor_and_rejects_auto_approve(tmp_path: Path)
     # Real approval works
     manager.approve("order-1", actor="human-test")
     assert manager.is_approved("order-1")
+
+
+def test_approval_records_are_written_atomically(tmp_path: Path, monkeypatch) -> None:
+    """A crash mid-write must leave the previous record intact, not a torn one.
+
+    The reader already fails closed on an unparseable record, so a torn write was
+    safe — but it destroyed a pending approval that an operator would then have to
+    recreate. Writing through the same helper the kill switch uses makes the torn
+    state impossible rather than merely harmless.
+    """
+    from atlas_agent.execution import approval as approval_module
+
+    seen: list[Path] = []
+    real_atomic = approval_module.atomic_write_json
+
+    def _tracking_atomic(target, payload, **kwargs):
+        seen.append(Path(target))
+        return real_atomic(target, payload, **kwargs)
+
+    monkeypatch.setattr(approval_module, "atomic_write_json", _tracking_atomic)
+
+    manager = ApprovalManager(pending_dir=tmp_path)
+    order = _order()
+    created = manager.create_pending_order(order)
+    manager.approve(order.id, actor="cli:test")
+
+    # Both the creation and the approval go through the atomic helper.
+    assert seen == [created, created]
+    assert manager.is_approved(order.id) is True
+    assert not list(tmp_path.glob("*.tmp*"))
+
+
+def test_approval_record_content_is_unchanged_by_atomic_write(tmp_path: Path) -> None:
+    """The swap must be byte-for-byte, since the record is hash-protected."""
+    import json
+
+    manager = ApprovalManager(pending_dir=tmp_path)
+    order = _order()
+    path = manager.create_pending_order(order)
+
+    raw = path.read_text(encoding="utf-8")
+    payload = json.loads(raw)
+    assert raw == json.dumps(payload, indent=2, sort_keys=True)
