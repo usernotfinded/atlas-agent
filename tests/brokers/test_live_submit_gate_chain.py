@@ -1,32 +1,38 @@
 # ==============================================================================
 # PROJECT: Atlas Agent
 # FILE:    tests/brokers/test_live_submit_gate_chain.py
-# PURPOSE: Asserts each live-submit gate blocks on its own, and that the chain
-#         can reach ready when every gate is satisfied.
-# DEPS:    json, os, pathlib, datetime, pytest, atlas_agent.
+# PURPOSE: Asserts the live-submit invariant over every combination of its
+#         gates, rather than one case per gate.
+# DEPS:    itertools, json, pathlib, datetime, pytest, atlas_agent.
 # ==============================================================================
 
-"""Per-gate coverage for `BrokerResolver._resolve_can_submit`.
+"""Exhaustive coverage for `BrokerResolver._resolve_can_submit`.
 
 The governance document states that `can_submit` is false unless every opt-in
-gate is satisfied. Eight gates all deny by default, which means a test that
-leaves the defaults in place proves almost nothing: were one gate to stop
-denying, the others would still return False and every such test would keep
-passing.
+gate is satisfied. That is one property, not eight cases, so it is tested as
+one property: for each of the 2^8 ways of breaking a subset of the gates,
+`can_submit` must be true exactly when the broken subset is empty.
 
-These cases therefore satisfy the whole chain and then break exactly one gate
-at a time, so each gate is shown to carry its own weight. The positive case
-pins the other half of the claim — that a fully satisfied chain does reach
-ready — which nothing asserted before.
+Writing a case per gate would assert less for more code. It only ever probes
+one gate at a time, so it cannot see an interaction — a gate that silently
+stops denying whenever some other gate is also broken passes a per-gate suite
+and fails here. The enumeration is small enough to run in full, so there is no
+reason to sample it.
+
+Reaching `live_submit_ready` at all is the other half of the claim, and the
+empty subset covers it: without that, a chain wired to deny unconditionally
+would look perfectly correct.
 """
 
 # --- IMPORTS ---
 
 from __future__ import annotations
 
+import itertools
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Callable
 
 import pytest
 
@@ -43,8 +49,21 @@ from atlas_agent.config import AtlasConfig
 
 # --- TEST FIXTURES, HELPERS, AND CASES ---
 
-@pytest.fixture
-def live_ready_config(tmp_path: Path, monkeypatch) -> AtlasConfig:
+def _write_opt_in(config: AtlasConfig) -> None:
+    """Write a currently-valid live-submit opt-in record."""
+    record = {
+        "event_type": "live_submit_opt_in_enabled",
+        "opt_in": True,
+        "broker_id": config.broker.provider,
+        "config_fingerprint": _compute_live_submit_fingerprint(config),
+        "created_at": datetime.now(UTC).isoformat(),
+    }
+    path = Path(config.audit_dir) / "live_submit_opt_in.jsonl"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+
+def _build_live_ready_config(tmp_path: Path, monkeypatch) -> AtlasConfig:
     """A config with all eight live-submit gates satisfied."""
     config = AtlasConfig(
         memory_dir=tmp_path / "memory",
@@ -71,18 +90,68 @@ def live_ready_config(tmp_path: Path, monkeypatch) -> AtlasConfig:
     return config
 
 
-def _write_opt_in(config: AtlasConfig) -> None:
-    """Write a currently-valid live-submit opt-in record."""
-    record = {
-        "event_type": "live_submit_opt_in_enabled",
-        "opt_in": True,
-        "broker_id": config.broker.provider,
-        "config_fingerprint": _compute_live_submit_fingerprint(config),
-        "created_at": datetime.now(UTC).isoformat(),
-    }
-    path = Path(config.audit_dir) / "live_submit_opt_in.jsonl"
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+# Each entry breaks exactly one gate, and names the code the resolver reports
+# when that gate is the first one it reaches.
+GateBreaker = Callable[[AtlasConfig, pytest.MonkeyPatch], None]
+
+
+def _break_live_submit_flag(config: AtlasConfig, _monkeypatch) -> None:
+    config.broker.enable_live_submit = False
+
+
+def _break_live_trading_flag(config: AtlasConfig, _monkeypatch) -> None:
+    config.broker.enable_live_trading = False
+
+
+def _break_kill_switch(config: AtlasConfig, _monkeypatch) -> None:
+    state_path = Path(config.memory_dir) / "kill_switch_state.json"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(
+        json.dumps(
+            {
+                "enabled": True,
+                "mode": "soft",
+                "reason": "test",
+                "actor": "test",
+                "updated_at": datetime.now(UTC).isoformat(),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _break_trading_mode(config: AtlasConfig, _monkeypatch) -> None:
+    config.trading_mode = "paper"
+
+
+def _break_approval_mode(config: AtlasConfig, _monkeypatch) -> None:
+    config.safety.order_approval_mode = "disabled_live"
+
+
+def _break_leverage(config: AtlasConfig, _monkeypatch) -> None:
+    config.risk.allow_leverage = True
+
+
+def _break_credentials(_config: AtlasConfig, monkeypatch) -> None:
+    monkeypatch.delenv("ALPACA_API_KEY", raising=False)
+
+
+def _break_opt_in(config: AtlasConfig, _monkeypatch) -> None:
+    (Path(config.audit_dir) / "live_submit_opt_in.jsonl").unlink()
+
+
+#: Ordered as the resolver evaluates them, so the expected code for a broken
+#: subset is the code of its earliest member.
+GATES: list[tuple[str, GateBreaker, str]] = [
+    ("live_submit_flag", _break_live_submit_flag, "live_submit_disabled"),
+    ("live_trading_flag", _break_live_trading_flag, "live_trading_disabled"),
+    ("kill_switch", _break_kill_switch, "kill_switch_active"),
+    ("trading_mode", _break_trading_mode, "trading_mode_not_live"),
+    ("approval_mode", _break_approval_mode, "approval_disabled"),
+    ("leverage", _break_leverage, "leverage_enabled"),
+    ("credentials", _break_credentials, "credentials_missing"),
+    ("opt_in_record", _break_opt_in, "opt_in_file_missing"),
+]
 
 
 def _can_submit(config: AtlasConfig) -> tuple[bool, str]:
@@ -91,85 +160,60 @@ def _can_submit(config: AtlasConfig) -> tuple[bool, str]:
     return allowed, code
 
 
-class TestChainReachesReady:
-    def test_all_gates_satisfied_allows_submit(self, live_ready_config: AtlasConfig) -> None:
-        """Without this, a permanently-false chain would look correct."""
-        allowed, code = _can_submit(live_ready_config)
-        assert allowed is True
+def _all_gate_subsets() -> list[tuple[int, ...]]:
+    indices = range(len(GATES))
+    return [
+        subset
+        for size in indices
+        for subset in itertools.combinations(indices, size)
+    ] + [tuple(indices)]
+
+
+@pytest.mark.parametrize("broken", _all_gate_subsets(), ids=lambda s: "-".join(
+    GATES[i][0] for i in s) or "none_broken")
+def test_can_submit_is_true_exactly_when_no_gate_is_broken(
+    broken: tuple[int, ...], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = _build_live_ready_config(tmp_path, monkeypatch)
+    for index in broken:
+        GATES[index][1](config, monkeypatch)
+
+    allowed, code = _can_submit(config)
+
+    assert allowed is (len(broken) == 0)
+    if broken:
+        # The resolver reports the first gate it reaches, so the code must belong
+        # to the earliest broken one. Asserting the specific code — not merely
+        # "some failure" — is what stops one gate's denial from standing in for
+        # another's.
+        assert code == GATES[min(broken)][2]
+    else:
         assert code == "live_submit_ready"
 
 
-class TestEachGateBlocksAlone:
-    """One gate broken at a time, everything else satisfied."""
+def test_unreadable_kill_switch_state_fails_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A state file that cannot be read must deny, never read as normal."""
+    config = _build_live_ready_config(tmp_path, monkeypatch)
+    state_path = Path(config.memory_dir) / "kill_switch_state.json"
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text("{ not json", encoding="utf-8")
 
-    def test_live_submit_flag_off(self, live_ready_config: AtlasConfig) -> None:
-        live_ready_config.broker.enable_live_submit = False
-        assert _can_submit(live_ready_config) == (False, "live_submit_disabled")
+    allowed, code = _can_submit(config)
 
-    def test_live_trading_flag_off(self, live_ready_config: AtlasConfig) -> None:
-        live_ready_config.broker.enable_live_trading = False
-        assert _can_submit(live_ready_config) == (False, "live_trading_disabled")
-
-    def test_trading_mode_not_live(self, live_ready_config: AtlasConfig) -> None:
-        live_ready_config.trading_mode = "paper"
-        assert _can_submit(live_ready_config) == (False, "trading_mode_not_live")
-
-    def test_approval_mode_disables_live(self, live_ready_config: AtlasConfig) -> None:
-        live_ready_config.safety.order_approval_mode = "disabled_live"
-        assert _can_submit(live_ready_config) == (False, "approval_disabled")
-
-    def test_leverage_enabled(self, live_ready_config: AtlasConfig) -> None:
-        live_ready_config.risk.allow_leverage = True
-        assert _can_submit(live_ready_config) == (False, "leverage_enabled")
-
-    def test_credentials_missing(self, live_ready_config: AtlasConfig, monkeypatch) -> None:
-        monkeypatch.delenv("ALPACA_API_KEY", raising=False)
-        assert _can_submit(live_ready_config) == (False, "credentials_missing")
-
-    def test_opt_in_record_missing(self, live_ready_config: AtlasConfig) -> None:
-        (Path(live_ready_config.audit_dir) / "live_submit_opt_in.jsonl").unlink()
-        allowed, code = _can_submit(live_ready_config)
-        assert allowed is False
-        assert code == "opt_in_file_missing"
-
-    def test_armed_kill_switch(self, live_ready_config: AtlasConfig) -> None:
-        """An armed switch in a non-normal mode must stop live submit."""
-        state_path = Path(live_ready_config.memory_dir) / "kill_switch_state.json"
-        state_path.parent.mkdir(parents=True, exist_ok=True)
-        state_path.write_text(
-            json.dumps(
-                {
-                    "enabled": True,
-                    "mode": "soft",
-                    "reason": "test",
-                    "actor": "test",
-                    "updated_at": datetime.now(UTC).isoformat(),
-                }
-            ),
-            encoding="utf-8",
-        )
-        assert _can_submit(live_ready_config) == (False, "kill_switch_active")
-
-    def test_unreadable_kill_switch_state_fails_closed(
-        self, live_ready_config: AtlasConfig
-    ) -> None:
-        """A state file that cannot be read must deny, never default to normal."""
-        state_path = Path(live_ready_config.memory_dir) / "kill_switch_state.json"
-        state_path.parent.mkdir(parents=True, exist_ok=True)
-        state_path.write_text("{ not json", encoding="utf-8")
-
-        allowed, code = _can_submit(live_ready_config)
-        assert allowed is False
-        assert code in {"kill_switch_active", "kill_switch_unreadable"}
+    assert allowed is False
+    assert code in {"kill_switch_active", "kill_switch_unreadable"}
 
 
-class TestOptInRecordIsBoundToConfig:
-    def test_opt_in_for_a_different_config_is_rejected(
-        self, live_ready_config: AtlasConfig
-    ) -> None:
-        """An opt-in must not survive a change to the limits it was granted under."""
-        live_ready_config.risk.max_order_notional = 999999.0
+def test_opt_in_does_not_survive_a_change_to_its_risk_limits(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An opt-in is granted against a fingerprint of the limits it was given under."""
+    config = _build_live_ready_config(tmp_path, monkeypatch)
+    config.risk.max_order_notional = 999999.0
 
-        allowed, code = _can_submit(live_ready_config)
-        assert allowed is False
-        assert code != "live_submit_ready"
+    allowed, code = _can_submit(config)
+
+    assert allowed is False
+    assert code != "live_submit_ready"
