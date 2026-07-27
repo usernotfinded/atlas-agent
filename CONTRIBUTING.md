@@ -17,6 +17,10 @@ GitHub Actions maintenance is documented in
 [docs/development/github-actions.md](docs/development/github-actions.md).
 Post-push direct-main verification is documented in
 [docs/development/main-health.md](docs/development/main-health.md).
+Open decisions left by the safety-invariant audit — where the code and the
+documented promise diverge, and changing either is a maintainer's call — are
+recorded in
+[docs/development/safety-invariant-audit-followups.md](docs/development/safety-invariant-audit-followups.md).
 
 ```bash
 # Install in editable mode with dev dependencies
