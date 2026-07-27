@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -36,6 +37,8 @@ from atlas_agent.execution.submit_state import (
     mark_acknowledged_from_reconcile,
     mark_reconciliation_required,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # ==============================================================================
@@ -165,11 +168,25 @@ def _safe_mark_reconciliation_required(path: Path, reason: str) -> bool:
     Catches SubmitStateError, OSError, and all other exceptions.
     Returns True on success, False on failure.
     Never raises.
+
+    A failure is logged rather than passed over in silence. Callers reconcile
+    several orders in a loop and cannot abort on one bad write, but the report
+    they return still says reconciliation is required — so without this the only
+    record that the order was never actually marked would be its absence from a
+    file nobody re-reads until the next run.
     """
     try:
         mark_reconciliation_required(path, reason)
         return True
-    except Exception:
+    except Exception as exc:
+        logger.warning(
+            "Could not mark %s as reconciliation_required (%s: %s). "
+            "Reason was: %s. The order keeps its previous status on disk.",
+            path,
+            type(exc).__name__,
+            exc,
+            reason,
+        )
         return False
 
 

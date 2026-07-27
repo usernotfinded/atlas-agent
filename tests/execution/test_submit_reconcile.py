@@ -1951,3 +1951,42 @@ def test_reconcile_alpaca_adapter_still_works_through_capability(tmp_path: Path)
     assert report.status == "acknowledged"
     assert report.broker_order_id == "broker-alpaca-111"
     adapter.get_order_by_client_order_id.assert_called_once_with(cid)
+
+
+def test_failed_reconciliation_marking_is_logged(tmp_path: Path, caplog) -> None:
+    """A silent failure here would leave no record that the order stayed unmarked.
+
+    Callers reconcile several orders in a loop and cannot abort on one bad write,
+    and the report they return still says reconciliation is required — so the
+    warning is the only trace that the on-disk status was not updated.
+    """
+    from atlas_agent.execution import submit_reconcile
+
+    order_path = tmp_path / "order.json"
+
+    def _boom(path, reason):
+        raise OSError("disk is read-only")
+
+    with patch.object(submit_reconcile, "mark_reconciliation_required", _boom):
+        with caplog.at_level("WARNING"):
+            marked = submit_reconcile._safe_mark_reconciliation_required(
+                order_path, "broker query failed during reconcile"
+            )
+
+    assert marked is False
+    assert "reconciliation_required" in caplog.text
+    assert "broker query failed during reconcile" in caplog.text
+    assert "disk is read-only" in caplog.text
+
+
+def test_successful_reconciliation_marking_is_quiet(tmp_path: Path, caplog) -> None:
+    from atlas_agent.execution import submit_reconcile
+
+    with patch.object(submit_reconcile, "mark_reconciliation_required", lambda p, r: None):
+        with caplog.at_level("WARNING"):
+            marked = submit_reconcile._safe_mark_reconciliation_required(
+                tmp_path / "order.json", "reason"
+            )
+
+    assert marked is True
+    assert caplog.text == ""
