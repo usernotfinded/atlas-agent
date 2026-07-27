@@ -62,6 +62,15 @@ def handle_audit(context: CLIContext) -> int:
             print(
                 f"Audit log verification successful. Checked {result.events_checked} events."
             )
+            # Say what this check cannot see. A chain proves that the events present
+            # were not edited or reordered, but a tail cut off the end leaves a
+            # perfectly valid chain behind — only the run manifest knows how many
+            # events there should have been.
+            print(
+                "This checks the chain of the events present. It cannot detect events "
+                "removed from the end of the log; run `atlas audit verify --all` to "
+                "check the run manifests, which record the expected event count."
+            )
             return 0
         print(
             f"Audit log verification FAILED. Checked {result.events_checked} events."

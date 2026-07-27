@@ -49,6 +49,11 @@ atlas audit verify
 
 This checks the default `audit/events.jsonl` hash-chain directly.
 
+It verifies the events that are present: each one's hash and its link to the
+previous event. It does not cover events removed from the end of the log, which
+leave a valid chain behind — that is what the manifest root hash catches, so use
+`--all` when you need that too.
+
 Expected behavior when valid:
 
 - Atlas reports the number of events checked and confirms the chain is intact.
