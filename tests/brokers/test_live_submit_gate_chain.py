@@ -95,6 +95,11 @@ def _build_live_ready_config(tmp_path: Path, monkeypatch) -> AtlasConfig:
 GateBreaker = Callable[[AtlasConfig, pytest.MonkeyPatch], None]
 
 
+def _break_broker_capability(config: AtlasConfig, _monkeypatch) -> None:
+    """Point at a broker the support registry marks as not live-submit capable."""
+    config.broker.provider = "ccxt"
+
+
 def _break_live_submit_flag(config: AtlasConfig, _monkeypatch) -> None:
     config.broker.enable_live_submit = False
 
@@ -143,6 +148,7 @@ def _break_opt_in(config: AtlasConfig, _monkeypatch) -> None:
 #: Ordered as the resolver evaluates them, so the expected code for a broken
 #: subset is the code of its earliest member.
 GATES: list[tuple[str, GateBreaker, str]] = [
+    ("broker_capability", _break_broker_capability, "broker_not_live_submit_capable"),
     ("live_submit_flag", _break_live_submit_flag, "live_submit_disabled"),
     ("live_trading_flag", _break_live_trading_flag, "live_trading_disabled"),
     ("kill_switch", _break_kill_switch, "kill_switch_active"),

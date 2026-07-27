@@ -208,6 +208,27 @@ class BrokerResolver:
         if config is None:
             return False, "config_missing", "config is missing"
 
+        # 0. Broker capability, from the support registry.
+        #
+        # First because it is the one condition an operator cannot change by
+        # flipping a setting: a broker the registry marks disabled, placeholder,
+        # unsupported, or simply not live-submit capable will never be ready, and
+        # reporting a flag problem ahead of that sends them down a path that ends
+        # at a wall.
+        #
+        # The registry rules are reused rather than reimplemented — a second copy
+        # would be free to drift from the registry exactly as the hardcoded broker
+        # set below already has. Only the capability half is asked here: the
+        # configuration flags follow as their own gates, so a forgotten flag keeps
+        # reporting a flag problem rather than an unsupported broker.
+        from atlas_agent.brokers.base import BrokerConfigurationError
+        from atlas_agent.brokers.guards import guard_broker_live_submit_capability
+
+        try:
+            guard_broker_live_submit_capability(broker_id, operation="live_submit")
+        except BrokerConfigurationError as exc:
+            return False, "broker_not_live_submit_capable", str(exc)
+
         # 1. Explicit opt-in flag
         if not config.broker.enable_live_submit:
             return False, "live_submit_disabled", "broker.enable_live_submit is false"

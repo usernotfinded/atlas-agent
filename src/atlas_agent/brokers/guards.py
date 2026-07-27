@@ -58,6 +58,45 @@ def guard_submit(
     # that redundancy is deliberate, because one flipped boolean should never be
     # enough to start trading real money.
     #
+    entry = guard_broker_live_submit_capability(broker_id, operation=operation)
+
+    if not config.broker.enable_live_trading:
+        raise _guard_error(
+            operation,
+            broker_id,
+            "broker.enable_live_trading is false",
+        )
+
+    if not config.broker.enable_live_submit:
+        raise _guard_error(
+            operation,
+            broker_id,
+            "broker.enable_live_submit is false",
+        )
+
+    if config.trading_mode != "live":
+        raise _guard_error(
+            operation,
+            broker_id,
+            f"trading_mode is {config.trading_mode}; must be live",
+        )
+
+    return entry
+
+
+def guard_broker_live_submit_capability(
+    broker_id: str,
+    *,
+    operation: str = "submit_order",
+) -> BrokerSupportEntry:
+    """Fail-closed guard for what the broker itself supports.
+
+    Split out from the operator-intent checks so both callers can ask the
+    narrower question. `BrokerResolver` needs the registry verdict without the
+    configuration flags, which it reports separately and with their own reason
+    codes — folding them together would make a forgotten flag read as an
+    unsupported broker.
+    """
     # Unknown broker → BLOCKED, not "try it anyway". An allowlist, never a blocklist.
     if not is_broker_known(broker_id):
         raise _guard_error(
@@ -95,27 +134,6 @@ def guard_submit(
             operation,
             broker_id,
             f"broker status is {entry.status}; live submit is not supported",
-        )
-
-    if not config.broker.enable_live_trading:
-        raise _guard_error(
-            operation,
-            broker_id,
-            "broker.enable_live_trading is false",
-        )
-
-    if not config.broker.enable_live_submit:
-        raise _guard_error(
-            operation,
-            broker_id,
-            "broker.enable_live_submit is false",
-        )
-
-    if config.trading_mode != "live":
-        raise _guard_error(
-            operation,
-            broker_id,
-            f"trading_mode is {config.trading_mode}; must be live",
         )
 
     return entry
