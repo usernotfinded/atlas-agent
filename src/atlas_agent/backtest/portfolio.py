@@ -1638,10 +1638,6 @@ def build_paper_portfolio_review_pack(
     data_path: str | Path,
     symbol: str,
     strategies: list[str] | None = None,
-    proposal: dict[str, Any] | None = None,
-    stress: dict[str, Any] | None = None,
-    monitoring: dict[str, Any] | None = None,
-    recheck: dict[str, Any] | None = None,
     dossier: dict[str, Any] | None = None,
     replay: dict[str, Any] | None = None,
     max_strategy_weight: float = 0.40,
@@ -1656,6 +1652,12 @@ def build_paper_portfolio_review_pack(
     The pack converts paper portfolio evidence into a non-executable review
     dossier. It does not generate orders, call providers or brokers, send
     notifications, or claim live readiness.
+
+    Precomputed evidence may be supplied as ``dossier`` and ``replay``; anything
+    else is derived from them. Proposal, stress, monitoring, and recheck reports
+    are deliberately not accepted: the dossier recomputes them, so accepting them
+    here would let a caller believe the pack reviewed the evidence they passed
+    while it reviewed a freshly computed set instead.
     """
     dossier_report = dossier or build_paper_portfolio_dossier(
         data_path=data_path,

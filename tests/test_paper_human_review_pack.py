@@ -15,9 +15,12 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from atlas_agent.backtest.portfolio import (
     ALLOWED_REVIEW_ITEM_STATUSES,
     ALLOWED_REVIEW_PACK_STATUSES,
+    build_paper_portfolio_dossier,
     build_paper_portfolio_review_pack,
     write_portfolio_review_pack_reports,
 )
@@ -290,3 +293,48 @@ def _snapshot(root: Path) -> dict[str, str]:
         for path in sorted(root.rglob("*"))
         if path.is_file()
     }
+
+
+def test_supplied_dossier_is_used_rather_than_recomputed():
+    """A reviewer must see the evidence they passed, not a fresh computation."""
+    baseline = build_paper_portfolio_review_pack(
+        data_path=str(DATA_PATH),
+        symbol="DEMO-SYMBOL",
+        strategies=["buy_and_hold"],
+    )
+
+    marked_dossier = build_paper_portfolio_dossier(
+        data_path=str(DATA_PATH),
+        symbol="DEMO-SYMBOL",
+        strategies=["buy_and_hold"],
+    )
+    marked_dossier["overall_dossier_status"] = "paper_dossier_recheck_required"
+
+    report = build_paper_portfolio_review_pack(
+        data_path=str(DATA_PATH),
+        symbol="DEMO-SYMBOL",
+        strategies=["buy_and_hold"],
+        dossier=marked_dossier,
+    )
+
+    baseline_sources = {item["source"] for item in baseline["review_items"]}
+    sources = {item["source"] for item in report["review_items"]}
+    assert "paper_portfolio_dossier" in sources
+    assert sources != baseline_sources or report != baseline
+
+
+def test_evidence_the_pack_cannot_honour_is_refused():
+    """Silently ignoring a supplied report would misdescribe what was reviewed.
+
+    The dossier recomputes proposal, stress, monitoring, and recheck internally,
+    so the pack cannot honour them; refusing them keeps a caller from believing
+    otherwise.
+    """
+    for unsupported in ("proposal", "stress", "monitoring", "recheck"):
+        with pytest.raises(TypeError):
+            build_paper_portfolio_review_pack(
+                data_path=str(DATA_PATH),
+                symbol="DEMO-SYMBOL",
+                strategies=["buy_and_hold"],
+                **{unsupported: {"fabricated": True}},
+            )
