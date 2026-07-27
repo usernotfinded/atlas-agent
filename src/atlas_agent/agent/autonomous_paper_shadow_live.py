@@ -624,9 +624,13 @@ def _pct_diff(
 def compare_paper_to_broker(
     paper_state: dict[str, Any],
     snapshot: BrokerAccountSnapshot,
-    policy: ShadowLiveThresholdPolicy,
 ) -> dict[str, Any]:
-    """Diff paper state against a broker snapshot."""
+    """Diff paper state against a broker snapshot.
+
+    Reports differences only. Whether a difference is tolerable is decided by
+    `resolve_shadow_live_status`, which owns the threshold policy — keeping the
+    measurement free of the judgement that reads it.
+    """
     paper_cash = paper_state.get("cash")
     paper_equity = paper_state.get("equity")
     paper_buying_power = paper_state.get("buying_power")
@@ -1009,7 +1013,7 @@ def build_shadow_live_comparison(
         base_report["status"] = "not_evaluated"
         return base_report
 
-    divergence = compare_paper_to_broker(paper_state, snapshot, policy)
+    divergence = compare_paper_to_broker(paper_state, snapshot)
     status, blockers = resolve_shadow_live_status(divergence, snapshot, policy, now)
     base_report["status"] = status
     base_report["blockers"].extend(blockers)

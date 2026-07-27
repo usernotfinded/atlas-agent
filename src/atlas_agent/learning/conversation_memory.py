@@ -103,6 +103,9 @@ def _redact_snippet(text: str) -> str:
 
 
 def _build_snippet(content: str, index: int, query_length: int) -> str:
+    # `query_length` is part of the shared snippet_builder contract
+    # (see research.session._default_snippet_builder, which extends the window
+    # by it). This implementation uses a fixed window instead.
     start = max(0, index - 80)
     end = min(len(content), index + MAX_SNIPPET_CHARS)
     snippet = _redact_snippet(content[start:end])

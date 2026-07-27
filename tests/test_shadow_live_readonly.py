@@ -288,7 +288,7 @@ def test_compare_matched() -> None:
     }
     snapshot = _make_broker_account_snapshot()
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     assert result["cash_difference"] == 0.0
     assert result["equity_difference"] == 0.0
     status, _ = resolve_shadow_live_status(result, snapshot, policy, now=_FIXED_NOW)
@@ -304,7 +304,7 @@ def test_compare_minor_divergence_cash() -> None:
     }
     snapshot = _make_broker_account_snapshot()
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     status, _ = resolve_shadow_live_status(result, snapshot, policy, now=_FIXED_NOW)
     assert status == "minor_divergence"
 
@@ -318,7 +318,7 @@ def test_compare_major_divergence_equity() -> None:
     }
     snapshot = _make_broker_account_snapshot()
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     status, _ = resolve_shadow_live_status(result, snapshot, policy, now=_FIXED_NOW)
     assert status == "major_divergence"
 
@@ -345,7 +345,7 @@ def test_compare_major_divergence_position_quantity() -> None:
         ),
     )
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     status, _ = resolve_shadow_live_status(result, snapshot, policy, now=_FIXED_NOW)
     assert status == "major_divergence"
 
@@ -367,7 +367,7 @@ def test_incomplete_snapshot_missing_critical_flag() -> None:
         },
     )
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     status, blockers = resolve_shadow_live_status(
         result, snapshot, policy, now=_FIXED_NOW
     )
@@ -387,7 +387,7 @@ def test_stale_snapshot() -> None:
     )
     policy = ShadowLiveThresholdPolicy()
     now = datetime.fromisoformat("2026-06-23T12:10:00+00:00")
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     status, blockers = resolve_shadow_live_status(result, snapshot, policy, now=now)
     assert status == "stale_snapshot"
     assert any("age" in b for b in blockers)
@@ -703,7 +703,7 @@ def test_open_order_differences_detected() -> None:
         ),
     )
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     assert result["open_order_differences"]["available"] is True
     assert len(result["open_order_differences"]["differences"]) == 1
 
@@ -740,7 +740,7 @@ def test_fill_differences_detected() -> None:
         ),
     )
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     assert result["fill_differences"]["available"] is True
     assert len(result["fill_differences"]["differences"]) == 1
 
@@ -767,7 +767,7 @@ def test_paper_only_and_broker_only_positions() -> None:
         ),
     )
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     by_symbol = {p["symbol"]: p for p in result["position_differences"]}
     assert by_symbol["AAPL"]["paper_only"] is True
     assert by_symbol["TSLA"]["broker_only"] is True
@@ -796,7 +796,7 @@ def test_signed_quantity_short_position() -> None:
         ),
     )
     policy = ShadowLiveThresholdPolicy()
-    result = compare_paper_to_broker(paper_state, snapshot, policy)
+    result = compare_paper_to_broker(paper_state, snapshot)
     assert result["position_differences"][0]["quantity_difference"] == 0.0
 
 
