@@ -182,6 +182,33 @@ classification; new exceptional tests may declare either marker at their
 source. `local_quick_check.sh` selects `quick`, while plain `python -m pytest`
 still runs every test in both tiers.
 
+## Reading a Coverage Report
+
+`pytest --cov` measures the pytest process. It does not measure subprocesses,
+and a large part of this suite exercises the CLI the way an operator does — by
+spawning it. Handler modules reached only that way therefore report as
+uncovered, whatever their real coverage.
+
+The effect is not small. `cli_commands/report.py`, `routine.py`,
+`reflection.py`, and `discipline.py` each measure **0.0%** — not one statement,
+not even their imports — while 41 tests across `tests/cli/test_report_cli.py`,
+`tests/cli/test_reflection_cli.py`, and `tests/test_discipline_cli.py` drive
+them through `subprocess.run`.
+
+So a low number is a question, not a finding. Before concluding a module is
+untested, check whether an in-process test reaches it:
+
+```bash
+python3 -m pytest <the tests you think cover it> \
+    --cov=atlas_agent.<the module> --cov-report=term
+```
+
+`Module ... was never imported` means the tests are subprocess-based and the
+figure says nothing. A module that stays near zero while in-process tests run
+against it is the real thing — that is how the `atlas research` handlers were
+found at 3% with 1421 in-process tests in the same package, which
+`tests/research/test_research_command_envelopes.py` now covers.
+
 ## Historical Tests
 
 Tests for historical release checkers (v0.5.8, v0.6.0–v0.6.6) are valuable for
