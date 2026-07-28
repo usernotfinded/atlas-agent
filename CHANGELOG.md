@@ -38,6 +38,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
+- `tests/architecture/test_broker_protocol_conformance.py`, enforcing hard
+  invariant 4's "every broker adapter implements the `Broker` interface". `Broker`
+  and `BrokerProvider` are `typing.Protocol`s, so nothing checked it — a missing
+  method surfaces as an `AttributeError` at the call site, which for `flatten_all`
+  means an adapter without the emergency exit passes every test that never has an
+  emergency. Every adapter currently conforms; the guard is against the next one.
+  It flags partial implementation rather than absence, so `IBKRStub` — which
+  implements nothing and raises `NotImplementedError` for every access — needs no
+  exemption. The protocol method names are read from `brokers/base.py` rather
+  than restated, so a method added to a protocol is immediately required of its
+  implementers.
 - `tests/risk/test_declared_limits_are_wired.py`, stating executably which of
   hard invariant 5's six limits `RiskManager` actually evaluates. Four do;
   `max_daily_loss_pct` and `OrderRiskInput.leverage` are declared, plumbed into
