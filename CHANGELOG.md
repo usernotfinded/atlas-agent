@@ -38,6 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
+- `tests/audit/test_live_submit_blocked_event_set.py`, pinning the
+  `live_submit_blocked` reason codes the release checklist enumerates against
+  the emitters in `submit_execution.py`. The list had drifted:
+  `hmac_approval_missing`, `market_quote_unavailable`, and `market_quote_invalid`
+  were emitted and undocumented, which means a reviewer auditing a live-submit
+  log had no reason to expect them. The checklist now lists all eighteen, and
+  the guard fails in both directions — an emitted code that is not documented,
+  and a documented code that nothing emits — plus a third case for the scan
+  silently matching nothing.
 - A differential test over the same space, pinning `brokers/guards.py` against
   `BrokerResolver`. The live-submit rule is written twice on purpose — the
   resolver reports a reason code per gate, the guard raises once — and the two

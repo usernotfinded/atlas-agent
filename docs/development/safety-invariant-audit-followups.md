@@ -138,6 +138,39 @@ are pinned by tests and the limitation is documented in `docs/kill-switch.md`.
 
 ## Open items
 
+### The approval gate fails without an audit record — `semantics_change`
+
+Hard invariant 8 says the audit hash-chain records "**all** gate failures, risk
+rejections, kill-switch transitions, and submit attempts". `docs/release-checklist.md`
+enumerates the reason codes for which `live_submit_blocked` is emitted, and that
+list starts at the HMAC-approval gate. The code follows the checklist, so the
+gates before it return blocked and write nothing:
+
+```
+not approved             blocked_reason=not_approved         NO AUDIT RECORD
+already submitted        blocked_reason=already_submitted    NO AUDIT RECORD
+terminal state           blocked_reason=terminal_state       NO AUDIT RECORD
+corrupt file             blocked_reason=invalid_pending_order    1 audit line
+```
+
+`not_approved` is the one that matters. Invariant 7 makes approval mandatory, and
+the failure of that gate — the event an operator would search the chain for when
+asking whether anything tried to submit without approval — leaves no
+tamper-evident trace. `already_submitted` and `terminal_state` are repeat submit
+attempts, which invariant 8 also names.
+
+The two documents disagree, and which is authoritative decides the fix. Read as
+a contract, the checklist defines a deliberate subset and the code is correct.
+Read as a verification checklist, it is an incomplete list of things to check
+and the governance invariant stands, making this a gap in the submit path.
+
+Deciding it: emitting for the earlier gates is mechanically small —
+`_emit_live_submit_blocked` is already called by fifteen neighbouring gates with
+established ordering and redaction — but it changes what a live-submit audit log
+contains, which release checks read. `tests/audit/test_live_submit_blocked_event_set.py`
+now pins the checklist against the emitters, so whichever way this is decided,
+the two can no longer drift apart quietly.
+
 ### CLI startup costs about half a second — `architecture`
 
 Every `atlas` invocation takes ~0.50 s before it does anything: ~346 ms
