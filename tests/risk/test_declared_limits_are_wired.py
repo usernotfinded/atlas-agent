@@ -127,6 +127,30 @@ def test_a_leveraged_order_is_rejected() -> None:
     assert violations != []
 
 
+@pytest.mark.xfail(
+    reason=(
+        "max_trades_per_day is configured, defaults to 5, and is printed by "
+        "`atlas risk check`, but RiskLimits has no such field and no rule reads "
+        "trades_today — which the paper broker does increment. See CAND-033."
+    ),
+    strict=True,
+)
+def test_the_daily_trade_count_limit_is_enforced() -> None:
+    """The one an operator is shown directly.
+
+    `atlas risk check` prints three lines — kill switch, max position size, and
+    max trades per day. The first two are enforced. An operator reading the third
+    has been told a limit exists.
+    """
+    from atlas_agent.config import AtlasConfig
+
+    assert AtlasConfig().max_trades_per_day == 5
+
+    violations = _violations(_order(), _portfolio(trades_today=100))
+
+    assert violations != []
+
+
 @pytest.mark.parametrize(
     "label, order, portfolio, expected_rule",
     [

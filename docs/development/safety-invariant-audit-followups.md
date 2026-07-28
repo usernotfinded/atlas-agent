@@ -194,6 +194,29 @@ the pinned CLI surface. The four are strict `xfail` in
 `tests/research/test_research_command_envelopes.py`, so whichever way it is
 decided, the marker has to be removed deliberately.
 
+### `atlas risk check` shows the operator a limit that does not exist — `semantics_change`
+
+The command prints exactly three lines:
+
+```
+kill_switch=False
+max_position_size=100.0
+max_trades_per_day=5
+```
+
+The first two are enforced. `max_trades_per_day` is configured, defaults to 5,
+and `RiskLimits` has no such field — 100 trades in a day evaluate `allowed=True`
+with zero violations. An operator running the command that reports their risk
+posture is told a limit exists that nothing applies.
+
+It is the readiest of the unenforced limits to fix: `trades_today` is already
+incremented by the paper broker and already reaches every evaluation, so a rule
+is all that is missing. It is also the only one with a second option — stop
+printing it, which removes the false claim without touching the gate.
+
+Deciding it: `CAND-033`. Pinned as a strict `xfail` in
+`tests/risk/test_declared_limits_are_wired.py`.
+
 ### Two of invariant 5's six limits are not enforced — `semantics_change`
 
 Hard invariant 5 states that `RiskManager` enforces "hard-coded limits on

@@ -110,6 +110,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exemption. The protocol method names are read from `brokers/base.py` rather
   than restated, so a method added to a protocol is immediately required of its
   implementers.
+- A third unenforced limit, found by asking which of the numbers `atlas risk
+  check` shows an operator are real. It prints three lines — kill switch, max
+  position size, max trades per day. The first two are enforced.
+  `max_trades_per_day` is configured, defaults to 5, and `RiskLimits` has no such
+  field: 100 trades in a day pass with zero violations. Unlike the daily-loss
+  case, its counter is live — the paper broker increments `trades_today` and it
+  reaches every evaluation — so a rule is all that is missing, and it also has
+  the option of simply not being printed. Pinned as a strict `xfail`; `CAND-033`
+  now covers all three.
 - `tests/risk/test_declared_limits_are_wired.py`, stating executably which of
   hard invariant 5's six limits `RiskManager` actually evaluates. Four do;
   `max_daily_loss_pct` and `OrderRiskInput.leverage` are declared, plumbed into
