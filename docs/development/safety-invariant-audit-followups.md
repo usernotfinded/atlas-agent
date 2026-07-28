@@ -3,7 +3,10 @@
 An audit walked the ten hard invariants in
 [Bounded Live Autonomy Governance](../bounded-live-autonomy-governance.md) and
 the defect classes this project has fixed before, asking of each whether the
-code enforces what the documentation promises.
+code enforces what the documentation promises. Later passes asked the same
+question of things the governance document does not cover — what the CLI reports
+to an operator, and what its error envelopes promise — and those findings are
+recorded here too, because they are the same kind: a claim nothing checks.
 
 Everything found was either fixed, or is recorded below because fixing it is a
 decision for a maintainer rather than a correction. Each open item states what
@@ -120,6 +123,26 @@ A guard may be stricter than the live path. It may never be looser. That is the
 property the tests state, and it is what nothing checked while these guards sat
 uncalled — which is how the resolver came to answer `live_submit_ready` for
 brokers the inventory disables.
+
+### `safety/policy.py` claimed an enforcement it did not have — `cleanup`
+
+The module header read: the invariants are "surfaced in the CLI and asserted
+against by the trust checkers, so the promises made to users and the promises
+made in code cannot silently diverge."
+
+Neither half was true. `HARD_RULES` has no importers anywhere in `src/`,
+`tests/`, or `scripts/`; no CLI command reads it — `atlas --help` carries its own
+separately worded safety blurb; no checker asserts it; and the module is not
+exported from `safety/__init__.py`. The one thing that references it is a comment
+in `execution/order_router.py` quoting a rule verbatim.
+
+**Decided: corrected the header, kept the constant.** Quoting a canonical wording
+instead of paraphrasing it is worth something, and the six rules are the subset
+short enough to quote — the enforced set is the ten invariants in the governance
+document. But a safety file that overstates its own enforcement is worse than one
+that claims nothing, because it reads like a gate to the next person looking for
+one. The header now says outright that nothing reads it, and names where each
+rule is actually enforced.
 
 ### A missing heartbeat does not fail closed — `semantics_change`
 
@@ -332,26 +355,6 @@ model.
 The `cli_bootstrap.py` pre-router is not the lever either way. It stays narrow
 for its own reason: the four configless commands must run with no config loaded
 and no third-party import on the path.
-
-### `safety/policy.py` claimed an enforcement it did not have — `cleanup`
-
-The module header read: the invariants are "surfaced in the CLI and asserted
-against by the trust checkers, so the promises made to users and the promises
-made in code cannot silently diverge."
-
-Neither half was true. `HARD_RULES` has no importers anywhere in `src/`,
-`tests/`, or `scripts/`; no CLI command reads it — `atlas --help` carries its own
-separately worded safety blurb; no checker asserts it; and the module is not
-exported from `safety/__init__.py`. The one thing that references it is a comment
-in `execution/order_router.py` quoting a rule verbatim.
-
-**Decided: corrected the header, kept the constant.** Quoting a canonical wording
-instead of paraphrasing it is worth something, and the six rules are the subset
-short enough to quote — the enforced set is the ten invariants in the governance
-document. But a safety file that overstates its own enforcement is worse than one
-that claims nothing, because it reads like a gate to the next person looking for
-one. The header now says outright that nothing reads it, and names where each
-rule is actually enforced.
 
 ## What the audit did change
 
