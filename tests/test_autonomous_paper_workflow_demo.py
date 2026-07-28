@@ -72,7 +72,7 @@ def _make_isolated_repo(
     script_patch: dict[str, str] | None = None,
     doc_patch: dict[str, tuple[str, str]] | None = None,
 ) -> Path:
-    tmp_dir = Path(tempfile.mkdtemp(dir=ROOT))
+    tmp_dir = Path(tempfile.mkdtemp())
 
     for rel in (
         "docs/autonomous-paper-workflow.md",
@@ -321,7 +321,7 @@ class TestUnitFunctions:
             "set -euo pipefail",
             "set -euo pipefail\nenable_live_submit=true\n",
         )
-        tmp = Path(tempfile.mkdtemp(dir=ROOT))
+        tmp = Path(tempfile.mkdtemp())
         fake_script = tmp / "demo_autonomous_paper_workflow.sh"
         fake_script.write_text(unsafe, encoding="utf-8")
         os.chmod(fake_script, 0o755)

@@ -53,7 +53,7 @@ def _load_checker_module() -> ModuleType:
 def _run_checker_with_patched_doc(original_text: str, patched_text: str, doc_name: str) -> subprocess.CompletedProcess[str]:
     """Run the checker with a single doc patched inside a temp dir under REPO_ROOT."""
     import shutil
-    tmp_dir = Path(tempfile.mkdtemp(dir=REPO_ROOT))
+    tmp_dir = Path(tempfile.mkdtemp())
     # Write the patched doc
     tmp_doc = tmp_dir / doc_name
     tmp_doc.parent.mkdir(parents=True, exist_ok=True)

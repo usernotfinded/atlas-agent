@@ -150,6 +150,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Six test helpers created their scratch directories with
+  `tempfile.mkdtemp(dir=REPO_ROOT)` and copied `docs/` into them, so under
+  `pytest -n` one worker's scratch copy of the documentation was visible to
+  another worker's checker — and then deleted mid-walk.
+  `check_runtime_readiness_envelope_contract.py` does `REPO_ROOT.rglob("*.md")`
+  and reads each hit, which failed with `FileNotFoundError` on a path that had
+  existed a moment earlier. Those six now use the system temp directory; the
+  patched checkers they invoke receive an absolute root, so nothing required the
+  repo. `test_public_docs_consistency.py` keeps its scratch dir under the repo
+  because its script calls `Path.relative_to(REPO_ROOT)`, and the checker now
+  tolerates a file that vanishes between `is_file()` and the read — the walk is
+  not atomic, and a file that no longer exists cannot be violating a docs rule.
 - `RiskManager.evaluate_order` accepted a non-finite portfolio figure and then
   compared against it. Both percentage exposure limits take their ceiling from
   equity, so `equity = NaN` made `projected > ceiling` false and the limits

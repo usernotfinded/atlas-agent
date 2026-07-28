@@ -48,7 +48,7 @@ def _run_checker(*args: str) -> subprocess.CompletedProcess[str]:
 
 def _run_checker_with_patched_doc(original_text: str, patched_text: str) -> subprocess.CompletedProcess[str]:
     """Run the checker with a patched contract doc inside a temp dir under REPO_ROOT."""
-    tmp_dir = Path(tempfile.mkdtemp(dir=REPO_ROOT))
+    tmp_dir = Path(tempfile.mkdtemp())
     try:
         # Copy required files into temp repo structure
         tmp_contract = tmp_dir / "docs" / "shadow-live-readiness-contract.md"

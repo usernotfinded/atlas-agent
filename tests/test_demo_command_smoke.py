@@ -61,7 +61,7 @@ def _run_checker_in_isolated_repo(
     doc_patch: dict[str, tuple[str, str]] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run the checker with REPO_ROOT patched to a temp dir."""
-    tmp_dir = Path(tempfile.mkdtemp(dir=REPO_ROOT))
+    tmp_dir = Path(tempfile.mkdtemp())
 
     # Copy docs directory
     docs_src = REPO_ROOT / "docs"

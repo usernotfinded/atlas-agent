@@ -97,7 +97,7 @@ def _make_isolated_repo(
     script_patch: dict[str, str] | None = None,
     doc_patch: dict[str, tuple[str, str]] | None = None,
 ) -> Path:
-    tmp_dir = Path(tempfile.mkdtemp(dir=ROOT))
+    tmp_dir = Path(tempfile.mkdtemp())
 
     docs_to_copy = [
         "docs/paper-provider-isolation.md",

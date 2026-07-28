@@ -793,7 +793,15 @@ def _check_blocked_reasons_not_active() -> list[str]:
             continue
         if not path.is_file():
             continue
-        text = _read(path)
+        try:
+            text = _read(path)
+        except FileNotFoundError:
+            # The walk is not atomic: anything holding a scratch file under the
+            # repo can remove it between `is_file()` and the read. A file that no
+            # longer exists cannot be a doc violating this rule, and failing the
+            # whole checker on it makes the suite flaky rather than safer. This
+            # was reached in practice by a parallel test run, not in theory.
+            continue
         if "blocked_reasons" in text and not _is_archived_doc(path):
             errors.append(
                 f"[{_rel(path)}] Doc references blocked_reasons but is not "
