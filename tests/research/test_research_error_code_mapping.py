@@ -15,11 +15,20 @@ string must never be echoed to the operator, because in general it could carry a
 path or user data.
 
 What is wrong is how much it fires. `src/atlas_agent` raises 205 distinct
-*literal* codes and the table maps 69 of them, so 136 land on the generic
-message — including plain not-found cases like
+*literal* codes and the table maps 69 of them, so at least 136 land on the
+generic message — including plain not-found cases like
 `provider_safety_dossier_source_seal_missing`. Measured over the CLI, 30 of the
 175 `atlas research` subcommands answer a nonexistent id with "Research command
 failed." while the reason was known, static, and safe to show.
+
+Only that direction is measurable here. A literal code absent from the table
+certainly hits the fallback, so the count is a sound lower bound. The reverse —
+concluding an entry is dead because no literal raise matches it — is not sound:
+33 raise sites build their code at runtime, and
+`artifact_store.py` raises `f"ambiguous_{kind.name}_id"`, which is where the
+table's `ambiguous_run_id`, `ambiguous_plan_id`, and `ambiguous_research_id`
+entries are reached. A scan that reads literals cannot see them, so this file
+does not ratchet unused entries.
 
 Nothing made that visible. Adding `ResearchSessionError("my_specific_code")`
 silently produces a generic message forever, and there is no failing test to
@@ -50,10 +59,6 @@ SRC_ROOT = Path(__file__).resolve().parents[2] / "src" / "atlas_agent"
 #: Codes raised with no entry in the table, counted when this ratchet was set.
 #: Lower it when entries are added; it must never be raised.
 UNMAPPED_CODE_BUDGET = 136
-
-#: Entries whose code nothing raises any more. Also a ratchet: dead rows make the
-#: table look more complete than it is, which is how it drifted this far.
-UNRAISED_ENTRY_BUDGET = 79
 
 
 # ==============================================================================
@@ -113,35 +118,18 @@ def test_the_unmapped_backlog_does_not_grow() -> None:
     )
 
 
-def test_the_dead_entry_backlog_does_not_grow() -> None:
-    """An entry for a code nothing raises makes the table look complete."""
-    raised = _literal_codes_raised()
-    unraised = sorted(set(RESEARCH_SESSION_ERROR_CODES) - set(raised))
-
-    assert len(unraised) <= UNRAISED_ENTRY_BUDGET, (
-        f"{len(unraised)} entries in RESEARCH_SESSION_ERROR_CODES map codes that "
-        f"nothing raises, above the ratchet of {UNRAISED_ENTRY_BUDGET}. Either the "
-        "raise was removed and the entry should go with it, or the code was "
-        "renamed and the entry should follow."
-    )
-
 
 def test_the_ratchets_are_not_slack() -> None:
     """A budget well above the real count would let the backlog grow unnoticed.
 
-    This is what stops the two ratchets above from being decoration: they have to
-    stay tight against the real numbers to mean anything.
+    This is what stops the ratchet above from being decoration: it has to stay
+    tight against the real number to mean anything.
     """
     raised = _literal_codes_raised()
     unmapped = len(set(raised) - set(RESEARCH_SESSION_ERROR_CODES))
-    unraised = len(set(RESEARCH_SESSION_ERROR_CODES) - set(raised))
 
     assert UNMAPPED_CODE_BUDGET - unmapped <= 5, (
         f"UNMAPPED_CODE_BUDGET is {UNMAPPED_CODE_BUDGET} and only {unmapped} codes "
         "are unmapped. Lower the budget to the real count so it keeps catching the "
         "next one."
-    )
-    assert UNRAISED_ENTRY_BUDGET - unraised <= 5, (
-        f"UNRAISED_ENTRY_BUDGET is {UNRAISED_ENTRY_BUDGET} and only {unraised} "
-        "entries are dead. Lower the budget to the real count."
     )

@@ -51,15 +51,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `tests/research/test_research_error_code_mapping.py`, ratcheting the research
   error-code allowlist against the codes the source raises. `src/atlas_agent`
   raises 205 distinct literal `ResearchSessionError` codes and
-  `RESEARCH_SESSION_ERROR_CODES` maps 69, so 136 fall back to "Research command
-  failed." — 30 of the 175 `atlas research` subcommands answer a nonexistent id
-  that way while the reason was known, static, and safe to show. A further 79
-  entries map codes nothing raises. Nothing made either visible: adding a new
-  code silently produced a generic message forever. The ratchets do not require
-  the backlog to be empty, only that it stops growing, and a fourth case fails if
-  a budget is raised instead of lowered. `CAND-034` proposes the work, including
-  whether 136 distinct messages are wanted at all given that eleven not-found
-  spellings already exist.
+  `RESEARCH_SESSION_ERROR_CODES` maps 69, so at least 136 fall back to "Research
+  command failed." — 30 of the 175 `atlas research` subcommands answer a
+  nonexistent id that way while the reason was known, static, and safe to show.
+  Nothing made it visible: adding a new code silently produced a generic message
+  forever. Only this direction is measurable by a literal scan and it is a lower
+  bound, because 33 raise sites build their code at runtime; the reverse check,
+  concluding an entry is unused, is not sound and is not attempted. The ratchet
+  does not require the backlog to be empty, only that it stops growing, and a
+  third case fails if the budget is raised instead of lowered. `CAND-034`
+  proposes the work, including whether that many distinct messages are wanted at
+  all given that eleven not-found spellings already exist.
 - `tests/research/test_research_command_envelopes.py`, running all 175
   `atlas research` subcommands. Coverage over the whole suite put
   `cli_commands/research/release_candidate.py` at 3% and `safety_dossier.py` at
