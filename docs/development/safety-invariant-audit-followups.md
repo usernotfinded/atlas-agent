@@ -64,6 +64,33 @@ The gate reads `is_live_broker_known`, not `is_broker_known`: `paper` is in the
 inventory, so the plain form would have let `live_broker = "paper"` past a gate
 written to reject it.
 
+### `default_strategy_registry()` rescanned the installed packages per call — `architecture`
+
+Every call rebuilt the registry and rescanned entry points. The original note
+recorded twenty lookups at 66 ms through the module-level helpers against 3 ms
+against a single registry, and said the looping call sites had been fixed.
+
+They had, but the per-call cost was not the small residue that suggests. The
+registry is rebuilt once per `BacktestEngine`, and 94% of building an engine was
+`importlib.metadata.entry_points()` walking every installed distribution: thirty
+engine constructions measured 104.3 ms, of which 97.8 ms was thirty repeats of
+that one scan. Any command that runs a sweep — `backtest compare`, sensitivity,
+robustness, walk-forward — paid it per run.
+
+**Decided: cache the scan, not the registry.** `_discovered_entry_point_factories`
+is `lru_cache`d, so discovery happens once per process; the same thirty
+constructions now measure 5.1 ms with one scan. `default_strategy_registry()`
+still returns a fresh registry and `get()` still returns a fresh strategy
+instance, which is the distinction that matters — caching one call further up
+would hand every caller the same mutable registry and reuse strategies that
+carry per-run state. A test pins both halves.
+
+What this gives up is that a plugin installed *after* the process started is not
+seen until restart. Nothing depended on it, and for a supervised trading run it
+is the wrong behaviour to preserve: strategy code appearing mid-run enters with
+no restart and no review. `cache_clear()` on that function rescans if a caller
+ever needs it.
+
 ### A missing heartbeat does not fail closed — `semantics_change`
 
 `safety/heartbeat.py::is_expired` reports a corrupt heartbeat as expired and an
@@ -81,28 +108,33 @@ are pinned by tests and the limitation is documented in `docs/kill-switch.md`.
 
 ## Open items
 
-### 1. CLI startup imports the whole backtest domain — `architecture`
+### 1. CLI startup costs about half a second — `architecture`
 
-`atlas --help` takes roughly 400 ms, most of it importing
-`atlas_agent.backtest` (~157 ms) at `cli.py` module scope, for commands that do
-not use it.
+Every `atlas` invocation takes ~0.50 s before it does anything: ~346 ms
+importing `atlas_agent.cli`, ~75 ms building the argparse tree, ~12 ms of
+interpreter startup. `atlas --version` pays all of it.
 
-This was left alone because the narrow pre-router in `cli_bootstrap.py` is
-deliberate: it peels off exactly four configless trust-contract commands and
-says so in its own comment — "that is a feature, not a gap". Widening it, or
-making `cli.py` import lazily, is a decision about that boundary.
+**The original entry blamed `atlas_agent.backtest` at ~157 ms and proposed
+deferring it. That number does not survive checking.** 157 ms is what the
+importing-module attribution assigns to whichever import arrives at the shared
+infrastructure first, and `backtest` happens to be first in `cli.py`. Its
+*marginal* cost — the time that disappears if `cli.py` stops importing it — is
+22.7 ms, about 4.5% of startup. The other ~174 ms is pydantic, `config.schema`,
+`risk`, `audit`, and `events`, which `cli_commands` pulls in regardless.
 
-### 2. `default_strategy_registry()` is rebuilt per call — `architecture`
+Deferring the backtest imports would therefore mean threading local imports
+through the dispatch in a 5.9k-line module whose command surface is a pinned
+trust contract, to recover 4.5%. It is not worth it at that price, and it is not
+the boundary question the original entry described.
 
-Every call constructs the registry and rescans entry points. Twenty lookups
-measured at 66 ms through the module-level helpers against 3 ms against a single
-registry. Call sites that looped were fixed; the per-call cost remains.
+Where the time actually goes is pydantic building model classes at import: the
+self-time hotspots are ten `*.models` modules totalling ~64 ms, plus
+`config.schema` at ~10 ms and pydantic itself at ~27 ms. Reducing that is a
+question about pydantic at module scope, not about the `cli_bootstrap.py`
+pre-router — which stays narrow for its own reason, that the four configless
+commands must run with no config loaded and no third-party import on the path.
 
-Deciding it: a process-wide cache would fix it everywhere, and would change when
-plugin discovery happens — currently every call sees newly installed entry
-points.
-
-### 3. `guard_submit` and `guard_sync` have no callers — `cleanup`
+### 2. `guard_submit` and `guard_sync` have no callers — `cleanup`
 
 `brokers/guards.py` holds two fail-closed guards. `guard_submit` was found to
 disagree with the resolver, which answered `live_submit_ready` for brokers the

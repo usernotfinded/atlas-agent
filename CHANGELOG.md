@@ -53,6 +53,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   356 s to 165 s on this checkout with identical pass counts. Steps measured not
   to benefit stay serial, and a checkout without the `dev` extra keeps the
   previous serial behavior.
+- Strategy plugin discovery now happens once per process instead of once per
+  registry build. The registry is rebuilt for every `BacktestEngine`, and 94% of
+  building an engine was `importlib.metadata.entry_points()` walking every
+  installed distribution: thirty engine constructions measured 104.3 ms → 5.1 ms
+  after caching the scan, with one scan instead of thirty. Commands that run a
+  sweep — `backtest compare`, sensitivity, robustness, walk-forward — paid that
+  per run. Only the scan is cached: `default_strategy_registry()` still returns a
+  fresh registry and `get_strategy()` a fresh instance. A plugin installed after
+  the process starts is no longer picked up mid-run, which is the intended
+  behaviour for a supervised trading process.
 - Corrected the dev and release-quick rows of `docs/development/check-tiers.md`,
   which listed `~55-90 s` for a tier that measured 356 s before the change and
   165 s after.
