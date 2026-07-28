@@ -38,6 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
+- `tests/risk/test_declared_limits_are_wired.py`, stating executably which of
+  hard invariant 5's six limits `RiskManager` actually evaluates. Four do;
+  `max_daily_loss_pct` and `OrderRiskInput.leverage` are declared, plumbed into
+  every evaluation, and read by no rule — a portfolio 50% down on the day against
+  a 2% limit passes with zero violations, as does an order carrying 10x leverage.
+  Both are strict `xfail`, so implementing either turns the marker into a failing
+  XPASS that has to be removed rather than a silently passing test. The four
+  working limits are pinned in the same file so a third cannot go the same way
+  unnoticed. `CAND-033` proposes the work.
 - `tests/audit/test_live_submit_blocked_event_set.py`, pinning the
   `live_submit_blocked` reason codes the release checklist enumerates against
   the emitters in `submit_execution.py`. The list had drifted:

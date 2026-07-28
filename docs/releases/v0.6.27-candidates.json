@@ -26,6 +26,25 @@
       "acceptance_criteria": "A measured reduction in atlas --version wall time with the command surface unchanged: scripts/check_cli_command_compatibility.py passes, every trust-contract envelope is byte-identical, and a test pins the reduction so it cannot silently regress.",
       "safety_notes": "Import-timing and packaging only. Changes no gate, no default, and no runtime decision: not RiskManager, approval queues, kill switch, heartbeat, deadman, the audit hash-chain, live-submit opt-in, or can_submit. Loads no credentials and adds no network access. The cli_bootstrap.py pre-router keeps its four configless commands and its stdlib-only module scope.",
       "open_question": "Two levers, priced in docs/development/safety-invariant-audit-followups.md. ConfigDict(defer_build=True) measures 74% off pydantic class creation (200 synthetic models: 178 ms to 46.5 ms), about a quarter of startup, but 128 of 129 model classes inherit BaseModel directly with no shared base, and it moves a malformed model from an import-time error to a first-use error. Lazy per-domain handler import has a larger ceiling (config alone imports in 137 ms against 273 ms for cli_commands) but threads local imports through a 5.9k-line dispatch whose command surface is a pinned trust contract. Deciding which, or neither, is the candidate."
+    },
+    {
+      "id": "CAND-033",
+      "title": "Wire the declared daily-loss and leverage limits",
+      "status": "proposed",
+      "accepted": false,
+      "category": "risk",
+      "priority": "P1",
+      "risk": "medium",
+      "source": "Hard invariant 5 states RiskManager enforces limits on position size, notional, daily loss, exposure, symbols, and leverage. Four are enforced and have rules. Two are not: max_daily_loss_pct is declared in RiskLimits and read by no rule, and OrderRiskInput.leverage is populated on both the paper and live-submit paths and read by no rule. A portfolio 50% down on the day, against a 2% declared limit, evaluates allowed=True with zero violations; so does an order carrying 10x leverage.",
+      "expected_files": [
+        "src/atlas_agent/risk/manager.py",
+        "src/atlas_agent/risk/limits.py",
+        "src/atlas_agent/portfolio/state.py",
+        "tests/risk/test_declared_limits_are_wired.py"
+      ],
+      "acceptance_criteria": "The two xfail cases in tests/risk/test_declared_limits_are_wired.py pass with their markers removed, each new guard is verified by breaking the source and confirming the specific test fails, and no previously accepted order is rejected except by the limit being added.",
+      "safety_notes": "Tightens the deterministic risk gate; enables nothing. Adds no live trading, live submit, broker or provider execution, credential loading, or network access, and changes no default toward permissiveness. It can only reject orders that are accepted today.",
+      "open_question": "The daily-loss chain is a stub at both ends: realized_pnl_today is carried from PortfolioState through PortfolioSnapshot into every evaluation, and nothing in src/ ever increments it, so it is always zero. Adding the rule alone would be a limit on a number nobody writes. Closing it properly means deciding where realized daily P&L is accounted \u2014 the paper broker's fills, the trade journal, or a session boundary the caller resets \u2014 which is a portfolio-accounting decision, not a risk-rule one. Leverage is narrower: no broker adapter forwards the field, so the question is whether to reject leveraged orders at the gate or to stop carrying a field the system does not act on."
     }
   ]
 }

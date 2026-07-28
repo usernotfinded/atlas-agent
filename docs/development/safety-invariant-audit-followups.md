@@ -138,6 +138,43 @@ are pinned by tests and the limitation is documented in `docs/kill-switch.md`.
 
 ## Open items
 
+### Two of invariant 5's six limits are not enforced — `semantics_change`
+
+Hard invariant 5 states that `RiskManager` enforces "hard-coded limits on
+position size, notional, daily loss, exposure, symbols, and leverage". Four of
+those six have rules in `risk/manager.py`. Two do not:
+
+```
+baseline, healthy portfolio          allowed=True  violations=[]
+realized_pnl_today = -50% of equity  allowed=True  violations=[]
+order leverage = 10x                 allowed=True  violations=[]
+```
+
+`max_daily_loss_pct` is declared in `RiskLimits` with a 2% default and read by no
+rule. `OrderRiskInput.leverage` is populated from the order on both the paper and
+the live-submit paths and read by no rule.
+
+The daily-loss chain is a stub at both ends: `realized_pnl_today` travels from
+`PortfolioState` through `PortfolioSnapshot` into every evaluation, and nothing
+in `src/` ever increments it, so it is always zero. The plumbing was built for a
+limit that was never written — `tests/test_risk_manager.py`'s helper still takes
+`realized_pnl_today` and `leverage` parameters no assertion uses.
+
+Leverage is narrower than it looks: no broker adapter forwards the field, and the
+resolver's leverage gate checks the `allow_leverage` config flag rather than the
+order, so with the safe default an order carrying `leverage=10.0` satisfies that
+gate. Nothing acts on the value today.
+
+Deciding it: `CAND-033` proposes the work.  Adding the daily-loss rule alone
+would be a limit on a number nobody writes, so closing it means first deciding
+where realized daily P&L is accounted — the paper broker's fills, the trade
+journal, or a session boundary the caller resets. That is a portfolio-accounting
+decision, not a risk-rule one. For leverage the question is whether to reject
+leveraged orders at the gate or to stop carrying a field the system does not use.
+`tests/risk/test_declared_limits_are_wired.py` states both as strict `xfail`
+cases, so whichever way this goes, implementing it turns the marker into a
+failing XPASS that has to be removed.
+
 ### The approval gate fails without an audit record — `semantics_change`
 
 Hard invariant 8 says the audit hash-chain records "**all** gate failures, risk
