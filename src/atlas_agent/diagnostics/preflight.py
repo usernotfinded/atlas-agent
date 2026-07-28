@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from atlas_agent.brokers.status import get_broker_support_entry
+from atlas_agent.brokers.status import get_broker_support_entry, resolve_broker_id
 from atlas_agent.config.schema import AtlasConfig
 from atlas_agent.providers.catalog import get_provider_profile, normalize_provider_id
 
@@ -239,7 +239,7 @@ def diagnose_provider(config: AtlasConfig) -> dict[str, Any]:
 
 def diagnose_broker(config: AtlasConfig) -> dict[str, Any]:
     requested_broker = (config.broker.provider or "none").strip().lower()
-    broker_id = "ibkr" if requested_broker == "ibkr_stub" else requested_broker
+    broker_id = resolve_broker_id(requested_broker)
     support = get_broker_support_entry(broker_id)
     credential_checks = [
         _credential_check(env_vars)

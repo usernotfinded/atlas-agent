@@ -172,9 +172,24 @@ def list_broker_support_inventory() -> tuple[BrokerSupportEntry, ...]:
     return _BROKER_SUPPORT_INVENTORY
 
 
+#: Names accepted for a broker whose canonical id differs. `ibkr_stub` is the
+#: module that holds the placeholder class, and it reached configuration and CLI
+#: output while the inventory records the broker itself as `ibkr`. Both names
+#: resolve to one entry so a caller cannot be told a broker is unsupported when
+#: the inventory knows exactly what it is.
+_BROKER_ID_ALIASES: dict[str, str] = {
+    "ibkr_stub": "ibkr",
+}
+
+
+def resolve_broker_id(broker_id: str) -> str:
+    """Return the canonical inventory id for a broker name."""
+    return _BROKER_ID_ALIASES.get(broker_id, broker_id)
+
+
 def get_broker_support_entry(broker_id: str) -> BrokerSupportEntry | None:
     """Look up a support entry by broker_id, or None if unknown."""
-    return _BROKER_SUPPORT_BY_ID.get(broker_id)
+    return _BROKER_SUPPORT_BY_ID.get(resolve_broker_id(broker_id))
 
 
 def is_broker_supported_for_live_submit(broker_id: str) -> bool:
@@ -187,4 +202,15 @@ def is_broker_supported_for_live_submit(broker_id: str) -> bool:
 
 def is_broker_known(broker_id: str) -> bool:
     """Return True if broker_id appears in the support inventory."""
-    return broker_id in _BROKER_SUPPORT_BY_ID
+    return resolve_broker_id(broker_id) in _BROKER_SUPPORT_BY_ID
+
+
+def is_live_broker_known(broker_id: str) -> bool:
+    """Return True for an inventory broker that can be named as a live broker.
+
+    The paper broker is in the inventory and is not a live broker, so asking
+    only whether the inventory knows a name would let `live_broker = "paper"`
+    past a gate written to reject it.
+    """
+    entry = get_broker_support_entry(broker_id)
+    return entry is not None and entry.status != "default_paper"

@@ -149,7 +149,7 @@ def _check_docs(root: Path) -> list[str]:
         "not financial advice",
         "not live readiness",
         "not a profit guarantee",
-        "allocation_drift",
+        "portfolio_movement",
         "cash_reserve_breach",
         "drawdown_breach",
         "stress_watchlist",

@@ -125,7 +125,7 @@ def test_monitoring_statuses_are_allowed_only():
     assert not observed & FORBIDDEN_LABELS
 
 
-def test_allocation_drift_trigger_is_deterministic():
+def test_portfolio_movement_trigger_is_deterministic():
     report = build_paper_portfolio_monitoring(
         data_path=DATA_PATH,
         symbol="DEMO-SYMBOL",
@@ -133,7 +133,7 @@ def test_allocation_drift_trigger_is_deterministic():
         proposal=_eligible_proposal(weight=0.90, cash=0.10),
         stress=_passing_stress(),
     )
-    drift_events = [e for e in report["monitoring_events"] if e["trigger"] == "allocation_drift"]
+    drift_events = [e for e in report["monitoring_events"] if e["trigger"] == "portfolio_movement"]
     assert len(drift_events) > 0
     for event in drift_events:
         assert event["status"] in ALLOWED_MONITORING_STATUSES
@@ -380,33 +380,33 @@ def _snapshot(root: Path) -> dict[str, str]:
     }
 
 
-def test_allocation_drift_reflects_portfolio_movement_not_weights():
+def test_portfolio_movement_is_not_allocation_drift():
     """Pin what the trigger actually measures, so the name cannot mislead.
 
     The check works from a portfolio-level return series, so it cannot see the
     holdings drifting apart. This records that limit rather than implying the
     weights were examined.
     """
-    from atlas_agent.backtest.portfolio import _check_allocation_drift
+    from atlas_agent.backtest.portfolio import _check_portfolio_movement
 
-    flat = _check_allocation_drift(
+    flat = _check_portfolio_movement(
         window=1,
         window_returns=[0.0, 0.0, 0.0],
         recheck_threshold=0.05,
     )
     assert flat["status"] == "paper_monitor_ok"
 
-    moved = _check_allocation_drift(
+    moved = _check_portfolio_movement(
         window=1,
         window_returns=[0.05, 0.05, 0.05],
         recheck_threshold=0.05,
     )
     assert moved["status"] in {"needs_recheck", "paper_monitor_watchlist"}
-    assert moved["trigger"] == "allocation_drift"
+    assert moved["trigger"] == "portfolio_movement"
 
     # A window that ends flat after moving in both directions reads as "ok",
     # even though real allocation drift would be at its largest there.
-    round_trip = _check_allocation_drift(
+    round_trip = _check_portfolio_movement(
         window=1,
         window_returns=[0.5, -1 / 3],
         recheck_threshold=0.05,

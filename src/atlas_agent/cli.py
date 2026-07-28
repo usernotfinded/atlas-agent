@@ -65,6 +65,7 @@ from atlas_agent.backtest.robustness import (
     write_strategy_robustness_reports,
 )
 from atlas_agent.brokers.base import BrokerConfigurationError
+from atlas_agent.brokers.status import is_live_broker_known
 from atlas_agent.brokers.paper import PaperBroker
 from atlas_agent.cli_commands import build_core_command_registry
 from atlas_agent.cli_context import CLIContext
@@ -3355,8 +3356,7 @@ def _display_live_status(config: AtlasConfig | None) -> tuple[bool, bool, str]:
     if broker_id in {"", "none"}:
         return False, False, "live broker is not configured"
 
-    known_brokers = {"alpaca", "binance", "ccxt", "ibkr_stub"}
-    if broker_id not in known_brokers:
+    if not is_live_broker_known(broker_id):
         return False, False, "live broker is not supported"
 
     # Credentials presence check only; values are never loaded or decrypted.

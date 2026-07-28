@@ -46,7 +46,7 @@ ALLOWED_MONITORING_STATUSES = {
     "rejected",
 }
 MONITORING_TRIGGER_TYPES = (
-    "allocation_drift",
+    "portfolio_movement",
     "cash_reserve_breach",
     "drawdown_breach",
     "stress_watchlist",
@@ -835,7 +835,7 @@ def _simulate_monitoring_windows(
         window_returns = base_returns[start:start + monitor_window]
 
         # 1. allocation drift check
-        events.append(_check_allocation_drift(
+        events.append(_check_portfolio_movement(
             window=window_idx,
             window_returns=window_returns,
             recheck_threshold=recheck_threshold,
@@ -867,7 +867,7 @@ def _simulate_monitoring_windows(
     return events
 
 
-def _check_allocation_drift(
+def _check_portfolio_movement(
     *,
     window: int,
     window_returns: list[float],
@@ -875,13 +875,12 @@ def _check_allocation_drift(
 ) -> dict[str, Any]:
     """Flag windows whose compounded portfolio return exceeds the threshold.
 
-    This measures how far the portfolio moved over the window, not how far the
-    holdings drifted from their target weights. True allocation drift needs a
-    per-strategy return series, and this layer only receives one portfolio-level
-    series, so the allocations cannot inform the result and are not accepted.
-
-    The `allocation_drift` trigger key is kept as-is because it is part of the
-    published monitoring artifact vocabulary.
+    Named for what it measures. It is not allocation drift: how far holdings
+    moved apart from their target weights needs a per-strategy return series,
+    and this layer receives one portfolio-level series. The two can disagree
+    outright — a window where every holding gains the same amount has no drift
+    and trips this check, and a window that ends flat after one holding doubled
+    and another halved trips nothing while drift peaks.
     """
     cumulative = 1.0
     for r in window_returns:
@@ -890,20 +889,20 @@ def _check_allocation_drift(
     if drift > recheck_threshold * 2:
         return {
             "window": window,
-            "trigger": "allocation_drift",
+            "trigger": "portfolio_movement",
             "status": "paper_monitor_watchlist",
             "reason": f"Simulated drift {drift:.4f} exceeds 2x recheck threshold {recheck_threshold * 2:.4f}.",
         }
     if drift > recheck_threshold:
         return {
             "window": window,
-            "trigger": "allocation_drift",
+            "trigger": "portfolio_movement",
             "status": "needs_recheck",
             "reason": f"Simulated drift {drift:.4f} exceeds recheck threshold {recheck_threshold:.4f}.",
         }
     return {
         "window": window,
-        "trigger": "allocation_drift",
+        "trigger": "portfolio_movement",
         "status": "paper_monitor_ok",
         "reason": f"Simulated drift {drift:.4f} within recheck threshold {recheck_threshold:.4f}.",
     }
@@ -1097,11 +1096,11 @@ def build_paper_portfolio_recheck(
 
     # Check Monitoring
     for i, event in enumerate(monitoring.get("monitoring_events", [])):
-        if event.get("event_type") == "allocation_drift":
+        if event.get("event_type") == "portfolio_movement":
             review_items.append({
                 "id": f"review-monitor-alloc-{i+1:03d}",
                 "source": "monitoring",
-                "trigger": "allocation_drift",
+                "trigger": "portfolio_movement",
                 "status": "paper_recheck_required",
                 "paper_action": "paper_recheck",
                 "severity": "medium",

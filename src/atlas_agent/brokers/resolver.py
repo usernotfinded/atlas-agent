@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING
 
 from atlas_agent.brokers.base import Broker, BrokerProvider
 from atlas_agent.brokers.paper import PaperBroker, PaperBrokerAdapter
+from atlas_agent.brokers.status import is_live_broker_known
 from atlas_agent.portfolio.state import PortfolioState
 
 if TYPE_CHECKING:
@@ -141,8 +142,9 @@ class BrokerResolver:
                 message="live broker is not configured",
             )
 
-        known_brokers = {"alpaca", "binance", "ccxt", "ibkr_stub"}
-        if broker_id not in known_brokers:
+        # The support inventory is the list; a literal here would be a second one,
+        # free to drift from it as this one had.
+        if not is_live_broker_known(broker_id):
             return BrokerStatus(
                 mode="live",
                 broker_id=broker_id,
