@@ -8,5 +8,24 @@
   "pypi_published": false,
   "tag_created": false,
   "github_release_created": false,
-  "candidates": []
+  "candidates": [
+    {
+      "id": "CAND-032",
+      "title": "Deferred domain loading for CLI startup",
+      "status": "proposed",
+      "accepted": false,
+      "category": "performance",
+      "priority": "P2",
+      "risk": "medium",
+      "source": "Every atlas invocation costs ~0.50 s before it does anything: ~346 ms importing atlas_agent.cli, ~75 ms building the argparse tree, ~12 ms interpreter startup. The suite spawns the CLI from 97 call sites, and the dev gate's slowest step spends 73% of its wall clock in 21 such subprocesses, so this is primarily a developer-loop cost rather than a UX one.",
+      "expected_files": [
+        "src/atlas_agent/cli.py",
+        "src/atlas_agent/cli_commands/",
+        "src/atlas_agent/config/schema.py"
+      ],
+      "acceptance_criteria": "A measured reduction in atlas --version wall time with the command surface unchanged: scripts/check_cli_command_compatibility.py passes, every trust-contract envelope is byte-identical, and a test pins the reduction so it cannot silently regress.",
+      "safety_notes": "Import-timing and packaging only. Changes no gate, no default, and no runtime decision: not RiskManager, approval queues, kill switch, heartbeat, deadman, the audit hash-chain, live-submit opt-in, or can_submit. Loads no credentials and adds no network access. The cli_bootstrap.py pre-router keeps its four configless commands and its stdlib-only module scope.",
+      "open_question": "Two levers, priced in docs/development/safety-invariant-audit-followups.md. ConfigDict(defer_build=True) measures 74% off pydantic class creation (200 synthetic models: 178 ms to 46.5 ms), about a quarter of startup, but 128 of 129 model classes inherit BaseModel directly with no shared base, and it moves a malformed model from an import-time error to a first-use error. Lazy per-domain handler import has a larger ceiling (config alone imports in 137 ms against 273 ms for cli_commands) but threads local imports through a 5.9k-line dispatch whose command surface is a pinned trust contract. Deciding which, or neither, is the candidate."
+    }
+  ]
 }
