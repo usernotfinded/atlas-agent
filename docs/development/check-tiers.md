@@ -8,16 +8,21 @@ balance of speed and coverage for each situation.
 | Tier | Script | Target time | When to run |
 |---|---|---|---|
 | Smoke | `scripts/smoke_check.sh` | < 10 s | After small docs/checker edits |
-| Local Quick | `scripts/local_quick_check.sh` | ~30–45 s | Before committing |
+| Local Quick | `scripts/local_quick_check.sh` | ~20–35 s | Before committing |
 | Dev | `scripts/dev_check.sh` | ~150–200 s | Before opening/updating a PR |
 | CI | `scripts/ci_check.sh` | ~60–180 s | When docs/checks/CI/packaging change |
 | Release Quick | `scripts/release_check.sh --quick` | ~150–200 s | Release-adjacent quick safety check |
 | Release Full | `scripts/release_check.sh --full` | ~120–600 s | Before push/tag |
 
-Times are measured on a developer machine with the `dev` extra installed. The
-dev tier distributes its three slowest steps across cores, so its figure scales
-with core count and is slower on a single-core runner. Without `pytest-xdist`
-those steps run serially and the tier takes roughly twice as long.
+Times are measured on a four-core developer machine with the `dev` extra
+installed. The local-quick and dev tiers distribute their slowest steps across
+cores, so those figures scale with core count. Without `pytest-xdist` the steps
+run serially and both tiers take roughly two to three times as long — an absent
+plugin degrades the speed, never the coverage.
+
+These figures go stale as tests are added, so treat them as an order of
+magnitude rather than a budget. Each script prints its own `Total elapsed` when
+it finishes, which is the number to trust on your machine.
 
 ## Smoke Check
 
@@ -151,16 +156,23 @@ These are non-negotiable safety gates that run even in the fastest smoke tier.
 
 ## Concurrency and Heat
 
-None of the local check scripts use `pytest-xdist` or `-n auto` by default.
-If you install `pytest-xdist` and want faster wall-clock time at the cost of
-higher CPU/heat, you can override pytest arguments:
+`local_quick_check.sh` and `dev_check.sh` distribute their slowest test steps
+across cores when `pytest-xdist` is importable. Only steps measured to benefit
+are distributed — the checker steps around them cost 0–1 s each, where worker
+startup would cost more than it saves.
+
+An absent plugin degrades the speed, never the coverage: without `pytest-xdist`
+the same steps run serially and the same tests run.
+
+To keep a laptop cool, force serial execution:
 
 ```bash
-ATLAS_CHECK_PYTEST_ARGS="-n auto" ./scripts/local_quick_check.sh
+ATLAS_CHECK_SERIAL=1 ./scripts/local_quick_check.sh
 ```
 
-The default serial execution is chosen to keep Macs cool during normal
-development. CI runs the full suite in GitHub Actions workers.
+On this four-core checkout that is the difference between ~21 s and ~53 s for
+the local-quick tier, with identical pass counts. CI runs the full suite in
+GitHub Actions workers.
 
 The `quick` marker identifies deterministic edit-loop coverage. Tests in domain
 directories receive it automatically. The `slow` marker identifies

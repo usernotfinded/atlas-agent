@@ -40,8 +40,10 @@ fi
 # short enough that worker startup would cost more than it saves.
 # pytest-xdist ships in the dev extra but the gate must still run without it, so
 # an absent plugin degrades to the serial behaviour rather than failing.
+# ATLAS_CHECK_SERIAL=1 forces serial on a machine where the heat matters more
+# than the wall clock.
 PYTEST_PARALLEL_ARGS=()
-if "$PYTHON_BIN" -c "import xdist" >/dev/null 2>&1; then
+if [[ "${ATLAS_CHECK_SERIAL:-}" != "1" ]] && "$PYTHON_BIN" -c "import xdist" >/dev/null 2>&1; then
     PYTEST_PARALLEL_ARGS+=("-n" "auto")
 fi
 

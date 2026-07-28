@@ -17,7 +17,8 @@ set -euo pipefail
 # Atlas Agent — Local Quick Check
 # Medium-cost local gate intended to run before committing.
 #
-# Target runtime: ~30–45 seconds on a modern Mac.
+# Target runtime: ~20–35 seconds with pytest-xdist on four cores; roughly
+# two to three times that serially. Each run prints its own total.
 # Skips historical release checkers, subprocess-heavy packaging checks,
 # and slow integration tests while preserving all safety boundaries.
 #
@@ -32,6 +33,7 @@ set -euo pipefail
 #   ATLAS_CHECK_FAIL_FAST=1       Pass -x to pytest invocations.
 #   ATLAS_CHECK_LAST_FAILED=1     Pass --lf to pytest invocations.
 #   ATLAS_CHECK_PYTEST_ARGS       Extra arguments appended to pytest invocations.
+#   ATLAS_CHECK_SERIAL=1          Do not distribute the test step across cores.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -51,6 +53,17 @@ fi
 if [[ -n "${ATLAS_CHECK_PYTEST_ARGS:-}" ]]; then
     read -ra USER_ARGS <<< "$ATLAS_CHECK_PYTEST_ARGS"
     PYTEST_EXTRA_ARGS+=("${USER_ARGS[@]}")
+fi
+
+# The quick test tier is this gate: every checker step around it costs 0-1 s and
+# the tests cost the rest, so it is the only step worth distributing.
+# pytest-xdist ships in the dev extra but the gate must still run without it, so
+# an absent plugin degrades to the serial behaviour rather than failing.
+# ATLAS_CHECK_SERIAL=1 forces serial on a machine where the heat matters more
+# than the wall clock.
+PYTEST_PARALLEL_ARGS=()
+if [[ "${ATLAS_CHECK_SERIAL:-}" != "1" ]] && "$PYTHON_BIN" -c "import xdist" >/dev/null 2>&1; then
+    PYTEST_PARALLEL_ARGS+=("-n" "auto")
 fi
 
 TOTAL_ELAPSED=0
@@ -129,8 +142,9 @@ _run "18. git diff --cached --check" \
 # --- Tier 3: automatically classified quick tests ---
 # Tests in domain directories join this tier automatically. Legacy root-level
 # coverage is classified centrally, and exceptional tests can declare `quick`.
-_run "18. automatically classified quick tests" \
+_run "19. automatically classified quick tests" \
     "$PYTHON_BIN" -m pytest tests -m "quick" -q \
+        "${PYTEST_PARALLEL_ARGS[@]+"${PYTEST_PARALLEL_ARGS[@]}"}" \
         "${PYTEST_EXTRA_ARGS[@]+"${PYTEST_EXTRA_ARGS[@]}"}"
 
 echo ""
