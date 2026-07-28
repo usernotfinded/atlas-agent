@@ -38,6 +38,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
+- `tests/safety/test_setup_wizard_cannot_enable_live.py`, pinning hard invariant 1
+  on the path a new user actually takes. `setup/wizard_ui.py` says of its
+  trading-mode step that "it is where a user can move themselves from paper to
+  live", and the existing wizard tests asserted only that `WizardState` round-trips
+  through its own JSON. Finishing the wizard in live mode writes
+  `trading_mode = "live"` and nothing else — `enable_live_trading` and
+  `enable_live_submit` stay false and `can_submit` stays false — which is correct
+  and was untested. Making the wizard also set the opt-in flags is a plausible,
+  well-meant change that would collapse two decisions into one screen; it now
+  fails out loud.
 - `tests/research/test_research_error_code_mapping.py`, ratcheting the research
   error-code allowlist against the codes the source raises. `src/atlas_agent`
   raises 205 distinct literal `ResearchSessionError` codes and
