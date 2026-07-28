@@ -144,25 +144,45 @@ Every `atlas` invocation takes ~0.50 s before it does anything: ~346 ms
 importing `atlas_agent.cli`, ~75 ms building the argparse tree, ~12 ms of
 interpreter startup. `atlas --version` pays all of it.
 
-**The original entry blamed `atlas_agent.backtest` at ~157 ms and proposed
-deferring it. That number does not survive checking.** 157 ms is what the
-importing-module attribution assigns to whichever import arrives at the shared
-infrastructure first, and `backtest` happens to be first in `cli.py`. Its
-*marginal* cost — the time that disappears if `cli.py` stops importing it — is
-22.7 ms, about 4.5% of startup. The other ~174 ms is pydantic, `config.schema`,
-`risk`, `audit`, and `events`, which `cli_commands` pulls in regardless.
+**This is mostly not a UX cost. It is the dominant cost of the dev gate.** The
+test suite exercises the CLI the way an operator does — by spawning it — from 97
+call sites. The gate's single slowest step, `4h. paper strategy evaluation
+tests` at 46 s and 31% of accounted gate time, spends 73% of its wall clock in 21
+CLI subprocesses at ~0.56 s each, most of that before the command starts.
 
-Deferring the backtest imports would therefore mean threading local imports
-through the dispatch in a 5.9k-line module whose command surface is a pinned
-trust contract, to recover 4.5%. It is not worth it at that price, and it is not
-the boundary question the original entry described.
+**The original entry blamed `atlas_agent.backtest` at ~157 ms. That number does
+not survive checking.** 157 ms is what importing-module attribution assigns to
+whichever import reaches the shared infrastructure first, and `backtest` happens
+to be first in `cli.py`. Its *marginal* cost — what disappears if `cli.py` stops
+importing it — is 22.7 ms, about 4.5% of startup. The rest is pydantic,
+`config.schema`, `risk`, `audit`, and `events`, which `cli_commands` pulls in
+regardless.
 
-Where the time actually goes is pydantic building model classes at import: the
-self-time hotspots are ten `*.models` modules totalling ~64 ms, plus
-`config.schema` at ~10 ms and pydantic itself at ~27 ms. Reducing that is a
-question about pydantic at module scope, not about the `cli_bootstrap.py`
-pre-router — which stays narrow for its own reason, that the four configless
-commands must run with no config loaded and no third-party import on the path.
+That trap is worth stating once, because it is easy to fall into twice:
+`urllib.request` sits at `cli.py` module scope for one function that makes a
+network call, and `-X importtime` bills it 28.6 ms. Moving it into that function
+saves **0.0 ms** — the rest of the CLI graph already imports it. A module-scope
+import is only worth deferring if its *marginal* cost is measured, not its
+attributed one.
+
+Where the time actually goes is pydantic building validation schemas at class
+creation: 209 model classes reachable from `cli.py`, with `config.schema`,
+`backtest.models`, and `safety.models` the largest. `ConfigDict(defer_build=True)`
+measures at 74% off class creation (200 synthetic models: 178 ms → 46.5 ms),
+with the deferred work costing 0.29 ms on a model's first validation and nothing
+after. On this codebase that is roughly a quarter of startup.
+
+Deciding it: 128 of the 129 model classes inherit `BaseModel` directly, so there
+is no shared base to set the option on once. It means either editing 128 class
+bodies across every domain including `config`, `safety`, `risk`, `brokers`, and
+`execution`, or introducing a base class and rewiring all of them. It also moves
+a malformed model from an import-time error to a first-use error, which is the
+wrong direction for this project unless the suite is known to construct every
+model.
+
+The `cli_bootstrap.py` pre-router is not the lever either way. It stays narrow
+for its own reason: the four configless commands must run with no config loaded
+and no third-party import on the path.
 
 ## What the audit did change
 
