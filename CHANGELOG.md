@@ -68,6 +68,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   356 s to 165 s on this checkout with identical pass counts. Steps measured not
   to benefit stay serial, and a checkout without the `dev` extra keeps the
   previous serial behavior.
+- `safety/policy.py` described its `HARD_RULES` as "surfaced in the CLI and
+  asserted against by the trust checkers, so the promises made to users and the
+  promises made in code cannot silently diverge". Nothing imports the constant,
+  no CLI command reads it, no checker asserts it, and the module is not exported
+  from `safety/__init__.py`. The constant stays — quoting a canonical wording
+  beats paraphrasing it, which is what `execution/order_router.py` does — but the
+  header now states that nothing reads it and names where each rule is really
+  enforced. A safety file that overstates its own enforcement reads like a gate
+  to the next person looking for one.
 - `guard_sync` admitted `paper` as a live read-only sync broker. It asked
   `is_broker_known`, and `paper` is in the support inventory with
   `read_only_supported=True`, so the guard answered yes where `BrokerResolver`
