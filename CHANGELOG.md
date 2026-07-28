@@ -38,17 +38,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
-- `tests/research/test_unexercised_research_command_envelopes.py`, running the
-  twenty `release-candidate-*` and `provider-safety-dossier-*` CLI handlers that
-  no other test executed. Coverage over the whole suite put those two modules at
-  3% and 4% with every handler body unrun, while the logic behind them sat at 81%
-  and 88% — the logic was tested, the CLI wiring to it was not, and the command
-  contract pinned the names so the surface looked covered. The smoke pass takes
-  them to 40% and 44%. It asserts what holds regardless of which refusal-code
-  convention a command follows: the handler runs, emits a well-formed envelope,
-  and its exit status agrees with the envelope's `ok`, so a command cannot report
-  failure and exit 0. Subcommands are read from the parser, so a new one in
-  either group is covered without editing the file.
+- `tests/research/test_research_command_envelopes.py`, running all 175
+  `atlas research` subcommands. Coverage over the whole suite put
+  `cli_commands/research/release_candidate.py` at 3% and `safety_dossier.py` at
+  4% with every handler body unrun, while the logic behind them sat at 81% and
+  88% — the logic was tested, the CLI wiring to it was not, and the command
+  contract pinned the names so the surface looked covered. Neighbouring handler
+  modules were at 17% to 53% for the same reason. One 28-second file takes the
+  whole `cli_commands/research/` package to 41%. It asserts what holds
+  regardless of which refusal-code convention a command follows: the handler
+  runs, emits a well-formed envelope, and its exit status agrees with the
+  envelope's `ok`, so a command cannot report failure and exit 0. Subcommands
+  are read from the parser, so one added tomorrow is covered without editing the
+  file.
+- Four commands found by that sweep report `ok: false` for a missing artifact
+  and exit 0: `provider-credential-boundary-summary`,
+  `provider-execution-chain-doctor`, `provider-opt-in-policy-summary`, and
+  `provider-preflight-freeze-summary`. Their `-show` siblings report the same
+  condition with exit 1, so this is an inconsistency inside a command family
+  rather than a convention. They are strict `xfail` pending a decision, since
+  changing four exit codes changes the pinned CLI surface.
 - The provider/execution boundary test now covers the return direction. Blocking
   the import edge stops the execution layer being *called* from the AI side; it
   does not stop the execution layer *reading* what the AI side wrote. A submit

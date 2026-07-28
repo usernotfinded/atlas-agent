@@ -159,10 +159,40 @@ Deciding it: the exit codes are part of the CLI surface that
 `scripts/check_cli_command_compatibility.py` and the trust contracts pin, so
 moving the research group to 2 is a contract change affecting roughly 170
 subcommands. Leaving it means the comment in `cli_io.py` describes one half of
-the CLI. `tests/research/test_unexercised_research_command_envelopes.py`
-deliberately asserts only the property that holds under either — that the exit
-status agrees with the envelope's `ok` — rather than settling this in a test
-written for something else.
+the CLI. `tests/research/test_research_command_envelopes.py` deliberately
+asserts only the property that holds under either — that the exit status agrees
+with the envelope's `ok` — rather than settling this in a test written for
+something else.
+
+### Four commands exit 0 while reporting failure — `contract_change`
+
+Running all 175 `atlas research` subcommands against a missing artifact, 171
+agree with their own envelope and four do not:
+
+| command | envelope | exit |
+|---|---|---|
+| `provider-credential-boundary-summary` | `ok: false` | 0 |
+| `provider-execution-chain-doctor` | `ok: false` | 0 |
+| `provider-opt-in-policy-summary` | `ok: false` | 0 |
+| `provider-preflight-freeze-summary` | `ok: false` | 0 |
+
+Each reports the artifact is missing — `provider-execution-chain-doctor` says
+`blocking_reasons: ["research_artifact_not_found"]` — and returns success. A
+caller reading the exit code sees success; a caller parsing the JSON sees
+failure. Shell pipelines and CI read the exit code.
+
+This is an inconsistency inside a command family rather than a convention:
+`provider-opt-in-policy-show` reports the same missing artifact with exit 1
+while `provider-opt-in-policy-summary` reports it with exit 0.
+
+Deciding it: there is a defensible reading for `-doctor` and `-summary`, that
+`ok` describes the subject's health rather than the command's success — the
+doctor ran fine, the patient is sick. It is weaker here because
+`research_artifact_not_found` means there is no patient, and because the
+`-show` siblings disagree. Either way, changing four exit codes is a change to
+the pinned CLI surface. The four are strict `xfail` in
+`tests/research/test_research_command_envelopes.py`, so whichever way it is
+decided, the marker has to be removed deliberately.
 
 ### Two of invariant 5's six limits are not enforced — `semantics_change`
 

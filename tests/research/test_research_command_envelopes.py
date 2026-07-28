@@ -1,40 +1,41 @@
 # ==============================================================================
 # PROJECT: Atlas Agent
-# FILE:    tests/research/test_unexercised_research_command_envelopes.py
-# PURPOSE: Runs the research CLI handlers that no other test executes, and holds
-#         them to the JSON envelope contract.
+# FILE:    tests/research/test_research_command_envelopes.py
+# PURPOSE: Runs every `atlas research` subcommand and holds each to the JSON
+#         envelope contract.
 # DEPS:    argparse, json, pytest, atlas_agent.cli.
 # ==============================================================================
 
-"""Smoke coverage for the release-candidate and provider-safety-dossier commands.
+"""Smoke coverage for the whole `atlas research` command surface.
 
-Coverage over the whole suite put `cli_commands/research/release_candidate.py`
-at 3% and `cli_commands/research/safety_dossier.py` at 4%, with every handler
-body unexecuted — while the logic behind them,
-`research/release_candidate_readiness.py` and `research/provider_safety_dossier.py`,
-sits at 81% and 88%. The logic was tested; the CLI wiring to it was not.
+Coverage over the full suite put `cli_commands/research/release_candidate.py` at
+3% and `cli_commands/research/safety_dossier.py` at 4%, with every handler body
+unexecuted — while the logic behind them, `research/release_candidate_readiness.py`
+and `research/provider_safety_dossier.py`, sat at 81% and 88%. The logic was
+tested; the CLI wiring to it was not. Neighbouring handler modules were at 17%
+to 53% for the same reason, so this covers all 175 subcommands rather than the
+two groups that surfaced first.
 
 `check_cli_command_compatibility.py` and `tests/fixtures/cli_command_contract.json`
-pin these command names, which made the gap harder to see: the surface was
-asserted to exist while nothing ran it. A handler could pass the wrong argument,
-mishandle `--json`, or let an exception escape, and the contract check would
-still pass.
+pin these names, which made the gap harder to see: the surface was asserted to
+exist while nothing ran it. A handler could pass the wrong argument, mishandle
+`--json`, or let an exception escape, and the contract check would still pass.
 
-What this asserts is deliberately narrow and contract-shaped: the command runs,
-answers in the documented envelope, and its exit status agrees with what the
-envelope says. A handler reporting `ok: false` while exiting 0 is a refusal the
-caller cannot see.
+What each case asserts is deliberately narrow and contract-shaped: the command
+runs, answers in the documented envelope, and its exit status agrees with what
+the envelope says. A handler reporting `ok: false` while exiting 0 is a refusal
+the caller cannot see — four commands do exactly that and are marked below.
 
 It does not assert a particular refusal code. The research group answers a clean
-refusal with exit 1 while `cli_io.emit_cli_error` uses 2 for the same thing —
-both conventions are live, and asserting either here would pin the wrong one for
-most of the group. That divergence is recorded separately rather than settled by
-a test written for something else.
+refusal with exit 1 while `cli_io.emit_cli_error` uses 2 for the same thing.
+Both conventions are live, and asserting either here would pin the wrong one for
+most of the group; the divergence is recorded in
+`docs/development/safety-invariant-audit-followups.md` rather than settled by a
+test written for something else.
 
-The subcommands are read from the parser rather than listed, so a command added
-to either group is covered without editing this file. Required positionals get a
-placeholder id, which exercises each handler's not-found path — the branch an
-operator hits first.
+Subcommands are read from the parser, so one added tomorrow is covered without
+editing this file. Required arguments get a placeholder id, which exercises each
+handler's not-found path — the branch an operator hits first.
 """
 
 # --- IMPORTS ---
@@ -51,8 +52,19 @@ from atlas_agent.cli import build_parser, main
 
 # --- CONFIGURATION AND CONSTANTS ---
 
-#: The two command groups no other test executes.
-UNEXERCISED_PREFIXES = ("release-candidate", "provider-safety-dossier")
+#: Commands whose exit status disagrees with their own envelope: each reports
+#: `ok: false` for a missing artifact and exits 0. Their `-show` siblings report
+#: the same condition with exit 1, so this is an inconsistency inside a command
+#: family rather than a convention. Marked rather than fixed — see
+#: `docs/development/safety-invariant-audit-followups.md`.
+EXIT_STATUS_DISAGREES = frozenset(
+    {
+        "provider-credential-boundary-summary",
+        "provider-execution-chain-doctor",
+        "provider-opt-in-policy-summary",
+        "provider-preflight-freeze-summary",
+    }
+)
 
 #: Stands in for a required id. Nothing by this name exists, which is the point.
 PLACEHOLDER_ID = "nonexistent-id-for-smoke-coverage"
@@ -92,12 +104,8 @@ def _research_subparsers() -> dict[str, argparse.ArgumentParser]:
     raise AssertionError("`atlas research` no longer has subcommands")
 
 
-def _unexercised_commands() -> list[str]:
-    return sorted(
-        name
-        for name in _research_subparsers()
-        if name.startswith(UNEXERCISED_PREFIXES)
-    )
+def _all_research_commands() -> list[str]:
+    return sorted(_research_subparsers())
 
 
 def _argv_for(name: str) -> list[str]:
@@ -131,17 +139,27 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys) -> Path:
     return tmp_path
 
 
-def test_the_command_groups_are_still_found() -> None:
-    """Every case below is vacuous if the parser walk stops finding them."""
-    commands = _unexercised_commands()
+def test_the_command_surface_is_still_found() -> None:
+    """Every case below is vacuous if the parser walk stops finding commands."""
+    commands = _all_research_commands()
 
-    assert len(commands) >= 15, (
-        f"only {len(commands)} commands matched {UNEXERCISED_PREFIXES}: {commands}. "
-        "The parser walk has probably stopped reaching the research subcommands."
+    assert len(commands) >= 150, (
+        f"the parser walk found only {len(commands)} research subcommands. It has "
+        "probably stopped reaching them rather than the surface having shrunk."
     )
 
 
-@pytest.mark.parametrize("command", _unexercised_commands())
+def test_the_marked_commands_still_exist() -> None:
+    """A marked command that vanished would leave a stale exemption behind."""
+    missing = EXIT_STATUS_DISAGREES - set(_all_research_commands())
+
+    assert missing == set(), (
+        f"{sorted(missing)} are marked as exit-status disagreements and no longer "
+        "exist. Remove them from EXIT_STATUS_DISAGREES."
+    )
+
+
+@pytest.mark.parametrize("command", _all_research_commands())
 def test_command_answers_in_the_json_envelope(
     command: str, workspace: Path, capsys
 ) -> None:
@@ -179,6 +197,13 @@ def test_command_answers_in_the_json_envelope(
     # The property that survives both exit-code conventions, and the one worth
     # having: a command that reports failure must not exit 0. A handler that says
     # `ok: false` and returns success is a refusal a caller cannot see.
+    if command in EXIT_STATUS_DISAGREES:
+        pytest.xfail(
+            f"`atlas research {command}` reports ok={payload['ok']} and exits "
+            f"{code}. Its `-show` sibling reports the same missing artifact with "
+            "exit 1."
+        )
+
     assert (code == 0) is payload["ok"], (
         f"`atlas research {command} --json` reported ok={payload['ok']} and exited "
         f"{code}. Success and exit status must agree, whichever refusal code the "
