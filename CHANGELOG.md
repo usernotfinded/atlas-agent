@@ -38,9 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
-- `docs/development/safety-invariant-audit-followups.md`, recording the six
-  findings whose resolution is a maintainer's decision rather than a fix, with
-  what deciding either way would involve.
+- `docs/development/safety-invariant-audit-followups.md`, recording the findings
+  whose resolution is a maintainer's decision rather than a fix, with what
+  deciding either way would involve. Three have since been decided and keep
+  their finding alongside the decision; three remain open.
 
 ### Changed
 
@@ -72,10 +73,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `build_paper_portfolio_review_pack` accepted `proposal`, `stress`,
   `monitoring`, and `recheck` and discarded all four, returning a pack built
   from freshly recomputed evidence while its digests described that other set.
-- `_check_allocation_drift` reported how far the portfolio moved rather than how
-  far holdings drifted from their target weights; the two can point opposite
-  ways. The parameter it never read is gone and the docs now state what is
-  measured.
+- The `allocation_drift` monitoring trigger reported how far the portfolio moved
+  rather than how far holdings drifted from their target weights; the two can
+  point opposite ways, so a flat window read as evidence the weights held —
+  exactly where real drift peaks. The check and its trigger key are now
+  `portfolio_movement`, in `scripts/check_paper_portfolio_monitoring.py` and the
+  docs with them, and the parameter the check never read is gone. Monitoring
+  artifacts are generated locally and untracked, so nothing persisted carries
+  the old key; `docs/paper-portfolio-monitoring.md` records what it was called
+  through v0.6.26.
+- The broker allowlist existed as a literal in `brokers/resolver.py` and again in
+  `cli.py` while the support inventory held the same knowledge with richer
+  status, and the three had drifted in both directions: `ibkr_stub` was in both
+  literals and unknown to the inventory, `ibkr` was known to the inventory and in
+  neither literal, so neither name worked coherently. Both literals are gone and
+  the inventory is the single source, with `ibkr_stub` carried as an alias of
+  `ibkr` — a mapping `diagnostics/preflight.py` already applied inline, whose
+  special case is gone too. The gate reads `is_live_broker_known` rather than
+  `is_broker_known`, because `paper` is in the inventory and the plain form would
+  have admitted `live_broker = "paper"`.
 - A failure to flag an order for reconciliation left no trace while the report
   returned to the operator still said reconciliation was required.
 - `scripts/release_assurance.py` aborted assurance-pack generation with an
