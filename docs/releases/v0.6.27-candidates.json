@@ -45,6 +45,23 @@
       "acceptance_criteria": "The two xfail cases in tests/risk/test_declared_limits_are_wired.py pass with their markers removed, each new guard is verified by breaking the source and confirming the specific test fails, and no previously accepted order is rejected except by the limit being added.",
       "safety_notes": "Tightens the deterministic risk gate; enables nothing. Adds no live trading, live submit, broker or provider execution, credential loading, or network access, and changes no default toward permissiveness. It can only reject orders that are accepted today.",
       "open_question": "The daily-loss chain is a stub at both ends: realized_pnl_today is carried from PortfolioState through PortfolioSnapshot into every evaluation, and nothing in src/ ever increments it, so it is always zero. Adding the rule alone would be a limit on a number nobody writes. Closing it properly means deciding where realized daily P&L is accounted \u2014 the paper broker's fills, the trade journal, or a session boundary the caller resets \u2014 which is a portfolio-accounting decision, not a risk-rule one. Leverage is narrower: no broker adapter forwards the field, so the question is whether to reject leveraged orders at the gate or to stop carrying a field the system does not act on."
+    },
+    {
+      "id": "CAND-034",
+      "title": "Map the research error codes the CLI flattens to a generic message",
+      "status": "proposed",
+      "accepted": false,
+      "category": "usability",
+      "priority": "P2",
+      "risk": "low",
+      "source": "safe_research_session_error maps a ResearchSessionError to a vetted status and falls back to ('research_error', 'Research command failed.') for anything unrecognised. src/atlas_agent raises 205 distinct literal codes and RESEARCH_SESSION_ERROR_CODES maps 69 of them, so 136 land on the generic message. Measured over the CLI, 30 of the 175 atlas research subcommands answer a nonexistent id with 'Research command failed.' while the reason was known, static, and safe to show \u2014 for example provider_safety_dossier_source_seal_missing. A further 79 table entries map codes nothing raises any more.",
+      "expected_files": [
+        "src/atlas_agent/research/errors.py",
+        "tests/research/test_research_error_code_mapping.py"
+      ],
+      "acceptance_criteria": "Entries added for the codes an operator can reach, the ratchets in tests/research/test_research_error_code_mapping.py lowered to the new counts, and no status string carrying a path, identifier, or any value from the exception rather than a literal.",
+      "safety_notes": "The generic fallback stays. It is the fail-safe half of this design \u2014 an unmapped exception string must never be echoed, because in general it can carry a path or user data. This only widens the vetted allowlist, so it enables nothing at runtime and changes no gate, default, or trading behaviour.",
+      "open_question": "Whether all 136 deserve a distinct message, or whether the families collapse into a smaller vocabulary \u2014 eleven different not-found spellings already exist across the -show commands (not_found, artifact_not_found, research_artifact_not_found, dossier_not_found, report_not_found, and more). Adding 136 more strings without deciding that first would make the surface harder to consume, not easier. The 79 dead entries also need a call: delete them, or restore the raises they were written for."
     }
   ]
 }
