@@ -138,6 +138,32 @@ are pinned by tests and the limitation is documented in `docs/kill-switch.md`.
 
 ## Open items
 
+### Two CLI refusal-code conventions are live at once — `contract_change`
+
+`cli_io.emit_cli_error` returns exit 2 and explains why in a comment: "exit 1 is
+what an uncaught Python traceback produces. Reserving a distinct code lets
+callers and CI tell 'the command ran and said no' apart from 'the command
+crashed'."
+
+The research command group does not follow it. `research dossier`,
+`research show`, `research backtest-proposal`, and the whole
+`release-candidate-*` and `provider-safety-dossier-*` surface answer a clean,
+structured refusal with exit **1** — the code the comment reserves for a crash.
+Each emits a well-formed `{"ok": false, "status": ...}` envelope while doing so.
+
+So a caller following the documented rule reads every research refusal as a
+crash, and cannot tell a missing artifact from a traceback. Both conventions are
+long-standing and internally consistent within their own halves.
+
+Deciding it: the exit codes are part of the CLI surface that
+`scripts/check_cli_command_compatibility.py` and the trust contracts pin, so
+moving the research group to 2 is a contract change affecting roughly 170
+subcommands. Leaving it means the comment in `cli_io.py` describes one half of
+the CLI. `tests/research/test_unexercised_research_command_envelopes.py`
+deliberately asserts only the property that holds under either — that the exit
+status agrees with the envelope's `ok` — rather than settling this in a test
+written for something else.
+
 ### Two of invariant 5's six limits are not enforced — `semantics_change`
 
 Hard invariant 5 states that `RiskManager` enforces "hard-coded limits on
