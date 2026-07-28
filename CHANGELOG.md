@@ -38,6 +38,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
+- Opened `CAND-035`, measuring the duplication in `cli_commands/research/`: 170
+  handlers over 7314 statements, of which 166 repeat the same workspace
+  resolution, `no_workspace` branch, and two-clause exception handling. Two
+  handlers from different modules are 52% line-identical. It is proposed rather
+  than done because the family is less uniform than the line counts suggest — 33
+  handlers build their error code at runtime and four disagree with their own
+  envelope — and because a half-applied version leaving two idioms side by side
+  would be worse than the duplication.
 - `tests/safety/test_setup_wizard_cannot_enable_live.py`, pinning hard invariant 1
   on the path a new user actually takes. `setup/wizard_ui.py` says of its
   trading-mode step that "it is where a user can move themselves from paper to

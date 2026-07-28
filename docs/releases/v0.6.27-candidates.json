@@ -62,6 +62,23 @@
       "acceptance_criteria": "Entries added for the codes an operator can reach, the ratchet in tests/research/test_research_error_code_mapping.py lowered to the new count, and no status string carrying a path, identifier, or any value from the exception rather than a literal.",
       "safety_notes": "The generic fallback stays. It is the fail-safe half of this design \u2014 an unmapped exception string must never be echoed, because in general it can carry a path or user data. This only widens the vetted allowlist, so it enables nothing at runtime and changes no gate, default, or trading behaviour.",
       "open_question": "Whether all of them deserve a distinct message, or whether the families collapse into a smaller vocabulary \u2014 eleven different not-found spellings already exist across the -show commands (not_found, artifact_not_found, research_artifact_not_found, dossier_not_found, report_not_found, and more). Adding that many strings without deciding the vocabulary first would make the surface harder to consume, not easier."
+    },
+    {
+      "id": "CAND-035",
+      "title": "Absorb the repeated research handler preamble",
+      "status": "proposed",
+      "accepted": false,
+      "category": "maintainability",
+      "priority": "P2",
+      "risk": "medium",
+      "source": "cli_commands/research/ holds 170 handlers over 7314 statements, median 42 statements each. 166 of them repeat the same preamble and epilogue: resolve_workspace_path(), an identical no_workspace branch printing the same JSON, a try block, `except ResearchSessionError` mapping through safe_research_session_error, and `except Exception` emitting research_error. Two handlers picked from different modules are 52% line-identical. 80 of the 170 share an AST shape with another handler.",
+      "expected_files": [
+        "src/atlas_agent/cli_commands/research/_shared.py",
+        "src/atlas_agent/cli_commands/research/"
+      ],
+      "acceptance_criteria": "tests/research/test_research_command_envelopes.py passes unchanged for all 175 subcommands \u2014 same envelope, same exit status agreement \u2014 and scripts/check_cli_command_compatibility.py reports no surface change. Every handler moves, or none does: two idioms side by side would be worse than the duplication.",
+      "safety_notes": "Refactor of CLI error handling and workspace resolution only. Adds no gate, removes none, and touches neither the risk gate nor the kill switch, approval queues, broker adapters, or the audit hash-chain. The fail-closed generic fallback in safe_research_session_error is preserved as-is.",
+      "open_question": "Whether the shared shape is genuinely one thing or several that currently look alike. The 33 handlers that build their error code at runtime, and the four whose exit status disagrees with their envelope, are evidence the family is not as uniform as the line counts suggest. A wrapper that forces them into one shape would either paper over those differences or need escape hatches that reintroduce the duplication. Worth spiking on one module and measuring the real reduction before committing to 170."
     }
   ]
 }
