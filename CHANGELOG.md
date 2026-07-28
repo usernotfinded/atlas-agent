@@ -38,10 +38,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
+- A differential test over the same space, pinning `brokers/guards.py` against
+  `BrokerResolver`. The live-submit rule is written twice on purpose — the
+  resolver reports a reason code per gate, the guard raises once — and the two
+  had already drifted apart once while nothing compared them. A guard may be
+  stricter than the live path; it may never be looser, and that is now asserted
+  for submit across every gate combination and for sync across the inventory.
 - `docs/development/safety-invariant-audit-followups.md`, recording the findings
   whose resolution is a maintainer's decision rather than a fix, with what
-  deciding either way would involve. Three have since been decided and keep
-  their finding alongside the decision; three remain open.
+  deciding either way would involve. Five have since been decided and keep their
+  finding alongside the decision; one remains open.
 
 ### Changed
 
@@ -53,6 +59,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   356 s to 165 s on this checkout with identical pass counts. Steps measured not
   to benefit stay serial, and a checkout without the `dev` extra keeps the
   previous serial behavior.
+- `guard_sync` admitted `paper` as a live read-only sync broker. It asked
+  `is_broker_known`, and `paper` is in the support inventory with
+  `read_only_supported=True`, so the guard answered yes where `BrokerResolver`
+  refuses with `live_broker_unsupported`. `guard_submit` survives the same
+  predicate only because `live_submit_supported` is false for `paper`. The guard
+  has no callers, so nothing was exposed; a guard that is looser than the live
+  path is a defect the day someone wires it in, which is what its docstring
+  offers. It now asks `is_live_broker_known`.
 - Strategy plugin discovery now happens once per process instead of once per
   registry build. The registry is rebuilt for every `BacktestEngine`, and 94% of
   building an engine was `importlib.metadata.entry_points()` walking every

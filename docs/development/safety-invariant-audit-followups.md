@@ -91,6 +91,36 @@ is the wrong behaviour to preserve: strategy code appearing mid-run enters with
 no restart and no review. `cache_clear()` on that function rescans if a caller
 ever needs it.
 
+### `guard_submit` and `guard_sync` had no callers — `cleanup`
+
+`brokers/guards.py` holds two fail-closed guards that nothing called. The
+original note recorded them as redundant with the resolver and said `guard_sync`
+agreed with it anyway: "both allow read-only sync for `alpaca` only. Wiring it in
+could only loosen behaviour."
+
+**That claim was wrong, and checking it is what found the defect.** `guard_sync`
+asked `is_broker_known`, and `paper` is in the inventory with
+`read_only_supported=True` — so the guard admitted `paper` as a *live* sync
+broker while `BrokerResolver` refuses it as `live_broker_unsupported`. The same
+class of mistake as the two broker literals, in the module written to prevent it.
+`guard_submit` survives the identical predicate only because
+`live_submit_supported` is false for `paper`; `guard_sync` had no such second
+line.
+
+**Decided: fixed, and pinned rather than deleted.** `guard_sync` now asks
+`is_live_broker_known`. Deleting the guards would have removed a cross-check to
+save lines: the live-submit rule is written twice on purpose, because the
+resolver must report a reason code per gate and the guard must raise once, and
+neither output can be derived from the other without parsing a message — which
+this project does not do. So the duplication stays and the agreement is now
+tested: all 2^9 gate combinations assert that `guard_submit` never allows what
+the resolver denies for a shared reason, and never refuses what it calls ready.
+
+A guard may be stricter than the live path. It may never be looser. That is the
+property the tests state, and it is what nothing checked while these guards sat
+uncalled — which is how the resolver came to answer `live_submit_ready` for
+brokers the inventory disables.
+
 ### A missing heartbeat does not fail closed — `semantics_change`
 
 `safety/heartbeat.py::is_expired` reports a corrupt heartbeat as expired and an
@@ -108,7 +138,7 @@ are pinned by tests and the limitation is documented in `docs/kill-switch.md`.
 
 ## Open items
 
-### 1. CLI startup costs about half a second — `architecture`
+### CLI startup costs about half a second — `architecture`
 
 Every `atlas` invocation takes ~0.50 s before it does anything: ~346 ms
 importing `atlas_agent.cli`, ~75 ms building the argparse tree, ~12 ms of
@@ -133,21 +163,6 @@ self-time hotspots are ten `*.models` modules totalling ~64 ms, plus
 question about pydantic at module scope, not about the `cli_bootstrap.py`
 pre-router — which stays narrow for its own reason, that the four configless
 commands must run with no config loaded and no third-party import on the path.
-
-### 2. `guard_submit` and `guard_sync` have no callers — `cleanup`
-
-`brokers/guards.py` holds two fail-closed guards. `guard_submit` was found to
-disagree with the resolver, which answered `live_submit_ready` for brokers the
-support registry marks disabled; the registry half was extracted into
-`guard_broker_live_submit_capability` and the resolver now calls it. The
-remaining flag checks in `guard_submit` duplicate the resolver's own gates.
-
-`guard_sync` is also uncalled, but its rules and the resolver agree: both allow
-read-only sync for `alpaca` only. Wiring it in could only loosen behaviour, so
-it was left as it is.
-
-Deciding it: both are exported from `brokers/__init__.py`, so removing either is
-a public API change.
 
 ## What the audit did change
 

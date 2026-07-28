@@ -21,6 +21,7 @@ from atlas_agent.brokers.status import (
     BrokerSupportEntry,
     get_broker_support_entry,
     is_broker_known,
+    is_live_broker_known,
 )
 
 if TYPE_CHECKING:
@@ -98,6 +99,12 @@ def guard_broker_live_submit_capability(
     unsupported broker.
     """
     # Unknown broker → BLOCKED, not "try it anyway". An allowlist, never a blocklist.
+    #
+    # This asks the wider question — is the broker in the inventory at all — where
+    # `guard_sync` asks whether it is a live broker. The difference is deliberate:
+    # `paper` is in the inventory, and answering "unsupported broker" for it would
+    # be wrong, since it is supported and merely not live-submit capable. The
+    # `live_submit_supported` check below refuses it with that reason instead.
     if not is_broker_known(broker_id):
         raise _guard_error(
             operation,
@@ -159,7 +166,14 @@ def guard_sync(
     # cannot move money, so demanding the submit opt-in to look at a balance would push
     # operators to enable submission just to see their own positions — making the
     # dangerous flag routine, which is the opposite of what it is for.
-    if not is_broker_known(broker_id):
+    #
+    # Weaker than guard_submit, but not weaker than "is this a live broker at all".
+    # `is_broker_known` was the wrong question here: `paper` is in the inventory with
+    # read_only_supported=True, so this guard admitted `paper` as a live sync broker
+    # while `BrokerResolver` refused it as live_broker_unsupported. The submit guard
+    # survives the same predicate only because live_submit_supported is false for
+    # `paper`; this one has no such second line.
+    if not is_live_broker_known(broker_id):
         raise _guard_error(
             operation,
             broker_id,

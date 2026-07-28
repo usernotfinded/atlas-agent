@@ -223,3 +223,105 @@ def test_opt_in_does_not_survive_a_change_to_its_risk_limits(
 
     assert allowed is False
     assert code != "live_submit_ready"
+
+
+# ==============================================================================
+# DIFFERENTIAL: THE GUARDS AGAINST THE RESOLVER
+# ==============================================================================
+
+# The live-submit rule is written twice. `BrokerResolver` reports it as a status
+# with a reason code per gate; `brokers/guards.py` raises a single exception. The
+# resolver reuses the guard for the broker-capability half, but re-implements the
+# operator flags, because folding them together would make a forgotten flag read
+# as an unsupported broker.
+#
+# Two implementations of a safety rule drift, and these two already did once: the
+# resolver answered `live_submit_ready` for brokers the inventory marks disabled,
+# for as long as the guard that disagreed had no caller. These tests pin the
+# agreement instead of trusting it.
+
+#: Indices into GATES that `guard_submit` also checks. It is a subset — the
+#: resolver additionally gates on the kill switch, approval mode, leverage,
+#: credentials, and the opt-in record.
+GUARD_SUBMIT_GATE_INDICES = frozenset({0, 1, 2, 4})
+
+#: The reason codes the resolver reports for exactly those gates.
+GUARD_SUBMIT_CODES = frozenset(GATES[i][2] for i in GUARD_SUBMIT_GATE_INDICES)
+
+
+def _guard_submit_refuses(config: AtlasConfig) -> bool:
+    from atlas_agent.brokers.base import BrokerConfigurationError
+    from atlas_agent.brokers.guards import guard_submit
+
+    try:
+        guard_submit(broker_id=config.broker.provider, config=config)
+    except BrokerConfigurationError:
+        return True
+    return False
+
+
+@pytest.mark.parametrize("broken", _all_gate_subsets(), ids=lambda s: "-".join(
+    GATES[i][0] for i in s) or "none_broken")
+def test_guard_submit_never_disagrees_with_the_resolver(
+    broken: tuple[int, ...], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    config = _build_live_ready_config(tmp_path, monkeypatch)
+    for index in broken:
+        GATES[index][1](config, monkeypatch)
+
+    refused = _guard_submit_refuses(config)
+    allowed, code = _can_submit(config)
+
+    assert refused is bool(GUARD_SUBMIT_GATE_INDICES & set(broken))
+
+    if refused:
+        # The resolver must deny too. Its reason may belong to a gate the guard
+        # does not check — the kill switch is reached before trading_mode — so the
+        # denial is what has to match, not the wording.
+        assert allowed is False, (
+            "guard_submit refused a configuration the resolver reported as ready"
+        )
+    else:
+        # Nothing the guard checks is broken, so the resolver must not be denying
+        # for one of the guard's own reasons.
+        assert code not in GUARD_SUBMIT_CODES, (
+            f"the resolver denied with {code}, a gate guard_submit shares, while "
+            "guard_submit allowed the same configuration"
+        )
+
+
+@pytest.mark.parametrize(
+    "broker_id", ["alpaca", "paper", "binance", "ccxt", "ibkr", "ibkr_stub", "unknown"]
+)
+def test_guard_sync_admits_no_broker_the_resolver_refuses(
+    broker_id: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A guard may be stricter than the live path. It may never be looser.
+
+    `guard_sync` admitted `paper`, which is in the inventory with
+    `read_only_supported=True`, while the resolver refuses it as
+    `live_broker_unsupported`. Read-only or not, a guard that answers yes where
+    the live path answers no is a guard that would loosen the live path the day
+    someone wires it in — which is precisely what its docstring offers to do.
+    """
+    from atlas_agent.brokers.base import BrokerConfigurationError
+    from atlas_agent.brokers.guards import guard_sync
+
+    config = _build_live_ready_config(tmp_path, monkeypatch)
+    # `live_broker` is a read-only view of `broker.provider`, which is what the
+    # resolver reads in live mode.
+    config.broker.provider = broker_id
+
+    try:
+        guard_sync(broker_id=broker_id, config=config)
+        guard_allows = True
+    except BrokerConfigurationError:
+        guard_allows = False
+
+    resolver_allows = BrokerResolver(config).resolve_status("live").can_sync
+
+    if guard_allows:
+        assert resolver_allows, (
+            f"guard_sync admits {broker_id!r} for live sync while BrokerResolver "
+            "refuses it"
+        )
