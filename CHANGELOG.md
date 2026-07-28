@@ -38,6 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   property over nine gates, so all 2^9 ways of breaking a subset are checked,
   including that the reported reason belongs to the earliest broken gate — which
   puts evaluation order under test.
+- The provider/execution boundary test now covers the return direction. Blocking
+  the import edge stops the execution layer being *called* from the AI side; it
+  does not stop the execution layer *reading* what the AI side wrote. A submit
+  path that opened a research artifact to take a suggested stop-loss would
+  satisfy every import check and still make provider output execution authority.
+  `execution/`, `brokers/`, and `risk/` are now asserted never to reach a
+  config location the AI-facing layers write into. That path does not exist
+  today — the order path reads kill-switch state and pending orders and nothing
+  else, and `research/backtest_bridge.py` is the sanctioned crossing.
 - `tests/architecture/test_broker_protocol_conformance.py`, enforcing hard
   invariant 4's "every broker adapter implements the `Broker` interface". `Broker`
   and `BrokerProvider` are `typing.Protocol`s, so nothing checked it — a missing
