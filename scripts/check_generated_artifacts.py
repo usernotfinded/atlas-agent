@@ -53,6 +53,13 @@ TEMPORARY_ARTIFACT_PATTERNS = (
     re.compile(r"^inventory_.*\.py$"),
     re.compile(r"^references_.*\.json$"),
     re.compile(r"^walkthrough\.md$"),
+    # coverage.py output. `.coverage` is a binary database rewritten by every
+    # run, so a tracked copy is a merge conflict waiting to happen and tells a
+    # reader nothing. It reached a commit once, swept in by `git add -A` after a
+    # coverage run, which is exactly the accident this pattern is here to catch.
+    re.compile(r"^\.coverage$"),
+    re.compile(r"^\.coverage\..+$"),
+    re.compile(r"^coverage\.(json|xml)$"),
 )
 
 TRACKED_VERSIONED_EVIDENCE_PREFIXES = (
