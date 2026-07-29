@@ -27,15 +27,21 @@ safety net — a net that pins the error envelope, which is what the wrapper
 absorbs, and pins nothing about the success branch, which such a refactor also
 rewrites.
 
-The two `_list` statuses are covered here. The two `_validated` ones are not,
-and deliberately: validation requires the repository itself — README safety
-claims, version consistency, a forbidden-claims scan, the protected-boundary
-check, and named docs and scripts. Reaching `..._validated` from a temporary
-workspace would mean reconstructing the repo, so those two are reachable only
-where the command is meant to run, and `test_release_candidate_readiness.py`
-covers that logic at the domain level instead. `test_the_validated_statuses_are_
-blocked_for_a_stated_reason` pins that this is the reason rather than an
-oversight.
+The two `_list` statuses are covered here, along with readiness `-show`,
+`-doctor` and `-summary`, which a later execution measurement found were never
+driven to exit 0 either.
+
+The two `_validated` statuses are not covered, and deliberately: validation
+requires the repository itself — README safety claims, version consistency, a
+forbidden-claims scan, the protected-boundary check, and named docs and scripts.
+Reaching `..._validated` from a temporary workspace would mean reconstructing
+the repo, so those two are reachable only where the command is meant to run, and
+`test_release_candidate_readiness.py` covers that logic at the domain level
+instead. `test_the_validated_statuses_are_blocked_for_a_stated_reason` pins that
+this is the reason rather than an oversight.
+
+The same constraint blocks the cutover family's *creation*, which is why only its
+listing is checked here.
 """
 
 # --- IMPORTS ---
@@ -145,3 +151,70 @@ def test_the_validated_statuses_are_blocked_for_a_stated_reason(workspace: Path)
     # from a synthetic workspace rather than merely unimplemented.
     assert any(b.startswith("doc_present:") for b in created["blockers"])
     assert "version_consistency" in created["blockers"]
+
+
+# ---------------------------------------------------------------------------
+# The readiness inspection commands
+#
+# `-show`, `-doctor` and `-summary` were among the 17 commands a full suite run
+# never drove to exit 0, for the same reason as the dossier family: this
+# command's own tests call the domain functions directly. Unlike the cutover
+# family above, readiness *creation* succeeds in a temporary workspace, so these
+# three are reachable from a created report.
+# ---------------------------------------------------------------------------
+
+
+def _readiness_report_id() -> str:
+    _code, created = _run(["research", "release-candidate-readiness", "--json"])
+    assert created["status"] == "research_release_candidate_readiness_created", created
+    return created["release_candidate_readiness_report_id"]
+
+
+def test_readiness_doctor_answers_in_its_success_envelope(workspace: Path) -> None:
+    report_id = _readiness_report_id()
+
+    code, payload = _run(["research", "release-candidate-readiness-doctor", report_id, "--json"])
+
+    assert code == 0
+    assert payload["status"] == "research_release_candidate_readiness_doctored"
+
+
+def test_readiness_summary_answers_in_its_success_envelope(workspace: Path) -> None:
+    report_id = _readiness_report_id()
+
+    code, payload = _run(["research", "release-candidate-readiness-summary", report_id, "--json"])
+
+    assert code == 0
+    assert payload["status"] == "research_release_candidate_readiness_summarized"
+
+
+def test_readiness_show_returns_the_report_that_was_asked_for(workspace: Path) -> None:
+    """`-show` prints the artifact itself, with no `ok`/`status` envelope.
+
+    The same divergence as `provider-safety-dossier-show`. Asserted as it is
+    rather than as the family suggests, because a wrapper migration has to
+    preserve it — and because the status key it does not have is what a
+    copy-pasted assertion would look for.
+    """
+    report_id = _readiness_report_id()
+
+    code, payload = _run(["research", "release-candidate-readiness-show", report_id, "--json"])
+
+    assert code == 0
+    assert "status" not in payload
+    assert payload["release_candidate_readiness_report_id"] == report_id
+
+
+def test_market_is_disabled_and_has_no_success_path(workspace: Path) -> None:
+    """`market` never reaches exit 0, and should not.
+
+    It appeared alongside the genuinely uncovered commands in the execution
+    measurement, but `handle_market` returns 1 unconditionally: it is a legacy
+    command disabled in the frozen local research pipeline. There is nothing to
+    cover, and this pins that rather than leaving it looking like an omission. If
+    the command is ever re-enabled, this case fails and asks for a real one.
+    """
+    code, payload = _run(["research", "market", "--symbol", "AAPL", "--json"])
+
+    assert code == 1
+    assert payload["status"] == "legacy_command_disabled"
