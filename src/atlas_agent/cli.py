@@ -4311,7 +4311,10 @@ def main(argv: list[str] | None = None) -> int:
         safety_dir.mkdir(parents=True, exist_ok=True)
         kill_switch = AdvancedKillSwitch(
             state_path=safety_dir / "kill_switch.json",
-            heartbeat_path=safety_dir / "heartbeat.json"
+            heartbeat_path=safety_dir / "heartbeat.json",
+            # So `atlas kill status` reports the same answer the agent loop acts
+            # on, rather than only half of it.
+            companion_state_path=Path(config.memory_dir) / "kill_switch_state.json",
         )
 
         if args.kill_command == "status":

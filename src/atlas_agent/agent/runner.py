@@ -140,12 +140,18 @@ def _run_agent_loop_cycle(mode: str, config: AtlasConfig, symbol: str | None = N
     run_id = generate_run_id()
 
     # Advanced Kill Switch
-    safety_dir = Path(".atlas/safety")
+    from atlas_agent.config.paths import get_safety_dir_for
+
+    safety_dir = get_safety_dir_for(config)
     kill_switch = AdvancedKillSwitch(
         state_path=safety_dir / "kill_switch.json",
         heartbeat_path=safety_dir / "heartbeat.json",
         audit_writer=audit_writer,
-        run_id=run_id
+        run_id=run_id,
+        # Without this the loop honours only one of the two kill switches, and an
+        # operator can arm `atlas kill-switch enable --mode flatten` and watch it
+        # keep trading.
+        companion_state_path=Path(config.memory_dir) / "kill_switch_state.json",
     )
     # Record a fresh heartbeat at start of cycle
     kill_switch.heartbeat_manager.record(source="agent_runner")

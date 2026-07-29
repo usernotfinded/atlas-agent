@@ -46,14 +46,95 @@ class AdvancedKillSwitch:
         audit_writer: Optional[AuditWriter] = None,
         run_id: str = "unknown",
         iteration: Optional[int] = None,
+        companion_state_path: str | Path | None = None,
     ):
         self.state_manager = AdvancedKillSwitchState(state_path)
         self.heartbeat_manager = HeartbeatManager(heartbeat_path)
         self.audit_writer = audit_writer
         self.run_id = run_id
         self.iteration = iteration
+        # The OTHER kill switch: `KillSwitchController`, behind `atlas kill-switch`
+        # and `atlas telegram kill`. Its state lives elsewhere, so an operator could
+        # arm it at `flatten` and watch `evaluate()` keep answering allowed=True.
+        #
+        # Optional because this class is constructed in places that have no config
+        # to derive the path from. Every construction on the agent's own decision
+        # path must pass it; `tests/safety/test_agent_loop_honours_both_kill_switches.py`
+        # is what holds that true.
+        self.companion_state_path = (
+            Path(companion_state_path) if companion_state_path is not None else None
+        )
 
     # --- Decision (the function every order path calls) ---
+
+    #: Controller mode -> (decision status, reported mode, action owed).
+    #:
+    #: The two switches have different vocabularies for the same ladder. Mapping
+    #: rather than passing the raw mode through matters because `agent/loop.py`
+    #: branches on `status` to build its safety plan: a controller `flatten`
+    #: arriving as a bare `blocked` would stop the loop while silently dropping
+    #: the flatten the operator asked for.
+    _COMPANION_LADDER = {
+        "soft": ("blocked", "soft_pause", None),
+        "cancel": ("cancel_required", "cancel_all", "cancel_all"),
+        "flatten": ("flatten_required", "flatten_all", "flatten_all"),
+    }
+
+    def _companion_decision(self) -> KillSwitchDecision | None:
+        """Blocking decision from `KillSwitchController`, or None when it is clear.
+
+        Absent state reads as clear. The file only exists once someone has used
+        `atlas kill-switch`, so treating its absence as armed would refuse every
+        workspace that has never touched that command.
+
+        Corrupt state needs nothing special here: `KillSwitchController.status()`
+        already fails closed on its own, answering `enabled=True, mode="soft"` for
+        an unparseable file, which arrives below as a block. The `except` is depth
+        for what the controller cannot absorb -- an unreadable parent directory,
+        say -- not the corrupt-file path.
+
+        Anything unrecognised blocks, matching this class's own doctrine for an
+        unknown mode: the safe answer to "I don't recognise this state" is no.
+        """
+        if self.companion_state_path is None or not self.companion_state_path.exists():
+            return None
+
+        def _blocked(reason: str, diagnostics: dict[str, Any]) -> KillSwitchDecision:
+            return KillSwitchDecision(
+                allowed=False, status="blocked", reason=reason,
+                mode="soft_pause", diagnostics=diagnostics,
+            )
+
+        try:
+            status = KillSwitchController(
+                state_path=self.companion_state_path,
+                enabled_flag_path=self.companion_state_path.parent / "kill_switch.enabled",
+            ).status()
+        except Exception:
+            return _blocked(
+                "Companion kill switch state is unreadable.",
+                {"companion_unreadable": True},
+            )
+
+        if not status.enabled or status.mode == "normal":
+            return None
+
+        mapped = self._COMPANION_LADDER.get(status.mode)
+        if mapped is None:
+            return _blocked(
+                f"Unknown companion kill switch mode: {status.mode}",
+                {"companion_mode": status.mode},
+            )
+
+        decision_status, reported_mode, action = mapped
+        return KillSwitchDecision(
+            allowed=False,
+            status=decision_status,  # type: ignore[arg-type]
+            reason=status.reason or f"Kill switch is in {status.mode} mode.",
+            mode=reported_mode,  # type: ignore[arg-type]
+            action_required=action,
+            diagnostics={"companion_switch": True, "companion_mode": status.mode},
+        )
 
     def evaluate(self) -> KillSwitchDecision:
         status = self.state_manager.load()
@@ -91,6 +172,13 @@ class AdvancedKillSwitch:
         # The mode ladder, in increasing severity. `normal` is the ONLY branch in this
         # entire method that returns allowed=True — including the fallthrough below.
         if mode == "normal":
+            # Consulted ONLY here, in the one branch that would otherwise allow.
+            # That placement is the safety argument: it can turn allowed=True into
+            # False and never the reverse, so a stronger advanced mode above is
+            # never softened by a milder companion one.
+            companion = self._companion_decision()
+            if companion is not None:
+                return companion
             return KillSwitchDecision(allowed=True, status="allowed", mode="normal")
 
         if mode == "soft_pause":
