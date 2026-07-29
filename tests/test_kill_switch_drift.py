@@ -90,6 +90,11 @@ class TestKillSwitchDocsDrift:
             "market",
             "aggressive_limit",
             "kill",
+            # CLI subcommand tokens, not modes. `atlas kill lock` maps to the
+            # `locked_down` mode, the same way `soft`/`cancel`/`flatten` below are
+            # `atlas kill-switch enable --mode` values rather than advanced modes.
+            # Unknown *mode* tokens still fail, which is what this guards.
+            "lock",
             "flatten",
             "soft",
             "cancel",
