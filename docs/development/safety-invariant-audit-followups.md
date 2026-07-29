@@ -202,6 +202,53 @@ record a heartbeat too, or it inherits a deadman that cannot fire.
 
 ## Open items
 
+### Two parallel safety subsystems, with the CLI split across both — `architecture`
+
+This is the root cause behind several findings that looked unrelated. Atlas
+carries two implementations of each safety mechanism, holding separate state,
+and the commands are split between them with nothing saying so.
+
+| Mechanism | `.atlas/safety/` subsystem | `memory/` subsystem |
+|---|---|---|
+| Kill switch | `AdvancedKillSwitch`, `kill_switch.json`, modes `soft_pause`/`cancel_all`/`flatten_all`/`locked_down` | `KillSwitchController`, `kill_switch_state.json`, modes `soft`/`cancel`/`flatten` |
+| Written by | `atlas kill` | `atlas kill-switch`, `atlas telegram kill` |
+| Heartbeat | `HeartbeatManager`, `heartbeat.json` | `deadman_heartbeat_path`, `deadman_heartbeat.json` |
+| Written by | `atlas kill heartbeat`, `agent/runner.py` | `atlas heartbeat`, `atlas telegram heartbeat` |
+| Consumed by | `AdvancedKillSwitch.evaluate()`, called from `agent/loop.py` on every tool call | `KillSwitchController.status()`, read by the resolver; `DeadmanSwitch.tick` |
+
+Each split produced its own defect, and neither was findable from the other:
+
+- The resolver read only the `memory/` kill switch, so `atlas kill flatten-all`
+  left `can_submit` true. **Fail-open, fixed** — the resolver now reads both.
+- The live deadman reads only the `.atlas/safety/` heartbeat, so `atlas
+  heartbeat` and `atlas telegram heartbeat` feed nothing that runs.
+  `DeadmanSwitch`, the only reader of the file they write, is never constructed
+  anywhere in `src/`. **Fail-closed, open** — pinned by
+  `tests/safety/test_heartbeat_commands_feed_the_live_deadman.py` with two
+  strict xfails.
+
+Both commands print their path and exit 0, which is why neither surfaced:
+
+```
+$ atlas heartbeat
+Heartbeat recorded: memory/deadman_heartbeat.json     # deadman still blocked
+$ atlas kill heartbeat
+Heartbeat recorded.                                   # deadman cleared
+```
+
+The heartbeat half is deliberately not fixed by "write both files". A remote
+`/heartbeat` from a phone that silences an agent-liveness deadman lets a human
+mask a hung agent, and the deadman exists to catch the agent simply stopping —
+which is not something an operator is in a position to vouch for. `atlas kill
+heartbeat` already writes the live file, so the precedent cuts both ways. It is
+a decision about who may assert liveness, not a wiring bug, and it wants a
+maintainer.
+
+Unifying the two subsystems is the larger question underneath. It is worth
+noting what the split costs beyond these two defects: every future safety
+mechanism has two places to be wired, and a reviewer checking one has no signal
+that the other exists.
+
 ### The emergency flatten cannot be reached by escalating — `semantics_change`
 
 `atlas kill-switch enable --mode flatten` is the only command that closes live
