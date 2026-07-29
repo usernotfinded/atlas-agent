@@ -184,10 +184,21 @@ one. The weaker failure is treated more permissively than the stronger one.
 
 **Decided: kept.** Making an absent heartbeat expire needs a marker written at
 first start, which adds a second file the deadman depends on — and a deadman
-with two failure modes is not obviously safer than one with a documented gap. On
-the order path the gap stays unreachable: `agent/runner.py` records a heartbeat
-at the start of every cycle, before `KillSwitch.evaluate` can run. Both branches
-are pinned by tests and the limitation is documented in `docs/kill-switch.md`.
+with two failure modes is not obviously safer than one with a documented gap.
+
+The original wording of this entry said the gap stays unreachable because
+"`agent/runner.py` records a heartbeat at the start of every cycle, before
+`KillSwitch.evaluate` can run". `runner.py` does record, but it never calls
+`evaluate` — `agent/loop.py` does, on every tool call, using the switch the
+runner hands it. The conclusion holds and the mechanism is a composition across
+two modules, which is what
+`tests/safety/test_deadman_blocks_a_hung_cycle.py` now pins, including the
+wiring that keeps the recorded switch and the evaluated switch the same object.
+
+The consequence worth carrying forward: because an absent heartbeat reads as
+fresh, the deadman is inert on any path that evaluates without ever recording —
+there is no stale file to age out. Any L3 path that consults the kill switch must
+record a heartbeat too, or it inherits a deadman that cannot fire.
 
 ## Open items
 
