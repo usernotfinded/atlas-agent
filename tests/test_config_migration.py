@@ -130,3 +130,51 @@ def test_no_two_legacy_keys_target_the_same_setting(tmp_path):
         f"these legacy keys write to the same setting: {collisions}. Whichever the "
         "legacy file lists last wins, silently."
     )
+
+
+def test_every_migration_target_is_a_real_setting():
+    """A target that does not exist is data loss, silently, on upgrade.
+
+    `set_raw_value` writes whatever dotted path it is given and `AtlasConfig`
+    ignores fields it does not declare, so a typo in a destination does not raise
+    — it drops the user's setting on the floor while reporting a successful
+    migration. All 24 targets resolve today; this is for the next one added.
+    """
+    import re
+    from pathlib import Path
+
+    from atlas_agent.config.schema import AtlasConfig
+
+    source = (
+        Path(__file__).resolve().parents[1]
+        / "src" / "atlas_agent" / "config" / "migrate.py"
+    ).read_text(encoding="utf-8")
+    block = source[source.index("mapping = {"):source.index("return mapping.get")]
+    pairs = re.findall(r'"([a-z_]+)":\s*"([a-z_.]+)"', block)
+
+    assert len(pairs) > 15, (
+        f"only {len(pairs)} mappings were parsed out of migrate.py; the scan has "
+        "stopped reading the table rather than the table having shrunk."
+    )
+
+    def resolves(dotted: str) -> bool:
+        model = AtlasConfig
+        parts = dotted.split(".")
+        for index, part in enumerate(parts):
+            fields = getattr(model, "model_fields", {})
+            if part not in fields:
+                return hasattr(AtlasConfig, part) and index == 0 and len(parts) == 1
+            if index < len(parts) - 1:
+                annotation = fields[part].annotation
+                if not hasattr(annotation, "model_fields"):
+                    return False
+                model = annotation
+        return True
+
+    unresolvable = [f"{legacy} -> {target}" for legacy, target in pairs
+                    if not resolves(target)]
+
+    assert unresolvable == [], (
+        f"these migration targets are not settings in AtlasConfig: {unresolvable}. "
+        "Migration would report success and discard the value."
+    )
