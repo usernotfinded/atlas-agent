@@ -3429,6 +3429,17 @@ def _display_live_status(config: AtlasConfig | None) -> tuple[bool, bool, str]:
     if ks_enabled and ks_mode != "normal":
         return creds_ok, False, f"kill switch is {ks_mode}"
 
+    # The other switch. Reporting "live submit possible: yes" from one of two
+    # kill switches tells an operator the opposite of what `_resolve_can_submit`
+    # will do, which reads both.
+    from atlas_agent.safety.kill_switch import advanced_kill_switch_mode
+
+    advanced_mode = advanced_kill_switch_mode(config)
+    if advanced_mode is None:
+        return creds_ok, False, "kill switch state is unreadable"
+    if advanced_mode != "normal":
+        return creds_ok, False, f"kill switch is {advanced_mode}"
+
     # Opt-in record check (read-only file read via existing helper).
     from atlas_agent.brokers.resolver import _live_submit_opt_in_status
 
@@ -3758,8 +3769,13 @@ def _cmd_broker_opt_in(args: argparse.Namespace, config: AtlasConfig) -> int:
         print(f"ERROR: trading_mode must be 'live' (currently '{config.trading_mode}').")
         return 2
 
-    # Kill switch check
-    from atlas_agent.safety.kill_switch import KillSwitchController
+    # Kill switch check -- BOTH switches. This gate refuses when one is armed, so
+    # its intent is not in doubt; it simply could not see the `atlas kill` one,
+    # and granted live-submit authority while `atlas kill flatten-all` was set.
+    from atlas_agent.safety.kill_switch import (
+        KillSwitchController,
+        advanced_kill_switch_mode,
+    )
     try:
         ks = KillSwitchController(
             state_path=Path(config.memory_dir) / "kill_switch_state.json",
@@ -3771,6 +3787,14 @@ def _cmd_broker_opt_in(args: argparse.Namespace, config: AtlasConfig) -> int:
             return 2
     except Exception:
         print("ERROR: Kill switch state is unreadable.")
+        return 2
+
+    advanced_mode = advanced_kill_switch_mode(config)
+    if advanced_mode is None:
+        print("ERROR: Kill switch state is unreadable.")
+        return 2
+    if advanced_mode != "normal":
+        print(f"ERROR: Kill switch is active (mode={advanced_mode}).")
         return 2
 
     broker_id = config.broker.provider

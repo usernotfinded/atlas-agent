@@ -262,7 +262,9 @@ class BrokerResolver:
         except Exception:
             return False, "kill_switch_unreadable", "kill switch state is unreadable"
 
-        advanced_mode = _advanced_kill_switch_mode(config)
+        from atlas_agent.safety.kill_switch import advanced_kill_switch_mode
+
+        advanced_mode = advanced_kill_switch_mode(config)
         if advanced_mode is None:
             return False, "kill_switch_unreadable", "kill switch state is unreadable"
         if advanced_mode != "normal":
@@ -366,33 +368,6 @@ def _compute_live_submit_fingerprint(config: AtlasConfig) -> str:
         parts.append(",".join(sorted(s.lower() for s in sides)))
     raw = "|".join(parts)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
-
-
-def _advanced_kill_switch_mode(config: AtlasConfig) -> str | None:
-    """Current `atlas kill` mode, or None when the state cannot be trusted.
-
-    Absent state reads as "normal": the file only exists once someone has used
-    `atlas kill`, so treating its absence as armed would refuse live submit on
-    every workspace that has never touched that command.
-
-    Unreadable state is a different answer entirely. Someone wrote that file,
-    and not being able to parse it is not permission -- None here becomes
-    `kill_switch_unreadable` at the call site, matching how the other switch
-    already handles its own corrupt state.
-    """
-    from atlas_agent.config.paths import get_safety_dir_for
-
-    state_path = get_safety_dir_for(config) / "kill_switch.json"
-    if not state_path.exists():
-        return "normal"
-    try:
-        payload = json.loads(state_path.read_text(encoding="utf-8"))
-    except Exception:
-        return None
-    mode = payload.get("mode") if isinstance(payload, dict) else None
-    if not isinstance(mode, str) or not mode:
-        return None
-    return mode
 
 
 def _live_submit_opt_in_status(config: AtlasConfig) -> OptInStatus:

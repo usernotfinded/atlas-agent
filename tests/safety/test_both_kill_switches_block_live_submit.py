@@ -195,7 +195,7 @@ def test_the_cli_arms_the_switch_the_resolver_reads(
     """
     from atlas_agent.cli import main
     from atlas_agent.config.paths import get_safety_dir_for
-    from atlas_agent.brokers.resolver import _advanced_kill_switch_mode
+    from atlas_agent.safety.kill_switch import advanced_kill_switch_mode
     from atlas_agent.config.builder import get_effective_config
 
     monkeypatch.chdir(tmp_path)
@@ -204,7 +204,7 @@ def test_the_cli_arms_the_switch_the_resolver_reads(
 
     config = get_effective_config()
     assert (get_safety_dir_for(config) / "kill_switch.json").exists()
-    assert _advanced_kill_switch_mode(config) == "flatten_all"
+    assert advanced_kill_switch_mode(config) == "flatten_all"
 
 
 def test_normal_mode_on_both_switches_leaves_the_path_open(ready_to_submit) -> None:

@@ -35,6 +35,37 @@ from atlas_agent.audit import AuditWriter
 # ADVANCED KILL SWITCH (mode + heartbeat)
 # ==============================================================================
 
+def advanced_kill_switch_mode(config: Any) -> str | None:
+    """Current `atlas kill` mode, or None when the state cannot be trusted.
+
+    Absent state reads as "normal": the file only exists once someone has used
+    `atlas kill`, so treating its absence as armed would refuse on every
+    workspace that has never touched that command.
+
+    Unreadable state is a different answer entirely. Someone wrote that file, and
+    not being able to parse it is not permission -- None is the caller's cue to
+    fail closed, matching how the other switch handles its own corrupt state.
+
+    Lives here, and not beside any one caller, because it now has three: the
+    resolver's live-submit gate, the live-submit opt-in, and the status display.
+    The first two are gates that refuse when a kill switch is armed, and each one
+    that grew its own copy of this grew it against a single switch.
+    """
+    from atlas_agent.config.paths import get_safety_dir_for
+
+    state_path = get_safety_dir_for(config) / "kill_switch.json"
+    if not state_path.exists():
+        return "normal"
+    try:
+        payload = json.loads(state_path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    mode = payload.get("mode") if isinstance(payload, dict) else None
+    if not isinstance(mode, str) or not mode:
+        return None
+    return mode
+
+
 class AdvancedKillSwitch:
 
     # --- Construction ---
