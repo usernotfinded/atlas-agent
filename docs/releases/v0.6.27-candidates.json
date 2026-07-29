@@ -81,6 +81,24 @@
       "acceptance_criteria": "tests/research/test_research_command_envelopes.py passes unchanged for all 175 subcommands \u2014 same envelope, same exit status agreement \u2014 and scripts/check_cli_command_compatibility.py reports no surface change. Every handler moves, or none does: two idioms side by side would be worse than the duplication.",
       "safety_notes": "Refactor of CLI error handling and workspace resolution only. Adds no gate, removes none, and touches neither the risk gate nor the kill switch, approval queues, broker adapters, or the audit hash-chain. The fail-closed generic fallback in safe_research_session_error is preserved as-is.",
       "open_question": "Whether the shared shape is genuinely one thing or several that currently look alike. The 33 handlers that build their error code at runtime, and the four whose exit status disagrees with their envelope, are evidence the family is not as uniform as the line counts suggest. A wrapper that forces them into one shape would either paper over those differences or need escape hatches that reintroduce the duplication. Worth spiking on one module and measuring the real reduction before committing to 170."
+    },
+    {
+      "id": "CAND-036",
+      "title": "L3 bounded live autonomy: explicit opt-in and the path that consults it",
+      "status": "proposed",
+      "accepted": false,
+      "category": "autonomy",
+      "priority": "P1",
+      "risk": "high",
+      "source": "The ladder defines L3 as requiring per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. Three of the four now hold: approval queues exist and OrderRouter allowlists exactly manual_live; the three declared risk limits that evaluated nothing are enforced as of CAND-033; and the deadman is verified to block a hung cycle with its composition pinned. The fourth is missing \u2014 live submit has an opt-in bound to a config fingerprint, autonomy has none.",
+      "expected_files": [
+        "docs/l3-bounded-live-autonomy-design.md",
+        "src/atlas_agent/safety/",
+        "src/atlas_agent/agent/"
+      ],
+      "acceptance_criteria": "The opt-in and the path that consults it land together: an autonomy opt-in record with its own fingerprint over the enforced limits, refused when absent, invalidated when any of those limits change, and a fail-closed L3 path that records a heartbeat. Per-order human approval is retained \u2014 a version without it is L4 and out of scope. Paper-validated before any live configuration is possible.",
+      "safety_notes": "Design only at this stage; this candidate authorizes nothing. L3 is not unattended trading \u2014 per-order human approval is part of its definition. L4 remains out of reach without external legal, security, operational, risk, broker-adapter, and regulatory review by qualified parties, which the governance document requires to be done by them and not by self-assessment.",
+      "open_question": "Three, recorded in the design. Whether the L3 path must record a heartbeat explicitly, since an absent heartbeat reads as fresh and the deadman is inert on any path that evaluates without recording. What 'active operator oversight' means as a signal \u2014 a deadman proves the agent is alive, not that a human is watching. And how narrow the first cut should be; the ladder says tightly bounded, and one symbol, one side, one broker, paper-validated first is what makes the review worth doing."
     }
   ]
 }
