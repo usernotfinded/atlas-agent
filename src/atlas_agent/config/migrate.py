@@ -60,12 +60,30 @@ def migrate_legacy_config() -> bool:
 def _map_legacy_key(key: str) -> str:
     """Map legacy flat keys to new nested structure if needed."""
     # Flat legacy name → dotted path in the new schema. Unmapped keys pass through
-    # unchanged and land at the top level, where schema validation will reject them
-    # if they are not real settings.
+    # unchanged and land at the top level of config.toml, where they sit inert:
+    # `AtlasConfig` ignores fields it does not declare, so an unrecognised key is
+    # kept and visible rather than rejected. That is the safer of the two for a
+    # key with no destination — better a stray line in the file than a legacy
+    # value forced into a typed field it does not belong in.
     mapping = {
         "provider": "model.provider",
         "model": "model.model",
-        "messaging": "safety.order_approval_mode",
+        # `messaging` is deliberately absent. It is a notification channel — its
+        # legacy values are "cli", "telegram", and "none" — and it used to map to
+        # `safety.order_approval_mode`, whose values are "auto_paper",
+        # "manual_live", and "disabled_live". Migrating a workspace that had
+        # `messaging = "telegram"` therefore wrote `order_approval_mode =
+        # "telegram"`, which no code path accepts.
+        #
+        # The mapping looks like a mis-transcription of the wizard, which does
+        # `if messaging == "cli": order_approval_mode = "manual_live"` — a
+        # conditional translation, copied here as an unconditional one. Applying
+        # the same condition would be a no-op anyway, since "manual_live" is the
+        # schema default, so the key is simply not mapped.
+        #
+        # It has no destination in the new schema: `NotificationConfig.transport`
+        # takes "disabled", "dry_run", or "slack". Inventing a home for it would
+        # repeat the mistake of writing an unrecognised value into a typed field.
         "broker_mode": "broker.provider",
         "trust_mode": "trading_mode",
         "enable_live_trading": "broker.enable_live_trading",

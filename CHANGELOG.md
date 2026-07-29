@@ -191,6 +191,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Config migration wrote a notification channel into a safety field. `messaging`
+  — legacy values `cli`, `telegram`, `none` — was mapped to
+  `safety.order_approval_mode`, whose values are `auto_paper`, `manual_live`, and
+  `disabled_live`, so migrating a workspace that had `messaging = "telegram"`
+  produced `order_approval_mode = "telegram"`. `OrderRouter` allowlists exactly
+  `manual_live` on the live path and rejects anything else, so this failed closed
+  rather than open; the cost was a working approval mode replaced by an
+  "unsupported live approval mode" rejection with nothing pointing at the
+  migration as the cause. The mapping looks like a mis-transcription of the
+  wizard's `if messaging == "cli": order_approval_mode = "manual_live"` — a
+  conditional translation copied as an unconditional one. `messaging` is now
+  unmapped: it has no destination in the new schema, and
+  `NotificationConfig.transport` takes `disabled`/`dry_run`/`slack`, so inventing
+  one would repeat the mistake. It also collided with the legacy
+  `order_approval_mode` key, which mapped to the same field; a test now refuses
+  any two legacy keys sharing a destination.
 - Six test helpers created their scratch directories with
   `tempfile.mkdtemp(dir=REPO_ROOT)` and copied `docs/` into them, so under
   `pytest -n` one worker's scratch copy of the documentation was visible to
