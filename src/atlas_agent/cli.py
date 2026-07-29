@@ -64,7 +64,7 @@ from atlas_agent.backtest.robustness import (
     parse_fixture_list,
     write_strategy_robustness_reports,
 )
-from atlas_agent.brokers.base import BrokerConfigurationError
+from atlas_agent.brokers.base import Broker, BrokerConfigurationError
 from atlas_agent.brokers.status import is_live_broker_known
 from atlas_agent.brokers.paper import PaperBroker
 from atlas_agent.cli_commands import build_core_command_registry
@@ -2571,6 +2571,32 @@ def _broker_for_mode(
         return resolution.execution_broker
 
     raise BrokerConfigurationError(f"no execution broker available for mode: {mode}")
+
+
+def _broker_for_kill_switch(config: AtlasConfig) -> tuple[Broker | None, str | None]:
+    """Best-effort broker for an emergency stop, and why it is missing.
+
+    Arming the kill switch must never depend on reaching a broker. An
+    unreachable broker is one of the situations an operator arms the switch in,
+    so treating it as a refusal turns a missing credential into a veto over the
+    emergency stop.
+
+    `KillSwitchController.enable` is already built for this: it persists the
+    armed state before running any broker side effect, and `_run_flatten`
+    returns a failed result rather than raising when handed no broker. Callers
+    only have to stop raising on the way in — hence best-effort here, with the
+    reason returned so the command can report what it could not do.
+    """
+    try:
+        broker = _broker_for_mode(
+            config.trading_mode,
+            config,
+            PortfolioState(cash=config.starting_cash),
+            AuditLogger(config.audit_dir),
+        )
+    except BrokerConfigurationError as exc:
+        return None, str(exc)
+    return broker, None
 
 
 def _run_once_live_analysis(
@@ -5681,12 +5707,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.kill_command == "enable":
             mode = args.mode
             runtime_config = _effective_config_with_runtime_kill_switch(config)
-            broker = _broker_for_mode(
-                runtime_config.trading_mode,
-                runtime_config,
-                PortfolioState(cash=runtime_config.starting_cash),
-                AuditLogger(runtime_config.audit_dir),
-            )
+            broker, broker_error = _broker_for_kill_switch(runtime_config)
             transition = controller.enable(
                 mode=mode,
                 reason=args.reason,
@@ -5699,6 +5720,8 @@ def main(argv: list[str] | None = None) -> int:
                 f" mode={transition.state.mode}"
                 f" reason={transition.state.reason or 'n/a'}"
             )
+            if broker_error is not None:
+                print(f"Warning: broker unavailable ({broker_error})")
             if transition.cancel_results:
                 print(f"Cancel results: {len(transition.cancel_results)}")
             if transition.flatten_result is not None:
@@ -5708,6 +5731,12 @@ def main(argv: list[str] | None = None) -> int:
                     f"(closed={transition.flatten_result.closed}, "
                     f"failed={transition.flatten_result.failed})"
                 )
+            # The switch is armed either way; the status reports whether the side
+            # effects the operator asked for actually ran. Someone who requested a
+            # flatten and still has open positions must not read exit 0 — in a
+            # script that is the difference between "handled" and "unattended".
+            if broker_error is not None and mode in ("cancel", "flatten"):
+                return 1
             return 0
         if args.kill_command == "disable":
             state = controller.status()

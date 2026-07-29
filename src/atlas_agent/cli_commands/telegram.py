@@ -21,11 +21,9 @@ def handle_telegram(context: CLIContext) -> int | None:
     config = context.config
     from atlas_agent.cli_safety import _effective_config_with_runtime_kill_switch
     from atlas_agent.cli_safety import _kill_switch_controller
-    from atlas_agent.execution.audit import AuditLogger
-    from atlas_agent.portfolio.state import PortfolioState
     from atlas_agent.safety import write_deadman_heartbeat
     from atlas_agent.cli import (
-        _broker_for_mode,
+        _broker_for_kill_switch,
         _heartbeat_path_for_config,
     )
 
@@ -42,12 +40,7 @@ def handle_telegram(context: CLIContext) -> int | None:
         if args.telegram_command == "kill":
             controller = _kill_switch_controller(config)
             runtime_config = _effective_config_with_runtime_kill_switch(config)
-            broker = _broker_for_mode(
-                runtime_config.trading_mode,
-                runtime_config,
-                PortfolioState(cash=runtime_config.starting_cash),
-                AuditLogger(runtime_config.audit_dir),
-            )
+            broker, broker_error = _broker_for_kill_switch(runtime_config)
             transition = controller.enable(
                 mode=args.mode,
                 reason=args.reason,
@@ -58,6 +51,10 @@ def handle_telegram(context: CLIContext) -> int | None:
                 f"Telegram /kill applied: changed={transition.changed} "
                 f"mode={transition.state.mode}"
             )
+            if broker_error is not None:
+                print(f"Warning: broker unavailable ({broker_error})")
+                if args.mode in ("cancel", "flatten"):
+                    return 1
             return 0
         if args.telegram_command == "resume":
             controller = _kill_switch_controller(config)
