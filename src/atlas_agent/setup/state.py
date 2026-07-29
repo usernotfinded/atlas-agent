@@ -115,7 +115,22 @@ class WizardState:
                 unset_raw_value("model.base_url")
         
         set_raw_value("broker.provider", self.broker_mode)
-        set_raw_value("update.auto_check", self.update_channel)
+        # `update_channel` is deliberately not written to config. It holds "stable"
+        # or "beta" — a release channel — and used to be written to
+        # `update.auto_check`, which is a check *frequency* documented as
+        # "daily", "weekly", or "never". Running the wizard therefore left
+        # `update.auto_check = "stable"` in config.toml.
+        #
+        # Nothing read it: that write was the only reference to the field in the
+        # whole codebase, and the update manager keeps its schedule in its own
+        # state file, which is why `atlas update status` reported "off" rather
+        # than "stable". So this corrupted a typed field without any visible
+        # effect, which is the kind that survives longest.
+        #
+        # There is no release-channel setting to write it to instead — `update/`
+        # has no channel concept at all. The wizard still records the answer in
+        # its own state file; giving it a home in the runtime config would mean
+        # implementing channel support, not moving a line.
         
         if self.messaging == "cli":
             set_raw_value("safety.order_approval_mode", "manual_live")

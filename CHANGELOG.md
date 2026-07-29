@@ -191,6 +191,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The setup wizard wrote a release channel into a check-frequency field.
+  `update_channel` holds "stable" or "beta"; `update.auto_check` is documented as
+  "daily", "weekly", or "never". Every workspace configured by `atlas setup` was
+  left with `update.auto_check = "stable"`. Nothing read it — that write was the
+  field's only reference in the codebase, and the update manager keeps its
+  schedule in its own state file, which is why `atlas update status` reported
+  "off" rather than "stable" — so it corrupted a typed setting with no visible
+  symptom. The write is removed; there is no release-channel setting to move it
+  to, because `update/` has no channel concept at all, so the wizard's question
+  currently records an answer the runtime does not act on.
 - Config migration wrote a notification channel into a safety field. `messaging`
   — legacy values `cli`, `telegram`, `none` — was mapped to
   `safety.order_approval_mode`, whose values are `auto_paper`, `manual_live`, and

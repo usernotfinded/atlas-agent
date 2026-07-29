@@ -1,8 +1,9 @@
 # ==============================================================================
 # PROJECT: Atlas Agent
 # FILE:    tests/safety/test_setup_wizard_cannot_enable_live.py
-# PURPOSE: Pins that finishing the setup wizard in live mode still leaves live
-#         trading and live submit switched off.
+# PURPOSE: Pins what the setup wizard writes to the runtime config — that live
+#         mode does not grant execution, and that answers land in fields that mean
+#         what they hold.
 # DEPS:    pathlib, pytest, atlas_agent.
 # ==============================================================================
 
@@ -22,6 +23,12 @@ authorising execution are two decisions, and the wizard only makes the first.
 Making the wizard "work properly" by having it set the opt-in flags too is a
 plausible, well-meant change that would collapse the two into one screen. These
 tests are what makes that change fail out loud instead of shipping.
+
+The last case covers a different failure in the same `save()`: an answer written
+into a field that means something else. The wizard put `update_channel`
+("stable" or "beta") into `update.auto_check`, a check frequency documented as
+"daily", "weekly", or "never". Nothing read it, so it left a wrong value in every
+configured workspace with no symptom to notice.
 """
 
 # --- IMPORTS ---
@@ -117,3 +124,39 @@ def test_choosing_paper_is_unaffected(
 
     assert config.trading_mode == "paper"
     assert config.broker.enable_live_trading is False
+
+
+@pytest.mark.parametrize("channel", ["stable", "beta"])
+def test_the_update_channel_does_not_land_in_the_check_schedule(
+    channel: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A release channel is not a check frequency.
+
+    `update_channel` holds "stable" or "beta"; `update.auto_check` is documented
+    as "daily", "weekly", or "never". The wizard used to write the first into the
+    second, leaving `update.auto_check = "stable"` in every configured workspace.
+    Nothing read it — that write was the field's only reference in the codebase —
+    so it corrupted a typed setting with no visible symptom.
+    """
+    from atlas_agent.setup.state import WizardState
+
+    monkeypatch.chdir(tmp_path)
+    WizardState(
+        setup_mode="full",
+        provider="anthropic",
+        model="claude-opus-4-7",
+        messaging="cli",
+        workspace_path=".",
+        trust_mode="paper",
+        broker_mode="paper",
+        update_channel=channel,
+    ).save(tmp_path / "wizard.json")
+
+    from atlas_agent.config import AtlasConfig
+
+    config = AtlasConfig.from_env()
+
+    assert config.update.auto_check in {"daily", "weekly", "never"}, (
+        f"the wizard left update.auto_check={config.update.auto_check!r}, which is "
+        "a release channel rather than a check frequency."
+    )
