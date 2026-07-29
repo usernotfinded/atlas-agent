@@ -28,8 +28,16 @@ def handle_risk(context: CLIContext) -> int:
             blocked_symbols=config.symbol_blocklist or set(),
             live_trading_enabled=config.enable_live_trading,
         )
+        # The effective config, not the raw one. `atlas kill-switch enable` writes
+        # on-disk state and leaves `safety.kill_switch_enabled` false, so reading
+        # the field alone reported "Inactive" for a switch armed at `flatten`.
+        # The `check` branch below already resolved it this way; only this one did
+        # not, so the two disagreed about the emergency stop.
         manager = RiskManager(
-            limits=limits, kill_switch_enabled=config.kill_switch_enabled
+            limits=limits,
+            kill_switch_enabled=_effective_config_with_runtime_kill_switch(
+                config
+            ).kill_switch_enabled,
         )
         print("Risk Management Status:")
         print(f"  Live Trading: {'ENABLED' if limits.live_trading_enabled else 'DISABLED'}")
