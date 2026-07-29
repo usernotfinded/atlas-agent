@@ -214,20 +214,46 @@ and the commands are split between them with nothing saying so.
 | Written by | `atlas kill` | `atlas kill-switch`, `atlas telegram kill` |
 | Heartbeat | `HeartbeatManager`, `heartbeat.json` | `deadman_heartbeat_path`, `deadman_heartbeat.json` |
 | Written by | `atlas kill heartbeat`, `agent/runner.py` | `atlas heartbeat`, `atlas telegram heartbeat` |
-| Consumed by | `AdvancedKillSwitch.evaluate()`, called from `agent/loop.py` on every tool call | `KillSwitchController.status()`, read by the resolver; `DeadmanSwitch.tick` |
+| Consumed by | `AdvancedKillSwitch.evaluate()`, called from `agent/loop.py` on every tool call | `KillSwitchController.status()`; `DeadmanSwitch.tick`, which nothing constructs |
 
-Each split produced its own defect, and neither was findable from the other:
+Four consumers were found reading one of the two kill switches. Each was wired
+to whichever subsystem was nearest when it was written, and none of them was
+findable from any of the others:
 
-- The resolver read only the `memory/` kill switch, so `atlas kill flatten-all`
-  left `can_submit` true. **Fail-open, fixed** — the resolver now reads both.
-- The live deadman reads only the `.atlas/safety/` heartbeat, so `atlas
-  heartbeat` and `atlas telegram heartbeat` feed nothing that runs.
-  `DeadmanSwitch`, the only reader of the file they write, is never constructed
-  anywhere in `src/`. **Fail-closed, open** — pinned by
-  `tests/safety/test_heartbeat_commands_feed_the_live_deadman.py` with two
-  strict xfails.
+| Consumer | Read | Consequence | State |
+|---|---|---|---|
+| `_resolve_can_submit` | `memory/` only | `atlas kill flatten-all` left `can_submit` true | Fixed |
+| `AdvancedKillSwitch.evaluate` (the agent loop) | `.atlas/safety/` only | `atlas kill-switch enable --mode flatten` did not stop the loop | Fixed |
+| `_cmd_broker_opt_in` | `memory/` only | live-submit authority granted while `atlas kill` armed | Fixed |
+| `_display_live_status` | `memory/` only | reported "live submit possible" against the resolver's own answer | Fixed |
 
-Both commands print their path and exit 0, which is why neither surfaced:
+The state read is now `advanced_kill_switch_mode` in `safety/kill_switch.py`,
+shared by all of them. That placement is the lesson rather than a tidy-up: every
+copy that grew next to its own caller grew against a single switch.
+
+The heartbeat mechanism has the same split and one open defect from it. The live
+deadman reads only the `.atlas/safety/` heartbeat, so `atlas heartbeat` and
+`atlas telegram heartbeat` feed nothing that runs: `DeadmanSwitch`, the only
+reader of the file they write, is never constructed anywhere in `src/`. It is
+pinned by `tests/safety/test_heartbeat_commands_feed_the_live_deadman.py` with
+two strict xfails.
+
+Only one of the five left a live path open. `_resolve_can_submit` is the gate
+the submit funnel consults, so its blind spot was the real fail-open: `atlas
+kill flatten-all` and live submission stayed possible. The other three
+kill-switch consumers failed to refuse while a downstream gate still held — the
+loop kept iterating but could not have placed a live order, the opt-in granted
+authority unusable while the stop held, and the status display only misreported.
+That ordering is worth keeping straight, because "four consumers were wrong" and
+"four ways to trade through a kill switch" are very different claims and only
+the first is true.
+
+The heartbeat defect points the other way entirely. It is **fail-closed**: the
+agent stops when it should keep running, costing false confidence and
+availability rather than opening anything.
+
+Both heartbeat commands print their path and exit 0, which is why neither
+surfaced:
 
 ```
 $ atlas heartbeat
@@ -244,8 +270,8 @@ heartbeat` already writes the live file, so the precedent cuts both ways. It is
 a decision about who may assert liveness, not a wiring bug, and it wants a
 maintainer.
 
-Unifying the two subsystems is the larger question underneath. It is worth
-noting what the split costs beyond these two defects: every future safety
+Unifying the two subsystems is the larger question underneath. What the split
+costs beyond these five is the part worth weighing: every future safety
 mechanism has two places to be wired, and a reviewer checking one has no signal
 that the other exists.
 
