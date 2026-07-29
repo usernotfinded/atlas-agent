@@ -4,6 +4,36 @@
 
 Atlas Agent supports hierarchical kill-switch modes, plus a dead-man heartbeat switch for automatic protection.
 
+## Two surfaces, and which one to reach for
+
+There are two kill-switch commands. They keep separate state and do different
+things, so it is worth knowing which you are holding before an incident rather
+than during one.
+
+| | `atlas kill` | `atlas kill-switch` |
+|---|---|---|
+| Modes | `soft-pause`, `cancel-all`, `flatten-all`, `lock` | `soft`, `cancel`, `flatten` |
+| State | `.atlas/safety/kill_switch.json` | `memory/kill_switch_state.json` |
+| Blocks live submit | Yes | Yes |
+| Cancels or closes positions itself | **No** — sets a mode | **Yes** — acts through the broker |
+| Dead-man heartbeat | Yes | No |
+
+`atlas kill` records an intent. A **running** agent loop re-reads it on every
+tool call and builds a safety plan from it, so `flatten-all` closes positions
+only while an agent is running to act on it. With no loop running it halts new
+orders and nothing else.
+
+`atlas kill-switch enable` performs the cancel and flatten itself, through the
+broker, at the moment you run it.
+
+**In an incident with no agent running, `atlas kill-switch enable --mode flatten`
+is the command that closes positions.** Run it *first* rather than escalating to
+it — a known open item means it cannot obtain a broker once the switch is already
+armed. See
+[safety-invariant-audit-followups.md](development/safety-invariant-audit-followups.md).
+
+Both surfaces close the live submit path, so either one stops new orders.
+
 ## Modes
 
 - `normal`: No kill switch active; trading proceeds normally.

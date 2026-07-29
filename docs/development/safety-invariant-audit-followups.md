@@ -202,6 +202,57 @@ record a heartbeat too, or it inherits a deadman that cannot fire.
 
 ## Open items
 
+### The emergency flatten cannot be reached by escalating — `semantics_change`
+
+`atlas kill-switch enable --mode flatten` is the only command that closes live
+positions through a broker. It works as a first action and fails as a second
+one, which is the order an operator actually uses it in.
+
+`_broker_for_kill_switch` obtains its broker from `_broker_for_mode`, which for
+live mode requires `resolution.status.can_submit`. That predicate includes "kill
+switch is normal". So arming the switch at all removes the broker from the only
+path that can flatten with it. Measured on a workspace with every other gate
+satisfied:
+
+```
+step 1, switch normal      AlpacaBroker
+step 2, after --mode soft  (None, 'live Alpaca sync is ready; submit kill switch is soft')
+```
+
+The documented ladder walks straight into it. `docs/kill-switch.md` lists
+`soft-pause`, `cancel-all`, `flatten-all` in that order under "Manual triggers",
+and `DEADMAN_ACTION` defaults to `soft` — so an operator arriving at a tripped
+deadman and asking to be flat is already in step 2.
+
+Gating a flatten behind a *submit* predicate is backwards, and this codebase has
+already ruled on it twice. `RiskManager.should_check_limits` exempts
+risk-reducing orders so a breached limit cannot trap a position open, and
+`safety/executor.py` says it outright:
+
+> Only locked_down blocks: the milder modes are the very reason this plan exists
+> (a cancel_all plan is *supposed* to run while the switch says cancel_all).
+
+The same rule applied here gives the fix: the kill switch's broker should be
+resolved on "is a broker configured and are its credentials present", not on
+"may we submit new orders", and refuse at `locked_down` as the executor does.
+
+It is recorded rather than done because the change is to what the resolver hands
+out while its own guard is armed, and `bounded-live-autonomy-governance.md`
+reserves exactly that question — "confirm every adapter implements fail-closed
+behavior and cannot bypass resolver guards" — for external broker-adapter
+review. `resolve_execution_broker` currently returns `execution_broker=None`
+alongside `can_submit=False`, so the fix means a second resolution path, and a
+second way to obtain a live broker handle is not something to add by
+self-assessment.
+
+One honest note on scope. Making `atlas kill` close the live path widened this:
+its modes now also refuse the broker, so `atlas kill soft-pause` followed by
+`atlas kill-switch enable --mode flatten` is newly affected. The exposure is the
+cross-surface sequence only — `atlas kill` never flattened through a broker
+itself, it sets a mode the agent loop consumes — and it buys the runbook's own
+commands actually closing live submit. Net positive, but both halves belong on
+the record.
+
 ### Four config fields keep their valid values in a comment — `contract_change`
 
 `config/schema.py` declares these as plain strings:
