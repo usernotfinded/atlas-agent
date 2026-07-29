@@ -202,6 +202,37 @@ record a heartbeat too, or it inherits a deadman that cannot fire.
 
 ## Open items
 
+### `provider-safety-dossier-summary` documents an argument it cannot accept — `contract_change`
+
+The parser names the positional `run_id` and validates it with
+`validate_run_id`, while `summarize_provider_safety_dossier(workspace, dossier_id)`
+looks the argument up as a dossier id. An operator following `--help` therefore
+always fails:
+
+```
+run_id (as --help names it)      : rc=1 ok=False status=research_error
+dossier_id (what the code wants) : rc=0 ok=True  status=research_provider_safety_dossier_summary
+```
+
+Two separate things make it worse than a wrong label. The refusal is opaque:
+`provider_safety_dossier_missing` is absent from `RESEARCH_SESSION_ERROR_CODES`,
+so it flattens to "Research command failed." and the operator learns nothing —
+one of the 136 entries `CAND-034` proposes wording. And nothing caught it, because
+the command's own tests call the domain function directly with a dossier id while
+the envelope suite only ever drives the not-found path.
+
+Both halves are now pinned in
+`tests/research/test_research_provider_safety_dossier.py`: one case uses the id
+the code wants, and `test_summary_refuses_a_run_id_opaquely` records the current
+behaviour so a fix has something to change.
+
+Deciding it is a contract question, which is why it is here rather than fixed.
+Renaming the positional to `dossier_id` is the honest fix, but the argument name
+is part of the CLI surface that `scripts/check_cli_command_compatibility.py` and
+the trust-contract envelopes pin, so it wants the same treatment as any other
+surface change. Mapping the error code is independently worth doing and would at
+least make the failure legible.
+
 ### Two parallel safety subsystems, with the CLI split across both — `architecture`
 
 This is the root cause behind several findings that looked unrelated. Atlas
