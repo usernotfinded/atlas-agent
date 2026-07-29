@@ -161,6 +161,42 @@ are pinned by tests and the limitation is documented in `docs/kill-switch.md`.
 
 ## Open items
 
+### Four config fields keep their valid values in a comment — `contract_change`
+
+`config/schema.py` declares these as plain strings:
+
+```python
+order_approval_mode: str = "manual_live"  # auto_paper, manual_live, disabled_live
+auto_check: str = "daily"                 # daily, weekly, never
+transport: str = "disabled"               # disabled, dry_run, slack
+trading_mode: str = "paper"               # backtest, paper, live
+```
+
+Three of the four have already taken a value from the wrong domain, each found
+and fixed separately before the pattern was visible:
+
+- `order_approval_mode` received `"telegram"` from config migration, because
+  `messaging` was mapped to it.
+- `auto_check` received `"stable"` from the setup wizard, because
+  `update_channel` was written to it.
+- `trading_mode` accepts `"banana"` from `atlas config set` today. The
+  per-field validation added with that fix cannot catch it: the field's type is
+  `str`, and `"banana"` is a string.
+
+`Literal[...]` would have caught all three at the point of writing, and would
+make `validate_raw_value` reject them with no further work.
+
+Deciding it: tightening these types is not only a schema change, it needs a plan
+for data already in the wild. Every workspace configured by the wizard before the
+`update_channel` fix has `auto_check = "stable"` in its `config.toml`, so a
+`Literal` on that field would refuse to load exactly the configs the earlier bug
+produced — turning a harmless stale value into a workspace that will not start.
+Whoever takes this needs a coercion or repair step first, not just the type.
+
+Nothing is currently at risk from the stale values: `auto_check` is read by
+nothing, and an unrecognised `trading_mode` fails closed at the resolver, which
+answers `unknown_mode`.
+
 ### Two CLI refusal-code conventions are live at once — `contract_change`
 
 `cli_io.emit_cli_error` returns exit 2 and explains why in a comment: "exit 1 is
