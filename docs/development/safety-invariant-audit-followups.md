@@ -531,6 +531,32 @@ The `cli_bootstrap.py` pre-router is not the lever either way. It stays narrow
 for its own reason: the four configless commands must run with no config loaded
 and no third-party import on the path.
 
+### Two suite-speed levers that measured smaller than they look — `cleanup`
+
+Both are recorded as declined so they are not re-derived. The suite is 8,589
+tests in about 990 s, and the shape of that cost is the useful part: the 30
+slowest tests are only 19% of it, while the quick tier averages 9 ms per test
+against 266 ms for the non-quick ones. The cost is distributed, not concentrated.
+
+**Copying a workspace template instead of running `atlas init`.** The operation
+itself is 11x cheaper — 57 ms for `main(["init", "."])` against 5 ms for a
+`copytree` of the result. Sizing it is what settles it: 118 call sites, of which
+only 10 are fixtures, giving roughly 260 workspace creations once the envelope
+test's parametrisation is counted. At 52 ms saved each that is about 13.5 s, or
+**1.4% of the suite**, spread across 11 fixtures that would all need converting.
+
+**Deferring the large CLI imports.** Priced in
+[v0.6.27 Release Candidates](../releases/v0.6.27-candidates.md) under CAND-032:
+marginal rather than attributed cost is 64 ms for `cli_commands`, 25 ms for
+`backtest`, and **0 ms** for both `risk` and `audit`, against a measured 690 ms
+for a cold `atlas --version`. Suite-wide the ceiling is 4.5%.
+
+What the two have in common is worth stating once: both look large in a profile
+because the profile attributes shared work to whoever triggered it first, and
+both shrink to a few percent when the marginal cost is measured instead. That
+trap has now been met three times in this repository, counting `urllib.request`
+above.
+
 ## What the audit did change
 
 For context on the boundaries above, the same pass fixed: a risk gate that
