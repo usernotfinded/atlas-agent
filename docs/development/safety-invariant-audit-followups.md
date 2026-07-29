@@ -258,9 +258,26 @@ findable from any of the others:
 | `_cmd_broker_opt_in` | `memory/` only | live-submit authority granted while `atlas kill` armed | Fixed |
 | `_display_live_status` | `memory/` only | reported "live submit possible" against the resolver's own answer | Fixed |
 
+A fifth was found later and fixed the same way: `atlas risk status` built its
+`RiskManager` from the raw config field and printed "Kill Switch: Inactive" for a
+switch armed at `flatten`, while `atlas risk check` — the sibling branch in the
+same file, which already imported the resolver — answered `kill_switch=True`.
+Reporting only, but it is the report an operator reads during an incident.
+
 The state read is now `advanced_kill_switch_mode` in `safety/kill_switch.py`,
 shared by all of them. That placement is the lesson rather than a tidy-up: every
 copy that grew next to its own caller grew against a single switch.
+
+One further site is recorded as **unverified** rather than as a defect.
+`_run_once_live_analysis` in `cli.py` constructs its `RiskManager` without
+passing `kill_switch_enabled` at all, so the flag defaults to false even though
+the config reaching it has been OR-ed with the on-disk state. Whether that
+changes any output could not be established: the live analysis path refuses at
+broker sync before it reaches risk evaluation, and getting past that needs real
+live credentials. No order can be submitted either way, since
+`_resolve_can_submit` gates that separately and reads both switches. Left as an
+observation because the honest status is "not shown to matter", not "checked and
+harmless" — and because a future L3 path would run through the same shape.
 
 The heartbeat mechanism has the same split and one open defect from it. The live
 deadman reads only the `.atlas/safety/` heartbeat, so `atlas heartbeat` and
