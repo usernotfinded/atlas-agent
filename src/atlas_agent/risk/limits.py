@@ -25,6 +25,7 @@ DEFAULT_MAX_SINGLE_TRADE_NOTIONAL = 500.0
 DEFAULT_MAX_DAILY_LOSS_PCT = 0.02
 DEFAULT_MINIMUM_CONFIDENCE = 0.6
 DEFAULT_MAX_OPEN_POSITIONS = 10
+DEFAULT_MAX_TRADES_PER_DAY = 5
 
 
 # ==============================================================================
@@ -38,7 +39,20 @@ class RiskLimits(BaseModel):
     max_portfolio_exposure_pct: float = Field(default=1.0, description="Max total portfolio exposure as % of equity")
     max_single_trade_notional: float = Field(default=DEFAULT_MAX_SINGLE_TRADE_NOTIONAL, description="Max notional value for a single trade")
     max_daily_loss_pct: float = Field(default=DEFAULT_MAX_DAILY_LOSS_PCT, description="Max daily loss as % of equity")
+    # The config carries an ABSOLUTE `max_daily_loss` while the limit above is a
+    # percentage. They are different units and neither is a substitute for the
+    # other, so both are kept and whichever binds first stops new risk. Folding
+    # the absolute value into the percentage field would read 100.0 as 10000% of
+    # equity — the same wrong-domain write this project has fixed elsewhere.
+    max_daily_loss_notional: Optional[float] = Field(default=None, description="Max daily loss in currency; None disables this ceiling")
     max_open_positions: int = Field(default=DEFAULT_MAX_OPEN_POSITIONS, description="Max number of concurrent open positions")
+    max_trades_per_day: int = Field(default=DEFAULT_MAX_TRADES_PER_DAY, description="Max fills per session before new risk is refused")
+
+    # --- Leverage ---
+    # False by default and checked against the order, not only the config flag.
+    # `BrokerResolver` gates on the flag alone, which passes when leverage is
+    # disallowed — it has no view of what the order actually carries.
+    allow_leverage: bool = Field(default=False, description="Allow orders carrying leverage above 1.0")
 
     # --- Tradable universe ---
     # `allowed_symbols=None` means "everything" and is NOT the same as an empty set,

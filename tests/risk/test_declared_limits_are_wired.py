@@ -6,31 +6,33 @@
 # DEPS:    pytest, atlas_agent.risk.
 # ==============================================================================
 
-"""Coverage for hard invariant 5's list of enforced limits.
+"""Every limit the project declares is a limit `RiskManager` evaluates.
 
 `docs/bounded-live-autonomy-governance.md` invariant 5 says `RiskManager`
 enforces "hard-coded limits on position size, notional, daily loss, exposure,
-symbols, and leverage". Four of those six are enforced and have rules. Two are
-not:
+symbols, and leverage", and `atlas risk check` additionally shows the operator a
+max-trades-per-day. Four of those were enforced. Three were not: a portfolio 50%
+down on the day against a 2% ceiling passed with zero violations, as did an order
+carrying 10x leverage and a session that had already made a hundred trades.
 
-- `max_daily_loss_pct` is declared in `RiskLimits` and read by no rule.
-  `realized_pnl_today` is carried from `PortfolioState` through
-  `PortfolioSnapshot` into every evaluation and then ignored — and nothing in
-  `src/` ever increments it, so the chain is a stub at both ends.
-- `OrderRiskInput.leverage` is populated from the order on both the paper and
-  the live-submit path, and read by no rule. No broker adapter forwards it
-  either, so today it is a field nothing acts on.
+They are enforced now, which is a prerequisite for the L3 bounded-live-autonomy
+tier — that rung requires "strict RiskManager limits", and limits that evaluate
+nothing do not qualify.
 
-The two enforced-limit tests are `xfail`: they state the behaviour the invariant
-promises, so implementing it turns them green and the marker into a visible
-XPASS that has to be removed. Asserting the current behaviour instead would
-record the gap as intended and have to be deleted by whoever closes it.
+The daily-loss chain needed both ends built. `realized_pnl_today` had existed on
+`PortfolioState` since the beginning, documented as backing this limit, and
+nothing ever wrote it; the paper broker now records it at the fill, where the
+position's average price is still known.
 
-The third test is not `xfail`. It pins the four limits that do work, so this
-file cannot quietly become a list of things that used to be checked.
+Two ceilings, not one: the config carries an absolute `max_daily_loss` while
+`RiskLimits` carries a percentage. Those are different units and neither
+substitutes for the other, so both bind and whichever is hit first stops new
+risk.
 
-`docs/development/safety-invariant-audit-followups.md` records the finding and
-`CAND-033` proposes the work.
+The case that matters most is the last one. A session halt must never trap a
+position open — an operator who has hit the loss limit has to be able to close
+what they are holding, so these limits refuse new risk and let risk reduction
+through.
 """
 
 # --- IMPORTS ---
@@ -94,14 +96,6 @@ def test_a_clean_order_passes() -> None:
     assert _violations(_order(), _portfolio()) == []
 
 
-@pytest.mark.xfail(
-    reason=(
-        "max_daily_loss_pct is declared in RiskLimits and evaluated by no rule. "
-        "realized_pnl_today reaches every evaluation and is ignored, and nothing "
-        "in src/ increments it. See CAND-033."
-    ),
-    strict=True,
-)
 def test_a_day_past_the_loss_limit_blocks_the_next_order() -> None:
     """A portfolio 50% down on the day, against a 2% limit, must not keep trading."""
     limits = RiskLimits()
@@ -113,13 +107,6 @@ def test_a_day_past_the_loss_limit_blocks_the_next_order() -> None:
     assert "max_daily_loss_pct" in violations
 
 
-@pytest.mark.xfail(
-    reason=(
-        "OrderRiskInput.leverage is populated on both order paths and evaluated by "
-        "no rule. No broker adapter forwards it either. See CAND-033."
-    ),
-    strict=True,
-)
 def test_a_leveraged_order_is_rejected() -> None:
     """`allow_leverage` defaults to false, so a 10x order has nothing authorising it."""
     violations = _violations(_order(leverage=10.0), _portfolio())
@@ -127,14 +114,6 @@ def test_a_leveraged_order_is_rejected() -> None:
     assert violations != []
 
 
-@pytest.mark.xfail(
-    reason=(
-        "max_trades_per_day is configured, defaults to 5, and is printed by "
-        "`atlas risk check`, but RiskLimits has no such field and no rule reads "
-        "trades_today — which the paper broker does increment. See CAND-033."
-    ),
-    strict=True,
-)
 def test_the_daily_trade_count_limit_is_enforced() -> None:
     """The one an operator is shown directly.
 
@@ -190,3 +169,77 @@ def test_the_wired_limits_still_reject(
     rules = [violation.rule for violation in decision.violations or []]
 
     assert expected_rule in rules, f"{label}: expected {expected_rule}, got {rules}"
+
+
+def test_the_absolute_daily_loss_ceiling_also_binds() -> None:
+    """The config's `max_daily_loss` is currency, not a percentage.
+
+    Folding it into `max_daily_loss_pct` would read 100.0 as 10000% of equity —
+    the wrong-domain write this project has fixed elsewhere — so it has its own
+    ceiling and both apply.
+    """
+    limits = RiskLimits(max_daily_loss_notional=100.0)
+    decision = RiskManager(limits=limits).evaluate_order(
+        _order(), _portfolio(realized_pnl_today=-150.0)
+    )
+
+    assert "max_daily_loss_notional" in [v.rule for v in decision.violations or []]
+
+
+def test_a_session_halt_never_blocks_closing_a_position() -> None:
+    """The property the whole design turns on.
+
+    An operator who has hit the daily loss limit, or the trade count, still has a
+    position open. Refusing the order that closes it would trap them in the loss
+    the limit exists to stop — so these limits refuse new risk only.
+    """
+    from atlas_agent.risk.models import RiskPosition
+
+    held = RiskPosition(
+        symbol="AAPL", quantity=10, average_price=100.0,
+        market_price=100.0, notional=1000.0, side="long",
+    )
+    battered = _portfolio(
+        total_exposure=1000.0,
+        positions=[held],
+        realized_pnl_today=-EQUITY * 0.5,
+        trades_today=100,
+    )
+
+    closing = OrderRiskInput(
+        symbol="AAPL", side="sell", quantity=10, price=100.0,
+        notional=1000.0, leverage=1.0, confidence=0.9, stop_loss=None,
+    )
+    opening = OrderRiskInput(
+        symbol="AAPL", side="buy", quantity=1, price=100.0,
+        notional=100.0, leverage=1.0, confidence=0.9, stop_loss=90.0,
+    )
+
+    assert RiskManager().evaluate_order(closing, battered).allowed is True, (
+        "a session halt blocked a risk-reducing order, trapping the position open"
+    )
+    assert RiskManager().evaluate_order(opening, battered).allowed is False
+
+
+def test_the_paper_broker_records_the_loss_the_limit_reads() -> None:
+    """A ceiling over a number nobody writes is not a limit.
+
+    `realized_pnl_today` was declared, plumbed into every evaluation, and left at
+    zero forever. This is the write that makes the daily-loss limit mean
+    something.
+    """
+    from atlas_agent.brokers.paper import PaperBroker
+    from atlas_agent.execution.order import Order
+    from atlas_agent.portfolio.state import PortfolioState
+
+    state = PortfolioState(cash=10_000.0)
+    broker = PaperBroker(state=state)
+    broker.place_order(
+        Order(symbol="AAPL", side="buy", quantity=10, limit_price=100.0, order_type="limit")
+    )
+    assert state.realized_pnl_today == 0.0, "an opening fill realizes nothing"
+
+    broker.place_order(
+        Order(symbol="AAPL", side="sell", quantity=10, limit_price=90.0, order_type="limit")
+    )
+    assert state.realized_pnl_today == pytest.approx(-100.0)

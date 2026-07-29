@@ -117,6 +117,15 @@ class PaperBroker:
                     reasons=("insufficient position",),
                 )
             self.state.cash += order.quantity * price
+            # Realized P&L is only knowable here: `average_price` is what the
+            # position cost, and it is about to be discarded when the position
+            # closes. `realized_pnl_today` has existed on PortfolioState since the
+            # beginning, documented as backing the max_daily_loss limit, and
+            # nothing ever wrote it — so that limit was a ceiling over a number
+            # frozen at zero. This is the write it was waiting for.
+            self.state.realized_pnl_today += (
+                price - position.average_price
+            ) * order.quantity
             position.quantity -= order.quantity
             if position.quantity == 0:
                 position.average_price = 0.0

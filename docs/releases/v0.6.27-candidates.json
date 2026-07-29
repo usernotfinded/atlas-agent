@@ -30,8 +30,8 @@
     {
       "id": "CAND-033",
       "title": "Wire the declared risk limits that no rule reads",
-      "status": "proposed",
-      "accepted": false,
+      "status": "accepted",
+      "accepted": true,
       "category": "risk",
       "priority": "P1",
       "risk": "medium",
@@ -45,7 +45,8 @@
       ],
       "acceptance_criteria": "The two xfail cases in tests/risk/test_declared_limits_are_wired.py pass with their markers removed, each new guard is verified by breaking the source and confirming the specific test fails, and no previously accepted order is rejected except by the limit being added.",
       "safety_notes": "Tightens the deterministic risk gate; enables nothing. Adds no live trading, live submit, broker or provider execution, credential loading, or network access, and changes no default toward permissiveness. It can only reject orders that are accepted today.",
-      "open_question": "The three differ in how ready they are. trades_today is already incremented by the paper broker and reaches every evaluation, so the trade -count limit needs only a rule. realized_pnl_today reaches every evaluation too but nothing in src/ ever increments it, so the daily-loss limit would be a limit on a number nobody writes until it is decided where realized daily P&L is accounted \u2014 the paper broker's fills, the trade journal, or a session boundary the caller resets. Leverage is narrower still: no broker adapter forwards the field, so the question is whether to reject leveraged orders at the gate or stop carrying a field the system does not act on. A fourth option exists for max_trades_per_day alone: stop `atlas risk check` printing it, which removes the misleading claim without changing the gate."
+      "open_question": "Resolved. Realized daily P&L is accounted at the paper broker's fill, where the position's average price is still known and where trades_today was already incremented. The config's absolute max_daily_loss and the schema's max_daily_loss_pct are different units, so both are kept as separate ceilings rather than one being folded into the other. Leverage is checked against the order, because the resolver's gate reads only the allow_leverage config flag and is satisfied when leverage is disallowed. All three limits refuse new risk only: a risk-reducing order passes every session halt, so a loss limit cannot trap a position open.",
+      "acceptance_verdict": "PASS"
     },
     {
       "id": "CAND-034",

@@ -97,6 +97,11 @@ class RiskManager:
             paper_only=not enable_live,
             minimum_confidence=_get(config, "minimum_confidence", 0.6),
             allow_shorting=_get(config, "allow_shorting", False),
+            # `max_trades_per_day` has been in the config schema, and printed by
+            # `atlas risk check`, since before any rule read it. It is read now.
+            max_trades_per_day=_get(config, "max_trades_per_day", 5),
+            max_daily_loss_notional=_get(config, "max_daily_loss", None),
+            allow_leverage=_get(config, "allow_leverage", False),
         )
         return cls(limits=limits, kill_switch_enabled=_get(config, "kill_switch_enabled", False))
 
@@ -442,6 +447,52 @@ class RiskManager:
         should_check_limits = not (is_reducing_current and is_reducing_pending)
 
         if should_check_limits:
+            # --- Session limits ---------------------------------------------------
+            # These sit inside `should_check_limits` on purpose. Both are halts on
+            # taking NEW risk, and an operator who has hit either one must still be
+            # able to close what they are holding. Blocking a risk-reducing order
+            # because the day went badly is the opposite of what a loss limit is
+            # for — it would trap a position open at exactly the wrong moment.
+            loss_today = -portfolio.realized_pnl_today
+            if portfolio.equity > 0 and self.limits.max_daily_loss_pct > 0:
+                loss_ceiling = portfolio.equity * self.limits.max_daily_loss_pct
+                if loss_today > loss_ceiling:
+                    violations.append(RiskViolation(
+                        rule="max_daily_loss_pct",
+                        message="max daily loss reached; no new risk this session",
+                        limit_value=loss_ceiling,
+                        actual_value=loss_today
+                    ))
+            if (
+                self.limits.max_daily_loss_notional is not None
+                and loss_today > self.limits.max_daily_loss_notional
+            ):
+                violations.append(RiskViolation(
+                    rule="max_daily_loss_notional",
+                    message="max daily loss reached; no new risk this session",
+                    limit_value=self.limits.max_daily_loss_notional,
+                    actual_value=loss_today
+                ))
+
+            if portfolio.trades_today >= self.limits.max_trades_per_day:
+                violations.append(RiskViolation(
+                    rule="max_trades_per_day",
+                    message="max trades per day reached",
+                    limit_value=self.limits.max_trades_per_day,
+                    actual_value=portfolio.trades_today
+                ))
+
+            # Leverage is checked against the ORDER. `BrokerResolver` gates on the
+            # `allow_leverage` config flag, which is satisfied when leverage is
+            # disallowed — nothing there looks at what the order carries.
+            if order.leverage > 1.0 and not self.limits.allow_leverage:
+                violations.append(RiskViolation(
+                    rule="allow_leverage",
+                    message="order carries leverage and leverage is not allowed",
+                    limit_value=1.0,
+                    actual_value=order.leverage
+                ))
+
             # Single trade limits (always check for new orders)
             if order.notional > self.limits.max_single_trade_notional:
                 violations.append(RiskViolation(
