@@ -144,6 +144,36 @@ that claims nothing, because it reads like a gate to the next person looking for
 one. The header now says outright that nothing reads it, and names where each
 rule is actually enforced.
 
+### The approval gate failed without an audit record — `semantics_change`
+
+Hard invariant 8 says the audit hash-chain records "**all** gate failures, risk
+rejections, kill-switch transitions, and submit attempts".
+`docs/release-checklist.md` enumerated the reason codes for which
+`live_submit_blocked` is emitted, and that list started at the HMAC-approval
+gate. The code followed the checklist, so every gate before it returned blocked
+and wrote nothing:
+
+```
+not approved             blocked_reason=not_approved         NO AUDIT RECORD
+already submitted        blocked_reason=already_submitted    NO AUDIT RECORD
+terminal state           blocked_reason=terminal_state       NO AUDIT RECORD
+```
+
+`not_approved` was the one that mattered: invariant 7 makes approval mandatory,
+and the failure of that gate — the event an operator searches the chain for when
+asking whether anything tried to submit without approval — left no trace.
+
+**Decided: the invariant wins, and all thirteen now emit.** The two documents
+disagreed and the earlier note left the choice open. The external gates for
+bounded live autonomy settle it: they require "tamper-evident audit logging for
+every autonomous decision", so under L3 the checklist reads as an incomplete list
+of things to verify rather than a narrower contract. The same probe that found
+the gap now shows an audit line for each.
+
+The checklist enumeration is regenerated from the emitters and
+`tests/audit/test_live_submit_blocked_event_set.py` holds the two together in
+both directions, so the list cannot fall behind the code again.
+
 ### A missing heartbeat does not fail closed — `semantics_change`
 
 `safety/heartbeat.py::is_expired` reports a corrupt heartbeat as expired and an
@@ -312,39 +342,6 @@ leveraged orders at the gate or to stop carrying a field the system does not use
 `tests/risk/test_declared_limits_are_wired.py` states both as strict `xfail`
 cases, so whichever way this goes, implementing it turns the marker into a
 failing XPASS that has to be removed.
-
-### The approval gate fails without an audit record — `semantics_change`
-
-Hard invariant 8 says the audit hash-chain records "**all** gate failures, risk
-rejections, kill-switch transitions, and submit attempts". `docs/release-checklist.md`
-enumerates the reason codes for which `live_submit_blocked` is emitted, and that
-list starts at the HMAC-approval gate. The code follows the checklist, so the
-gates before it return blocked and write nothing:
-
-```
-not approved             blocked_reason=not_approved         NO AUDIT RECORD
-already submitted        blocked_reason=already_submitted    NO AUDIT RECORD
-terminal state           blocked_reason=terminal_state       NO AUDIT RECORD
-corrupt file             blocked_reason=invalid_pending_order    1 audit line
-```
-
-`not_approved` is the one that matters. Invariant 7 makes approval mandatory, and
-the failure of that gate — the event an operator would search the chain for when
-asking whether anything tried to submit without approval — leaves no
-tamper-evident trace. `already_submitted` and `terminal_state` are repeat submit
-attempts, which invariant 8 also names.
-
-The two documents disagree, and which is authoritative decides the fix. Read as
-a contract, the checklist defines a deliberate subset and the code is correct.
-Read as a verification checklist, it is an incomplete list of things to check
-and the governance invariant stands, making this a gap in the submit path.
-
-Deciding it: emitting for the earlier gates is mechanically small —
-`_emit_live_submit_blocked` is already called by fifteen neighbouring gates with
-established ordering and redaction — but it changes what a live-submit audit log
-contains, which release checks read. `tests/audit/test_live_submit_blocked_event_set.py`
-now pins the checklist against the emitters, so whichever way this is decided,
-the two can no longer drift apart quietly.
 
 ### CLI startup costs about half a second — `architecture`
 

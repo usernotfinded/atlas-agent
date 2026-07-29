@@ -367,6 +367,11 @@ def run_submit_execution(
     try:
         path = approval_manager.path_for(order_id)
     except InvalidApprovalIdError:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "invalid_pending_order_id", "path_traversal",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -377,6 +382,11 @@ def run_submit_execution(
         )
 
     if not path.exists():
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "pending_order_not_found", "pending_file",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -412,6 +422,11 @@ def run_submit_execution(
 
     # 4. Idempotency / terminal-state gate (before approved check)
     if current_status == "submitted":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "already_submitted", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -421,6 +436,11 @@ def run_submit_execution(
             message="Order has already been submitted.",
         )
     if current_status == "duplicate_reconciled":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "already_reconciled", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -430,6 +450,11 @@ def run_submit_execution(
             message="Order has already been reconciled.",
         )
     if current_status == "submit_uncertain":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "reconciliation_required", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -439,6 +464,11 @@ def run_submit_execution(
             message="Order is in submit_uncertain state. Run --reconcile first.",
         )
     if current_status == "reconciliation_required":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "reconciliation_required", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -448,6 +478,11 @@ def run_submit_execution(
             message="Order requires reconciliation. Run --reconcile first.",
         )
     if current_status == "submit_requested":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "reconciliation_required", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -457,6 +492,11 @@ def run_submit_execution(
             message="Order is in submit_requested state. Run --reconcile first.",
         )
     if current_status == "acknowledged":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "already_submitted", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -466,6 +506,11 @@ def run_submit_execution(
             message="Order has already been submitted.",
         )
     if current_status == "submit_prepare_failed":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "submit_prepare_failed", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -475,6 +520,11 @@ def run_submit_execution(
             message="Order preparation failed. Review config and retry.",
         )
     if current_status == "failed":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "submit_failed", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -484,6 +534,11 @@ def run_submit_execution(
             message="Order is in a terminal failed state.",
         )
     if current_status in ("cancelled", "rejected", "expired"):
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "terminal_state", "idempotency",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -495,6 +550,11 @@ def run_submit_execution(
 
     # 5. Require status == "approved"
     if not payload.get("approved") or current_status != "approved":
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "not_approved", "approved",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",
@@ -508,6 +568,11 @@ def run_submit_execution(
     # 6. Require approval not expired
     expiry_ok, expiry_reason = _check_expiry(payload)
     if not expiry_ok:
+        _emit_live_submit_blocked(
+            audit_writer, order_id, None,
+            getattr(config, "live_broker", "none"),
+            "approval_expired", "not_expired",
+        )
         return SubmitExecutionReport(
             ok=False,
             status="blocked",

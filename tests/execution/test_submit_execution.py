@@ -3662,25 +3662,28 @@ def test_execution_broker_invalid_emits_blocked(tmp_path: Path) -> None:
 # Batch 5.2: Negative tests — these gates must NOT emit live_submit_blocked
 # ---------------------------------------------------------------------------
 
-def test_path_traversal_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+def test_path_traversal_emits_live_submit_blocked(tmp_path: Path) -> None:
+    """A rejected order id is the one an operator most wants a record of."""
     manager = ApprovalManager(tmp_path / "pending")
     mock_audit = _mock_audit_writer()
     report = run_submit_execution("../../etc/passwd", FakeConfig(), manager, audit_writer=mock_audit)
     assert report.ok is False
     assert report.blocked_reason == "invalid_pending_order_id"
-    assert len(mock_audit.events) == 0
+    assert [e["event_type"] for e in mock_audit.events] == ["live_submit_blocked"]
 
 
-def test_pending_order_not_found_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+def test_pending_order_not_found_emits_live_submit_blocked(tmp_path: Path) -> None:
+    """Asking to submit an order that does not exist is worth recording."""
     manager = ApprovalManager(tmp_path / "pending")
     mock_audit = _mock_audit_writer()
     report = run_submit_execution("nonexistent-order", FakeConfig(), manager, audit_writer=mock_audit)
     assert report.ok is False
     assert report.blocked_reason == "pending_order_not_found"
-    assert len(mock_audit.events) == 0
+    assert [e["event_type"] for e in mock_audit.events] == ["live_submit_blocked"]
 
 
-def test_already_submitted_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+def test_already_submitted_emits_live_submit_blocked(tmp_path: Path) -> None:
+    """A repeat submit attempt is still a submit attempt, which invariant 8 names."""
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="already-submitted")
     payload = _make_v2_payload(order, status="submitted")
@@ -3690,10 +3693,18 @@ def test_already_submitted_does_not_emit_live_submit_blocked(tmp_path: Path) -> 
     report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
     assert report.ok is False
     assert report.blocked_reason == "already_submitted"
-    assert len(mock_audit.events) == 0
+    assert [e["event_type"] for e in mock_audit.events] == ["live_submit_blocked"]
 
 
-def test_not_approved_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+def test_not_approved_emits_live_submit_blocked(tmp_path: Path) -> None:
+    """The failure of the mandatory approval gate must reach the audit chain.
+
+    This test previously asserted the opposite. Hard invariant 8 promises the
+    chain records all gate failures, and the external gates for bounded live
+    autonomy require "tamper-evident audit logging for every autonomous
+    decision" — an unapproved submit attempt is exactly what an operator would
+    search the chain for.
+    """
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="not-approved")
     payload = _make_v2_payload(order, approved=False, status="pending_approval")
@@ -3703,10 +3714,11 @@ def test_not_approved_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
     report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
     assert report.ok is False
     assert report.blocked_reason == "not_approved"
-    assert len(mock_audit.events) == 0
+    assert [e["event_type"] for e in mock_audit.events] == ["live_submit_blocked"]
 
 
-def test_approval_expired_does_not_emit_live_submit_blocked(tmp_path: Path) -> None:
+def test_approval_expired_emits_live_submit_blocked(tmp_path: Path) -> None:
+    """An expired approval is a gate failure like any other."""
     manager = ApprovalManager(tmp_path / "pending")
     order = _make_order(id="expired")
     payload = _make_v2_payload(order)
@@ -3717,7 +3729,7 @@ def test_approval_expired_does_not_emit_live_submit_blocked(tmp_path: Path) -> N
     report = run_submit_execution(order.id, FakeConfig(), manager, audit_writer=mock_audit)
     assert report.ok is False
     assert report.blocked_reason == "approval_expired"
-    assert len(mock_audit.events) == 0
+    assert [e["event_type"] for e in mock_audit.events] == ["live_submit_blocked"]
 
 
 # ---------------------------------------------------------------------------

@@ -205,20 +205,12 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 
 - `run_submit_execution()` accepts an optional `audit_writer` parameter defaulting to `None`.
 - `live_submit_blocked` is emitted for these live-submit gate failures:
-  `hmac_approval_missing`, `live_trading_disabled`, `kill_switch_active` (both
-  checks), `broker_sync_unavailable`, `live_sync_failed`,
-  `market_price_unavailable`, `market_quote_unavailable`, `market_quote_invalid`,
-  `risk_revalidation_failed`, `live_submit_max_notional_exceeded`,
-  `live_submit_symbol_not_allowed`, `live_submit_side_not_allowed`,
-  `can_submit_false`, `invalid_pending_order`, `invalid_client_order_id`,
-  `submit_state_mutation_failed`, `execution_broker_unavailable`,
-  `execution_broker_invalid`.
+  `already_reconciled`, `already_submitted`, `approval_expired`, `broker_sync_unavailable`, `can_submit_false`, `execution_broker_invalid`, `execution_broker_unavailable`, `hmac_approval_missing`, `invalid_client_order_id`, `invalid_pending_order`, `invalid_pending_order_id`, `kill_switch_active`, `live_submit_max_notional_exceeded`, `live_submit_side_not_allowed`, `live_submit_symbol_not_allowed`, `live_sync_failed`, `live_trading_disabled`, `market_price_unavailable`, `market_quote_invalid`, `market_quote_unavailable`, `not_approved`, `pending_order_not_found`, `reconciliation_required`, `risk_revalidation_failed`, `submit_failed`, `submit_prepare_failed`, `submit_state_mutation_failed`, `terminal_state`.
 - That list is pinned against the emitters in the source by
   `tests/audit/test_live_submit_blocked_event_set.py`, so the two cannot drift.
-  It is not every gate in the submit path: the gates that run before the
-  approval check emit nothing, which
-  [safety-invariant-audit-followups.md](development/safety-invariant-audit-followups.md)
-  records as an open divergence from hard invariant 8.
+  That is now every gate failure in `run_submit_execution`, which is what hard
+  invariant 8 promises and what the external gates for bounded live autonomy
+  require: "tamper-evident audit logging for every autonomous decision".
 - `live_submit_attempted` is emitted exactly once, immediately before `execution_broker.place_order()`, only when all gates pass.
 - `live_submit_attempted` is **not** emitted when `can_submit=false`, hard limits fail, state mutation fails, broker resolution fails, or the final kill-switch check fails.
 - Audit emission is best-effort: write failures are caught silently and never change `SubmitExecutionReport` outcome.
