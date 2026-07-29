@@ -4301,7 +4301,13 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "kill":
         from atlas_agent.safety.kill_switch import AdvancedKillSwitch
-        safety_dir = Path(".atlas/safety")
+        from atlas_agent.config.paths import get_safety_dir_for
+
+        # Shared with BrokerResolver._resolve_can_submit, which reads this state
+        # to decide whether live submit is open. A literal here and a literal
+        # there is how the reader came to be looking at a file this command
+        # never wrote.
+        safety_dir = get_safety_dir_for(config)
         safety_dir.mkdir(parents=True, exist_ok=True)
         kill_switch = AdvancedKillSwitch(
             state_path=safety_dir / "kill_switch.json",
