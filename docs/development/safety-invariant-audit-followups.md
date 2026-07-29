@@ -238,6 +238,13 @@ reader of the file they write, is never constructed anywhere in `src/`. It is
 pinned by `tests/safety/test_heartbeat_commands_feed_the_live_deadman.py` with
 two strict xfails.
 
+Its size is what makes that a decision rather than a cleanup. `DeadmanSwitch` is
+286 lines and 12 methods, with market-session awareness, notifier fan-out, an
+audit hook and flatten escalation, and `tests/safety/test_deadman.py` exercises
+it in 11 cases. This is a finished, tested subsystem that was never plugged in —
+not a stub to delete and not a bug to patch. Wiring it changes what can stop the
+agent; removing it discards working capability and two CLI commands with it.
+
 Only one of the five left a live path open. `_resolve_can_submit` is the gate
 the submit funnel consults, so its blind spot was the real fail-open: `atlas
 kill flatten-all` and live submission stayed possible. The other three
