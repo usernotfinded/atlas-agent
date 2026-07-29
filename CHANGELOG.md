@@ -191,6 +191,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `atlas config set` wrote any value it was given, so
+  `atlas config set risk.max_order_notional not_a_number` printed "Updated
+  risk.max_order_notional in config.toml", returned 0, and left a workspace where
+  every command failed with "Invalid Atlas config schema" — a setter that bricks
+  the config and reports success. The secret branch of the same handler already
+  refused bad input and returned 2; the plain branch now does too. Validation is
+  per field rather than over the whole document, deliberately: `atlas config set`
+  is the tool an operator reaches for to repair a bad value, so it has to keep
+  working when the file it is repairing does not load. An undeclared key is still
+  accepted, because unmapped legacy keys land at the top level by design.
 - The setup wizard wrote a release channel into a check-frequency field.
   `update_channel` holds "stable" or "beta"; `update.auto_check` is documented as
   "daily", "weekly", or "never". Every workspace configured by `atlas setup` was

@@ -117,7 +117,13 @@ def handle_config(context: CLIContext) -> int | None:
                     return 2
                 print(f"Updated secret {env_var} in .env.atlas")
             else:
-                set_raw_value(args.key, args.value)
+                from atlas_agent.config.store import InvalidConfigValueError
+
+                try:
+                    set_raw_value(args.key, args.value)
+                except InvalidConfigValueError as exc:
+                    print(str(exc))
+                    return 2
                 print(f"Updated {args.key} in config.toml")
             return 0
 

@@ -95,6 +95,52 @@ def _atomic_write_toml(config_dict: dict) -> None:
         os.unlink(temp_path)
         raise
 
+class InvalidConfigValueError(ValueError):
+    """A value that would make the config unloadable was rejected before writing."""
+
+
+def validate_raw_value(dotted_path: str, value: Any) -> None:
+    """Refuse a value the schema could never load back.
+
+    `atlas config set` used to write anything. `risk.max_order_notional
+    not_a_number` reported "Updated ..." and exit 0, and every command afterwards
+    failed with "Invalid Atlas config schema" — a setter that bricks the workspace
+    and calls it success. The secret path in the same handler already refuses bad
+    input; this gives the plain path the same manners.
+
+    Only the one field is checked, never the whole config. Validating the whole
+    document would make an already-broken config unrepairable: `atlas config set`
+    is the tool you reach for to fix it, and it must not refuse the write that
+    would.
+
+    An unknown path is not an error here. Unmapped legacy keys land at the top
+    level by design (see `config/migrate.py`), and `set_raw_value` is the writer
+    they go through.
+    """
+    from pydantic import TypeAdapter, ValidationError
+
+    from atlas_agent.config.schema import AtlasConfig
+
+    model: Any = AtlasConfig
+    parts = dotted_path.split(".")
+    for index, part in enumerate(parts):
+        fields = getattr(model, "model_fields", None)
+        if not fields or part not in fields:
+            return  # not a declared setting; nothing to validate against
+        annotation = fields[part].annotation
+        if index < len(parts) - 1:
+            model = annotation
+            continue
+        try:
+            TypeAdapter(annotation).validate_python(value)
+        except ValidationError as exc:
+            reason = exc.errors()[0].get("msg", "invalid value")
+            raise InvalidConfigValueError(
+                f"{dotted_path} rejects {value!r}: {reason}. "
+                "The value was not written; the config is unchanged."
+            ) from exc
+
+
 def set_raw_value(dotted_path: str, value: Any) -> None:
     """Set a value in the raw TOML config. Rejects secrets."""
     # `model.default` is the legacy spelling of `model.model`; normalise on write so
@@ -108,6 +154,8 @@ def set_raw_value(dotted_path: str, value: Any) -> None:
     # committable and shareable, so a secret must never land in it by accident.
     if is_secret_key(dotted_path):
         raise ValueError(f"Cannot store secret key '{dotted_path}' in raw TOML. Use secrets store.")
+
+    validate_raw_value(dotted_path, value)
 
     import tomlkit # Lazy import
     
