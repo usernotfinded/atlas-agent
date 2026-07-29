@@ -180,21 +180,30 @@ def _kill_switch_enabled(kill_switch: Any) -> bool:
         return False
     if callable(getattr(kill_switch, "is_enabled", None)):
         return bool(kill_switch.is_enabled())
-    status = None
+    # An accessor that RAISES is not an accessor that said "off". `_read_state`
+    # in safety/kill_switch.py states the doctrine this follows: "Treating 'I
+    # cannot read the kill switch' as 'the kill switch is off' is exactly the
+    # fail-open this method must not have." `BrokerResolver` and
+    # `submit_execution` both answer the same way on the same condition.
+    #
+    # Unreachable with `KillSwitchController`, which fails closed twice over —
+    # `is_enabled` short-circuits above and `status()` returns an armed state on
+    # a corrupt file rather than raising. It is reachable for any other
+    # kill-switch-like object, which is what this loop accepts.
     if callable(getattr(kill_switch, "status", None)):
         try:
             status = kill_switch.status()
         except Exception:
-            status = None
-    if status is not None and hasattr(status, "enabled"):
-        return bool(status.enabled)
+            return True
+        if hasattr(status, "enabled"):
+            return bool(status.enabled)
     if callable(getattr(kill_switch, "evaluate", None)):
         try:
             decision = kill_switch.evaluate()
-            if hasattr(decision, "allowed"):
-                return not bool(decision.allowed)
         except Exception:
-            pass
+            return True
+        if hasattr(decision, "allowed"):
+            return not bool(decision.allowed)
     return False
 
 

@@ -191,6 +191,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The autonomous paper loop's kill-switch probe treated an accessor that raises
+  as a switch that is off. `_kill_switch_enabled` swallowed exceptions from both
+  `status()` and `evaluate()` and fell through to `return False`, letting the
+  loop run on. `safety/kill_switch.py::_read_state` states the doctrine it now
+  follows — "Treating 'I cannot read the kill switch' as 'the kill switch is off'
+  is exactly the fail-open this method must not have" — and `BrokerResolver` and
+  `submit_execution` already answer that way on the same condition. Not reachable
+  through `KillSwitchController`, which fails closed twice over, but the loop
+  accepts any duck-typed switch. The absence of a kill switch still reads as not
+  armed, which is a different thing from one that cannot be read.
 - `atlas config set` wrote any value it was given, so
   `atlas config set risk.max_order_notional not_a_number` printed "Updated
   risk.max_order_notional in config.toml", returned 0, and left a workspace where
