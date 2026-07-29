@@ -1196,3 +1196,150 @@ class TestSafetyDossierDiscoveryUX:
             "PASSWORD", "API_KEY", "sk-", "broker.example.com",
         ]:
             assert frag not in items_json, f"Forbidden fragment in list output: {frag}"
+
+
+# ---------------------------------------------------------------------------
+# CLI success paths
+#
+# Everything above calls the domain functions directly. Instrumenting
+# `dispatch_research` across a full suite run showed the consequence: six
+# `provider-safety-dossier` commands execute during the suite but never reach
+# exit 0, because the only thing that drives them is
+# `test_research_command_envelopes.py` with placeholder ids against an empty
+# workspace — always the not-found path.
+#
+# The cases below go through the CLI instead. They live in this file because the
+# 24-step `_full_chain_to_seal` lineage they need is already here, and a dossier
+# cannot exist without it.
+#
+# This is enabling work for CAND-035: a wrapper migration rewrites each handler's
+# success branch as well as its error envelope, and the envelope suite pins only
+# the latter.
+# ---------------------------------------------------------------------------
+
+
+def _cli_json(argv: list[str]) -> tuple[int | None, dict]:
+    """Run a research command in process and return its status and envelope."""
+    import contextlib
+    import io
+
+    from atlas_agent.cli import main
+
+    buffer = io.StringIO()
+    with contextlib.redirect_stdout(buffer):
+        code = main(argv)
+    return code, json.loads(buffer.getvalue())
+
+
+class TestSafetyDossierCliSuccessPaths:
+    """Drive each dossier command to its success envelope through the CLI."""
+
+    def _dossier(self, tmp_path: Path, monkeypatch) -> tuple[str, str]:
+        _ensure_workspace(tmp_path)
+        run_id, seal_id = _full_chain_to_seal(tmp_path, monkeypatch)
+        code, created = _cli_json(
+            ["research", "provider-safety-dossier", seal_id, "--json"]
+        )
+        # The premise for every case below. Asserted rather than assumed so a
+        # broken lineage does not read as a broken command.
+        assert code == 0, created
+        assert created["status"] == "research_provider_safety_dossier_created"
+        return run_id, created["provider_safety_dossier_id"]
+
+    def test_create_answers_in_its_success_envelope(self, tmp_path: Path, monkeypatch) -> None:
+        _run_id, dossier_id = self._dossier(tmp_path, monkeypatch)
+
+        assert len(dossier_id) > 10
+
+    def test_show_returns_the_dossier_that_was_asked_for(self, tmp_path: Path, monkeypatch) -> None:
+        _run_id, dossier_id = self._dossier(tmp_path, monkeypatch)
+
+        code, payload = _cli_json(
+            ["research", "provider-safety-dossier-show", dossier_id, "--json"]
+        )
+
+        assert code == 0
+        # This command prints the artifact itself rather than an `ok`/`status`
+        # envelope, unlike its siblings. Asserted as it is, not as the family
+        # suggests -- a wrapper migration has to preserve that difference.
+        assert payload["provider_safety_dossier_id"] == dossier_id
+        assert payload["artifact_type"]
+
+    def test_validate_answers_in_its_success_envelope(self, tmp_path: Path, monkeypatch) -> None:
+        _run_id, dossier_id = self._dossier(tmp_path, monkeypatch)
+
+        code, payload = _cli_json(
+            ["research", "provider-safety-dossier-validate", dossier_id, "--json"]
+        )
+
+        assert code == 0
+        assert payload["ok"] is True
+        assert payload.get("valid") is True
+
+    def test_replay_reports_a_match_for_an_untouched_dossier(self, tmp_path: Path, monkeypatch) -> None:
+        _run_id, dossier_id = self._dossier(tmp_path, monkeypatch)
+
+        code, payload = _cli_json(
+            ["research", "provider-safety-dossier-replay", dossier_id, "--json"]
+        )
+
+        assert code == 0
+        assert payload["status"] == "research_provider_safety_dossier_replayed"
+        # The key is `replay_hash_match`, not the `match` its sandbox counterpart
+        # uses. A false value means the artifact changed underneath us, so
+        # asserting only the status would let the interesting failure through.
+        assert payload["replay_hash_match"] is True
+
+    def test_summary_answers_for_the_dossier(self, tmp_path: Path, monkeypatch) -> None:
+        """Note the argument: a dossier id, despite `--help` calling it `run_id`.
+
+        `summarize_provider_safety_dossier` takes a dossier id, while the parser
+        names the positional `run_id` and validates it as one. Passing an actual
+        run id fails, and fails opaquely -- see
+        `test_summary_refuses_a_run_id_opaquely` below.
+        """
+        _run_id, dossier_id = self._dossier(tmp_path, monkeypatch)
+
+        code, payload = _cli_json(
+            ["research", "provider-safety-dossier-summary", dossier_id, "--json"]
+        )
+
+        assert code == 0
+        assert payload["ok"] is True
+        assert payload["status"] == "research_provider_safety_dossier_summary"
+
+    def test_summary_refuses_a_run_id_opaquely(self, tmp_path: Path, monkeypatch) -> None:
+        """Pins the mislabeled argument, so the fix has something to change.
+
+        An operator following `--help` passes a run id and gets "Research command
+        failed." The underlying `provider_safety_dossier_missing` is absent from
+        `RESEARCH_SESSION_ERROR_CODES`, so the specific reason is flattened into
+        the generic fallback -- an instance of the CAND-034 backlog making a
+        CAND-035-adjacent defect harder to diagnose.
+
+        If the positional is renamed or the code mapped, this case fails and
+        should be updated to the better behaviour.
+        """
+        run_id, _dossier_id = self._dossier(tmp_path, monkeypatch)
+
+        code, payload = _cli_json(
+            ["research", "provider-safety-dossier-summary", run_id, "--json"]
+        )
+
+        assert code == 1
+        assert payload["status"] == "research_error"
+
+    def test_export_writes_the_markdown_it_reports(self, tmp_path: Path, monkeypatch) -> None:
+        _run_id, dossier_id = self._dossier(tmp_path, monkeypatch)
+        output = tmp_path / "dossier.md"
+
+        code, payload = _cli_json([
+            "research", "provider-safety-dossier-export", dossier_id,
+            "--output", str(output), "--json",
+        ])
+
+        assert code == 0
+        assert payload["ok"] is True
+        # An export that reports success without producing the file is the
+        # failure this asserts against.
+        assert output.exists() and output.read_text(encoding="utf-8").strip()
