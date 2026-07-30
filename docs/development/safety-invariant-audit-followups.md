@@ -210,7 +210,7 @@ empty. Two coherent vocabularies had drifted apart:
 | Group | Shares | Missing |
 |---|---|---|
 | the seven `provider_*` modules | 12 capability claims — `credentials loaded`, `call broker`, `network enabled`, `api key loaded`, `broker touched`, `approve order`, `create order`, `manual unlock granted`, `live trading authorized`, `provider response trusted`, `trust upgrade performed`, `api call succeeded` | all 23 of the readiness claims |
-| the two `release_candidate_*` modules | 23 trading-readiness claims — `safe to trade`, `live trading ready`, `autonomous trading ready`, `real-money ready`, `production trading ready`, `profitable strategy`, `verified alpha`, `beats the market`, `orders enabled`, `approvals enabled`, `broker execution enabled`, `provider execution enabled`, `trust granted`, a profit-guarantee phrase, and their snake_case twins | all 12 of the capability claims |
+| the two `release_candidate_*` modules | 23 trading-readiness claims — `safe to trade`, `real-money ready`, `profitable strategy`, `verified alpha`, `beats the market`, `orders enabled`, `approvals enabled`, `broker execution enabled`, `provider execution enabled`, `trust granted`, three readiness assertions about live, autonomous and production trading, a profit-guarantee phrase, and their snake_case twins | all 12 of the capability claims |
 
 Both gaps were demonstrated by running the scanners, each against a control
 phrase from the scanner's own list so the probe could not be vacuous:
@@ -240,21 +240,37 @@ unchecked on the high-volume path.
 `FORBIDDEN_FRAGMENTS` does not cover the gap: eleven secret-shaped tokens
 (`API_KEY`, `Bearer`, `sk-`, `/Users/`), matching none of the 35 phrases.
 
-There is a third list, and writing this entry found it. `scripts/check_forbidden_claims.py`
-holds nine phrases it refuses to let *documentation* contain: three profit- or
-return-guarantee wordings, three risk-absence wordings, one about being unable to
-lose, and two about live trading being safe or unattended. It overlaps the
-39-phrase artifact vocabulary in exactly one entry, and quoting that entry in the
-table above made this document fail its own check — which is how the overlap
-surfaced, and why the phrases are described here rather than listed.
+**There are five of these lists, not one, and this entry found the rest by
+tripping over them.** Writing the table above meant quoting the vocabulary, and
+quoting it made this document fail three separate repository checks in
+succession — which is a more direct demonstration of the point than the table is:
 
-The two lists are not obviously wrong to differ: one governs prose written by
-humans, the other machine-built artifacts. But nothing states that they differ on
-purpose, and a phrase refused in a document while accepted in an artifact is the
-same shape of gap as the one this entry is about. Not unified here — merging a
+| List | Governs | Size |
+|---|---|---|
+| `research/_claim_vocabulary.py` | what a research artifact may claim | 39 phrases |
+| `sandbox_contracts.FORBIDDEN_FRAGMENTS` | secret-shaped tokens in artifact text | 11 tokens |
+| `scripts/check_forbidden_claims.py` | profit, return and risk wordings in docs | 9 phrases |
+| `scripts/check_docs_archive_hygiene.py` | trading-readiness claims in active docs | overlapping subset |
+| `scripts/check_bounded_autonomy_governance.py` | autonomy claims in docs | overlapping subset |
+
+The last two are why this entry's table now describes three of its phrases instead
+of quoting them. The artifact vocabulary and the documentation vocabularies
+overlap partially and differ in ways nothing states, so a phrase can be refused in
+a document and accepted in an artifact, or the reverse.
+
+That is not obviously wrong — one set governs prose written by humans, the other
+machine-built artifacts — but it is the same shape as the gap this entry is about,
+and now it is at least written down in one place. Not unified here: merging a
 human-prose vocabulary into an artifact vocabulary is a decision about wording
 policy rather than a cleanup, and it would refuse artifacts on phrases nobody has
 checked against artifact content.
+
+One process note, since it cost a full suite run. `scripts/local_quick_check.sh`
+does not run any of the three documentation checkers, so a doc edit that trips
+them passes the quick gate and fails ~19 minutes later in the full suite. Editing
+a doc in this repository means running `check_forbidden_claims`,
+`check_docs_archive_hygiene` and `check_bounded_autonomy_governance` before
+believing the gate.
 
 Reachability is not hypothetical. `release_candidate_readiness` puts the *stdout*
 of `scripts/check_version_consistency.py` and `scripts/check_forbidden_claims.py`
