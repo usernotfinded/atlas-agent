@@ -52,6 +52,7 @@ from atlas_agent.research.session import (
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 from atlas_agent.research._artifact_helpers import check as _check_name
 from atlas_agent.research.sandbox_contracts import validate_contract_model_id
+from atlas_agent.research.sandbox_contracts import validate_contract_mock_provider_id
 
 PROVIDER_MOCK_RESPONSE_REVIEW_SANDBOX_VERSION = "research_provider_mock_response_review_sandbox_v1"
 
@@ -165,10 +166,8 @@ class ProviderMockResponseReviewSandboxValidationResult:
 _has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)
 
 
-def validate_provider_id(value: str) -> str:
-    if not value or value != "mock":
-        raise ResearchSessionError("invalid_provider_mock_response_review_sandbox_provider")
-    return value
+def validate_mock_provider_id(value: str) -> str:
+    return validate_contract_mock_provider_id(value, "invalid_provider_mock_response_review_sandbox_provider")
 
 
 def validate_model_id(value: str) -> str:
@@ -965,7 +964,7 @@ def safe_validate_provider_mock_response_review_sandbox_data(
 
     provider_id = data.get("provider_id", "")
     try:
-        validate_provider_id(provider_id)
+        validate_mock_provider_id(provider_id)
     except ResearchSessionError:
         return None, "invalid_provider_mock_response_review_sandbox_provider"
     if provider_id != "mock":

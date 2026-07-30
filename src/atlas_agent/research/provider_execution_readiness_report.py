@@ -54,7 +54,7 @@ from atlas_agent.research.session import (
 )
 from atlas_agent.research._artifact_helpers import check as _check_name, is_inside_workspace as _is_inside_workspace
 from atlas_agent.research.sandbox_contracts import validate_contract_model_id
-from atlas_agent.research.provider_call_plan import _get_disabled_provider_ids
+from atlas_agent.research.sandbox_contracts import validate_contract_external_provider_id
 
 PROVIDER_EXECUTION_READINESS_REPORT_CONTRACT_VERSION = "research_provider_execution_readiness_report_v1"
 
@@ -123,13 +123,8 @@ def sanitize_readiness_report_text(value: str, max_chars: int = MAX_CONTRACT_TEX
     return sanitize_contract_text(value, max_chars)
 
 
-def validate_provider_id(value: str) -> str:
-    """Validate provider_id against known disabled targets. Fail closed."""
-    if not value:
-        raise ResearchSessionError("invalid_provider_id")
-    if value not in _get_disabled_provider_ids():
-        raise ResearchSessionError("invalid_provider_id")
-    return value
+def validate_external_provider_id(value: str) -> str:
+    return validate_contract_external_provider_id(value, "invalid_provider_id")
 
 
 def validate_model_id(value: str) -> str:
@@ -403,7 +398,7 @@ def build_provider_execution_readiness_report_dict(
     validate_contract_lineage_id(source_run_id, "source_run_id")
 
     symbol = validate_contract_symbol(source_audit_packet.get("symbol", ""))
-    safe_provider_id = validate_provider_id(source_audit_packet.get("provider_id", ""))
+    safe_provider_id = validate_external_provider_id(source_audit_packet.get("provider_id", ""))
     safe_model_id = validate_model_id(source_audit_packet.get("model_id", ""))
     latest_state = source_audit_packet.get("latest_state", "disabled")
     safe_execution_status = validate_execution_status("provider_execution_blocked")
@@ -685,7 +680,7 @@ def safe_validate_provider_execution_readiness_report_data(
     # 11. provider_id
     provider_id = data.get("provider_id", "")
     try:
-        validate_provider_id(provider_id)
+        validate_external_provider_id(provider_id)
     except ResearchSessionError:
         return None, "invalid_provider_execution_readiness_report_provider"
     err = _safe_error_code_for_field(provider_id, "provider")
@@ -969,7 +964,7 @@ def validate_provider_execution_readiness_report_artifact(
     # 13. provider_id
     provider_id = data.get("provider_id", "")
     try:
-        validate_provider_id(provider_id)
+        validate_external_provider_id(provider_id)
         provider_ok = True
     except ResearchSessionError:
         provider_ok = False

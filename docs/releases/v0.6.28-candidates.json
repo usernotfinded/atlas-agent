@@ -65,19 +65,20 @@
     {
       "id": "CAND-038",
       "title": "Three admission rules share the name validate_provider_id",
-      "status": "proposed",
-      "accepted": false,
+      "status": "released",
+      "accepted": true,
       "category": "maintainability",
       "priority": "P2",
       "risk": "medium",
-      "source": "CAND-037 collapsed six helper families and stopped at the seventh. validate_provider_id has 21 copies that look like duplicates and are not: normalising the error code away leaves three disjoint admission rules under one name. 15 copies accept the four disabled external provider ids and reject 'mock'; 5 accept only 'mock'; 1 accepts both. 'mock' is not among the disabled ids, so the first two accept strictly different sets. The union belongs to provider_mock_response_simulation, which calls the function on two different fields -- its upstream preview's provider id, which is external, and its own artifact's, which must be 'mock' -- and re-checks provider_id != 'mock' immediately after validating its own.",
+      "source": "CAND-037 collapsed six helper families and stopped at the seventh. validate_provider_id has 21 copies that look like duplicates and are not: normalising the error code away leaves three disjoint admission rules under one name. 15 copies accept the four disabled external provider ids and reject 'mock'; 5 accept only 'mock'; 1 accepts both. 'mock' is not among the disabled ids, so the first two accept strictly different sets. The union belongs to provider_mock_response_simulation, which calls the function on two different fields -- its upstream preview's provider id, which is external, and its own artifact's, which must be 'mock' -- and re-checks provider_id != 'mock' immediately after validating its own. A twenty-second copy lives in providers/provider_preflight.py and is not a copy at all: a bounded-string check raising PreflightValidationError, in a different package for a different purpose. It is out of scope and left alone, but it means the name carries four meanings across the tree, not three.",
       "expected_files": [
         "src/atlas_agent/research/sandbox_contracts.py",
         "src/atlas_agent/research/provider_mock_response_simulation.py"
       ],
       "acceptance_criteria": "Three named policies replacing one overloaded name, with the module needing both saying which it means at each call site, and the strict re-check that currently defends the union either preserved or made unnecessary by the rename. No admission set changes.",
       "safety_notes": "A rename of validators, not a change to what they admit. Any change to an accepted set would be a policy change and is out of scope. No gate added or removed; no live trading, live submit, broker or provider execution, credential loading, or network access.",
-      "open_question": "Whether the permissive union is load-bearing or an artifact of one function being used for two jobs. It is currently defended by a separate strict check placed immediately after it -- the shape that breaks when someone deletes the redundant-looking line. Naming the two policies apart would remove the need for that defence, which is the argument for doing it."
+      "open_question": "Resolved. The union is gone: provider_mock_response_simulation names validate_source_provider_id for the upstream preview's external provider and validate_mock_provider_id for its own artifact, so the strict != 'mock' re-check that defended the union is no longer load-bearing and is removed. No admitted set changed, asserted per module over the whole provider universe rather than argued. The providers/provider_preflight.py function keeps the name in its own package.",
+      "acceptance_verdict": "PASS"
     }
   ]
 }

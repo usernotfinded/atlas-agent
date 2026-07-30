@@ -58,6 +58,12 @@ The general hazard is worth stating, because it will recur: a helper that takes
 an error code as a parameter hides its callers' vocabulary from any scan that
 looks for literals at the raise site. `ERROR_CODE_ARGUMENT_SITES` below is the
 list of such helpers, and it has to grow whenever another one is introduced.
+
+It recurred within one release. CAND-038 split `validate_provider_id` into
+`validate_contract_external_provider_id` and `validate_contract_mock_provider_id`,
+both taking their caller's code, and this file's anti-slack test failed again on
+the same mechanism. That is the note above working as intended rather than a
+second oversight: the list is the fix, and it is meant to be extended.
 """
 
 # --- IMPORTS ---
@@ -87,6 +93,8 @@ UNMAPPED_CODE_BUDGET = 136
 #: codes remain in the computed set this file deliberately does not ratchet.
 ERROR_CODE_ARGUMENT_SITES = {
     "validate_contract_model_id": 1,
+    "validate_contract_external_provider_id": 1,
+    "validate_contract_mock_provider_id": 1,
 }
 
 

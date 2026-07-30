@@ -38,7 +38,7 @@ from atlas_agent.research.provider_safety_dossier import (
     replay_provider_safety_dossier,
     safe_validate_provider_safety_dossier_data,
     summarize_provider_safety_dossier,
-    validate_provider_id,
+    validate_mock_provider_id,
     validate_provider_safety_dossier_artifact,
 )
 from atlas_agent.research.session import RESEARCH_ARTIFACT_SCHEMA_VERSION, ResearchSessionError
@@ -340,10 +340,10 @@ def test_has_unsafe_positive_claims():
     assert not _has_unsafe_positive_claims("everything is safe")
     assert not _has_unsafe_positive_claims({"key": "safe"})
 
-def test_validate_provider_id():
-    assert validate_provider_id("mock") == "mock"
+def test_validate_mock_provider_id():
+    assert validate_mock_provider_id("mock") == "mock"
     with pytest.raises(ResearchSessionError):
-        validate_provider_id("openai")
+        validate_mock_provider_id("openai")
 
 def test_build_provider_safety_dossier_dict_missing_seal(tmp_path):
     with pytest.raises(ResearchSessionError, match="provider_safety_dossier_source_seal_missing"):

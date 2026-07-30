@@ -57,6 +57,7 @@ from atlas_agent.research.provider_mock_response_final_safety_seal import (
 )
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 from atlas_agent.research._artifact_helpers import check as _check_name
+from atlas_agent.research.sandbox_contracts import validate_contract_mock_provider_id
 
 PROVIDER_SAFETY_DOSSIER_VERSION = "research_provider_safety_dossier_v1"
 
@@ -90,10 +91,8 @@ _UNSAFE_POSITIVE_CLAIM_PHRASES = claim_phrases(
 
 _has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)
 
-def validate_provider_id(value: str) -> str:
-    if not value or value != "mock":
-        raise ResearchSessionError("invalid_provider_safety_dossier_provider")
-    return value
+def validate_mock_provider_id(value: str) -> str:
+    return validate_contract_mock_provider_id(value, "invalid_provider_safety_dossier_provider")
 
 def provider_safety_dossier_sha256(data: dict[str, Any]) -> str:
     copy = {k: v for k, v in data.items() if k not in _PROVIDER_SAFETY_DOSSIER_HASH_EXCLUDED_FIELDS}
@@ -304,7 +303,7 @@ def safe_validate_provider_safety_dossier_data(
         return None, "unsupported_provider_safety_dossier_schema"
 
     try:
-        validate_provider_id(data.get("provider_id", ""))
+        validate_mock_provider_id(data.get("provider_id", ""))
     except ResearchSessionError:
         return None, "invalid_provider_safety_dossier_provider"
 

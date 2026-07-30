@@ -196,6 +196,43 @@ def validate_contract_model_id(value: str, error_code: str) -> str:
     return value
 
 
+#: The one local provider. Not a member of the disabled-target registry, which is
+#: why the two provider rules below accept strictly different sets rather than one
+#: being a subset of the other.
+MOCK_PROVIDER_ID = "mock"
+
+
+def validate_contract_external_provider_id(value: str, error_code: str) -> str:
+    """Accept only a provider the registry lists as a *disabled* outbound target.
+
+    Rejects `mock`. These are the identifiers of third-party providers Atlas
+    knows about and does not call; naming one in an artifact records an intent,
+    never an action.
+    """
+    from atlas_agent.research.provider_call_plan import list_disabled_provider_call_targets
+    from atlas_agent.research.session import ResearchSessionError
+
+    if not value:
+        raise ResearchSessionError(error_code)
+    if value not in {target["provider_id"] for target in list_disabled_provider_call_targets()}:
+        raise ResearchSessionError(error_code)
+    return value
+
+
+def validate_contract_mock_provider_id(value: str, error_code: str) -> str:
+    """Accept only the local mock provider.
+
+    Rejects every external provider id, including the disabled ones the rule
+    above accepts. An artifact validated with this rule is asserting that no
+    third-party provider is named anywhere in it.
+    """
+    from atlas_agent.research.session import ResearchSessionError
+
+    if value != MOCK_PROVIDER_ID:
+        raise ResearchSessionError(error_code)
+    return value
+
+
 def validate_sandbox_request_artifact(data: dict[str, Any]) -> SandboxValidationResult:
     """Validate a sandbox request artifact against the local contract."""
     checks: list[dict[str, Any]] = []

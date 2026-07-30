@@ -51,7 +51,10 @@ from atlas_agent.research.session import (
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
 from atlas_agent.research.sandbox_contracts import validate_contract_model_id
-from atlas_agent.research.provider_call_plan import _get_disabled_provider_ids
+from atlas_agent.research.sandbox_contracts import (
+    validate_contract_external_provider_id,
+    validate_contract_mock_provider_id,
+)
 
 PROVIDER_MOCK_RESPONSE_SIMULATION_VERSION = "research_provider_mock_response_simulation_v1"
 
@@ -150,14 +153,25 @@ def sanitize_adapter_text(value: str, max_chars: int = MAX_CONTRACT_TEXT_CHARS) 
     return sanitize_contract_text(value, max_chars)
 
 
-def validate_provider_id(value: str) -> str:
-    if not value:
-        raise ResearchSessionError("invalid_provider_mock_response_simulation_provider")
-    if value == "mock":
-        return value
-    if value not in _get_disabled_provider_ids():
-        raise ResearchSessionError("invalid_provider_mock_response_simulation_provider")
-    return value
+# This module is the only one that validated two different provider fields with
+# one function, so its rule was the union of the other two: `mock` or a disabled
+# external id. The union was safe only because the artifact-validation path
+# re-checked `!= "mock"` immediately afterwards -- a permissive validator guarded
+# by a separate strict test, which is the shape that breaks the moment someone
+# deletes the line that looks redundant. Both fields now name the policy they
+# mean, and the guard is no longer load-bearing.
+def validate_source_provider_id(value: str) -> str:
+    """The provider named by the upstream outbound-payload preview: external."""
+    return validate_contract_external_provider_id(
+        value, "invalid_provider_mock_response_simulation_provider"
+    )
+
+
+def validate_mock_provider_id(value: str) -> str:
+    """The provider named by this module's own artifact: always the local mock."""
+    return validate_contract_mock_provider_id(
+        value, "invalid_provider_mock_response_simulation_provider"
+    )
 
 
 def validate_model_id(value: str) -> str:
@@ -384,7 +398,7 @@ def build_provider_mock_response_simulation_dict(
         validate_contract_lineage_id(value, field_name)
 
     symbol = validate_contract_symbol(source_preview.get("symbol", ""))
-    safe_provider_id = validate_provider_id(source_preview.get("provider_id", ""))
+    safe_provider_id = validate_source_provider_id(source_preview.get("provider_id", ""))
     safe_model_id = validate_model_id(source_preview.get("model_id", ""))
 
     created_at = datetime.now(UTC)
@@ -841,10 +855,8 @@ def safe_validate_provider_mock_response_simulation_data(
 
     provider_id = data.get("provider_id", "")
     try:
-        validate_provider_id(provider_id)
+        validate_mock_provider_id(provider_id)
     except ResearchSessionError:
-        return None, "invalid_provider_mock_response_simulation_provider"
-    if provider_id != "mock":
         return None, "invalid_provider_mock_response_simulation_provider"
     err = _safe_error_code_for_field(provider_id, "provider")
     if err:

@@ -200,10 +200,10 @@ def test_validate_failure_diagnostics_are_stable(fixture_name: str) -> None:
 
 
 def test_invalid_and_disabled_provider_diagnostics_are_stable() -> None:
-    assert final_safety_seal.validate_provider_id("mock") == "mock"
+    assert final_safety_seal.validate_mock_provider_id("mock") == "mock"
     for provider_id in ("", "custom-openai-compatible", "openai"):
         with pytest.raises(ResearchSessionError) as exc:
-            final_safety_seal.validate_provider_id(provider_id)
+            final_safety_seal.validate_mock_provider_id(provider_id)
         assert str(exc.value) == "invalid_provider_mock_response_final_safety_seal_provider"
 
 

@@ -64,6 +64,7 @@ from atlas_agent.research.provider_mock_response_trust_decision_blocker import (
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
 from atlas_agent.research.sandbox_contracts import validate_contract_model_id
+from atlas_agent.research.sandbox_contracts import validate_contract_mock_provider_id
 
 PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_VERSION = "research_provider_mock_response_final_safety_seal_v1"
 
@@ -200,10 +201,8 @@ class ProviderMockResponseFinalSafetySealValidationResult:
 _has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)
 
 
-def validate_provider_id(value: str) -> str:
-    if not value or value != "mock":
-        raise ResearchSessionError("invalid_provider_mock_response_final_safety_seal_provider")
-    return value
+def validate_mock_provider_id(value: str) -> str:
+    return validate_contract_mock_provider_id(value, "invalid_provider_mock_response_final_safety_seal_provider")
 
 
 def validate_model_id(value: str) -> str:
@@ -400,7 +399,7 @@ def build_provider_mock_response_final_safety_seal_dict(
 
     safe_symbol = validate_contract_symbol(source_trust_decision_blocker.get("symbol", "UNKNOWN"))
     safe_model_id = validate_model_id(source_trust_decision_blocker.get("model_id", "unknown"))
-    safe_source_provider_id = validate_provider_id(source_trust_decision_blocker.get("source_provider_id", "mock"))
+    safe_source_provider_id = validate_mock_provider_id(source_trust_decision_blocker.get("source_provider_id", "mock"))
 
     now = datetime.now(UTC).isoformat()
 
@@ -654,7 +653,7 @@ def safe_validate_provider_mock_response_final_safety_seal_data(
         return None, "invalid_provider_mock_response_final_safety_seal_lineage"
 
     try:
-        validate_provider_id(data.get("provider_id", ""))
+        validate_mock_provider_id(data.get("provider_id", ""))
     except ResearchSessionError:
         return None, "invalid_provider_mock_response_final_safety_seal_provider"
 

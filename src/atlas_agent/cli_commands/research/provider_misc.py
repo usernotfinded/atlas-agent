@@ -96,13 +96,13 @@ def handle_provider_plan(context: CLIContext, ws: Path) -> int:
     from atlas_agent.research.provider_call_plan import (
         create_provider_call_plan,
         validate_model_id,
-        validate_provider_id,
+        validate_external_provider_id,
     )
     from atlas_agent.research.session import (
         validate_run_id,
     )
     safe_sandbox_request_id = validate_run_id(args.sandbox_request_id)
-    provider_id = validate_provider_id(args.provider)
+    provider_id = validate_external_provider_id(args.provider)
     model_id = validate_model_id(args.model)
     artifact = create_provider_call_plan(ws, safe_sandbox_request_id, provider_id, model_id)
 
