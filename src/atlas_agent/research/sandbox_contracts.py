@@ -146,6 +146,56 @@ def validate_contract_symbol(value: str) -> str:
         raise ResearchSessionError("invalid_contract_symbol") from None
 
 
+#: Everything a model identifier may contain. A frozenset at module scope rather
+#: than a `set(...)` rebuilt inside the check: the twenty copies this rule
+#: replaces each constructed it per call. That is 0.9 us a call, so the reason to
+#: hoist it is that a constant belongs at module scope, not that it is a
+#: measurable saving -- `validate_contract_model_id` runs once per artifact build
+#: or load.
+_MODEL_ID_ALLOWED_CHARS = frozenset(
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:"
+)
+
+MAX_MODEL_ID_CHARS = 120
+
+
+def validate_contract_model_id(value: str, error_code: str) -> str:
+    """Validate a model identifier, raising `error_code` for every rejection.
+
+    Twenty per-artifact modules each defined this rule for themselves. The copies
+    were compared before being collapsed, and agreed on every substantive point:
+    the same 68-character set, the same 120-character bound, the same four checks
+    in the same order. They differed only in the code they raised, which is
+    per-artifact by design and so becomes the argument -- `CAND-037` in
+    [v0.6.27 Release Candidates](../../../docs/releases/v0.6.27-candidates.md)
+    records the comparison.
+
+    The transitive dependencies were checked too, since identical source can still
+    behave differently through what it calls: all twenty imported the one
+    `_has_forbidden_fragments` defined in this module and all twenty declared the
+    same bound.
+
+    Not to be confused with `validate_provider_id`, whose 21 copies look like the
+    same function and carry three disjoint admission rules.
+
+    A single `error_code` for all four rejections is the original behaviour, kept
+    deliberately: which rule rejected an identifier is not something a caller
+    should be able to learn from the outside, since the value may be attacker-
+    influenced and the distinctions would describe the filter.
+    """
+    from atlas_agent.research.session import ResearchSessionError
+
+    if not value:
+        raise ResearchSessionError(error_code)
+    if len(value) > MAX_MODEL_ID_CHARS:
+        raise ResearchSessionError(error_code)
+    if _has_forbidden_fragments(value):
+        raise ResearchSessionError(error_code)
+    if not all(ch in _MODEL_ID_ALLOWED_CHARS for ch in value):
+        raise ResearchSessionError(error_code)
+    return value
+
+
 def validate_sandbox_request_artifact(data: dict[str, Any]) -> SandboxValidationResult:
     """Validate a sandbox request artifact against the local contract."""
     checks: list[dict[str, Any]] = []

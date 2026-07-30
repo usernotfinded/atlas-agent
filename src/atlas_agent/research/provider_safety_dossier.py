@@ -24,7 +24,6 @@ from typing import Any
 from atlas_agent.events.log import generate_run_id
 from atlas_agent.research.sandbox_contracts import (
     FORBIDDEN_FRAGMENTS,
-    _has_forbidden_fragments,
     canonical_json_dumps,
     validate_contract_lineage_id,
     validate_contract_symbol,

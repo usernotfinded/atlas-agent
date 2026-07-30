@@ -48,12 +48,13 @@ from atlas_agent.research.session import (
     validate_run_id,
 )
 from atlas_agent.research._artifact_helpers import check as _check_name, is_inside_workspace as _is_inside_workspace
+from atlas_agent.research.sandbox_contracts import validate_contract_model_id
+from atlas_agent.research.provider_call_plan import _get_disabled_provider_ids
 
 PROVIDER_CREDENTIAL_BOUNDARY_CONTRACT_VERSION = "research_provider_credential_boundary_v1"
 
 _PROVIDER_CREDENTIAL_BOUNDARY_HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
 
-_MAX_MODEL_ID_CHARS = 120
 _MAX_STATUS_CHARS = 120
 
 _VALID_BOUNDARY_STATUSES = {
@@ -101,12 +102,6 @@ class ProviderCredentialBoundaryValidationResult:
     warnings: list[str]
 
 
-def _get_disabled_provider_ids() -> set[str]:
-    from atlas_agent.research.provider_call_plan import list_disabled_provider_call_targets
-
-    return {t["provider_id"] for t in list_disabled_provider_call_targets()}
-
-
 def sanitize_boundary_text(value: str, max_chars: int = MAX_CONTRACT_TEXT_CHARS) -> str:
     """Redact forbidden fragments and bound length."""
     if not isinstance(value, str):
@@ -124,17 +119,7 @@ def validate_provider_id(value: str) -> str:
 
 
 def validate_model_id(value: str) -> str:
-    """Validate model_id. Bounds length, rejects unsafe chars/fragments. Fail closed."""
-    if not value:
-        raise ResearchSessionError("invalid_model_id")
-    if len(value) > _MAX_MODEL_ID_CHARS:
-        raise ResearchSessionError("invalid_model_id")
-    if _has_forbidden_fragments(value):
-        raise ResearchSessionError("invalid_model_id")
-    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:")
-    if not all(ch in allowed for ch in value):
-        raise ResearchSessionError("invalid_model_id")
-    return value
+    return validate_contract_model_id(value, "invalid_model_id")
 
 
 def validate_boundary_status(value: str) -> str:

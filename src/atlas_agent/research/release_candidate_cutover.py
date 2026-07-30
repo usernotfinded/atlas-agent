@@ -30,7 +30,6 @@ from atlas_agent import __version__
 from atlas_agent.events.log import generate_run_id
 from atlas_agent.research.sandbox_contracts import (
     FORBIDDEN_FRAGMENTS,
-    _has_forbidden_fragments,
     canonical_json_dumps,
 )
 from atlas_agent.research.session import (

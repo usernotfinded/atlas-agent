@@ -43,10 +43,10 @@ from atlas_agent.research.session import (
     validate_run_id,
 )
 from atlas_agent.research._artifact_helpers import check as _check_name, is_inside_workspace as _is_inside_workspace
+from atlas_agent.research.sandbox_contracts import validate_contract_model_id
 
 PROVIDER_CALL_PLAN_CONTRACT_VERSION = "research_provider_call_plan_v1"
 
-_MAX_MODEL_ID_CHARS = 120
 _MAX_REQUEST_SUMMARY_CHARS = 4000
 
 
@@ -130,17 +130,7 @@ def validate_provider_id(value: str) -> str:
 
 
 def validate_model_id(value: str) -> str:
-    """Validate model_id. Bounds length, rejects unsafe chars/fragments. Fail closed."""
-    if not value:
-        raise ResearchSessionError("invalid_model_id")
-    if len(value) > _MAX_MODEL_ID_CHARS:
-        raise ResearchSessionError("invalid_model_id")
-    if _has_forbidden_fragments(value):
-        raise ResearchSessionError("invalid_model_id")
-    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:")
-    if not all(ch in allowed for ch in value):
-        raise ResearchSessionError("invalid_model_id")
-    return value
+    return validate_contract_model_id(value, "invalid_model_id")
 
 
 def provider_call_plan_sha256(data: dict[str, Any]) -> str:

@@ -47,12 +47,13 @@ from atlas_agent.research.session import (
     validate_run_id,
 )
 from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
+from atlas_agent.research.sandbox_contracts import validate_contract_model_id
+from atlas_agent.research.provider_call_plan import _get_disabled_provider_ids
 
 PROVIDER_RESPONSE_SCHEMA_CONTRACT_VERSION = "research_provider_response_schema_contract_v1"
 
 _PROVIDER_RESPONSE_SCHEMA_CONTRACT_HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
 
-_MAX_MODEL_ID_CHARS = 120
 _MAX_STATUS_CHARS = 120
 
 _VALID_SCHEMA_STATUSES = {
@@ -120,11 +121,6 @@ class ProviderResponseSchemaContractValidationResult:
     warnings: list[str]
 
 
-def _get_disabled_provider_ids() -> set[str]:
-    from atlas_agent.research.provider_call_plan import list_disabled_provider_call_targets
-    return {t["provider_id"] for t in list_disabled_provider_call_targets()}
-
-
 def sanitize_schema_text(value: str, max_chars: int = MAX_CONTRACT_TEXT_CHARS) -> str:
     if not isinstance(value, str):
         value = str(value)
@@ -140,16 +136,7 @@ def validate_provider_id(value: str) -> str:
 
 
 def validate_model_id(value: str) -> str:
-    if not value:
-        raise ResearchSessionError("invalid_provider_response_schema_contract_model")
-    if len(value) > _MAX_MODEL_ID_CHARS:
-        raise ResearchSessionError("invalid_provider_response_schema_contract_model")
-    if _has_forbidden_fragments(value):
-        raise ResearchSessionError("invalid_provider_response_schema_contract_model")
-    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:")
-    if not all(ch in allowed for ch in value):
-        raise ResearchSessionError("invalid_provider_response_schema_contract_model")
-    return value
+    return validate_contract_model_id(value, "invalid_provider_response_schema_contract_model")
 
 
 def validate_response_schema_status(value: str) -> str:

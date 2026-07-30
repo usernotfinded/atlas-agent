@@ -47,12 +47,13 @@ from atlas_agent.research.session import (
     validate_run_id,
 )
 from atlas_agent.research._artifact_helpers import check as _check_name
+from atlas_agent.research.sandbox_contracts import validate_contract_model_id
+from atlas_agent.research.provider_call_plan import _get_disabled_provider_ids
 
 PROVIDER_REQUEST_RESPONSE_PAIRING_CONTRACT_VERSION = "research_provider_request_response_pairing_v1"
 
 _PROVIDER_REQUEST_RESPONSE_PAIRING_HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
 
-_MAX_MODEL_ID_CHARS = 120
 _MAX_STATUS_CHARS = 120
 
 _VALID_PAIRING_STATUSES = {
@@ -115,11 +116,6 @@ class ProviderRequestResponsePairingValidationResult:
     warnings: list[str]
 
 
-def _get_disabled_provider_ids() -> set[str]:
-    from atlas_agent.research.provider_call_plan import list_disabled_provider_call_targets
-    return {t["provider_id"] for t in list_disabled_provider_call_targets()}
-
-
 def sanitize_pairing_text(value: str, max_chars: int = MAX_CONTRACT_TEXT_CHARS) -> str:
     if not isinstance(value, str):
         value = str(value)
@@ -135,16 +131,7 @@ def validate_provider_id(value: str) -> str:
 
 
 def validate_model_id(value: str) -> str:
-    if not value:
-        raise ResearchSessionError("invalid_provider_request_response_pairing_model")
-    if len(value) > _MAX_MODEL_ID_CHARS:
-        raise ResearchSessionError("invalid_provider_request_response_pairing_model")
-    if _has_forbidden_fragments(value):
-        raise ResearchSessionError("invalid_provider_request_response_pairing_model")
-    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:")
-    if not all(ch in allowed for ch in value):
-        raise ResearchSessionError("invalid_provider_request_response_pairing_model")
-    return value
+    return validate_contract_model_id(value, "invalid_provider_request_response_pairing_model")
 
 
 def validate_pairing_status(value: str) -> str:

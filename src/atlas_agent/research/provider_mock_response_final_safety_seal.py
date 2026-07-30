@@ -63,6 +63,7 @@ from atlas_agent.research.provider_mock_response_trust_decision_blocker import (
 )
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
+from atlas_agent.research.sandbox_contracts import validate_contract_model_id
 
 PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_VERSION = "research_provider_mock_response_final_safety_seal_v1"
 
@@ -74,7 +75,6 @@ _PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_SPEC = ArtifactSpec(
     hash_excluded_fields=frozenset(_PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_HASH_EXCLUDED_FIELDS),
 )
 
-_MAX_MODEL_ID_CHARS = 120
 _MAX_STATUS_CHARS = 120
 
 _VALID_FINAL_SAFETY_SEAL_STATUSES = {
@@ -207,16 +207,7 @@ def validate_provider_id(value: str) -> str:
 
 
 def validate_model_id(value: str) -> str:
-    if not value:
-        raise ResearchSessionError("invalid_provider_mock_response_final_safety_seal_model")
-    if len(value) > _MAX_MODEL_ID_CHARS:
-        raise ResearchSessionError("invalid_provider_mock_response_final_safety_seal_model")
-    if _has_forbidden_fragments(value):
-        raise ResearchSessionError("invalid_provider_mock_response_final_safety_seal_model")
-    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:")
-    if not all(ch in allowed for ch in value):
-        raise ResearchSessionError("invalid_provider_mock_response_final_safety_seal_model")
-    return value
+    return validate_contract_model_id(value, "invalid_provider_mock_response_final_safety_seal_model")
 
 
 def validate_final_safety_seal_status(value: str) -> str:

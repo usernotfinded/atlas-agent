@@ -51,12 +51,12 @@ from atlas_agent.research.session import (
 )
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 from atlas_agent.research._artifact_helpers import check as _check_name
+from atlas_agent.research.sandbox_contracts import validate_contract_model_id
 
 PROVIDER_MOCK_RESPONSE_REVIEW_SANDBOX_VERSION = "research_provider_mock_response_review_sandbox_v1"
 
 _PROVIDER_MOCK_RESPONSE_REVIEW_SANDBOX_HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
 
-_MAX_MODEL_ID_CHARS = 120
 _MAX_STATUS_CHARS = 120
 
 _VALID_MOCK_REVIEW_SANDBOX_STATUSES = {
@@ -172,16 +172,7 @@ def validate_provider_id(value: str) -> str:
 
 
 def validate_model_id(value: str) -> str:
-    if not value:
-        raise ResearchSessionError("invalid_provider_mock_response_review_sandbox_model")
-    if len(value) > _MAX_MODEL_ID_CHARS:
-        raise ResearchSessionError("invalid_provider_mock_response_review_sandbox_model")
-    if _has_forbidden_fragments(value):
-        raise ResearchSessionError("invalid_provider_mock_response_review_sandbox_model")
-    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:")
-    if not all(ch in allowed for ch in value):
-        raise ResearchSessionError("invalid_provider_mock_response_review_sandbox_model")
-    return value
+    return validate_contract_model_id(value, "invalid_provider_mock_response_review_sandbox_model")
 
 
 def validate_mock_review_sandbox_status(value: str) -> str:

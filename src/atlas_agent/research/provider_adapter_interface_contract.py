@@ -50,12 +50,13 @@ from atlas_agent.research.session import (
 )
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
+from atlas_agent.research.sandbox_contracts import validate_contract_model_id
+from atlas_agent.research.provider_call_plan import _get_disabled_provider_ids
 
 PROVIDER_ADAPTER_INTERFACE_CONTRACT_VERSION = "research_provider_adapter_interface_contract_v1"
 
 _PROVIDER_ADAPTER_INTERFACE_CONTRACT_HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
 
-_MAX_MODEL_ID_CHARS = 120
 _MAX_STATUS_CHARS = 120
 
 _VALID_ADAPTER_CONTRACT_STATUSES = {
@@ -147,11 +148,6 @@ class ProviderAdapterInterfaceContractValidationResult:
     warnings: list[str]
 
 
-def _get_disabled_provider_ids() -> set[str]:
-    from atlas_agent.research.provider_call_plan import list_disabled_provider_call_targets
-    return {t["provider_id"] for t in list_disabled_provider_call_targets()}
-
-
 def sanitize_adapter_text(value: str, max_chars: int = MAX_CONTRACT_TEXT_CHARS) -> str:
     if not isinstance(value, str):
         value = str(value)
@@ -167,16 +163,7 @@ def validate_provider_id(value: str) -> str:
 
 
 def validate_model_id(value: str) -> str:
-    if not value:
-        raise ResearchSessionError("invalid_provider_adapter_interface_contract_model")
-    if len(value) > _MAX_MODEL_ID_CHARS:
-        raise ResearchSessionError("invalid_provider_adapter_interface_contract_model")
-    if _has_forbidden_fragments(value):
-        raise ResearchSessionError("invalid_provider_adapter_interface_contract_model")
-    allowed = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:")
-    if not all(ch in allowed for ch in value):
-        raise ResearchSessionError("invalid_provider_adapter_interface_contract_model")
-    return value
+    return validate_contract_model_id(value, "invalid_provider_adapter_interface_contract_model")
 
 
 def validate_adapter_contract_status(value: str) -> str:

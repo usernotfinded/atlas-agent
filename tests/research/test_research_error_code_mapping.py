@@ -39,8 +39,25 @@ to word, which is a contract decision and is proposed as `CAND-034`. It requires
 the backlog not to grow. A new code without a table entry pushes the count over
 the ratchet and fails here, with the fix in the failure message.
 
-The scan reads only string literals passed to `raise ResearchSessionError(...)`.
-A computed code cannot be safely mapped in advance and is out of scope.
+The scan reads string literals passed to `raise ResearchSessionError(...)`, and
+also those passed as the error-code argument of a validator that raises on the
+caller's behalf. A computed code cannot be safely mapped in advance and is out of
+scope.
+
+That second source was added because a refactor made this ratchet's own
+measurement go blind. CAND-037 collapsed twenty copies of `validate_model_id`
+into one `validate_contract_model_id(value, error_code)`, which moved thirteen
+codes out of `raise ResearchSessionError('literal')` and into an argument at the
+call site. The codes are still raised and the CLI is unchanged, but the literal
+scan stopped seeing them: the unmapped count fell from 136 to 126 with nothing
+fixed. `test_the_ratchets_are_not_slack` caught it, which is what that test is
+for — and the fix is to teach the scan the new shape, not to lower the budget to
+match a number that had become a fiction.
+
+The general hazard is worth stating, because it will recur: a helper that takes
+an error code as a parameter hides its callers' vocabulary from any scan that
+looks for literals at the raise site. `ERROR_CODE_ARGUMENT_SITES` below is the
+list of such helpers, and it has to grow whenever another one is introduced.
 """
 
 # --- IMPORTS ---
@@ -60,6 +77,18 @@ SRC_ROOT = Path(__file__).resolve().parents[2] / "src" / "atlas_agent"
 #: Lower it when entries are added; it must never be raised.
 UNMAPPED_CODE_BUDGET = 136
 
+#: Validators that raise `ResearchSessionError` with a code their caller supplies,
+#: as {function name: index of the error-code argument}. Their call sites are the
+#: real raise sites, so the scan has to read them too.
+#:
+#: Only helpers whose argument is the *whole* code belong here.
+#: `validate_contract_lineage_id` takes a `field_name` and raises
+#: `f"invalid_{field_name}"` — a fragment, not a code — so it stays out, and its
+#: codes remain in the computed set this file deliberately does not ratchet.
+ERROR_CODE_ARGUMENT_SITES = {
+    "validate_contract_model_id": 1,
+}
+
 
 # ==============================================================================
 # TEST SUITE
@@ -68,7 +97,11 @@ UNMAPPED_CODE_BUDGET = 136
 # --- TEST FIXTURES, HELPERS, AND CASES ---
 
 def _literal_codes_raised() -> dict[str, str]:
-    """Every string literal passed to `raise ResearchSessionError(...)`."""
+    """Every string literal that reaches `ResearchSessionError` as a whole code.
+
+    Two shapes: raised directly, or handed to a validator from
+    `ERROR_CODE_ARGUMENT_SITES` that raises it for the caller.
+    """
     found: dict[str, str] = {}
     for path in sorted(SRC_ROOT.rglob("*.py")):
         try:
@@ -76,17 +109,42 @@ def _literal_codes_raised() -> dict[str, str]:
         except SyntaxError:
             continue
         for node in ast.walk(tree):
-            if not isinstance(node, ast.Raise) or not isinstance(node.exc, ast.Call):
-                continue
-            name = getattr(node.exc.func, "id", "") or getattr(node.exc.func, "attr", "")
-            if name != "ResearchSessionError" or not node.exc.args:
-                continue
-            argument = node.exc.args[0]
-            if isinstance(argument, ast.Constant) and isinstance(argument.value, str):
-                found.setdefault(
-                    argument.value, f"{path.relative_to(SRC_ROOT)}:{node.lineno}"
-                )
+            if isinstance(node, ast.Raise) and isinstance(node.exc, ast.Call):
+                name = getattr(node.exc.func, "id", "") or getattr(node.exc.func, "attr", "")
+                if name != "ResearchSessionError" or not node.exc.args:
+                    continue
+                argument = node.exc.args[0]
+                if isinstance(argument, ast.Constant) and isinstance(argument.value, str):
+                    found.setdefault(
+                        argument.value, f"{path.relative_to(SRC_ROOT)}:{node.lineno}"
+                    )
+            elif isinstance(node, ast.Call):
+                name = getattr(node.func, "id", "") or getattr(node.func, "attr", "")
+                index = ERROR_CODE_ARGUMENT_SITES.get(name)
+                if index is None or len(node.args) <= index:
+                    continue
+                argument = node.args[index]
+                if isinstance(argument, ast.Constant) and isinstance(argument.value, str):
+                    found.setdefault(
+                        argument.value, f"{path.relative_to(SRC_ROOT)}:{node.lineno}"
+                    )
     return found
+
+
+def test_the_scan_reads_the_parameterised_validators() -> None:
+    """Guards against the blindness that prompted this addition.
+
+    A helper taking an error code as an argument moves its callers' codes out of
+    the raise-site scan. If this returns nothing, the wrapper branch above has
+    stopped matching and the backlog count is quietly understated again.
+    """
+    raised = _literal_codes_raised()
+    via_wrapper = [code for code in raised if code.endswith("_model") or code == "invalid_model_id"]
+
+    assert len(via_wrapper) >= 13, (
+        f"only {len(via_wrapper)} model-id codes found; the scan of "
+        f"{sorted(ERROR_CODE_ARGUMENT_SITES)} has probably stopped matching."
+    )
 
 
 def test_the_scan_still_finds_the_raises() -> None:
