@@ -29,7 +29,6 @@ def handle_provider_mock_response_simulate(context: CLIContext, ws: Path) -> int
     args = context.args
     from atlas_agent.research.provider_mock_response_simulation import create_provider_mock_response_simulation
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.contract_id)
@@ -54,7 +53,6 @@ def handle_provider_mock_response_list(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_simulation import iter_provider_mock_response_simulation_artifacts
     from atlas_agent.research.session import (
-        ResearchSessionError,
         sanitize_symbol,
     )
     symbol_filter = None
@@ -92,7 +90,6 @@ def handle_provider_mock_response_show(context: CLIContext, ws: Path) -> int:
         load_provider_mock_response_simulation,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.simulation_id)
@@ -132,7 +129,6 @@ def handle_provider_mock_response_validate(context: CLIContext, ws: Path) -> int
         validate_provider_mock_response_simulation_artifact,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.simulation_id)
@@ -175,7 +171,6 @@ def handle_provider_mock_response_replay(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_simulation import replay_provider_mock_response_simulation
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.simulation_id)
@@ -198,7 +193,6 @@ def handle_provider_mock_response_summary(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_simulation import summarize_provider_mock_response_simulation
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -226,7 +220,6 @@ def handle_provider_mock_response_doctor(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_simulation import doctor_provider_mock_response_simulation
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -259,7 +252,6 @@ def handle_provider_mock_response_import_candidate(context: CLIContext, ws: Path
     args = context.args
     from atlas_agent.research.provider_mock_response_import_candidate import create_provider_mock_response_import_candidate
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.simulation_id)
@@ -285,7 +277,6 @@ def handle_provider_mock_response_import_candidate_list(context: CLIContext, ws:
     args = context.args
     from atlas_agent.research.provider_mock_response_import_candidate import iter_provider_mock_response_import_candidate_artifacts
     from atlas_agent.research.session import (
-        ResearchSessionError,
         sanitize_symbol,
     )
     symbol_filter = None
@@ -324,7 +315,6 @@ def handle_provider_mock_response_import_candidate_show(context: CLIContext, ws:
         load_and_validate_provider_mock_response_import_candidate,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.candidate_id)
@@ -358,7 +348,6 @@ def handle_provider_mock_response_import_candidate_validate(context: CLIContext,
         validate_provider_mock_response_import_candidate_artifact,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.candidate_id)
@@ -401,7 +390,6 @@ def handle_provider_mock_response_import_candidate_replay(context: CLIContext, w
     args = context.args
     from atlas_agent.research.provider_mock_response_import_candidate import replay_provider_mock_response_import_candidate
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.candidate_id)
@@ -424,7 +412,6 @@ def handle_provider_mock_response_import_candidate_summary(context: CLIContext, 
     args = context.args
     from atlas_agent.research.provider_mock_response_import_candidate import summarize_provider_mock_response_import_candidate
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -451,7 +438,6 @@ def handle_provider_mock_response_import_candidate_doctor(context: CLIContext, w
     args = context.args
     from atlas_agent.research.provider_mock_response_import_candidate import doctor_provider_mock_response_import_candidate
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -483,7 +469,6 @@ def handle_provider_mock_response_review_sandbox(context: CLIContext, ws: Path) 
     args = context.args
     from atlas_agent.research.provider_mock_response_review_sandbox import create_provider_mock_response_review_sandbox
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.import_candidate_id)
@@ -509,7 +494,6 @@ def handle_provider_mock_response_review_sandbox_list(context: CLIContext, ws: P
     args = context.args
     from atlas_agent.research.provider_mock_response_review_sandbox import iter_provider_mock_response_review_sandbox_artifacts
     from atlas_agent.research.session import (
-        ResearchSessionError,
         sanitize_symbol,
     )
     symbol_filter = None
@@ -548,7 +532,6 @@ def handle_provider_mock_response_review_sandbox_show(context: CLIContext, ws: P
         load_and_validate_provider_mock_response_review_sandbox,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.sandbox_id)
@@ -582,7 +565,6 @@ def handle_provider_mock_response_review_sandbox_validate(context: CLIContext, w
         validate_provider_mock_response_review_sandbox_artifact,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.sandbox_id)
@@ -625,7 +607,6 @@ def handle_provider_mock_response_review_sandbox_replay(context: CLIContext, ws:
     args = context.args
     from atlas_agent.research.provider_mock_response_review_sandbox import replay_provider_mock_response_review_sandbox
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.sandbox_id)
@@ -648,7 +629,6 @@ def handle_provider_mock_response_review_sandbox_summary(context: CLIContext, ws
     args = context.args
     from atlas_agent.research.provider_mock_response_review_sandbox import summarize_provider_mock_response_review_sandbox
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -676,7 +656,6 @@ def handle_provider_mock_response_review_sandbox_doctor(context: CLIContext, ws:
     args = context.args
     from atlas_agent.research.provider_mock_response_review_sandbox import doctor_provider_mock_response_review_sandbox
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -708,7 +687,7 @@ def handle_provider_mock_response_review_sandbox_doctor(context: CLIContext, ws:
 def handle_provider_mock_response_trust_decision_blocker(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_trust_decision_blocker import create_provider_mock_response_trust_decision_blocker
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.review_sandbox_id)
     result = create_provider_mock_response_trust_decision_blocker(ws, safe_id)
 
@@ -736,7 +715,6 @@ def handle_provider_mock_response_trust_decision_blocker(context: CLIContext, ws
 def handle_provider_mock_response_trust_decision_blocker_list(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_trust_decision_blocker import iter_provider_mock_response_trust_decision_blocker_artifacts
-    from atlas_agent.research.session import ResearchSessionError
     items = iter_provider_mock_response_trust_decision_blocker_artifacts(ws, symbol=args.symbol)
     limit = max(1, min(args.limit, 100))
     items = items[:limit]
@@ -760,7 +738,7 @@ def handle_provider_mock_response_trust_decision_blocker_show(context: CLIContex
         find_provider_mock_response_trust_decision_blocker_by_id,
         load_provider_mock_response_trust_decision_blocker,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.blocker_id)
     artifact_path = find_provider_mock_response_trust_decision_blocker_by_id(ws, safe_id)
     if artifact_path is None:
@@ -790,7 +768,7 @@ def handle_provider_mock_response_trust_decision_blocker_validate(context: CLICo
         find_provider_mock_response_trust_decision_blocker_by_id,
         validate_provider_mock_response_trust_decision_blocker_artifact,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.blocker_id)
     artifact_path = find_provider_mock_response_trust_decision_blocker_by_id(ws, safe_id)
     if artifact_path is None:
@@ -829,7 +807,7 @@ def handle_provider_mock_response_trust_decision_blocker_validate(context: CLICo
 def handle_provider_mock_response_trust_decision_blocker_replay(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_trust_decision_blocker import replay_provider_mock_response_trust_decision_blocker
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.blocker_id)
     result = replay_provider_mock_response_trust_decision_blocker(ws, safe_id)
 
@@ -848,7 +826,7 @@ def handle_provider_mock_response_trust_decision_blocker_replay(context: CLICont
 def handle_provider_mock_response_trust_decision_blocker_summary(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_trust_decision_blocker import summarize_provider_mock_response_trust_decision_blocker
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.run_id)
     result = summarize_provider_mock_response_trust_decision_blocker(ws, safe_id)
 
@@ -875,7 +853,7 @@ def handle_provider_mock_response_trust_decision_blocker_summary(context: CLICon
 def handle_provider_mock_response_trust_decision_blocker_doctor(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_trust_decision_blocker import doctor_provider_mock_response_trust_decision_blocker
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.run_id)
     result = doctor_provider_mock_response_trust_decision_blocker(ws, safe_id)
 
@@ -907,7 +885,7 @@ def handle_provider_mock_response_trust_decision_blocker_doctor(context: CLICont
 def handle_provider_mock_response_final_safety_seal(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_final_safety_seal import create_provider_mock_response_final_safety_seal
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.blocker_id)
     result = create_provider_mock_response_final_safety_seal(ws, safe_id)
 
@@ -937,7 +915,6 @@ def handle_provider_mock_response_final_safety_seal(context: CLIContext, ws: Pat
 def handle_provider_mock_response_final_safety_seal_list(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_final_safety_seal import iter_provider_mock_response_final_safety_seal_artifacts
-    from atlas_agent.research.session import ResearchSessionError
     items = iter_provider_mock_response_final_safety_seal_artifacts(ws, symbol=args.symbol)
     limit = max(1, min(args.limit, 100))
     items = items[:limit]
@@ -961,7 +938,7 @@ def handle_provider_mock_response_final_safety_seal_show(context: CLIContext, ws
         find_provider_mock_response_final_safety_seal_by_id,
         load_provider_mock_response_final_safety_seal,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.seal_id)
     artifact_path = find_provider_mock_response_final_safety_seal_by_id(ws, safe_id)
     if artifact_path is None:
@@ -991,7 +968,7 @@ def handle_provider_mock_response_final_safety_seal_validate(context: CLIContext
         find_provider_mock_response_final_safety_seal_by_id,
         validate_provider_mock_response_final_safety_seal_artifact,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.seal_id)
     artifact_path = find_provider_mock_response_final_safety_seal_by_id(ws, safe_id)
     if artifact_path is None:
@@ -1030,7 +1007,7 @@ def handle_provider_mock_response_final_safety_seal_validate(context: CLIContext
 def handle_provider_mock_response_final_safety_seal_replay(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_final_safety_seal import replay_provider_mock_response_final_safety_seal
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.seal_id)
     result = replay_provider_mock_response_final_safety_seal(ws, safe_id)
 
@@ -1049,7 +1026,7 @@ def handle_provider_mock_response_final_safety_seal_replay(context: CLIContext, 
 def handle_provider_mock_response_final_safety_seal_summary(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_final_safety_seal import summarize_provider_mock_response_final_safety_seal
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.run_id)
     result = summarize_provider_mock_response_final_safety_seal(ws, safe_id)
 
@@ -1077,7 +1054,7 @@ def handle_provider_mock_response_final_safety_seal_summary(context: CLIContext,
 def handle_provider_mock_response_final_safety_seal_doctor(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_mock_response_final_safety_seal import doctor_provider_mock_response_final_safety_seal
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.run_id)
     result = doctor_provider_mock_response_final_safety_seal(ws, safe_id)
 

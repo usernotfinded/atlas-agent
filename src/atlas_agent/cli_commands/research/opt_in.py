@@ -26,7 +26,6 @@ from atlas_agent.cli_commands.research._shared import (
 def handle_provider_opt_in_policy(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_opt_in_policy import create_provider_opt_in_policy
-    from atlas_agent.research.session import ResearchSessionError
     result = create_provider_opt_in_policy(ws, args.provider_preflight_freeze_id)
 
     if args.json:
@@ -42,7 +41,6 @@ def handle_provider_opt_in_policy_list(context: CLIContext, ws: Path) -> int:
     from atlas_agent.research.provider_opt_in_policy import iter_provider_opt_in_policy_artifacts
     from atlas_agent.research.session import (
         InvalidResearchSymbolError,
-        ResearchSessionError,
         sanitize_symbol,
     )
 
@@ -154,7 +152,6 @@ def handle_provider_opt_in_policy_replay(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_opt_in_policy import replay_provider_opt_in_policy
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_opt_in_policy_id)
@@ -186,7 +183,6 @@ def handle_provider_opt_in_policy_summary(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_opt_in_policy import summarize_provider_opt_in_policy_for_run
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)

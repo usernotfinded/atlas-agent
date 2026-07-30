@@ -26,7 +26,6 @@ def handle_provider_request_response_pairing(context: CLIContext, ws: Path) -> i
     args = context.args
     from atlas_agent.research.provider_request_response_pairing import create_provider_request_response_pairing
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.intake_policy_id)
@@ -48,7 +47,6 @@ def handle_provider_request_response_pairing_list(context: CLIContext, ws: Path)
     args = context.args
     from atlas_agent.research.provider_request_response_pairing import iter_provider_request_response_pairing_artifacts
     from atlas_agent.research.session import (
-        ResearchSessionError,
         sanitize_symbol,
     )
     safe_symbol = args.symbol.strip().upper() if args.symbol else None
@@ -78,7 +76,6 @@ def handle_provider_request_response_pairing_show(context: CLIContext, ws: Path)
         load_provider_request_response_pairing,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.pairing_id)
@@ -121,7 +118,6 @@ def handle_provider_request_response_pairing_validate(context: CLIContext, ws: P
         validate_provider_request_response_pairing_artifact,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.pairing_id)
@@ -160,7 +156,6 @@ def handle_provider_request_response_pairing_replay(context: CLIContext, ws: Pat
     args = context.args
     from atlas_agent.research.provider_request_response_pairing import replay_provider_request_response_pairing
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.pairing_id)
@@ -190,7 +185,6 @@ def handle_provider_request_response_pairing_summary(context: CLIContext, ws: Pa
     args = context.args
     from atlas_agent.research.provider_request_response_pairing import summarize_provider_request_response_pairing_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -218,7 +212,6 @@ def handle_provider_request_response_pairing_doctor(context: CLIContext, ws: Pat
     args = context.args
     from atlas_agent.research.provider_request_response_pairing import doctor_provider_request_response_pairing
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)

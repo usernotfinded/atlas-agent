@@ -70,7 +70,6 @@ def handle_providers(context: CLIContext, ws: Path) -> int:
 def handle_provider_targets(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_call_plan import list_disabled_provider_call_targets
-    from atlas_agent.research.session import ResearchSessionError
     targets = list_disabled_provider_call_targets()
 
     if args.json:
@@ -100,7 +99,6 @@ def handle_provider_plan(context: CLIContext, ws: Path) -> int:
         validate_provider_id,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_sandbox_request_id = validate_run_id(args.sandbox_request_id)
@@ -250,7 +248,6 @@ def handle_provider_plan_replay(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_call_plan import replay_provider_call_plan
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_call_plan_id)
@@ -279,7 +276,6 @@ def handle_provider_plan_replay(context: CLIContext, ws: Path) -> int:
 def handle_provider_payload_preview(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_outbound_payload_preview import create_provider_outbound_payload_preview
-    from atlas_agent.research.session import ResearchSessionError
     result = create_provider_outbound_payload_preview(ws, args.provider_credential_boundary_id)
 
     if args.json:
@@ -405,7 +401,6 @@ def handle_provider_payload_preview_replay(context: CLIContext, ws: Path) -> int
     args = context.args
     from atlas_agent.research.provider_outbound_payload_preview import replay_provider_outbound_payload_preview
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_outbound_payload_preview_id)
@@ -435,7 +430,6 @@ def handle_provider_payload_preview_summary(context: CLIContext, ws: Path) -> in
     args = context.args
     from atlas_agent.research.provider_outbound_payload_preview import summarize_provider_outbound_payload_preview_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)

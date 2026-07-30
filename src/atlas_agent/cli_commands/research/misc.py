@@ -42,15 +42,12 @@ def handle_market(context: CLIContext, ws: Path) -> int:
 @research_envelope("run")
 def handle_run(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
     from atlas_agent.events import EventLogger
     from atlas_agent.research import ResearchConfigurationError
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedResearchProviderError,
             run_research_session,
         )
@@ -65,41 +62,29 @@ def handle_run(context: CLIContext, ws: Path) -> int:
         )
     except InvalidResearchSymbolError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."})
         else:
             print("research run skipped safely: invalid research symbol")
         return 1
     except UnsupportedResearchProviderError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."})
         else:
             print("research run skipped safely: unsupported research provider")
         return 1
-    except ResearchSessionError as exc:
-        status, message = safe_research_session_error(exc)
-        if args.json:
-            _research_error_json(status, message)
-        else:
-            _research_error_text("research run", message.lower().rstrip("."))
-        return 1
     except ResearchConfigurationError:
+        # Kept inside the body because it returns 0, not 1: a missing research
+        # configuration is a safe no-op here, not a failure. The envelope has no
+        # clause for it, and `ResearchConfigurationError` is a sibling of
+        # `ResearchSessionError` (both derive straight from `RuntimeError`), so
+        # neither clause can shadow the other.
         if args.json:
             _research_error_json("configuration_error", "Configuration error.")
         else:
             _research_error_text("research run", "configuration error")
         return 0
-    except Exception:
-        if args.json:
-            _research_error_json("research_error", "Research command failed.")
-        else:
-            _research_error_text("research run", "research command failed")
-        return 1
 
     if args.json:
-        import json
-
         out = {
             "ok": True,
             "status": "created",
@@ -128,12 +113,10 @@ def handle_run(context: CLIContext, ws: Path) -> int:
 def handle_list(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             iter_research_artifacts,
             sanitize_symbol,
         )
@@ -165,7 +148,6 @@ def handle_list(context: CLIContext, ws: Path) -> int:
         return 0
     except InvalidResearchSymbolError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."})
         else:
             print("research list skipped safely: invalid research symbol")
@@ -176,11 +158,9 @@ def handle_list(context: CLIContext, ws: Path) -> int:
 def handle_show(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             find_research_artifact_by_run_id,
             load_research_artifact,
@@ -190,7 +170,6 @@ def handle_show(context: CLIContext, ws: Path) -> int:
         artifact_path = find_research_artifact_by_run_id(ws, safe_run_id)
         if artifact_path is None:
             if args.json:
-                import json
                 print_json({"ok": False, "status": "artifact_not_found"})
             else:
                 print("research show skipped safely: artifact not found")
@@ -243,12 +222,10 @@ def handle_plan(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
     from atlas_agent.events import EventLogger
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             UnsupportedResearchProviderError,
             create_paper_plan,
@@ -269,7 +246,6 @@ def handle_plan(context: CLIContext, ws: Path) -> int:
         return 1
     except UnsupportedResearchProviderError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."})
         else:
             print("research plan skipped safely: unsupported research provider")
@@ -311,11 +287,9 @@ def handle_plan(context: CLIContext, ws: Path) -> int:
 def handle_summary(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             summarize_research_workspace,
         )
@@ -328,7 +302,6 @@ def handle_summary(context: CLIContext, ws: Path) -> int:
         return 1
 
     if args.json:
-        import json
         out = {
             "ok": True,
             "status": "research_summary",
@@ -367,12 +340,10 @@ def handle_verify(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
     from atlas_agent.events import EventLogger
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             UnsupportedResearchProviderError,
             verify_paper_plan,
@@ -393,7 +364,6 @@ def handle_verify(context: CLIContext, ws: Path) -> int:
         return 1
     except UnsupportedResearchProviderError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."})
         else:
             print("research verify skipped safely: unsupported research provider")
@@ -442,12 +412,10 @@ def handle_evaluate(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
     from atlas_agent.events import EventLogger
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             UnsupportedResearchProviderError,
             evaluate_paper_plan,
@@ -469,7 +437,6 @@ def handle_evaluate(context: CLIContext, ws: Path) -> int:
         return 1
     except UnsupportedResearchProviderError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "unsupported_research_provider", "message": "Unsupported research provider."})
         else:
             print("research evaluate skipped safely: unsupported research provider")
@@ -517,12 +484,10 @@ def handle_evaluate(context: CLIContext, ws: Path) -> int:
 def handle_check_artifacts(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             check_research_artifacts,
             sanitize_symbol,
@@ -533,7 +498,6 @@ def handle_check_artifacts(context: CLIContext, ws: Path) -> int:
         result = check_research_artifacts(ws, symbol_filter=symbol_filter)
     except InvalidResearchSymbolError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."})
         else:
             print("research check-artifacts skipped safely: invalid research symbol")
@@ -581,12 +545,10 @@ def handle_check_artifacts(context: CLIContext, ws: Path) -> int:
 def handle_timeline(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             build_research_timeline,
             sanitize_symbol,
@@ -708,12 +670,10 @@ def handle_prompt(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
     from atlas_agent.events import EventLogger
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             generate_prompt_packet,
             validate_run_id,
@@ -734,7 +694,6 @@ def handle_prompt(context: CLIContext, ws: Path) -> int:
             event_logger=event_logger,
         )
         if args.json:
-            import json
 
             out = {
                 "ok": True,
@@ -773,12 +732,10 @@ def handle_simulate_provider(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
     from atlas_agent.events import EventLogger
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             UnsupportedResearchProviderError,
             simulate_provider_response,
@@ -851,12 +808,10 @@ def handle_review_response(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
     from atlas_agent.events import EventLogger
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             review_provider_response,
             validate_run_id,
@@ -882,7 +837,6 @@ def handle_review_response(context: CLIContext, ws: Path) -> int:
         return 1
 
     if args.json:
-        import json
 
         out = {
             "ok": True,
@@ -913,12 +867,10 @@ def handle_dossier(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
     from atlas_agent.events import EventLogger
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
             build_dossier,
             validate_run_id,
@@ -945,7 +897,6 @@ def handle_dossier(context: CLIContext, ws: Path) -> int:
         return 1
 
     if args.json:
-        import json
 
         out = {
             "ok": True,
@@ -975,7 +926,6 @@ def handle_import_provider_response(context: CLIContext, ws: Path) -> int:
     args = context.args
     import json
     from atlas_agent.events import generate_run_id
-    from atlas_agent.research.errors import safe_research_session_error
     from atlas_agent.research.sandbox_contracts import (
         artifact_sha256,
         sanitize_contract_text,
@@ -1099,14 +1049,11 @@ def handle_import_provider_response(context: CLIContext, ws: Path) -> int:
 @research_envelope("backtest-proposal")
 def handle_backtest_proposal(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
-    from atlas_agent.research.errors import safe_research_session_error
 
     try:
         from atlas_agent.research.backtest_bridge import build_backtest_proposal
         from atlas_agent.research.session import (
             InvalidResearchSymbolError,
-            ResearchSessionError,
             UnsupportedArtifactSchemaError,
         )
         proposal = build_backtest_proposal(ws, args.run_id)

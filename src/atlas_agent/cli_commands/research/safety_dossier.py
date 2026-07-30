@@ -25,7 +25,7 @@ from atlas_agent.cli_commands.research._shared import (
 def handle_provider_safety_dossier(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_safety_dossier import create_provider_safety_dossier
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.seal_id)
     result = create_provider_safety_dossier(ws, safe_id)
 
@@ -48,7 +48,6 @@ def handle_provider_safety_dossier(context: CLIContext, ws: Path) -> int:
 def handle_provider_safety_dossier_list(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_safety_dossier import iter_provider_safety_dossier_artifacts
-    from atlas_agent.research.session import ResearchSessionError
     items = iter_provider_safety_dossier_artifacts(ws, symbol=args.symbol, status_filter=args.status)
     limit = max(1, min(args.limit, 100))
     items = items[:limit]
@@ -69,7 +68,6 @@ def handle_provider_safety_dossier_list(context: CLIContext, ws: Path) -> int:
 def handle_provider_safety_dossier_latest(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_safety_dossier import latest_provider_safety_dossier
-    from atlas_agent.research.session import ResearchSessionError
     result = latest_provider_safety_dossier(ws)
 
     if args.json:
@@ -98,7 +96,7 @@ def handle_provider_safety_dossier_show(context: CLIContext, ws: Path) -> int:
         find_provider_safety_dossier_by_id,
         load_provider_safety_dossier,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.dossier_id)
     artifact_path = find_provider_safety_dossier_by_id(ws, safe_id)
     if artifact_path is None:
@@ -127,7 +125,7 @@ def handle_provider_safety_dossier_validate(context: CLIContext, ws: Path) -> in
         find_provider_safety_dossier_by_id,
         validate_provider_safety_dossier_artifact,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.dossier_id)
     artifact_path = find_provider_safety_dossier_by_id(ws, safe_id)
     if artifact_path is None:
@@ -166,7 +164,7 @@ def handle_provider_safety_dossier_validate(context: CLIContext, ws: Path) -> in
 def handle_provider_safety_dossier_replay(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_safety_dossier import replay_provider_safety_dossier
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.dossier_id)
     result = replay_provider_safety_dossier(ws, safe_id)
 
@@ -185,7 +183,7 @@ def handle_provider_safety_dossier_replay(context: CLIContext, ws: Path) -> int:
 def handle_provider_safety_dossier_summary(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_safety_dossier import summarize_provider_safety_dossier
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.run_id)
     result = summarize_provider_safety_dossier(ws, safe_id)
 
@@ -204,7 +202,7 @@ def handle_provider_safety_dossier_summary(context: CLIContext, ws: Path) -> int
 def handle_provider_safety_dossier_doctor(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_safety_dossier import doctor_provider_safety_dossier
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.run_id)
     result = doctor_provider_safety_dossier(ws, safe_id)
 
@@ -227,7 +225,7 @@ def handle_provider_safety_dossier_doctor(context: CLIContext, ws: Path) -> int:
 def handle_provider_safety_dossier_export(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_safety_dossier import export_provider_safety_dossier_markdown
-    from atlas_agent.research.session import ResearchSessionError, _is_inside_workspace, validate_run_id
+    from atlas_agent.research.session import _is_inside_workspace, validate_run_id
     safe_id = validate_run_id(args.dossier_id)
     output_path = Path(args.output).resolve()
     if not _is_inside_workspace(output_path, ws):

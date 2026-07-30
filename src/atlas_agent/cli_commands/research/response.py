@@ -27,7 +27,6 @@ from atlas_agent.cli_commands.research._shared import (
 def handle_provider_response_intake_policy(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_response_intake_policy import create_provider_response_intake_policy
-    from atlas_agent.research.session import ResearchSessionError
     result = create_provider_response_intake_policy(ws, args.provider_outbound_payload_preview_id)
 
     if args.json:
@@ -46,7 +45,6 @@ def handle_provider_response_intake_policy_list(context: CLIContext, ws: Path) -
     from atlas_agent.research.provider_response_intake_policy import iter_provider_response_intake_policy_artifacts
     from atlas_agent.research.session import (
         InvalidResearchSymbolError,
-        ResearchSessionError,
         sanitize_symbol,
     )
 
@@ -86,7 +84,7 @@ def handle_provider_response_intake_policy_show(context: CLIContext, ws: Path) -
         find_provider_response_intake_policy_by_id,
         load_provider_response_intake_policy,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.provider_response_intake_policy_id)
     path = find_provider_response_intake_policy_by_id(ws, safe_id)
     if path is None:
@@ -125,7 +123,7 @@ def handle_provider_response_intake_policy_validate(context: CLIContext, ws: Pat
         find_provider_response_intake_policy_by_id,
         validate_provider_response_intake_policy_artifact,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.provider_response_intake_policy_id)
     path = find_provider_response_intake_policy_by_id(ws, safe_id)
     if path is None:
@@ -162,7 +160,6 @@ def handle_provider_response_intake_policy_replay(context: CLIContext, ws: Path)
     args = context.args
     from atlas_agent.research.provider_response_intake_policy import replay_provider_response_intake_policy
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_response_intake_policy_id)
@@ -192,7 +189,6 @@ def handle_provider_response_intake_policy_summary(context: CLIContext, ws: Path
     args = context.args
     from atlas_agent.research.provider_response_intake_policy import summarize_provider_response_intake_policy_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -218,7 +214,6 @@ def handle_provider_response_schema_contract(context: CLIContext, ws: Path) -> i
     args = context.args
     from atlas_agent.research.provider_response_schema_contract import create_provider_response_schema_contract
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.pairing_id)
@@ -240,7 +235,6 @@ def handle_provider_response_schema_contract_list(context: CLIContext, ws: Path)
     args = context.args
     from atlas_agent.research.provider_response_schema_contract import iter_provider_response_schema_contract_artifacts
     from atlas_agent.research.session import (
-        ResearchSessionError,
         sanitize_symbol,
     )
     safe_symbol = args.symbol.strip().upper() if args.symbol else None
@@ -270,7 +264,6 @@ def handle_provider_response_schema_contract_show(context: CLIContext, ws: Path)
         load_provider_response_schema_contract,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.contract_id)
@@ -313,7 +306,6 @@ def handle_provider_response_schema_contract_validate(context: CLIContext, ws: P
         validate_provider_response_schema_contract_artifact,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.contract_id)
@@ -352,7 +344,6 @@ def handle_provider_response_schema_contract_replay(context: CLIContext, ws: Pat
     args = context.args
     from atlas_agent.research.provider_response_schema_contract import replay_provider_response_schema_contract
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.contract_id)
@@ -382,7 +373,6 @@ def handle_provider_response_schema_contract_summary(context: CLIContext, ws: Pa
     args = context.args
     from atlas_agent.research.provider_response_schema_contract import summarize_provider_response_schema_contract_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -410,7 +400,6 @@ def handle_provider_response_schema_contract_doctor(context: CLIContext, ws: Pat
     args = context.args
     from atlas_agent.research.provider_response_schema_contract import doctor_provider_response_schema_contract
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -436,7 +425,6 @@ def handle_provider_response_review_result(context: CLIContext, ws: Path) -> int
     args = context.args
     from atlas_agent.research.provider_response_review_result import create_provider_response_review_result
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.schema_contract_id)
@@ -459,7 +447,6 @@ def handle_provider_response_review_result_list(context: CLIContext, ws: Path) -
     args = context.args
     from atlas_agent.research.provider_response_review_result import iter_provider_response_review_result_artifacts
     from atlas_agent.research.session import (
-        ResearchSessionError,
         sanitize_symbol,
     )
     safe_symbol = args.symbol.strip().upper() if args.symbol else None
@@ -489,7 +476,6 @@ def handle_provider_response_review_result_show(context: CLIContext, ws: Path) -
         load_provider_response_review_result,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.review_result_id)
@@ -534,7 +520,6 @@ def handle_provider_response_review_result_validate(context: CLIContext, ws: Pat
         validate_provider_response_review_result_artifact,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.review_result_id)
@@ -573,7 +558,6 @@ def handle_provider_response_review_result_replay(context: CLIContext, ws: Path)
     args = context.args
     from atlas_agent.research.provider_response_review_result import replay_provider_response_review_result
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.review_result_id)
@@ -603,7 +587,6 @@ def handle_provider_response_review_result_summary(context: CLIContext, ws: Path
     args = context.args
     from atlas_agent.research.provider_response_review_result import summarize_provider_response_review_result_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -632,7 +615,6 @@ def handle_provider_response_review_result_doctor(context: CLIContext, ws: Path)
     args = context.args
     from atlas_agent.research.provider_response_review_result import doctor_provider_response_review_result
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)

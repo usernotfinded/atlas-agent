@@ -26,7 +26,6 @@ from atlas_agent.cli_commands.research._shared import (
 def handle_provider_preflight_freeze(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_preflight_freeze import create_provider_preflight_freeze
-    from atlas_agent.research.session import ResearchSessionError
     result = create_provider_preflight_freeze(ws, args.provider_execution_readiness_report_id)
 
     if args.json:
@@ -42,7 +41,6 @@ def handle_provider_preflight_freeze_list(context: CLIContext, ws: Path) -> int:
     from atlas_agent.research.provider_preflight_freeze import iter_provider_preflight_freeze_artifacts
     from atlas_agent.research.session import (
         InvalidResearchSymbolError,
-        ResearchSessionError,
         sanitize_symbol,
     )
 
@@ -164,7 +162,6 @@ def handle_provider_preflight_freeze_replay(context: CLIContext, ws: Path) -> in
     args = context.args
     from atlas_agent.research.provider_preflight_freeze import replay_provider_preflight_freeze
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_preflight_freeze_id)
@@ -195,7 +192,6 @@ def handle_provider_preflight_freeze_summary(context: CLIContext, ws: Path) -> i
     args = context.args
     from atlas_agent.research.provider_preflight_freeze import summarize_provider_preflight_freeze_for_run
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)

@@ -27,7 +27,6 @@ def handle_provider_adapter_interface_contract(context: CLIContext, ws: Path) ->
     args = context.args
     from atlas_agent.research.provider_adapter_interface_contract import create_provider_adapter_interface_contract
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.unlock_state_id)
@@ -50,7 +49,6 @@ def handle_provider_adapter_interface_contract_list(context: CLIContext, ws: Pat
     args = context.args
     from atlas_agent.research.provider_adapter_interface_contract import iter_provider_adapter_interface_contract_artifacts
     from atlas_agent.research.session import (
-        ResearchSessionError,
         sanitize_symbol,
     )
     safe_symbol = args.symbol.strip().upper() if args.symbol else None
@@ -80,7 +78,6 @@ def handle_provider_adapter_interface_contract_show(context: CLIContext, ws: Pat
         load_provider_adapter_interface_contract,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.contract_id)
@@ -174,7 +171,6 @@ def handle_provider_adapter_interface_contract_replay(context: CLIContext, ws: P
     args = context.args
     from atlas_agent.research.provider_adapter_interface_contract import replay_provider_adapter_interface_contract
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.contract_id)
@@ -197,7 +193,6 @@ def handle_provider_adapter_interface_contract_summary(context: CLIContext, ws: 
     args = context.args
     from atlas_agent.research.provider_adapter_interface_contract import summarize_provider_adapter_interface_contract
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -223,7 +218,6 @@ def handle_provider_adapter_interface_contract_doctor(context: CLIContext, ws: P
     args = context.args
     from atlas_agent.research.provider_adapter_interface_contract import doctor_provider_adapter_interface_contract
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -250,7 +244,6 @@ def handle_provider_adapter_disabled_smoke(context: CLIContext, ws: Path) -> int
     args = context.args
     from atlas_agent.research.provider_adapter_interface_contract import run_disabled_adapter_smoke
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.contract_id)

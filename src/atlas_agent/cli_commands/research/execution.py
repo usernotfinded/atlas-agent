@@ -31,7 +31,6 @@ def handle_provider_execution_dry_run(context: CLIContext, ws: Path) -> int:
         create_provider_execution_dry_run,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_plan_id = validate_run_id(args.provider_call_plan_id)
@@ -66,7 +65,6 @@ def handle_provider_execution_list(context: CLIContext, ws: Path) -> int:
     )
     from atlas_agent.research.session import (
         InvalidResearchSymbolError,
-        ResearchSessionError,
         sanitize_symbol,
     )
 
@@ -185,7 +183,6 @@ def handle_provider_execution_replay(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_execution_dry_run import replay_provider_execution_dry_run
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_execution_dry_run_id)
@@ -216,7 +213,6 @@ def handle_provider_execution_state(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_execution_state import create_provider_execution_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_execution_dry_run_id)
@@ -346,7 +342,6 @@ def handle_provider_execution_state_replay(context: CLIContext, ws: Path) -> int
     args = context.args
     from atlas_agent.research.provider_execution_state import replay_provider_execution_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_execution_state_id)
@@ -377,7 +372,6 @@ def handle_provider_execution_audit(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_execution_audit_packet import create_provider_execution_audit_packet
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_execution_state_id)
@@ -501,7 +495,6 @@ def handle_provider_execution_audit_replay(context: CLIContext, ws: Path) -> int
     args = context.args
     from atlas_agent.research.provider_execution_audit_packet import replay_provider_execution_audit_packet
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_execution_audit_packet_id)
@@ -531,7 +524,6 @@ def handle_provider_execution_audit_replay(context: CLIContext, ws: Path) -> int
 def handle_provider_execution_readiness(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.provider_execution_readiness_report import create_provider_execution_readiness_report
-    from atlas_agent.research.session import ResearchSessionError
     result = create_provider_execution_readiness_report(ws, args.provider_execution_audit_packet_id)
 
     if args.json:
@@ -547,7 +539,6 @@ def handle_provider_execution_readiness_list(context: CLIContext, ws: Path) -> i
     from atlas_agent.research.provider_execution_readiness_report import iter_provider_execution_readiness_report_artifacts
     from atlas_agent.research.session import (
         InvalidResearchSymbolError,
-        ResearchSessionError,
         sanitize_symbol,
     )
 
@@ -647,7 +638,6 @@ def handle_provider_execution_readiness_validate(context: CLIContext, ws: Path) 
     result = validate_provider_execution_readiness_report_artifact(data, ws)
 
     if args.json:
-        import json
         out = {
             "ok": True,
             "status": "research_provider_execution_readiness_report_validated",
@@ -674,7 +664,6 @@ def handle_provider_execution_readiness_replay(context: CLIContext, ws: Path) ->
     args = context.args
     from atlas_agent.research.provider_execution_readiness_report import replay_provider_execution_readiness_report
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.provider_execution_readiness_report_id)
@@ -705,7 +694,6 @@ def handle_provider_execution_chain_doctor(context: CLIContext, ws: Path) -> int
     args = context.args
     from atlas_agent.research.provider_execution_readiness_report import provider_execution_chain_doctor
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -737,7 +725,6 @@ def handle_provider_execution_unlock_state(context: CLIContext, ws: Path) -> int
     args = context.args
     from atlas_agent.research.provider_execution_unlock_state import create_provider_execution_unlock_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.review_result_id)
@@ -761,7 +748,6 @@ def handle_provider_execution_unlock_state_list(context: CLIContext, ws: Path) -
     args = context.args
     from atlas_agent.research.provider_execution_unlock_state import iter_provider_execution_unlock_state_artifacts
     from atlas_agent.research.session import (
-        ResearchSessionError,
         sanitize_symbol,
     )
     safe_symbol = args.symbol.strip().upper() if args.symbol else None
@@ -791,7 +777,6 @@ def handle_provider_execution_unlock_state_show(context: CLIContext, ws: Path) -
         load_provider_execution_unlock_state,
     )
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.unlock_state_id)
@@ -888,7 +873,6 @@ def handle_provider_execution_unlock_state_replay(context: CLIContext, ws: Path)
     args = context.args
     from atlas_agent.research.provider_execution_unlock_state import replay_provider_execution_unlock_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.unlock_state_id)
@@ -911,7 +895,6 @@ def handle_provider_execution_unlock_state_summary(context: CLIContext, ws: Path
     args = context.args
     from atlas_agent.research.provider_execution_unlock_state import summarize_provider_execution_unlock_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)
@@ -937,7 +920,6 @@ def handle_provider_execution_unlock_state_doctor(context: CLIContext, ws: Path)
     args = context.args
     from atlas_agent.research.provider_execution_unlock_state import doctor_provider_execution_unlock_state
     from atlas_agent.research.session import (
-        ResearchSessionError,
         validate_run_id,
     )
     safe_id = validate_run_id(args.run_id)

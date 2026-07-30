@@ -26,7 +26,6 @@ from atlas_agent.cli_commands.research._shared import (
 def handle_release_candidate_readiness(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.release_candidate_readiness import create_release_candidate_readiness
-    from atlas_agent.research.session import ResearchSessionError
     from atlas_agent import __version__
     result = create_release_candidate_readiness(ws, args.symbol, __version__)
 
@@ -49,7 +48,6 @@ def handle_release_candidate_readiness(context: CLIContext, ws: Path) -> int:
 def handle_release_candidate_readiness_list(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.release_candidate_readiness import iter_release_candidate_readiness_artifacts
-    from atlas_agent.research.session import ResearchSessionError
     result = iter_release_candidate_readiness_artifacts(ws, symbol=args.symbol)
 
     if args.json:
@@ -68,7 +66,7 @@ def handle_release_candidate_readiness_show(context: CLIContext, ws: Path) -> in
         find_release_candidate_readiness_by_id,
         load_release_candidate_readiness,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.report_id)
     artifact_path = find_release_candidate_readiness_by_id(ws, safe_id)
     if artifact_path is None:
@@ -101,7 +99,7 @@ def handle_release_candidate_readiness_validate(context: CLIContext, ws: Path) -
         find_release_candidate_readiness_by_id,
         validate_release_candidate_readiness_artifact,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.report_id)
     artifact_path = find_release_candidate_readiness_by_id(ws, safe_id)
     if artifact_path is None:
@@ -147,7 +145,7 @@ def handle_release_candidate_readiness_summary(context: CLIContext, ws: Path) ->
         find_release_candidate_readiness_by_id,
         summarize_release_candidate_readiness,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.report_id)
     artifact_path = find_release_candidate_readiness_by_id(ws, safe_id)
     if artifact_path is None:
@@ -179,7 +177,7 @@ def handle_release_candidate_readiness_doctor(context: CLIContext, ws: Path) -> 
         find_release_candidate_readiness_by_id,
         doctor_release_candidate_readiness,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.report_id)
     artifact_path = find_release_candidate_readiness_by_id(ws, safe_id)
     if artifact_path is None:
@@ -215,7 +213,6 @@ def handle_release_candidate_readiness_doctor(context: CLIContext, ws: Path) -> 
 def handle_release_candidate_cutover_dry_run(context: CLIContext, ws: Path) -> int:
     args = context.args
     from atlas_agent.research.release_candidate_cutover import create_release_candidate_cutover_dry_run
-    from atlas_agent.research.session import ResearchSessionError
     result = create_release_candidate_cutover_dry_run(ws, args.target_version)
 
     if args.json:
@@ -265,7 +262,7 @@ def handle_release_candidate_cutover_dry_run_validate(context: CLIContext, ws: P
         find_release_candidate_cutover_by_id,
         validate_release_candidate_cutover_artifact,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.report_id)
     artifact_path = find_release_candidate_cutover_by_id(ws, safe_id)
     if artifact_path is None:
@@ -309,7 +306,7 @@ def handle_release_candidate_cutover_dry_run_summary(context: CLIContext, ws: Pa
         find_release_candidate_cutover_by_id,
         summarize_release_candidate_cutover,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.report_id)
     artifact_path = find_release_candidate_cutover_by_id(ws, safe_id)
     if artifact_path is None:
@@ -339,7 +336,7 @@ def handle_release_candidate_cutover_dry_run_doctor(context: CLIContext, ws: Pat
         doctor_release_candidate_cutover,
         find_release_candidate_cutover_by_id,
     )
-    from atlas_agent.research.session import ResearchSessionError, validate_run_id
+    from atlas_agent.research.session import validate_run_id
     safe_id = validate_run_id(args.report_id)
     artifact_path = find_release_candidate_cutover_by_id(ws, safe_id)
     if artifact_path is None:
