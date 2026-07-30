@@ -55,6 +55,31 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 - Confirm no private values or credential-like strings are committed in docs or scripts.
 - Verify `pyproject.toml` `project.version` matches `src/atlas_agent/__init__.py` `__version__`.
 - Verify release checklist references current source version `0.6.27` and public tag `v0.6.27` where applicable.
+- **Extend the historical audit checkers to the new posture.** Thirteen
+  release-specific checkers carry an allowlist of audited postures — one entry per
+  release since each audit was written — so a historical audit's conclusions stay
+  verifiable as the version moves on. Bumping the source version without adding
+  the new entry puts the repository in a posture none of them recognise, and they
+  report it as an unsupported state. The `v0.6.27` cutover missed this and the
+  full suite failed 23 tests as a result.
+
+  Find them with `grep -rln "<previous version>" scripts/*.py`. They come in three
+  shapes and must be edited individually rather than by one substitution:
+
+  - `POST_V06NN_{SOURCE,CURRENT,NEXT}` constants feeding a set of posture tuples
+    (`check_v0614_final_readiness_audit.py`, `check_v0615_final_readiness_audit.py`).
+  - A single `POST_V06NN_SOURCE_VERSION` constant in a flat tuple
+    (`check_v0614_paper_portfolio_evidence.py`) or in an `or`-branch plus a
+    **separate release-metadata branch**
+    (`check_v0615_paper_human_review_evidence.py` — the metadata branch is easy to
+    miss and fails on its own).
+  - Long `and`-chains over `pyproject.toml` and `__init__.py`, plus the operator
+    message listing accepted versions, which must be updated with them so the
+    error keeps naming what it will accept (the eight `check_paper_*.py` and
+    `check_v0613_paper_autonomy_evidence.py`).
+
+  Verify by running each edited script directly; the quick gate does not cover
+  them.
 - Verify `git status` does not include runtime files like `memory/`.
 - Stage files explicitly. Do not use `git add .`.
 - Do not stage `.atlas/`, `.env`, `.env.atlas`, `memory/`, `build/`, `dist/`, `*.egg-info/`, generated reports, credentials, local logs, scratch files.
