@@ -31,17 +31,21 @@ The two `_list` statuses are covered here, along with readiness `-show`,
 `-doctor` and `-summary`, which a later execution measurement found were never
 driven to exit 0 either.
 
-The two `_validated` statuses are not covered, and deliberately: validation
-requires the repository itself — README safety claims, version consistency, a
-forbidden-claims scan, the protected-boundary check, and named docs and scripts.
-Reaching `..._validated` from a temporary workspace would mean reconstructing
-the repo, so those two are reachable only where the command is meant to run, and
-`test_release_candidate_readiness.py` covers that logic at the domain level
-instead. `test_the_validated_statuses_are_blocked_for_a_stated_reason` pins that
-this is the reason rather than an oversight.
+Every command in both families now reaches its success envelope here.
 
-The same constraint blocks the cutover family's *creation*, which is why only its
-listing is checked here.
+The two `..._validated` *statuses* remain uncovered, and deliberately: validation
+passing requires the repository itself — README safety claims, version
+consistency, a forbidden-claims scan, the protected-boundary check, and named
+docs and scripts. Reaching `..._validated` from a temporary workspace would mean
+reconstructing the repo, so `test_release_candidate_readiness.py` covers that
+logic at the domain level instead, and
+`test_the_validated_statuses_are_blocked_for_a_stated_reason` pins the reason.
+Note the distinction: `-validate` reaches exit 0 either way, reporting
+`..._validation_failed`; it is the verdict that needs the repo, not the command.
+
+An earlier version of this file also claimed the cutover family's *creation* was
+blocked by repository state. It is not — see the comment above the cutover cases
+for what was actually going on.
 """
 
 # --- IMPORTS ---
@@ -106,28 +110,16 @@ def test_readiness_list_answers_in_its_success_envelope(workspace: Path) -> None
 
 
 def test_cutover_dry_run_list_answers_in_its_success_envelope(workspace: Path) -> None:
-    """The cutover twin, which can only be checked more weakly — and why.
+    """The listing answers before anything has been created.
 
-    Its creation is itself blocked on repository state (`invalid_target_version`,
-    `missing_release_note`, `forbidden_claims_scan_missing`), so it writes no
-    artifact and the listing is legitimately empty here. The first version of
-    this case asserted the created id came back out of the list and failed on
-    `'' in []`, which was the test being wrong rather than the command.
-
-    So this pins what is true in a synthetic workspace: the command reaches its
-    success envelope and answers with a list. A non-empty listing needs the
-    repository, like the `..._validated` statuses below.
+    An empty listing is a real state worth pinning separately from the populated
+    one in `test_the_cutover_listing_contains_the_created_report`.
     """
-    _code, created = _run(
-        ["research", "release-candidate-cutover-dry-run", "--target-version", "9.9.9", "--json"]
-    )
-    assert created["status"] == "research_release_candidate_cutover_dry_run_blocked"
-
     code, listed = _run(["research", "release-candidate-cutover-dry-run-list", "--json"])
 
     assert code == 0
     assert listed["status"] == "research_release_candidate_cutover_dry_run_list"
-    assert isinstance(listed["items"], list)
+    assert listed["items"] == []
 
 
 def test_the_validated_statuses_are_blocked_for_a_stated_reason(workspace: Path) -> None:
@@ -158,9 +150,8 @@ def test_the_validated_statuses_are_blocked_for_a_stated_reason(workspace: Path)
 #
 # `-show`, `-doctor` and `-summary` were among the 17 commands a full suite run
 # never drove to exit 0, for the same reason as the dossier family: this
-# command's own tests call the domain functions directly. Unlike the cutover
-# family above, readiness *creation* succeeds in a temporary workspace, so these
-# three are reachable from a created report.
+# command's own tests call the domain functions directly. Creation succeeds in a
+# temporary workspace, so all three are reachable from a created report.
 # ---------------------------------------------------------------------------
 
 
@@ -218,3 +209,116 @@ def test_market_is_disabled_and_has_no_success_path(workspace: Path) -> None:
 
     assert code == 1
     assert payload["status"] == "legacy_command_disabled"
+
+
+# ---------------------------------------------------------------------------
+# The cutover commands
+#
+# These were recorded as unreachable from a temporary workspace, on the evidence
+# that creation answered `..._blocked` and so wrote no artifact for the
+# inspection commands to read. That was wrong, and the mistake is worth keeping
+# visible: creation was refused because the *target version* was invalid, not
+# because of repository state.
+#
+# `--target-version 9.9.9` does not match `^v(\d+)\.(\d+)\.(\d+)-rc([1-9]\d*)$`,
+# so it never got as far as the repository checks. With `v0.6.27-rc1` the
+# artifact is created and all four commands reach exit 0 — while still reporting
+# blockers, which is the point of a dry run.
+#
+# What genuinely needs the repository is the `..._validated` status. `-validate`
+# reaches its success envelope either way; validation *passing* is the part that
+# depends on release-check scripts, docs and a clean protected boundary.
+# ---------------------------------------------------------------------------
+
+#: Matches `_TARGET_RE` in `research/release_candidate_cutover.py`. A version
+#: this does not match is refused before any repository check runs.
+VALID_RC_TARGET = "v0.6.27-rc1"
+
+
+def _cutover_report_id() -> str:
+    code, created = _run([
+        "research", "release-candidate-cutover-dry-run",
+        "--target-version", VALID_RC_TARGET, "--json",
+    ])
+    assert code == 0, created
+    assert created["status"] == "research_release_candidate_cutover_dry_run_created", created
+    return created["release_candidate_cutover_dry_run_id"]
+
+
+def test_cutover_creation_succeeds_with_a_valid_rc_target(workspace: Path) -> None:
+    """Creation is not gated on repository state, only on the target version."""
+    report_id = _cutover_report_id()
+
+    assert report_id
+
+
+def test_cutover_creation_is_refused_for_a_non_rc_target(workspace: Path) -> None:
+    """The refusal that was mistaken for a repository constraint.
+
+    Pinned so the distinction stays visible: this is a version-format refusal,
+    and it happens before the repository checks are consulted.
+    """
+    code, created = _run([
+        "research", "release-candidate-cutover-dry-run",
+        "--target-version", "9.9.9", "--json",
+    ])
+
+    assert code == 1
+    assert created["status"] == "research_release_candidate_cutover_dry_run_blocked"
+    assert created["target_version"] == "<invalid>"
+    assert "target_not_rc" in created["blockers"]
+
+
+def test_cutover_doctor_answers_in_its_success_envelope(workspace: Path) -> None:
+    report_id = _cutover_report_id()
+
+    code, payload = _run([
+        "research", "release-candidate-cutover-dry-run-doctor", report_id, "--json",
+    ])
+
+    assert code == 0
+    assert payload["status"] == "research_release_candidate_cutover_dry_run_doctored"
+
+
+def test_cutover_summary_answers_in_its_success_envelope(workspace: Path) -> None:
+    report_id = _cutover_report_id()
+
+    code, payload = _run([
+        "research", "release-candidate-cutover-dry-run-summary", report_id, "--json",
+    ])
+
+    assert code == 0
+    assert payload["status"] == "research_release_candidate_cutover_dry_run_summarized"
+
+
+def test_cutover_validate_reaches_its_envelope_but_reports_blockers(workspace: Path) -> None:
+    """`-validate` succeeds as a command while validation itself fails.
+
+    Exit 0 with `..._validation_failed` is the documented shape: the command ran,
+    and its answer is that the candidate is not ready. Reaching `..._validated`
+    needs the repository, which is the constraint already recorded for readiness.
+    """
+    report_id = _cutover_report_id()
+
+    code, payload = _run([
+        "research", "release-candidate-cutover-dry-run-validate", report_id, "--json",
+    ])
+
+    assert code == 0
+    assert payload["status"] == "research_release_candidate_cutover_dry_run_validation_failed"
+
+
+def test_the_cutover_listing_contains_the_created_report(workspace: Path) -> None:
+    """Now that creation succeeds, the listing can be checked properly.
+
+    An earlier version of this file could only assert the listing was a list,
+    because nothing was ever created to appear in it.
+    """
+    report_id = _cutover_report_id()
+
+    code, listed = _run(["research", "release-candidate-cutover-dry-run-list", "--json"])
+
+    assert code == 0
+    assert report_id in [
+        item.get("release_candidate_cutover_dry_run_id") for item in listed["items"]
+    ]
