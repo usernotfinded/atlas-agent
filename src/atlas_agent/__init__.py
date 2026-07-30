@@ -10,4 +10,4 @@
 
 # Bumped by the release cutover, and cross-checked against CHANGELOG.md and the
 # git tag by the release-gate checkers. Do not edit by hand outside a cutover.
-__version__ = "0.6.26"
+__version__ = "0.6.27"

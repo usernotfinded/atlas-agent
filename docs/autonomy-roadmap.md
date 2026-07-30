@@ -261,7 +261,7 @@ access, order placement, and approval queue mutation were not enabled.
 
 ### Candidate status in the `v0.6.26` release
 
-`v0.6.26` is the current public GitHub release. One candidate, **CAND-021**, is
+`v0.6.26` is a historical public GitHub release. One candidate, **CAND-021**, is
 **released** as part of `v0.6.26` on 2026-07-13. Live trading, live submit,
 broker/provider execution, credential loading, network access, order placement,
 and approval queue mutation are not enabled.
@@ -430,7 +430,7 @@ L2 is the highest autonomy level Atlas Agent supports for live-market workflows.
 
 ## L3 — Bounded Live Autonomy under Strict Risk Limits
 
-L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.26` current public release; `v0.6.25` and earlier are historical, `v0.6.27` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
+L3 represents a tightly bounded live-autonomy research concept that Atlas is not implementing in the current release line (`v0.6.27` current public release; `v0.6.26` and earlier are historical, `v0.6.28` planning-only). Any future exploration of L3 would require every live order to pass per-order human approval, strict RiskManager limits, explicit opt-in, and active operator oversight. This tier is **not production-ready**, **not unattended-safe**, and **not enabled by default**. It would only be considered for operators who have completed extensive paper-mode validation and can demonstrate operational readiness, and only after additional safety review.
 
 ### Required preconditions
 

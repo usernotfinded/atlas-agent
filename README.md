@@ -13,7 +13,7 @@
 backtests, local paper workflows, provider-assisted analysis, trading memory,
 approval queues, risk gates, and audit evidence.**
 
-> **Current Status (v0.6.26)** — package/source version is `0.6.26`. `v0.6.26` is the current public GitHub release. `v0.6.25` is the historical previous public release. `v0.6.27` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
+> **Current Status (v0.6.27)** — package/source version is `0.6.27`. `v0.6.27` is the current public GitHub release. `v0.6.26` is the historical previous public release. `v0.6.28` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
 
 > **Safety posture:** Not financial advice. Live trading is disabled by default,
 > provider and broker capabilities are opt-in, and trading can result in substantial
@@ -113,8 +113,8 @@ explicitly configured and authorized.
 | Audit and manifests | Implemented, path-dependent | Hardened paths are tamper-evident, but live-submit blocked/attempted event emission is currently optional and best-effort; not every event sink is the hash-chain. |
 | Dashboard | Basic | Strictly read-only and zero-secret by contract. |
 
-`v0.6.26` is the current public GitHub release and source version.
-`v0.6.27` is the next planning line. Provider-safety trust remains blocked: those
+`v0.6.27` is the current public GitHub release and source version.
+`v0.6.28` is the next planning line. Provider-safety trust remains blocked: those
 workflows are sandbox-only and do not authorize provider execution.
 Live submit remains disabled by default; live trading disabled by default. There
 are no profitability or trading-correctness claims.
@@ -377,7 +377,7 @@ For orientation and project posture, see the [Trust Center](docs/trust/README.md
 Maintainers can create a local, non-publishing assurance pack:
 
 ```bash
-python scripts/release_assurance.py --version v0.6.26 --output artifacts/release_assurance/v0.6.26-local-check
+python scripts/release_assurance.py --version v0.6.27 --output artifacts/release_assurance/v0.6.27-local-check
 ```
 
 The local command and the `release-assurance.yml` workflow do not create tags,

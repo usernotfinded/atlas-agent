@@ -6,7 +6,7 @@
 
 | Version | Supported |
 |---|---|
-| 0.6.26 (main) | Yes — current source package version on main and current public GitHub release |
+| 0.6.27 (main) | Yes — current source package version on main and current public GitHub release |
 | 0.6.25 | Yes — historical GitHub release |
 | 0.6.24 | Yes — historical GitHub release |
 | 0.6.21 | Yes — historical GitHub release |
@@ -30,7 +30,7 @@
 
 Live trading disabled by default in all versions.
 
-Atlas is in active development on the `main` branch. The source version on main is 0.6.26 and the current public GitHub release is v0.6.26.
+Atlas is in active development on the `main` branch. The source version on main is 0.6.27 and the current public GitHub release is v0.6.27.
 The v0.6.25 release is the historical previous public GitHub release. Earlier releases are historical. Security updates are applied to the latest development line.
 
 ## Scope

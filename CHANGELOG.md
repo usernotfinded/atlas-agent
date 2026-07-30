@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.6.27] - 2026-07-30
+
+### Added
+
 - Implemented the `v0.6.2` roadmap line: a read-only bridge from local research
   artifacts to paper-only backtest proposals
   (`atlas_agent.research.backtest_bridge.build_backtest_proposal`, exposed as
@@ -147,6 +155,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   whose resolution is a maintainer's decision rather than a fix, with what
   deciding either way would involve. Five have since been decided and keep their
   finding alongside the decision; one remains open.
+- `tests/architecture/test_research_handlers_use_the_shared_envelope.py`, a
+  structural ratchet on the CAND-035 migration: no research handler module may
+  reintroduce the dispatch guard, resolve its own workspace, or emit a
+  `no_workspace` envelope; every registered handler must carry the decorator; the
+  decorator's argument must equal its registry key; only five named handlers may
+  keep an error clause duplicating the envelope's; and no function-scoped import
+  may be left unreferenced. Each of the seven assertions was verified by planting
+  a violation and confirming the plant reached the file first.
+- `tests/research/test_unsafe_claim_vocabulary_is_shared.py` and
+  `tests/research/test_artifact_helpers_are_shared.py`, pinning the two research
+  deduplications structurally and behaviourally, including a symlink-escape case
+  for workspace containment that asserts the unresolved path would have passed a
+  prefix check.
 
 ### Changed
 
@@ -188,6 +209,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Corrected the dev and release-quick rows of `docs/development/check-tiers.md`,
   which listed `~55-90 s` for a tier that measured 356 s before the change and
   165 s after.
+- `cli_commands/research/_envelope.py` now carries the workspace resolution and
+  fail-closed error envelope that 170 handlers repeated, completing CAND-035:
+  11,196 lines to 6,578 across thirteen modules, all handlers on one idiom. The
+  migration's own residue went with it — 177 function-scoped imports of
+  `ResearchSessionError`, `safe_research_session_error` and `json` that nothing
+  referenced, and two `handle_run` clauses reproducing the envelope exactly.
+  Verified by capturing the JSON envelope of all 175 research subcommands in an
+  initialised workspace and diffing against a pre-migration baseline: 0
+  differences at every step.
+- `research/_artifact_helpers.py` and `sandbox_contracts.validate_contract_model_id`
+  absorb 76 byte-identical copies of five helpers spread one per artifact module
+  (`_check_name` x24, `validate_model_id` x20, `_get_disabled_provider_ids` x15,
+  `_is_inside_workspace` x9, `_build_broker_separation_policy` x8), each compared
+  on substance — including transitive dependencies — before being collapsed. The
+  per-artifact error code stays per-artifact, passed as an argument.
 
 ### Fixed
 
@@ -302,6 +338,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   which a root test runner ignores; and release-history assertions skip through a
   `require_release_tags` fixture when a checkout carries no git tags at all, while
   still failing when an individual tag is missing from a fully tagged clone.
+- The anti-fabrication scan over research artifacts had two vocabularies with
+  nothing in common. Nine modules each carried their own
+  `_UNSAFE_POSITIVE_CLAIM_PHRASES`; between them the lists held 85 phrases and the
+  intersection was empty. The seven `provider_*` modules shared twelve capability
+  claims that both `release_candidate_*` modules lacked, and the two release
+  modules shared twenty-three trading-readiness claims that all seven provider
+  modules lacked — so a provider artifact could assert a trading-readiness claim
+  and validate cleanly, on the path that runs on every research session.
+  `research/_claim_vocabulary.py` now holds one 39-phrase core and one scanner,
+  with each module appending its stage-specific phrases. No trading path is
+  affected: this gate governs what an artifact may claim, not what the system may
+  do.
+- `tests/research/test_research_error_code_mapping.py` had gone blind to thirteen
+  error codes after they moved from a literal at the raise site into an argument
+  of a shared validator. The codes were still raised and the CLI was unchanged,
+  but the measured unmapped backlog fell from 136 to 126 with nothing fixed. The
+  scan now also reads the error-code argument of the validators named in
+  `ERROR_CODE_ARGUMENT_SITES`, and the budget stays at 136.
 
 ## [0.6.26] - 2026-07-13
 

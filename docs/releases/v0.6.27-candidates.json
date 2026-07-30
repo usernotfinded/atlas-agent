@@ -1,10 +1,10 @@
 {
   "release_line": "v0.6.27",
-  "status": "planning",
-  "source_version": "0.6.26",
-  "current_public_release": "v0.6.26",
-  "next_planned_release": "v0.6.27",
-  "release_date": null,
+  "status": "released",
+  "source_version": "0.6.27",
+  "current_public_release": "v0.6.27",
+  "next_planned_release": "v0.6.28",
+  "release_date": "2026-07-30",
   "pypi_published": false,
   "tag_created": false,
   "github_release_created": false,
@@ -30,7 +30,7 @@
     {
       "id": "CAND-033",
       "title": "Wire the declared risk limits that no rule reads",
-      "status": "accepted",
+      "status": "released",
       "accepted": true,
       "category": "risk",
       "priority": "P1",
@@ -68,8 +68,8 @@
     {
       "id": "CAND-035",
       "title": "Absorb the repeated research handler preamble",
-      "status": "proposed",
-      "accepted": false,
+      "status": "released",
+      "accepted": true,
       "category": "maintainability",
       "priority": "P2",
       "risk": "medium",
@@ -80,7 +80,8 @@
       ],
       "acceptance_criteria": "tests/research/test_research_command_envelopes.py passes unchanged for all 175 subcommands \u2014 same envelope, same exit status agreement \u2014 and scripts/check_cli_command_compatibility.py reports no surface change. Every handler moves, or none does: two idioms side by side would be worse than the duplication.",
       "safety_notes": "Refactor of CLI error handling and workspace resolution only. Adds no gate, removes none, and touches neither the risk gate nor the kill switch, approval queues, broker adapters, or the audit hash-chain. The fail-closed generic fallback in safe_research_session_error is preserved as-is.",
-      "open_question": "Whether the shared shape is genuinely one thing or several that currently look alike. The 33 handlers that build their error code at runtime, and the four whose exit status disagrees with their envelope, are evidence the family is not as uniform as the line counts suggest. A wrapper that forces them into one shape would either paper over those differences or need escape hatches that reintroduce the duplication. Worth spiking on one module and measuring the real reduction before committing to 170."
+      "open_question": "Whether the shared shape is genuinely one thing or several that currently look alike. The 33 handlers that build their error code at runtime, and the four whose exit status disagrees with their envelope, are evidence the family is not as uniform as the line counts suggest. A wrapper that forces them into one shape would either paper over those differences or need escape hatches that reintroduce the duplication. Worth spiking on one module and measuring the real reduction before committing to 170.",
+      "acceptance_verdict": "PASS"
     },
     {
       "id": "CAND-036",
@@ -99,6 +100,27 @@
       "acceptance_criteria": "The opt-in and the path that consults it land together: an autonomy opt-in record with its own fingerprint over the enforced limits, refused when absent, invalidated when any of those limits change, and a fail-closed L3 path that records a heartbeat. Per-order human approval is retained \u2014 a version without it is L4 and out of scope. Paper-validated before any live configuration is possible.",
       "safety_notes": "Design only at this stage; this candidate authorizes nothing. L3 is not unattended trading \u2014 per-order human approval is part of its definition. L4 remains out of reach without external legal, security, operational, risk, broker-adapter, and regulatory review by qualified parties, which the governance document requires to be done by them and not by self-assessment.",
       "open_question": "Three, recorded in the design. Whether the L3 path must record a heartbeat explicitly, since an absent heartbeat reads as fresh and the deadman is inert on any path that evaluates without recording. What 'active operator oversight' means as a signal \u2014 a deadman proves the agent is alive, not that a human is watching. And how narrow the first cut should be; the ladder says tightly bounded, and one symbol, one side, one broker, paper-validated first is what makes the review worth doing."
+    },
+    {
+      "id": "CAND-037",
+      "title": "Absorb the per-artifact helper copies verified identical",
+      "status": "released",
+      "accepted": true,
+      "category": "maintainability",
+      "priority": "P2",
+      "risk": "medium",
+      "source": "src/atlas_agent/research/ holds ~30 modules, one per artifact type, each written by copying its predecessor. Comparing the unparsed source of every module-level function finds 83 definitions byte-identical to another module's: _check_name x24, validate_provider_id x21, validate_model_id x20, _get_disabled_provider_ids x16, _is_inside_workspace x9, _has_unsafe_positive_claims x9, _build_broker_separation_policy x8. Eight of the nine families had not drifted; the ninth had, and it was the one whose copies were not byte-identical.",
+      "expected_files": [
+        "src/atlas_agent/research/_artifact_helpers.py",
+        "src/atlas_agent/research/_claim_vocabulary.py",
+        "src/atlas_agent/research/sandbox_contracts.py",
+        "tests/research/test_artifact_helpers_are_shared.py",
+        "tests/research/test_unsafe_claim_vocabulary_is_shared.py"
+      ],
+      "acceptance_criteria": "Scoped to the helper families whose copies are byte-identical and verified identical on substance including transitive dependencies: _check_name, validate_model_id, _get_disabled_provider_ids, _is_inside_workspace, _build_broker_separation_policy, _has_unsafe_positive_claims. Each family collapsed to one definition, the per-artifact error code kept as an argument, a structural test preventing regrowth, and the research suite passing unchanged.",
+      "safety_notes": "Validator and artifact-loader plumbing. No gate added or removed, and no change to the risk gate, kill switch, approval queues, broker adapters, or the audit hash-chain. The one behavioural change is the unsafe-claim vocabulary, which only refuses more.",
+      "open_question": "Resolved for this scope: 76 copies collapsed across six families. validate_provider_id is excluded by scope, not left undone -- normalising its error code away leaves three disjoint admission rules under one name (15 copies accept the four disabled external provider ids and reject mock, 5 accept only mock, 1 accepts both), so unifying it is a policy change rather than a dedup. It carries forward as CAND-038. The larger structure-only clusters were re-measured and are not a mechanical lever: only 4 of ~24 lines are identical across all 12 validate_*_artifact copies, so the earlier 2,208-line estimate measured shape rather than content.",
+      "acceptance_verdict": "PASS"
     }
   ]
 }

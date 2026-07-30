@@ -5,12 +5,13 @@ users, contributors, auditors, and potential adopters.
 
 ## Current Public Release
 
-- Current public release: `v0.6.26` (tagged)
-- Previous public release: `v0.6.25`
-- Source package version on `main`: `0.6.26`
-- GitHub release: `v0.6.26` (current public)
-- Next planning line: `v0.6.27`
-- Public v0.6.26: current public — [v0.6.26 Trust and Release Status](v0.6.26-status.md)
+- Current public release: `v0.6.27` (tagged)
+- Previous public release: `v0.6.26`
+- Source package version on `main`: `0.6.27`
+- GitHub release: `v0.6.27` (current public)
+- Next planning line: `v0.6.28`
+- Public v0.6.27: current public — [v0.6.27 Trust and Release Status](v0.6.27-status.md)
+- Public v0.6.26: historical — [v0.6.26 Trust and Release Status](v0.6.26-status.md)
 - Public v0.6.25: historical — [v0.6.25 Trust and Release Status](v0.6.25-status.md)
 - Public v0.6.24: historical — [v0.6.24 Trust and Release Status](v0.6.24-status.md)
 - Public v0.6.23: historical — [v0.6.23 Trust and Release Status](v0.6.23-status.md)
@@ -27,7 +28,7 @@ users, contributors, auditors, and potential adopters.
 - Public v0.6.12: historical — [v0.6.12 Trust and Release Status](v0.6.12-status.md)
 - Public v0.6.11: historical — [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
 - PyPI was not published
-- Current public release status: [v0.6.26 Trust and Release Status](v0.6.26-status.md) (current public)
+- Current public release status: [v0.6.27 Trust and Release Status](v0.6.27-status.md) (current public)
 - Previous release status: [v0.6.25 Trust and Release Status](v0.6.25-status.md) (historical)
 - Previous previous release status: [v0.6.24 Trust and Release Status](v0.6.24-status.md) (historical)
 - Previous previous release status: [v0.6.23 Trust and Release Status](v0.6.23-status.md) (historical)
@@ -36,7 +37,7 @@ users, contributors, auditors, and potential adopters.
 - Previous previous previous previous previous release status: [v0.6.17 Trust and Release Status](v0.6.17-status.md) (historical)
 - Previous previous previous previous previous previous release status: [v0.6.15 Trust and Release Status](v0.6.15-status.md) (historical)
 - Previous previous previous previous previous previous previous release status: [v0.6.11 Trust and Release Status](v0.6.11-status.md) (historical)
-- Current public release notes: [docs/releases/v0.6.26.md](../releases/v0.6.26.md) (current public)
+- Current public release notes: [docs/releases/v0.6.27.md](../releases/v0.6.27.md) (current public)
 - Previous release notes: [docs/releases/v0.6.25.md](../releases/v0.6.25.md) (historical)
 - v0.6.11 release notes: [docs/releases/v0.6.11.md](../releases/v0.6.11.md) (historical)
 - Previous previous release notes: [docs/releases/v0.6.10.md](../releases/v0.6.10.md) (historical)
@@ -146,7 +147,7 @@ brokers, enable trading, or require credentials.
 
 ## Distribution Status
 
-- GitHub release: `v0.6.26` (current public)
+- GitHub release: `v0.6.27` (current public)
 - GitHub release: `v0.6.25` (historical)
 - GitHub release: `v0.6.24` (historical)
 - GitHub release: `v0.6.23` (historical)
@@ -160,7 +161,7 @@ brokers, enable trading, or require credentials.
 - GitHub release: `v0.6.14` (historical)
 - GitHub release: `v0.6.13` (historical)
 - GitHub release: `v0.6.11` (historical)
-- Tag: `v0.6.26` (current public)
+- Tag: `v0.6.27` (current public)
 - Tag: `v0.6.25` (historical)
 - Tag: `v0.6.24` (historical)
 - Tag: `v0.6.23` (historical)
@@ -180,7 +181,7 @@ brokers, enable trading, or require credentials.
 
 ## What Is Ready
 
-- Public v0.6.26 release notes and release status documentation (current public).
+- Public v0.6.27 release notes and release status documentation (current public).
 - Public v0.6.25 release notes and release status documentation (historical).
 - Public v0.6.24 release notes and release status documentation (historical).
 - Public v0.6.23 release notes and release status documentation (historical).
@@ -242,8 +243,10 @@ brokers, enable trading, or require credentials.
 - [Generated Artifacts](../development/generated-artifacts.md)
 - [Main Health Report](../development/main-health.md)
 - [Checks Reference](../development/checks-reference.md)
-- [v0.6.26 Release Notes](../releases/v0.6.26.md) (current public)
-- [v0.6.26 Trust and Release Status](v0.6.26-status.md) (current public)
+- [v0.6.27 Release Notes](../releases/v0.6.27.md) (current public)
+- [v0.6.26 Release Notes](../releases/v0.6.26.md) (historical)
+- [v0.6.27 Trust and Release Status](v0.6.27-status.md) (current public)
+- [v0.6.26 Trust and Release Status](v0.6.26-status.md) (historical)
 - [v0.6.25 Release Notes](../releases/v0.6.25.md) (historical)
 - [v0.6.25 Trust and Release Status](v0.6.25-status.md) (historical)
 - [v0.6.24 Release Notes](../releases/v0.6.24.md) (historical)
