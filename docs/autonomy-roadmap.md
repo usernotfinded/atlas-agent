@@ -273,6 +273,43 @@ and approval queue mutation are not enabled.
   fixture values instead of hardcoded release-identity literals. Test-only; no
   runtime, safety, broker, provider, credential, network, or trading changes.
 
+### Candidate status in the `v0.6.27` release
+
+`v0.6.27` is the current public GitHub release. Three candidates — **CAND-033**,
+**CAND-035** and **CAND-037** — are **released** as part of `v0.6.27` on
+2026-07-30. Live trading, live submit, broker/provider execution, credential
+loading, network access, order placement, and approval queue mutation are not
+enabled.
+
+Unlike every release line since `v0.6.21`, this one **changed protected runtime
+safety boundaries**. `safety/`, `brokers/`, `execution/`, `risk/` and `config/`
+all changed, because that is where the audited defects were. Every change refuses
+more than before; the per-change direction is tabulated in
+[v0.6.27 Trust and Release Status](trust/v0.6.27-status.md). A reader
+comparing release lines should not carry the "no protected boundary changed"
+statement forward from `v0.6.26`.
+
+- **CAND-033** is released in `v0.6.27` as the wiring of three declared risk
+  limits that no rule read — daily loss, leverage, and trades per day. The third
+  was printed to the operator by `atlas risk check` while `RiskLimits` had no such
+  field. It tightens the deterministic risk gate and can only reject orders that
+  were previously accepted. Risk-reducing orders still pass every session halt, so
+  a loss limit cannot trap a position open.
+- **CAND-035** is released in `v0.6.27` as the absorption of the repeated research
+  handler preamble: 170 handlers on one shared envelope, `cli_commands/research/`
+  from 11,040 lines to 6,614, with all 175 command envelopes unchanged. CLI error
+  handling and workspace resolution only; no gate added or removed.
+- **CAND-037** is released in `v0.6.27` as the absorption of six per-artifact
+  helper families verified identical, taking 86 definitions to 21. Validator and
+  artifact-loader plumbing. Its one behavioural change — a single anti-fabrication
+  claim vocabulary across nine artifact scanners — refuses strictly more than any
+  of the nine lists it replaced.
+
+The autonomy position is unchanged by this release. L3 gains a design document and
+three of its four conditions now hold, but it is **not enabled**; its fourth
+condition, active operator oversight, has no definition. L4 remains out of reach
+without external review by qualified parties.
+
 ### Candidate status in the `v0.6.27` planning line
 
 `v0.6.27` is the next planned release line and is not released. No candidates
