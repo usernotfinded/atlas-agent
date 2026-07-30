@@ -211,19 +211,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   165 s after.
 - `cli_commands/research/_envelope.py` now carries the workspace resolution and
   fail-closed error envelope that 170 handlers repeated, completing CAND-035:
-  11,196 lines to 6,578 across thirteen modules, all handlers on one idiom. The
+  11,040 lines to 6,614 across thirteen modules, all handlers on one idiom,
+  measured against the `v0.6.26` release commit. The
   migration's own residue went with it — 177 function-scoped imports of
   `ResearchSessionError`, `safe_research_session_error` and `json` that nothing
   referenced, and two `handle_run` clauses reproducing the envelope exactly.
   Verified by capturing the JSON envelope of all 175 research subcommands in an
   initialised workspace and diffing against a pre-migration baseline: 0
   differences at every step.
-- `research/_artifact_helpers.py` and `sandbox_contracts.validate_contract_model_id`
-  absorb 76 byte-identical copies of five helpers spread one per artifact module
-  (`_check_name` x24, `validate_model_id` x20, `_get_disabled_provider_ids` x15,
-  `_is_inside_workspace` x9, `_build_broker_separation_policy` x8), each compared
-  on substance — including transitive dependencies — before being collapsed. The
-  per-artifact error code stays per-artifact, passed as an argument.
+- `research/_artifact_helpers.py`, `research/_claim_vocabulary.py` and
+  `sandbox_contracts.validate_contract_model_id` absorb six helper families that
+  each module had written out for itself, taking 86 definitions to 21 — 65 removed.
+  `_check_name` (24), `_is_inside_workspace` (9), `_build_broker_separation_policy`
+  (8) and `_has_unsafe_positive_claims` (9) lose every copy;
+  `_get_disabled_provider_ids` (16) keeps one; `validate_model_id`'s 20 become
+  two-line wrappers over one shared rule, so the logic is shared while each
+  artifact's error code stays at its own definition. Every family was compared on
+  substance — including transitive dependencies — before being collapsed.
 
 ### Fixed
 
