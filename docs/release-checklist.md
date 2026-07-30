@@ -80,6 +80,14 @@ Expectation: same stable JSON envelope shape as non-strict JSON mode; exits non-
 
   Verify by running each edited script directly; the quick gate does not cover
   them.
+- **Bump the two version-pinned test fixtures.** Both assert against
+  `atlas_agent.__version__` and fail on any bump:
+  `tests/fixtures/cli_command_contract.json` (`package_series`) and
+  `tests/fixtures/product_capability_inventory.json` (`generated_for`). Run
+  `python3.11 scripts/check_cli_command_compatibility.py` *before* editing the
+  first — it verifies the pinned surface still matches the real CLI, which is the
+  property the fixture exists to protect. Bumping the field without that check
+  would re-pin whatever the surface happens to be.
 - Verify `git status` does not include runtime files like `memory/`.
 - Stage files explicitly. Do not use `git add .`.
 - Do not stage `.atlas/`, `.env`, `.env.atlas`, `memory/`, `build/`, `dist/`, `*.egg-info/`, generated reports, credentials, local logs, scratch files.
