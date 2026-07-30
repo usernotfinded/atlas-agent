@@ -49,6 +49,7 @@ from atlas_agent.research.session import (
     validate_run_id,
 )
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
+from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
 
 PROVIDER_ADAPTER_INTERFACE_CONTRACT_VERSION = "research_provider_adapter_interface_contract_v1"
 
@@ -208,10 +209,6 @@ def provider_adapter_interface_contract_sha256(data: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
-
-
 def _check_boolean_safety_flags(data: dict[str, Any]) -> str | None:
     for flag in _BOOLEAN_SAFETY_FLAGS_MUST_BE_FALSE:
         if data.get(flag) is not False:
@@ -332,16 +329,6 @@ def _build_side_effect_policy() -> dict[str, Any]:
         "send_method_writes_events": False,
         "send_method_writes_artifacts": False,
         "send_method_touches_broker": False,
-    }
-
-
-def _build_broker_separation_policy() -> dict[str, Any]:
-    return {
-        "broker_live_bridge_allowed": False,
-        "broker_adapter_access_allowed": False,
-        "order_routing_allowed": False,
-        "approval_manager_access_allowed": False,
-        "risk_manager_access_allowed": False,
     }
 
 

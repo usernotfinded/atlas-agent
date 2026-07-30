@@ -29,6 +29,7 @@ from atlas_agent.research.providers import (
     UnsupportedResearchProviderError,
     resolve_research_provider,
 )
+from atlas_agent.research._artifact_helpers import is_inside_workspace as _is_inside_workspace
 
 if TYPE_CHECKING:
     from atlas_agent.learning.memory_index import MemoryIndexResult
@@ -267,14 +268,6 @@ def validate_run_id(run_id: str) -> str:
     if len(run_id) > 80:
         raise ResearchSessionError("run_id exceeds maximum length")
     return run_id
-
-
-def _is_inside_workspace(path: Path, workspace: Path) -> bool:
-    try:
-        path.resolve().relative_to(workspace.resolve())
-        return True
-    except ValueError:
-        return False
 
 
 def iter_research_artifacts(

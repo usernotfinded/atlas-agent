@@ -42,6 +42,7 @@ from atlas_agent.research.session import (
     validate_run_id,
 )
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
+from atlas_agent.research._artifact_helpers import check as _check_name
 
 RELEASE_CANDIDATE_READINESS_VERSION = "research_release_candidate_readiness_v1"
 
@@ -121,10 +122,6 @@ def release_candidate_readiness_sha256(data: dict[str, Any]) -> str:
     copy = {k: v for k, v in data.items() if k not in _RELEASE_CANDIDATE_READINESS_HASH_EXCLUDED_FIELDS}
     canonical = canonical_json_dumps(copy)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
-
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
 
 
 @dataclass(frozen=True)

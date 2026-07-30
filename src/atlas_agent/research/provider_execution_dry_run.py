@@ -39,6 +39,7 @@ from atlas_agent.research.session import (
     UnsupportedArtifactSchemaError,
     validate_run_id,
 )
+from atlas_agent.research._artifact_helpers import check as _check_name, is_inside_workspace as _is_inside_workspace
 
 PROVIDER_EXECUTION_DRY_RUN_CONTRACT_VERSION = "research_provider_execution_dry_run_v1"
 
@@ -99,10 +100,6 @@ def provider_execution_dry_run_sha256(data: dict[str, Any]) -> str:
     copy = {k: v for k, v in data.items() if k not in _PROVIDER_EXECUTION_DRY_RUN_HASH_EXCLUDED_FIELDS}
     canonical = canonical_json_dumps(copy)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
-
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
 
 
 def build_provider_execution_dry_run_dict(
@@ -908,14 +905,6 @@ def load_and_validate_provider_execution_dry_run(
     if error:
         raise ResearchSessionError(error)
     return cleaned
-
-
-def _is_inside_workspace(path: Path, workspace: Path) -> bool:
-    try:
-        path.resolve().relative_to(workspace.resolve())
-        return True
-    except ValueError:
-        return False
 
 
 def iter_provider_execution_dry_run_artifacts(

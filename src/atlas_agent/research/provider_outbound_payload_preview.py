@@ -44,6 +44,7 @@ from atlas_agent.research.session import (
     _is_inside_workspace,
     validate_run_id,
 )
+from atlas_agent.research._artifact_helpers import check as _check_name
 
 PROVIDER_OUTBOUND_PAYLOAD_PREVIEW_CONTRACT_VERSION = "research_provider_outbound_payload_preview_v1"
 
@@ -152,10 +153,6 @@ def provider_outbound_payload_preview_sha256(data: dict[str, Any]) -> str:
     copy = {k: v for k, v in data.items() if k not in _PROVIDER_OUTBOUND_PAYLOAD_PREVIEW_HASH_EXCLUDED_FIELDS}
     canonical = canonical_json_dumps(copy)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
-
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
 
 
 def _check_boolean_safety_flags(data: dict[str, Any]) -> str | None:

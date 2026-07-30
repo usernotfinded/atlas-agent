@@ -40,6 +40,7 @@ from atlas_agent.research.session import (
     validate_run_id,
 )
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
+from atlas_agent.research._artifact_helpers import check as _check_name
 
 
 RELEASE_CANDIDATE_CUTOVER_VERSION = "research_release_candidate_cutover_dry_run_v1"
@@ -191,10 +192,6 @@ class ReleaseCandidateCutoverValidationResult:
     cutover_status: str
     blockers: list[str]
     mismatched_fields: list[str]
-
-
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
 
 
 _has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)

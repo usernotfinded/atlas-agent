@@ -62,6 +62,7 @@ from atlas_agent.research.provider_mock_response_trust_decision_blocker import (
     provider_mock_response_trust_decision_blocker_sha256,
 )
 from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
+from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
 
 PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_VERSION = "research_provider_mock_response_final_safety_seal_v1"
 
@@ -246,10 +247,6 @@ def provider_mock_response_final_safety_seal_sha256(data: dict[str, Any]) -> str
     return artifact_sha256(data, _PROVIDER_MOCK_RESPONSE_FINAL_SAFETY_SEAL_SPEC)
 
 
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
-
-
 def _check_boolean_safety_flags(data: dict[str, Any]) -> str | None:
     for flag in _BOOLEAN_SAFETY_FLAGS_MUST_BE_FALSE:
         if data.get(flag) is not False:
@@ -370,16 +367,6 @@ def _build_trading_authorization_policy() -> dict[str, Any]:
         "seal_cannot_submit_order": True,
         "seal_cannot_modify_risk": True,
         "seal_cannot_call_broker": True,
-    }
-
-
-def _build_broker_separation_policy() -> dict[str, Any]:
-    return {
-        "broker_live_bridge_allowed": False,
-        "broker_adapter_access_allowed": False,
-        "order_routing_allowed": False,
-        "approval_manager_access_allowed": False,
-        "risk_manager_access_allowed": False,
     }
 
 

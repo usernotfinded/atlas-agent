@@ -46,6 +46,7 @@ from atlas_agent.research.session import (
     _is_inside_workspace,
     validate_run_id,
 )
+from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
 
 PROVIDER_RESPONSE_SCHEMA_CONTRACT_VERSION = "research_provider_response_schema_contract_v1"
 
@@ -179,10 +180,6 @@ def provider_response_schema_contract_sha256(data: dict[str, Any]) -> str:
     copy = {k: v for k, v in data.items() if k not in _PROVIDER_RESPONSE_SCHEMA_CONTRACT_HASH_EXCLUDED_FIELDS}
     canonical = canonical_json_dumps(copy)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
-
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
 
 
 def _check_boolean_safety_flags(data: dict[str, Any]) -> str | None:
@@ -326,16 +323,6 @@ def _build_trading_separation_policy() -> dict[str, Any]:
         "response_cannot_submit_order": True,
         "response_cannot_modify_risk": True,
         "response_cannot_call_broker": True,
-    }
-
-
-def _build_broker_separation_policy() -> dict[str, Any]:
-    return {
-        "broker_live_bridge_allowed": False,
-        "broker_adapter_access_allowed": False,
-        "order_routing_allowed": False,
-        "approval_manager_access_allowed": False,
-        "risk_manager_access_allowed": False,
     }
 
 

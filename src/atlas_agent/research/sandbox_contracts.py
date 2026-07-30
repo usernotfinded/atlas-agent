@@ -21,6 +21,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from typing import Any
+from atlas_agent.research._artifact_helpers import check as _check_name
 
 
 
@@ -98,10 +99,6 @@ def artifact_sha256(data: dict[str, Any]) -> str:
     copy = {k: v for k, v in data.items() if k not in ("content_hash", "artifact_hash", "created_at")}
     canonical = canonical_json_dumps(copy)
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-
-
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
 
 
 def _has_forbidden_fragments(value: str) -> bool:

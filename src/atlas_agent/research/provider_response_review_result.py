@@ -47,6 +47,7 @@ from atlas_agent.research.session import (
     _is_inside_workspace,
     validate_run_id,
 )
+from atlas_agent.research._artifact_helpers import broker_separation_policy as _build_broker_separation_policy, check as _check_name
 
 PROVIDER_RESPONSE_REVIEW_RESULT_VERSION = "research_provider_response_review_result_v1"
 
@@ -210,10 +211,6 @@ def provider_response_review_result_sha256(data: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
-    return {"name": name, "passed": passed, "message": message}
-
-
 def _check_boolean_safety_flags(data: dict[str, Any]) -> str | None:
     for flag in _BOOLEAN_SAFETY_FLAGS_MUST_BE_FALSE:
         if data.get(flag) is not False:
@@ -303,16 +300,6 @@ def _build_trading_separation_policy() -> dict[str, Any]:
         "review_result_cannot_submit_order": True,
         "review_result_cannot_modify_risk": True,
         "review_result_cannot_call_broker": True,
-    }
-
-
-def _build_broker_separation_policy() -> dict[str, Any]:
-    return {
-        "broker_live_bridge_allowed": False,
-        "broker_adapter_access_allowed": False,
-        "order_routing_allowed": False,
-        "approval_manager_access_allowed": False,
-        "risk_manager_access_allowed": False,
     }
 
 
