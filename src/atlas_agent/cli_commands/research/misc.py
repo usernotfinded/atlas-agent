@@ -112,7 +112,6 @@ def handle_run(context: CLIContext, ws: Path) -> int:
 @research_envelope("list")
 def handle_list(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
 
     try:
         from atlas_agent.research.session import (
@@ -130,7 +129,6 @@ def handle_list(context: CLIContext, ws: Path) -> int:
             limit = 100
         items = iter_research_artifacts(ws, symbol=symbol_filter)[:limit]
         if args.json:
-            import json
             out = {
                 "ok": True,
                 "status": "research_listed",
@@ -157,7 +155,6 @@ def handle_list(context: CLIContext, ws: Path) -> int:
 @research_envelope("show")
 def handle_show(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
 
     try:
         from atlas_agent.research.session import (
@@ -176,7 +173,6 @@ def handle_show(context: CLIContext, ws: Path) -> int:
             return 1
         artifact = load_research_artifact(artifact_path, ws)
         if args.json:
-            import json
             out = {
                 "ok": True,
                 "status": "research_loaded",
@@ -220,7 +216,6 @@ def handle_show(context: CLIContext, ws: Path) -> int:
 @research_envelope("plan")
 def handle_plan(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
     from atlas_agent.events import EventLogger
 
     try:
@@ -239,7 +234,6 @@ def handle_plan(context: CLIContext, ws: Path) -> int:
         )
     except InvalidResearchSymbolError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."})
         else:
             print("research plan skipped safely: invalid research symbol")
@@ -258,7 +252,6 @@ def handle_plan(context: CLIContext, ws: Path) -> int:
         return 1
 
     if args.json:
-        import json
         out = {
             "ok": True,
             "status": "paper_plan_created",
@@ -286,7 +279,6 @@ def handle_plan(context: CLIContext, ws: Path) -> int:
 @research_envelope("summary")
 def handle_summary(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
 
     try:
         from atlas_agent.research.session import (
@@ -338,7 +330,6 @@ def handle_summary(context: CLIContext, ws: Path) -> int:
 @research_envelope("verify")
 def handle_verify(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
     from atlas_agent.events import EventLogger
 
     try:
@@ -357,7 +348,6 @@ def handle_verify(context: CLIContext, ws: Path) -> int:
         )
     except InvalidResearchSymbolError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."})
         else:
             print("research verify skipped safely: invalid research symbol")
@@ -376,7 +366,6 @@ def handle_verify(context: CLIContext, ws: Path) -> int:
         return 1
 
     if args.json:
-        import json
         out = {
             "ok": True,
             "status": "research_verification_created",
@@ -410,7 +399,6 @@ def handle_verify(context: CLIContext, ws: Path) -> int:
 @research_envelope("evaluate")
 def handle_evaluate(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
     from atlas_agent.events import EventLogger
 
     try:
@@ -430,7 +418,6 @@ def handle_evaluate(context: CLIContext, ws: Path) -> int:
         )
     except InvalidResearchSymbolError:
         if args.json:
-            import json
             print_json({"ok": False, "status": "invalid_research_symbol", "message": "Invalid research symbol."})
         else:
             print("research evaluate skipped safely: invalid research symbol")
@@ -449,7 +436,6 @@ def handle_evaluate(context: CLIContext, ws: Path) -> int:
         return 1
 
     if args.json:
-        import json
         out = {
             "ok": True,
             "status": "research_evaluation_created",
@@ -483,7 +469,6 @@ def handle_evaluate(context: CLIContext, ws: Path) -> int:
 @research_envelope("check-artifacts")
 def handle_check_artifacts(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
 
     try:
         from atlas_agent.research.session import (
@@ -510,7 +495,6 @@ def handle_check_artifacts(context: CLIContext, ws: Path) -> int:
         return 1
 
     if args.json:
-        import json
         print_json(result)
     else:
         print("Research artifact health check")
@@ -668,7 +652,6 @@ def handle_timeline(context: CLIContext, ws: Path) -> int:
 @research_envelope("prompt")
 def handle_prompt(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
     from atlas_agent.events import EventLogger
 
     try:
@@ -806,7 +789,6 @@ def handle_simulate_provider(context: CLIContext, ws: Path) -> int:
 @research_envelope("review-response")
 def handle_review_response(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
     from atlas_agent.events import EventLogger
 
     try:
@@ -865,7 +847,6 @@ def handle_review_response(context: CLIContext, ws: Path) -> int:
 @research_envelope("dossier")
 def handle_dossier(context: CLIContext, ws: Path) -> int:
     args = context.args
-    import json
     from atlas_agent.events import EventLogger
 
     try:
