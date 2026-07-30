@@ -200,6 +200,95 @@ fresh, the deadman is inert on any path that evaluates without ever recording �
 there is no stale file to age out. Any L3 path that consults the kill switch must
 record a heartbeat too, or it inherits a deadman that cannot fire.
 
+### The anti-fabrication scanner had two vocabularies with nothing in common — `semantics_change`
+
+Nine modules in `research/` each carried their own `_UNSAFE_POSITIVE_CLAIM_PHRASES`
+tuple and their own byte-identical recursive scanner. The nine lists held 85
+phrases between them and **no phrase appeared in all nine** — the intersection was
+empty. Two coherent vocabularies had drifted apart:
+
+| Group | Shares | Missing |
+|---|---|---|
+| the seven `provider_*` modules | 12 capability claims — `credentials loaded`, `call broker`, `network enabled`, `api key loaded`, `broker touched`, `approve order`, `create order`, `manual unlock granted`, `live trading authorized`, `provider response trusted`, `trust upgrade performed`, `api call succeeded` | all 23 of the readiness claims |
+| the two `release_candidate_*` modules | 23 trading-readiness claims — `safe to trade`, `live trading ready`, `autonomous trading ready`, `real-money ready`, `production trading ready`, `profitable strategy`, `verified alpha`, `beats the market`, `orders enabled`, `approvals enabled`, `broker execution enabled`, `provider execution enabled`, `trust granted`, a profit-guarantee phrase, and their snake_case twins | all 12 of the capability claims |
+
+Both gaps were demonstrated by running the scanners, each against a control
+phrase from the scanner's own list so the probe could not be vacuous:
+
+```
+provider_safety_dossier      "mock response trusted"  -> flagged
+provider_safety_dossier      "safe to trade"          -> NOT flagged
+provider_safety_dossier      <profit-guarantee phrase> -> NOT flagged
+
+release_candidate_readiness  "safe to trade"          -> refused
+release_candidate_readiness  "credentials loaded"     -> ACCEPTED into a
+                                                         validated artifact
+```
+
+**Severity.** No trading path opens: this gate governs what an artifact may
+*claim*, not what the system may do. Accepting "credentials loaded" into a
+readiness report loads no credentials. What it costs is the anti-fabrication
+principle itself — these artifacts are what a human reads to decide whether a
+release is ready, and the project refused a claim in one file while accepting the
+same claim in another.
+
+The direction that matters is the second one. Provider artifacts are written on
+every research run; release-candidate artifacts are occasional. So the claims a
+reader would most want caught — "safe to trade", "live trading ready" — were
+unchecked on the high-volume path.
+
+`FORBIDDEN_FRAGMENTS` does not cover the gap: eleven secret-shaped tokens
+(`API_KEY`, `Bearer`, `sk-`, `/Users/`), matching none of the 35 phrases.
+
+There is a third list, and writing this entry found it. `scripts/check_forbidden_claims.py`
+holds nine phrases it refuses to let *documentation* contain: three profit- or
+return-guarantee wordings, three risk-absence wordings, one about being unable to
+lose, and two about live trading being safe or unattended. It overlaps the
+39-phrase artifact vocabulary in exactly one entry, and quoting that entry in the
+table above made this document fail its own check — which is how the overlap
+surfaced, and why the phrases are described here rather than listed.
+
+The two lists are not obviously wrong to differ: one governs prose written by
+humans, the other machine-built artifacts. But nothing states that they differ on
+purpose, and a phrase refused in a document while accepted in an artifact is the
+same shape of gap as the one this entry is about. Not unified here — merging a
+human-prose vocabulary into an artifact vocabulary is a decision about wording
+policy rather than a cleanup, and it would refuse artifacts on phrases nobody has
+checked against artifact content.
+
+Reachability is not hypothetical. `release_candidate_readiness` puts the *stdout*
+of `scripts/check_version_consistency.py` and `scripts/check_forbidden_claims.py`
+into the `message` field of its checks, so the artifact carries text this package
+did not generate.
+
+**Fixed** by extracting `research/_claim_vocabulary.py` — one core list, one
+scanner — with each module appending its own stage-specific phrases. The core is
+the union of the two families' shared sets, plus four snake_case twins of phrases
+already in it that one module of a pair had and the other did not: 39 phrases.
+`tests/research/test_unsafe_claim_vocabulary_is_shared.py` pins the structure and
+the behaviour separately, since either alone is escapable.
+
+Two things were checked before widening, because widening a refusal is
+fail-closed for fabricated text and fail-*shut* for correct text:
+
+- A phrase occurring in a field name or a generated message would refuse valid
+  artifacts. The 35 cross-family phrases were checked against the 8,101 string
+  literals in the nine modules, and the four snake_case twins against all 25,844
+  in the package; none collided. The test now asserts the stronger form — all 39
+  against every literal — so a phrase added later cannot skip the check.
+- The shared scanner reproduces the nine originals exactly, including descending
+  into `list` but not `tuple`. A phrase inside a tuple escapes the scan — only
+  reachable for a dict built in memory and scanned before serialisation, since
+  artifacts are JSON. Left alone deliberately: widening the recursion in the same
+  change would make a suite failure ambiguous between the two causes. Recorded
+  here as the smaller open question it is.
+
+The 20 copies of `validate_model_id` found alongside this were checked for the
+same class of drift and are clean: same character set, same 120-character limit,
+same four checks in the same order, differing only in the per-artifact error code.
+That is 240 lines with 20 chances to diverge and none taken yet, recorded in the
+`v0.6.27` candidates as structural work rather than a defect.
+
 ## Open items
 
 ### `provider-safety-dossier-summary` documents an argument it cannot accept — `contract_change`

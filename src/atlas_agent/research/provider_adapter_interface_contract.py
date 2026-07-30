@@ -48,6 +48,7 @@ from atlas_agent.research.session import (
     _is_inside_workspace,
     validate_run_id,
 )
+from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 
 PROVIDER_ADAPTER_INTERFACE_CONTRACT_VERSION = "research_provider_adapter_interface_contract_v1"
 
@@ -110,50 +111,29 @@ _BOOLEAN_SAFETY_FLAGS_MUST_BE_TRUE = [
 
 # Unsafe positive-claim phrases that must not appear in string values anywhere in the artifact.
 # These indicate real provider execution, network calls, credential loading, trading, or broker access.
-_UNSAFE_POSITIVE_CLAIM_PHRASES = (
-    "provider call allowed and send succeeded",
-    "send succeeded",
-    "real provider adapter implemented",
-    "provider sdk imported",
-    "http client imported",
-    "network enabled",
-    "network call attempted",
-    "credentials loaded",
-    "credential lookup attempted",
-    "env read attempted",
-    "dotenv loaded",
-    "provider execution unlocked",
-    "manual unlock granted",
+_UNSAFE_POSITIVE_CLAIM_PHRASES = claim_phrases(
     "actual provider call made",
-    "outbound request sent",
-    "provider response received",
-    "provider response imported",
-    "provider response trusted",
-    "trust upgrade performed",
-    "trading signal generated",
-    "create order",
-    "approve order",
-    "pending order created",
-    "call broker",
-    "broker touched",
     "buy signal",
+    "credential lookup attempted",
+    "dotenv loaded",
+    "env read attempted",
+    "http client imported",
+    "network call attempted",
+    "outbound request sent",
+    "pending order created",
+    "provider call allowed and send succeeded",
+    "provider execution unlocked",
+    "provider response imported",
+    "provider response received",
+    "provider sdk imported",
+    "real provider adapter implemented",
     "sell signal",
-    "live trading authorized",
-    "api key loaded",
-    "api call succeeded",
+    "send succeeded",
+    "trading signal generated",
 )
 
 
-def _has_unsafe_positive_claims(value: Any) -> bool:
-    """Recursively scan value for unsafe positive-claim phrases in string values."""
-    if isinstance(value, str):
-        lower = value.lower()
-        return any(phrase in lower for phrase in _UNSAFE_POSITIVE_CLAIM_PHRASES)
-    if isinstance(value, dict):
-        return any(_has_unsafe_positive_claims(v) for v in value.values())
-    if isinstance(value, list):
-        return any(_has_unsafe_positive_claims(item) for item in value)
-    return False
+_has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)
 
 
 @dataclass(frozen=True)

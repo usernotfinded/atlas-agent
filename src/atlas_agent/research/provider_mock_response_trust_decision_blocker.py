@@ -50,6 +50,7 @@ from atlas_agent.research.session import (
     _is_inside_workspace,
     validate_run_id,
 )
+from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 
 PROVIDER_MOCK_RESPONSE_TRUST_DECISION_BLOCKER_VERSION = "research_provider_mock_response_trust_decision_blocker_v1"
 
@@ -133,37 +134,25 @@ _BOOLEAN_SAFETY_FLAGS_MUST_BE_TRUE = [
     "sandbox_only",
 ]
 
-_UNSAFE_POSITIVE_CLAIM_PHRASES = (
-    "trust decision granted",
-    "trust decision present",
-    "trust upgrade performed",
-    "trust upgrade available",
-    "provider response trusted",
-    "mock response trusted",
-    "sandbox review trusted",
-    "manual review completed",
-    "review decision allows trading",
-    "review decision allows order creation",
-    "create order",
-    "approve order",
-    "call broker",
-    "buy",
-    "sell",
-    "trading signal",
+_UNSAFE_POSITIVE_CLAIM_PHRASES = claim_phrases(
     "approval created",
+    "buy",
+    "manual review completed",
+    "mock response trusted",
     "pending order created",
-    "broker touched",
-    "real provider response trusted",
-    "real provider response reviewed",
-    "manual unlock granted",
     "provider call allowed",
-    "network enabled",
-    "credentials loaded",
-    "api key loaded",
-    "api call succeeded",
-    "live trading authorized",
     "real provider adapter used",
     "real provider request sent",
+    "real provider response reviewed",
+    "real provider response trusted",
+    "review decision allows order creation",
+    "review decision allows trading",
+    "sandbox review trusted",
+    "sell",
+    "trading signal",
+    "trust decision granted",
+    "trust decision present",
+    "trust upgrade available",
 )
 
 
@@ -177,16 +166,7 @@ class ProviderMockResponseTrustDecisionBlockerValidationResult:
     warnings: list[str]
 
 
-def _has_unsafe_positive_claims(value: Any) -> bool:
-    """Recursively scan value for unsafe positive-claim phrases in string values."""
-    if isinstance(value, str):
-        lower = value.lower()
-        return any(phrase in lower for phrase in _UNSAFE_POSITIVE_CLAIM_PHRASES)
-    if isinstance(value, dict):
-        return any(_has_unsafe_positive_claims(v) for v in value.values())
-    if isinstance(value, list):
-        return any(_has_unsafe_positive_claims(item) for item in value)
-    return False
+_has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)
 
 
 def validate_provider_id(value: str) -> str:

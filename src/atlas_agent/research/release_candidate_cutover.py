@@ -39,6 +39,7 @@ from atlas_agent.research.session import (
     ResearchSessionError,
     validate_run_id,
 )
+from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 
 
 RELEASE_CANDIDATE_CUTOVER_VERSION = "research_release_candidate_cutover_dry_run_v1"
@@ -67,35 +68,7 @@ _SECRET_LIKE_RE = re.compile(
     re.IGNORECASE,
 )
 
-_UNSAFE_POSITIVE_CLAIM_PHRASES = (
-    "live trading ready",
-    "production trading ready",
-    "safe to trade",
-    "trust granted",
-    "provider execution enabled",
-    "broker execution enabled",
-    "orders enabled",
-    "approvals enabled",
-    "autonomous trading ready",
-    "guaranteed profit",
-    "profitable strategy",
-    "verified alpha",
-    "beats the market",
-    "real-money ready",
-    "live_trading_ready",
-    "production_trading_ready",
-    "safe_to_trade",
-    "trust_granted",
-    "provider_execution_enabled",
-    "broker_execution_enabled",
-    "orders_enabled",
-    "approvals_enabled",
-    "autonomous_trading_ready",
-    "profitable_strategy",
-    "verified_alpha",
-    "beats_the_market",
-    "real_money_ready",
-)
+_UNSAFE_POSITIVE_CLAIM_PHRASES = claim_phrases()
 
 _HARD_FALSE_INVARIANTS = (
     "provider_call_allowed",
@@ -224,15 +197,7 @@ def _check_name(name: str, passed: bool, message: str) -> dict[str, Any]:
     return {"name": name, "passed": passed, "message": message}
 
 
-def _has_unsafe_positive_claims(value: Any) -> bool:
-    if isinstance(value, str):
-        lower = value.lower()
-        return any(phrase in lower for phrase in _UNSAFE_POSITIVE_CLAIM_PHRASES)
-    if isinstance(value, dict):
-        return any(_has_unsafe_positive_claims(v) for v in value.values())
-    if isinstance(value, list):
-        return any(_has_unsafe_positive_claims(item) for item in value)
-    return False
+_has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)
 
 
 def release_candidate_cutover_sha256(data: dict[str, Any]) -> str:

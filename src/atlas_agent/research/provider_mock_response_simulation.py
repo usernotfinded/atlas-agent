@@ -48,6 +48,7 @@ from atlas_agent.research.session import (
     _is_inside_workspace,
     validate_run_id,
 )
+from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 
 PROVIDER_MOCK_RESPONSE_SIMULATION_VERSION = "research_provider_mock_response_simulation_v1"
 
@@ -112,44 +113,23 @@ _BOOLEAN_SAFETY_FLAGS_MUST_BE_TRUE = [
 ]
 
 # Unsafe positive-claim phrases that must not appear in string values anywhere in the artifact.
-_UNSAFE_POSITIVE_CLAIM_PHRASES = (
-    "real provider adapter used",
-    "real provider adapter implemented",
-    "real provider request sent",
-    "provider response received",
-    "provider response trusted",
-    "mock response trusted",
-    "network enabled",
-    "network call attempted",
-    "credentials loaded",
-    "provider call allowed",
+_UNSAFE_POSITIVE_CLAIM_PHRASES = claim_phrases(
     "actual provider call made",
-    "outbound request sent",
-    "trading signal generated",
-    "create order",
-    "approve order",
-    "call broker",
     "buy signal",
+    "mock response trusted",
+    "network call attempted",
+    "outbound request sent",
+    "provider call allowed",
+    "provider response received",
+    "real provider adapter implemented",
+    "real provider adapter used",
+    "real provider request sent",
     "sell signal",
-    "broker touched",
-    "trust upgrade performed",
-    "manual unlock granted",
-    "api key loaded",
-    "api call succeeded",
-    "live trading authorized",
+    "trading signal generated",
 )
 
 
-def _has_unsafe_positive_claims(value: Any) -> bool:
-    """Recursively scan value for unsafe positive-claim phrases in string values."""
-    if isinstance(value, str):
-        lower = value.lower()
-        return any(phrase in lower for phrase in _UNSAFE_POSITIVE_CLAIM_PHRASES)
-    if isinstance(value, dict):
-        return any(_has_unsafe_positive_claims(v) for v in value.values())
-    if isinstance(value, list):
-        return any(_has_unsafe_positive_claims(item) for item in value)
-    return False
+_has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)
 
 
 @dataclass(frozen=True)

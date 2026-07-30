@@ -56,58 +56,39 @@ from atlas_agent.research.provider_mock_response_final_safety_seal import (
     find_provider_mock_response_final_safety_seal_by_id,
     load_provider_mock_response_final_safety_seal,
 )
+from atlas_agent.research._claim_vocabulary import claim_phrases, make_claim_scanner
 
 PROVIDER_SAFETY_DOSSIER_VERSION = "research_provider_safety_dossier_v1"
 
 _PROVIDER_SAFETY_DOSSIER_HASH_EXCLUDED_FIELDS = {"artifact_hash", "created_at"}
 
-_UNSAFE_POSITIVE_CLAIM_PHRASES = (
-    "trust decision granted",
-    "trust decision present",
-    "trust upgrade performed",
-    "trust upgrade available",
-    "provider response trusted",
-    "mock response trusted",
-    "sandbox review trusted",
-    "manual review completed",
-    "review decision allows trading",
-    "review decision allows order creation",
-    "create order",
-    "approve order",
-    "call broker",
-    "buy",
-    "sell",
-    "trading signal",
+_UNSAFE_POSITIVE_CLAIM_PHRASES = claim_phrases(
     "approval created",
+    "buy",
+    "final seal grants trust",
+    "manual review completed",
+    "mock response trusted",
     "pending order created",
-    "broker touched",
-    "real provider response trusted",
-    "real provider response reviewed",
-    "manual unlock granted",
     "provider call allowed",
-    "network enabled",
-    "credentials loaded",
-    "api key loaded",
-    "api call succeeded",
-    "live trading authorized",
     "real provider adapter used",
     "real provider request sent",
-    "seal authorizes",
+    "real provider response reviewed",
+    "real provider response trusted",
+    "review decision allows order creation",
+    "review decision allows trading",
+    "sandbox review trusted",
     "seal approves",
+    "seal authorizes",
     "seal permits execution",
-    "final seal grants trust",
     "seal unlocks trading",
+    "sell",
+    "trading signal",
+    "trust decision granted",
+    "trust decision present",
+    "trust upgrade available",
 )
 
-def _has_unsafe_positive_claims(value: Any) -> bool:
-    if isinstance(value, str):
-        lower = value.lower()
-        return any(phrase in lower for phrase in _UNSAFE_POSITIVE_CLAIM_PHRASES)
-    if isinstance(value, dict):
-        return any(_has_unsafe_positive_claims(v) for v in value.values())
-    if isinstance(value, list):
-        return any(_has_unsafe_positive_claims(item) for item in value)
-    return False
+_has_unsafe_positive_claims = make_claim_scanner(_UNSAFE_POSITIVE_CLAIM_PHRASES)
 
 def validate_provider_id(value: str) -> str:
     if not value or value != "mock":
