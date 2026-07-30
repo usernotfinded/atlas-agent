@@ -188,7 +188,15 @@ class TestProviderDiscoveryNoNetworkImports:
         assert start != -1
         end = src.find("\ndef ", start + 1)
         block = src[start : end if end != -1 else len(src)]
-        assert 'if args.command == "research" and args.research_command == "providers":' in block
+        # Anchor confirming the block really is this handler, so the import scan
+        # below cannot pass by having located nothing. This was the dispatch guard
+        # `if args.command == "research" and args.research_command == "providers":`
+        # until CAND-035 absorbed that guard into `_envelope.py` -- it was
+        # unreachable code, since `dispatch_research` already matched on the same
+        # name. The property under test is the absence of network imports; the
+        # anchor is scaffolding for it, so it moves to something the handler
+        # actually does.
+        assert "list_research_providers" in block
         banned = [
             "import openai",
             "import anthropic",
