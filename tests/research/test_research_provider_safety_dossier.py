@@ -1308,17 +1308,21 @@ class TestSafetyDossierCliSuccessPaths:
         assert payload["ok"] is True
         assert payload["status"] == "research_provider_safety_dossier_summary"
 
-    def test_summary_refuses_a_run_id_opaquely(self, tmp_path: Path, monkeypatch) -> None:
-        """Pins the mislabeled argument, so the fix has something to change.
+    def test_summary_refuses_a_run_id_with_a_specific_reason(self, tmp_path: Path, monkeypatch) -> None:
+        """Pins the mislabeled argument, so the fix still has something to change.
 
-        An operator following `--help` passes a run id and gets "Research command
-        failed." The underlying `provider_safety_dossier_missing` is absent from
-        `RESEARCH_SESSION_ERROR_CODES`, so the specific reason is flattened into
-        the generic fallback -- an instance of the CAND-034 backlog making a
-        CAND-035-adjacent defect harder to diagnose.
+        An operator following `--help` passes a run id where a dossier id is
+        required. This used to answer "Research command failed." because
+        `provider_safety_dossier_missing` was absent from
+        `RESEARCH_SESSION_ERROR_CODES` -- and this test asserted that, with a note
+        saying it should be updated to the better behaviour once the code was
+        mapped. CAND-034 mapped it, so this is that update.
 
-        If the positional is renamed or the code mapped, this case fails and
-        should be updated to the better behaviour.
+        The argument is still mislabeled: the command takes a dossier id and its
+        help calls it a run id. What changed is that the refusal now names which
+        artifact was not found instead of hiding it, which is the whole point of
+        the mapping. The naming defect is recorded separately in
+        safety-invariant-audit-followups and is not fixed here.
         """
         run_id, _dossier_id = self._dossier(tmp_path, monkeypatch)
 
@@ -1327,7 +1331,8 @@ class TestSafetyDossierCliSuccessPaths:
         )
 
         assert code == 1
-        assert payload["status"] == "research_error"
+        assert payload["status"] == "provider_safety_dossier_missing"
+        assert payload["message"] == "Invalid provider safety dossier artifact."
 
     def test_export_writes_the_markdown_it_reports(self, tmp_path: Path, monkeypatch) -> None:
         _run_id, dossier_id = self._dossier(tmp_path, monkeypatch)

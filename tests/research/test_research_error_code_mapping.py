@@ -81,7 +81,12 @@ SRC_ROOT = Path(__file__).resolve().parents[2] / "src" / "atlas_agent"
 
 #: Codes raised with no entry in the table, counted when this ratchet was set.
 #: Lower it when entries are added; it must never be raised.
-UNMAPPED_CODE_BUDGET = 136
+#:
+#: CAND-034 took this from 136 to 0. Every literal code the source raises now has
+#: a vetted status and message. The budget stays as a ratchet rather than being
+#: deleted: a new code added without an entry pushes it above zero and fails here,
+#: which is the whole point.
+UNMAPPED_CODE_BUDGET = 0
 
 #: Validators that raise `ResearchSessionError` with a code their caller supplies,
 #: as {function name: index of the error-code argument}. Their call sites are the

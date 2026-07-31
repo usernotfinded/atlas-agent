@@ -30,8 +30,8 @@
     {
       "id": "CAND-034",
       "title": "Map the research error codes the CLI flattens to a generic message",
-      "status": "proposed",
-      "accepted": false,
+      "status": "released",
+      "accepted": true,
       "category": "usability",
       "priority": "P2",
       "risk": "low",
@@ -42,7 +42,8 @@
       ],
       "acceptance_criteria": "Entries added for the codes an operator can reach, the ratchet in tests/research/test_research_error_code_mapping.py lowered to the new count, and no status string carrying a path, identifier, or any value from the exception rather than a literal.",
       "safety_notes": "The generic fallback stays. It is the fail-safe half of this design \u2014 an unmapped exception string must never be echoed, because in general it can carry a path or user data. This only widens the vetted allowlist, so it enables nothing at runtime and changes no gate, default, or trading behaviour.",
-      "open_question": "Resolved by precedent. The 148 already-mapped codes use only 32 distinct messages, and three artifact families mapped independently converged on the identical five-slot pattern: four shared messages (identifier, malformed, unsupported schema, not found) plus one sentence naming the artifact. Applying it to the 136 unmapped codes: 21 reuse a shared message and 115 take their family's sentence, so the vocabulary decision is 13 sentences, not 136. safe_research_session_error must stay an exact dict lookup -- a runtime derivation rule would echo the 33 codes that are built at runtime. Blast radius measured: 18 research_error assertions across 5 test files. This is now implementation, not decision, and stays proposed only because widening 136 machine-readable statuses is a contract change that should land as its own reviewed unit."
+      "open_question": "Resolved and implemented. 136 entries added, giving 284 mapped codes and an UNMAPPED_CODE_BUDGET of 0. The vocabulary came from precedent: three families mapped independently converged on four shared messages plus one sentence naming the artifact, so 136 codes needed 13 new sentences. safe_research_session_error remains an exact dict lookup -- nothing is derived at runtime, so the 33 codes built with an f-string still land on the generic fallback, which stays.",
+      "acceptance_verdict": "PASS"
     },
     {
       "id": "CAND-036",
