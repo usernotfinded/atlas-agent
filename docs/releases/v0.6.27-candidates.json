@@ -6,8 +6,8 @@
   "next_planned_release": "v0.6.28",
   "release_date": "2026-07-30",
   "pypi_published": false,
-  "tag_created": false,
-  "github_release_created": false,
+  "tag_created": true,
+  "github_release_created": true,
   "candidates": [
     {
       "id": "CAND-032",

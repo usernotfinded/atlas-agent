@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "release": "v0.6.27",
+  "source_version": "0.6.27",
+  "previous_public_release": "v0.6.26",
+  "next_planned_release": "v0.6.28",
+  "release_type": "github_only",
+  "pypi_published": false,
+  "release_commit": "89662d6513f4c8e194c684766efb70af23507cf0",
+  "annotated_tag": {
+    "name": "v0.6.27",
+    "local": true,
+    "remote": true,
+    "object": "4a6dfdd9d8cfefd95e411a5bf79dcab70062c4fe",
+    "dereferences_to": "89662d6513f4c8e194c684766efb70af23507cf0"
+  },
+  "github_release": {
+    "created": true,
+    "draft": false,
+    "prerelease": false,
+    "latest": true,
+    "assets": 0,
+    "url": "https://github.com/usernotfinded/atlas-agent/releases/tag/v0.6.27"
+  },
+  "tagged_commit_scope_caveat": {
+    "tagged_at": "89662d6513f4c8e194c684766efb70af23507cf0",
+    "last_pure_cutover_commit": "b7e1e55b",
+    "note": "Tagged at the tip of main rather than the last pure v0.6.27 cutover commit. The tagged tree therefore contains v0.6.28 candidate work (CAND-034, research error-code mapping, validate_provider_id split) that the v0.6.27 release notes do not describe. Deliberate choice at publication time; tagging b7e1e55b would have excluded the documents recording the tag procedure and the partial-tag test trap."
+  },
+  "ci_status": {
+    "status": "partially_recorded",
+    "note": "Release Gate for the release commit was still in progress when this record was written; its conclusion is not claimed.",
+    "runs": [
+      {
+        "name": "Release Gate",
+        "run_id": 30767901636,
+        "url": "https://github.com/usernotfinded/atlas-agent/actions/runs/30767901636",
+        "conclusion": "",
+        "status": "in_progress"
+      },
+      {
+        "name": "Full Test",
+        "run_id": 30734833502,
+        "url": "https://github.com/usernotfinded/atlas-agent/actions/runs/30734833502",
+        "conclusion": "success",
+        "status": "completed"
+      },
+      {
+        "name": "CI",
+        "run_id": 30652400860,
+        "url": "https://github.com/usernotfinded/atlas-agent/actions/runs/30652400860",
+        "conclusion": "success",
+        "status": "completed"
+      }
+    ]
+  },
+  "local_checks": {
+    "all_passed": true,
+    "scripts": [
+      "check_version_consistency",
+      "check_release_metadata",
+      "check_public_docs_consistency",
+      "check_candidate_chain",
+      "check_hardcoded_release_literals",
+      "check_forbidden_claims",
+      "check_docs_archive_hygiene",
+      "check_cli_command_compatibility"
+    ],
+    "cli_sandbox": {
+      "isolated_workspace": true,
+      "validate_exit_code": 0,
+      "live_run_command": "atlas run --mode live --offline",
+      "live_run_expected_exit_code": 2,
+      "live_run_observed_exit_code": 2
+    }
+  },
+  "safety_reaffirmation": {
+    "live_trading_enabled": false,
+    "live_submit_enabled": false,
+    "broker_or_provider_execution": false,
+    "credential_loading": false,
+    "risk_manager_bypassed": false,
+    "kill_switch_bypassed": false,
+    "audit_hash_chain_bypassed": false,
+    "production_readiness_claimed": false,
+    "profitability_claimed": false
+  },
+  "known_warnings": [
+    "Release Gate for the release commit was still running when this record was written.",
+    "The tagged commit includes v0.6.28 candidate work not described in the v0.6.27 release notes.",
+    "Creating the tag in a partially-tagged checkout makes 18 tag-dependent tests fail spuriously; this publication used a checkout carrying all 114 tags.",
+    "Full pytest or full release_check.sh may exceed local interactive timeouts; targeted checks pass.",
+    "Historical candidate-chain docs emit expected non-blocking warnings.",
+    "CAND-015 retains a clean-room independence caveat pending external review."
+  ],
+  "statement": "v0.6.27 is a GitHub-only release. This assurance record confirms release identity and process integrity only. It makes no profitability, trading-safety, live-readiness, production-readiness, or unattended-safe-operation claim."
+}

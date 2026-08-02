@@ -16,8 +16,8 @@
       "pypi_published": false,
       "release_authorized": true,
       "release_type": "github_only",
-      "tag_created": false,
-      "github_release_created": false
+      "tag_created": true,
+      "github_release_created": true
     },
     {
       "tag": "v0.6.26",
