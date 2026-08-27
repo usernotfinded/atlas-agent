@@ -2,6 +2,14 @@
 
 # Atlas Agent
 
+> **Unmaintained as of 2026-08-27.** Development has stopped. There will be
+> no further updates, issue triage, or support. The last released line is
+> **v0.6.27**.
+>
+> The code stays public under the [MIT License](LICENSE). Fork it, change it,
+> ship it, sell it — no permission needed beyond the license. Do not expect
+> a reply.
+
 <p align="center">
   <a href="https://github.com/usernotfinded/atlas-agent/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License: MIT"></a>
   <a href="https://github.com/usernotfinded/atlas-agent/actions/workflows/ci.yml"><img src="https://github.com/usernotfinded/atlas-agent/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -13,7 +21,10 @@
 backtests, local paper workflows, provider-assisted analysis, trading memory,
 approval queues, risk gates, and audit evidence.**
 
-> **Current Status (v0.6.27)** — package/source version is `0.6.27`. `v0.6.27` is the current public GitHub release. `v0.6.26` is the historical previous public release. `v0.6.28` is the next planning line. Historical stable baseline is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md) for full release history.
+> **Current Status (v0.6.27, final)** — package/source version is `0.6.27`.
+> `v0.6.27` is the last public GitHub release. `v0.6.26` is the historical
+> previous public release. There is no `v0.6.28`. Historical stable baseline
+> is `v0.5.8`. PyPI was not published. See [CHANGELOG.md](CHANGELOG.md).
 
 > **Safety posture:** Not financial advice. Live trading is disabled by default,
 > provider and broker capabilities are opt-in, and trading can result in substantial

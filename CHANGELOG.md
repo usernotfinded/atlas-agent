@@ -7,11 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-### Changed
-
-### Fixed
+Development stopped on 2026-08-27. This repository is unmaintained.
+**v0.6.27 is the last release.** The code remains MIT-licensed: fork it,
+change it, and use it as you wish. There will be no further changelog
+entries.
 
 ## [0.6.27] - 2026-07-30
 
