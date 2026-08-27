@@ -124,8 +124,8 @@ explicitly configured and authorized.
 | Audit and manifests | Implemented, path-dependent | Hardened paths are tamper-evident, but live-submit blocked/attempted event emission is currently optional and best-effort; not every event sink is the hash-chain. |
 | Dashboard | Basic | Strictly read-only and zero-secret by contract. |
 
-`v0.6.27` is the current public GitHub release and source version.
-`v0.6.28` is the next planning line. Provider-safety trust remains blocked: those
+`v0.6.27` is the last public GitHub release and source version. There is no
+further planning line. Provider-safety trust remains blocked: those
 workflows are sandbox-only and do not authorize provider execution.
 Live submit remains disabled by default; live trading disabled by default. There
 are no profitability or trading-correctness claims.
